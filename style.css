@@ -19,7 +19,8 @@ a:focus-visible{outline:2px solid #f1d9ac;outline-offset:4px}
 .hero-halo{position:absolute;z-index:-1;left:50%;top:5%;width:85%;max-width:850px;height:590px;transform:translateX(-50%);pointer-events:none;background:radial-gradient(ellipse,rgba(64,84,133,.18) 0%,rgba(13,25,52,0) 66%)}
 .hero-kicker{font-size:.68rem;letter-spacing:.44em;color:#cbb897;margin:15px 0 2px}
 /* The emblem is transparent; the readable lockup is actual selectable HTML text. */
-.art-wrap{max-width:460px;width:100%;margin:-12px auto -32px;position:relative}
+/* Keep the original crystal+wave proportions. Only uniformly scale the full image; leave a positive gap before text. */
+.art-wrap{max-width:280px;width:100%;margin:6px auto 18px;position:relative}
 .hero-mark{display:block;width:100%;height:auto;object-fit:contain;border:0}
 .hero-copy{position:relative;max-width:790px;margin:0 auto}
 .hero-title{font-family:Georgia,"Times New Roman",serif;font-weight:400;line-height:1.05;margin:0 auto 20px;color:#fff4e5}
@@ -71,7 +72,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
   .site-nav a{font-size:.78rem}
   .hero{padding:14px 21px 60px;min-height:0}
   .hero-kicker{font-size:.58rem;letter-spacing:.2em;margin-top:17px}
-  .art-wrap{max-width:350px;margin:-12px auto -30px}
+  .art-wrap{max-width:185px;margin:4px auto 16px}
   .hero-copy{margin-top:0}
   .brand-main{font-size:clamp(2.05rem,9.3vw,3.5rem);letter-spacing:-.045em}
   .brand-records{font-size:clamp(.9rem,3.6vw,1.3rem);letter-spacing:.37em;text-indent:.37em;margin-top:7px}
@@ -92,6 +93,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
   .site-nav{gap:7px 12px}
   .site-nav a{font-size:.7rem}
   .hero-actions{display:block}
+  .art-wrap{max-width:170px}
   .button{display:block;max-width:270px;margin:10px auto}
   .brand-main{font-size:clamp(1.9rem,9.3vw,2.5rem)}
 }

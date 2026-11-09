@@ -33,7 +33,12 @@ const sw = read('sw.js');
 assert.match(sw, /CACHE_PREFIX/);
 assert.match(sw, /isPublicAsset/);
 assert.match(sw, /velardream-crystal\.png/);
-assert.match(sw, /CACHE_PREFIX \+ 'v3'/);
+assert.match(sw, /CACHE_PREFIX \+ 'v4'/);
+const css = read('style.css');
+assert.match(css, /\.art-wrap\{max-width:280px;width:100%;margin:6px auto 18px;/);
+assert.match(css, /\.art-wrap\{max-width:185px;margin:4px auto 16px/);
+assert.ok(!css.includes('margin:-12px auto -30px') && !css.includes('margin:-12px auto -32px'), 'Logo must not overlap title');
+assert.match(homepage, /max-width:185px;margin:4px auto 16px/);
 assert.ok(!sw.includes('cache.put(req, response)'), 'Never cache unfiltered responses');
 assert.match(read('firestore.rules'), /allow read, write: if false;/);
 for (const file of ['index.html','app/index.html','style.css','main.js','sw.js','manifest.webmanifest','favicon.svg']) {

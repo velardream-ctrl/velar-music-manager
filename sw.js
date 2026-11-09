@@ -1,7 +1,7 @@
 /* VELAR public shell only. NEVER cache authenticated API responses or personal lyrics here. ES5 compatible. */
 'use strict';
 var CACHE_PREFIX = 'velar-public-shell-';
-var CACHE_NAME = CACHE_PREFIX + 'v3';
+var CACHE_NAME = CACHE_PREFIX + 'v4';
 var ASSETS = [
   './', './index.html', './app/', './app/index.html',
   './style.css', './main.js', './manifest.webmanifest',
