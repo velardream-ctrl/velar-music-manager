@@ -1,10 +1,10 @@
 /* VELAR public shell only. NEVER cache authenticated API responses or personal lyrics here. ES5 compatible. */
 'use strict';
 var CACHE_PREFIX = 'velar-public-shell-';
-var CACHE_NAME = CACHE_PREFIX + 'v5';
+var CACHE_NAME = CACHE_PREFIX + 'v6';
 var ASSETS = [
   './', './index.html', './app/', './app/index.html',
-  './style.css', './style.css?v=5', './main.js', './manifest.webmanifest',
+  './style.css', './style.css?v=6', './main.js', './manifest.webmanifest',
   './favicon.svg', './assets/velardream-crystal.png', './assets/icon-192.png', './assets/icon-512.png'
 ];
 function isPublicAsset(url) {
