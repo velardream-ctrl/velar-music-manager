@@ -1,10 +1,10 @@
 /* VELAR public shell only. NEVER cache authenticated API responses or personal lyrics here. ES5 compatible. */
 'use strict';
 var CACHE_PREFIX = 'velar-public-shell-';
-var CACHE_NAME = CACHE_PREFIX + 'v4';
+var CACHE_NAME = CACHE_PREFIX + 'v5';
 var ASSETS = [
   './', './index.html', './app/', './app/index.html',
-  './style.css', './main.js', './manifest.webmanifest',
+  './style.css', './style.css?v=5', './main.js', './manifest.webmanifest',
   './favicon.svg', './assets/velardream-crystal.png', './assets/icon-192.png', './assets/icon-512.png'
 ];
 function isPublicAsset(url) {
@@ -33,8 +33,8 @@ self.addEventListener('fetch', function (event) {
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
   if (url.origin !== self.location.origin || !isPublicAsset(url.href)) return;
-  if (req.mode === 'navigate') {
-    // Network-first for public HTML; cached fallback when disconnected.
+  if (req.mode === 'navigate' || url.pathname.slice(-10) === '/style.css') {
+    // Network-first for public HTML and stylesheets; cached fallback when disconnected.
     event.respondWith(fetch(req).then(function (response) {
       if (response && response.ok && response.type === 'basic') {
         var copy = response.clone();
