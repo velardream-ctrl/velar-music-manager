@@ -17,19 +17,23 @@ for (const icon of manifest.icons) {
 }
 const homepage = read('index.html');
 assert.match(homepage, /<h1[^>]*id="hero-title"/);
-assert.match(homepage, /assets\/velardream-records\.jpg/);
-assert.ok(fs.statSync(path.join(root, 'assets/velardream-records.jpg')).size > 10000, 'Missing supplied label artwork');
+assert.match(homepage, /assets\/velardream-crystal\.png/);
+assert.ok(fs.statSync(path.join(root, 'assets/velardream-crystal.png')).size > 10000, 'Missing transparent emblem');
+assert.ok(fs.statSync(path.join(root, 'assets/velardream-crystal.png')).size < 120000, 'Emblem too heavy');
+assert.match(homepage, /<h1 class="hero-title" id="hero-title"><span class="brand-main">VELARDREAM<\/span><span class="brand-records">RECORDS<\/span><\/h1>/);
+assert.ok(!homepage.includes('Музыкальный мир VELARDREAM RECORDS'), 'Duplicate hero text');
+assert.ok(!homepage.includes('<img class="hero-logo"'), 'The old combined logo should no longer render');
 for (const section of ['artists', 'releases', 'genres', 'about']) {
   assert.ok(homepage.includes('id="' + section + '"'), 'Missing section ' + section);
   assert.ok(homepage.includes('href="#' + section + '"'), 'Missing navigation to ' + section);
 }
 assert.match(homepage, /<meta name="description"/);
-assert.match(homepage, /alt="VELARDREAM RECORDS/);
+assert.match(homepage, /alt="" fetchpriority="high"/);
 const sw = read('sw.js');
 assert.match(sw, /CACHE_PREFIX/);
 assert.match(sw, /isPublicAsset/);
-assert.match(sw, /velardream-records\.jpg/);
-assert.match(sw, /CACHE_PREFIX \+ 'v2'/);
+assert.match(sw, /velardream-crystal\.png/);
+assert.match(sw, /CACHE_PREFIX \+ 'v3'/);
 assert.ok(!sw.includes('cache.put(req, response)'), 'Never cache unfiltered responses');
 assert.match(read('firestore.rules'), /allow read, write: if false;/);
 for (const file of ['index.html','app/index.html','style.css','main.js','sw.js','manifest.webmanifest','favicon.svg']) {
