@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+const root = path.resolve(import.meta.dirname || path.dirname(new URL(import.meta.url).pathname), '..');
+const read = p => fs.readFileSync(path.join(root,p),'utf8');
+const html = read('studio/index.html');
+const js = read('studio/import.js');
+const css = read('studio/studio.css');
+assert.match(html,/href="studio\.css\?v=2"/);
+assert.match(html,/src="import\.js\?v=1"/);
+for(const id of ['data-import','import-file','inspect-import','import-confirm','execute-import','import-status','refresh-studio','records-browser','records-list','records-detail','records-filter','records-count']) {
+ assert.ok(html.includes('id="'+id+'"'),'UI missing '+id);
+}
+assert.match(html,/noindex,nofollow,noarchive/);
+assert.match(js,/format !== 'velardream-vmm-private-import-v1'/);
+assert.match(js,/get\(\{source:'server'\}\)/);
+assert.match(js,/vmm_admins/);
+assert.match(js,/doc\.data\(\)\.enabled !== true/);
+assert.match(js,/snapshot\.forEach/);
+assert.match(js,/if \(existing\[row\.id\]\) already\+\+/);
+assert.match(js,/db\.batch\(\)/);
+assert.match(js,/175/);
+assert.match(js,/batch\.commit\(\)/);
+assert.match(js,/new FileReader\(\)/);
+assert.match(js,/window\.confirm\(prompt\)/);
+assert.ok(!js.includes('localStorage.setItem'));
+assert.ok(!js.includes('sessionStorage.setItem'));
+assert.ok(!js.includes('https://docs.google.com/spreadsheets'));
+assert.ok(!html.includes('VELARDREAM_PRIVATE_IMPORT_2026-11-09.json'));
+assert.ok(css.includes('.records-grid') && css.includes('.import-panel'));
+console.log('PASS: secure admin-gated VMM import UI; no personal data in source; idempotent 175-doc batches and record browser');

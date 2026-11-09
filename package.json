@@ -3,6 +3,10 @@
   "version": "0.0.1",
   "private": true,
   "description": "Safe public foundation for velardream.com",
-  "scripts": {"test": "node tests/test-static.mjs"},
-  "engines": {"node": ">=18"}
+  "scripts": {
+    "test": "node tests/test-static.mjs && node tests/test-import.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
 }
