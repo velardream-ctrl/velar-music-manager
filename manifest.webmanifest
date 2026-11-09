@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "VELAR — Music",
-  "short_name": "VELAR",
+  "name": "VELARDREAM RECORDS",
+  "short_name": "VELARDREAM",
   "description": "Официальный сайт VELAR",
   "start_url": "./",
   "scope": "./",
@@ -9,7 +9,7 @@
   "background_color": "#101727",
   "theme_color": "#101727",
   "icons": [
-    {"src":"assets/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
-    {"src":"assets/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+    {"src":"assets/velardream-app-icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"assets/velardream-app-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
   ]
 }
