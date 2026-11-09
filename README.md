@@ -1,16 +1,13 @@
-# VELAR Music Manager — velardream.com
+# VELARDREAM RECORDS — velardream.com
 
-Repository of the future music-label website **VELAR DREAM**.
+Independent music label website and planned private VMM workspace. GitHub Pages deploys the public landing page from `main`.
 
-**Current status:** safe public starter **committed**, CI static tests passed. GitHub Pages, Cloudflare DNS and HTTPS still require setup; no live domain deployment has been verified. The original Google Apps Script music manager remains separate and unchanged.
+**Public website:** Artists / releases / genres / about. The owner-approved branding includes a crystal mark, wordmark and CSS star field. `noindex` stays in place until a public launch decision.
 
-- Public landing page and `/app/` placeholder contain **no private catalogue, lyrics, contacts or credentials**.
-- `sw.js` caches public assets only. Personal offline editing / sync are **not implemented yet**.
-- Initial `firestore.rules` is **deny-all**; Firebase itself is not provisioned.
-- Private catalogue will be migrated only after protected authentication and read/write rules are tested.
-- Planned: multi-artist label pages, releases, genre/tag filters and playlists. See [architecture](docs/MUSIC_DOMAIN_MODEL_RU.md).
-- CI: `npm test`; local checks `node --check main.js && node --check sw.js`.
+**Private Studio (staged):** `/studio/` has a **publicly inspectable code shell, NOT private content**. There is intentionally no navigation link on the landing page. The future workspace requires Google Firebase Authentication **and** a server-enforced `vmm_admins/{uid}` allowlist. Until a separate VELAR Firebase project's web config is set up, sign-in is **disabled** and no private data can be read. Firestore rules are committed for review, not deployed.
 
-Developer reference in Russian: [README_RU.md](README_RU.md). The project activity log and private backups are stored outside this public repository.
+**Backups:** the owner's original Google Sheet has been copied privately into the project archive. No song lyrics, contacts, secret keys or private records are committed here.
 
-> `noindex` is not an access restriction. Anyone can inspect published GitHub Pages files, so never commit private data.
+See [Russian setup instructions](docs/PRIVATE_STUDIO_SETUP_RU.md) and [Russian project status](README_RU.md). Full VMM migration, A4 Lyrics Studio parity and offline-first cross-device syncing are future tasks.
+
+> GitHub Pages is public. Keeping a link unlisted or setting `noindex` does not restrict access. Firestore security rules must protect all private data.
