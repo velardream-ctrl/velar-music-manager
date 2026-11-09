@@ -65,3 +65,35 @@ for (const file of ['index.html', 'app/index.html']) {
   }
 }
 console.log('PASS: safe public shell, noindex, manifest, static assets, deny-all Firestore rules, links and domain');
+
+// Private studio staging assertions: no embedded user content, no unauthenticated data.
+const studioPage = read('studio/index.html');
+const studioJs = read('studio/studio.js');
+const studioConfig = read('studio/firebase-config.js');
+const studioCss = read('studio/studio.css');
+const studioRules = read('firestore.rules');
+assert.match(studioPage, /content="noindex,nofollow,noarchive"/);
+assert.ok(studioPage.includes('Войти через Google'));
+assert.ok(studioPage.includes('id="lyric-form"'));
+assert.ok(studioPage.includes('href="studio.css?v=1"'));
+assert.ok(studioJs.includes("collection('vmm_admins').doc(user.uid).get()"), 'Studio must check the admin allowlist');
+assert.ok(studioJs.includes('doc.exists&&doc.data()&&doc.data().enabled===true'), 'Disabled admins denied');
+assert.ok(studioJs.includes('signInWithPopup(provider)'), 'Google sign-in must not use redirect');
+assert.ok(studioJs.includes("collection('vmm_lyrics')"), 'Lyrics collection required');
+assert.ok(studioJs.includes('firebase.firestore.FieldValue.serverTimestamp()'), 'Server timestamp required');
+assert.ok(studioConfig.includes('window.VELAR_FIREBASE_CONFIG = null;'), 'Unconfigured studio must fail closed');
+assert.ok(studioCss.includes('@media print'), 'A4 print baseline required');
+assert.ok(studioRules.includes("request.auth.token.firebase.sign_in_provider == 'google.com'"));
+assert.ok(studioRules.includes('match /vmm_admins/{uid}'));
+assert.ok(studioRules.includes('allow list, create, update, delete: if false;'), 'No self-granted admin role');
+assert.ok(studioRules.includes('match /{document=**} { allow read, write: if false; }'), 'Unknown collections must be deny-all');
+assert.ok(!homepage.includes('href="studio/"') && !homepage.includes('href="app/"'), 'Public landing must not link to private studio yet');
+for (const file of ['studio/index.html','studio/studio.js','studio/studio.css','studio/firebase-config.js']) {
+  const content=read(file);
+  assert.ok(!/BEGIN PRIVATE KEY|serviceAccount|docs\.google\.com\/spreadsheets|velardream@gmail\.com/.test(content), 'Private data leak in ' + file);
+}
+for (const match of studioPage.matchAll(/(?:src|href)="([^"]+)"/g)) {
+  if (match[1].startsWith('http') || match[1].startsWith('#')) continue;
+  const target = path.join(root,'studio',match[1].split(/[?#]/)[0]);
+  assert.ok(fs.existsSync(target), 'Broken studio asset: ' + match[1]);
+}
