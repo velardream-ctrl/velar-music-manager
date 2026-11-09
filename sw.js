@@ -1,11 +1,11 @@
 /* VELAR public shell only. NEVER cache authenticated API responses or personal lyrics here. ES5 compatible. */
 'use strict';
 var CACHE_PREFIX = 'velar-public-shell-';
-var CACHE_NAME = CACHE_PREFIX + 'v1';
+var CACHE_NAME = CACHE_PREFIX + 'v2';
 var ASSETS = [
   './', './index.html', './app/', './app/index.html',
   './style.css', './main.js', './manifest.webmanifest',
-  './favicon.svg', './assets/icon-192.png', './assets/icon-512.png'
+  './favicon.svg', './assets/velardream-records.jpg', './assets/icon-192.png', './assets/icon-512.png'
 ];
 function isPublicAsset(url) {
   var allowed = false;

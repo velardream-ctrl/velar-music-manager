@@ -4,27 +4,120 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <meta name="theme-color" content="#101727">
+  <meta name="theme-color" content="#0a1023">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="Официальный сайт музыкального проекта VELAR готовится к открытию.">
+  <meta name="description" content="VELARDREAM RECORDS — творческая музыкальная площадка для артистов, релизов, жанров и авторских плейлистов. Сайт готовится к открытию.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="VELARDREAM RECORDS">
+  <meta property="og:title" content="VELARDREAM RECORDS — музыкальный мир">
+  <meta property="og:description" content="Разные голоса. Разные жанры. Одна музыкальная вселенная.">
+  <meta property="og:url" content="https://velardream.com/">
+  <meta property="og:image" content="https://velardream.com/assets/velardream-records.jpg">
   <link rel="canonical" href="https://velardream.com/">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="preload" href="assets/velardream-records.jpg" as="image">
   <link rel="stylesheet" href="style.css">
-  <title>VELAR — официальный сайт</title>
+  <title>VELARDREAM RECORDS — артисты, релизы и музыка</title>
   <script src="main.js" defer></script>
 </head>
-<body>
-  <main class="shell" id="main">
-    <p class="eyebrow">VELAR DREAM</p>
-    <h1>VELAR</h1>
-    <p class="lead">Музыка, которая находит свой путь.</p>
-    <div class="rule" aria-hidden="true"></div>
-    <p class="intro">Здесь создаётся официальный сайт музыкального проекта VELAR.</p>
-    <p class="footnote">Личный каталог и редактор пока не открыты для посетителей.</p>
-    <p class="connection" role="status" aria-live="polite" id="connectionStatus">Проверка соединения…</p>
+<body class="public-site">
+  <a class="skip-link" href="#content">Перейти к содержанию</a>
+  <header class="site-header" id="top">
+    <a class="mini-brand" href="#top" aria-label="VELARDREAM RECORDS — главная">
+      <span class="mini-mark" aria-hidden="true">◇</span><span>VELARDREAM</span>
+    </a>
+    <nav class="site-nav" aria-label="Разделы сайта">
+      <a href="#artists">Артисты</a>
+      <a href="#releases">Релизы</a>
+      <a href="#genres">Жанры</a>
+      <a href="#about">О проекте</a>
+    </nav>
+  </header>
+
+  <main id="content">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-halo" aria-hidden="true"></div>
+      <p class="hero-kicker">INDEPENDENT MUSIC UNIVERSE</p>
+      <div class="art-wrap">
+        <img class="hero-logo" src="assets/velardream-records.jpg" width="1024" height="1024" alt="VELARDREAM RECORDS — светящийся кристалл, звёздное небо и название музыкального лейбла">
+      </div>
+      <div class="hero-copy">
+        <h1 id="hero-title">Музыкальный мир VELARDREAM RECORDS</h1>
+        <p class="hero-subtitle">Разные голоса. Разные жанры. Одна вселенная музыки.</p>
+        <p class="hero-intro">Здесь рождается пространство для артистов, авторских релизов и музыкальных историй — от оперы и этно до рока, поп-музыки и кроссоверов.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#artists">Открыть мир артистов <span aria-hidden="true">↗</span></a>
+          <a class="button button-secondary" href="#releases">Музыка и релизы</a>
+        </div>
+      </div>
+      <a class="discover" href="#explore">Листайте дальше <span aria-hidden="true">↓</span></a>
+    </section>
+
+    <div class="main-panels" id="explore">
+      <section id="artists" class="showcase" aria-labelledby="artists-title">
+        <div class="section-heading">
+          <span class="section-number">01 / ARTISTS</span>
+          <h2 id="artists-title">У каждого голоса — своя история</h2>
+          <p>Отдельные профили артистов с собственным оформлением, записями, клипами и ссылками на музыкальные площадки.</p>
+        </div>
+        <div class="feature feature-artists">
+          <div class="symbol" aria-hidden="true">✧</div>
+          <div>
+            <span class="feature-label">СКОРО</span>
+            <h3>Артисты VELARDREAM</h3>
+            <p>Здесь появится каталог исполнителей. Каждый профиль будет самостоятельным музыкальным миром.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="releases" class="showcase" aria-labelledby="releases-title">
+        <div class="section-heading">
+          <span class="section-number">02 / RELEASES</span>
+          <h2 id="releases-title">Музыка, которую можно открыть заново</h2>
+          <p>Синглы, альбомы, клипы и внешние плееры — без загрузки тяжёлых музыкальных файлов на собственный сервер.</p>
+        </div>
+        <div class="feature feature-releases">
+          <div class="symbol" aria-hidden="true">♫</div>
+          <div>
+            <span class="feature-label">СКОРО</span>
+            <h3>Релизы и видеоклипы</h3>
+            <p>Подключим Spotify, YouTube и другие площадки по мере подготовки публичного каталога.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="genres" class="showcase genres-section" aria-labelledby="genres-title">
+        <div class="section-heading">
+          <span class="section-number">03 / MOODS &amp; GENRES</span>
+          <h2 id="genres-title">От оперы до новых звуков</h2>
+          <p>Ищите музыку по настроению, жанру, артисту или тематической подборке. Жанры и плейлисты будут дополнять друг друга, а не смешивать песни в один список.</p>
+        </div>
+        <div class="genre-tags" aria-label="Планируемые музыкальные направления">
+          <span>Опера</span><span>Поп</span><span>Рок</span><span>Этно</span><span>Кроссовер</span><span>Юмор</span><span>Авторские подборки</span>
+        </div>
+      </section>
+
+      <section id="about" class="showcase about-section" aria-labelledby="about-title">
+        <div class="section-heading">
+          <span class="section-number">04 / THE LABEL</span>
+          <h2 id="about-title">VELARDREAM RECORDS</h2>
+          <p>Музыкальный проект, объединяющий разных исполнителей, жанры и творческие идеи. Сейчас мы создаём его официальный дом в интернете.</p>
+        </div>
+        <p class="construction">Сайт находится в разработке. Публичные страницы артистов, релизы и плейлисты будут появляться постепенно.</p>
+      </section>
+    </div>
   </main>
-  <footer>© VELAR <span id="currentYear">2026</span></footer>
+
+  <footer class="site-footer">
+    <div class="footer-brand">◇ <span>VELARDREAM RECORDS</span></div>
+    <p>Независимая музыкальная вселенная · © <span id="currentYear">2026</span></p>
+    <div class="footer-links">
+      <a href="#top">Наверх ↑</a>
+      <a href="app/" rel="nofollow">Личный кабинет</a>
+    </div>
+    <span class="connection" role="status" aria-live="polite" id="connectionStatus">Проверка соединения…</span>
+  </footer>
 </body>
 </html>

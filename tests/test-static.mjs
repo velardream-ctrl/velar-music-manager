@@ -15,9 +15,21 @@ assert.equal(manifest.start_url, './');
 for (const icon of manifest.icons) {
   assert.ok(fs.statSync(path.join(root, icon.src)).size > 100, 'Missing icon ' + icon.src);
 }
+const homepage = read('index.html');
+assert.match(homepage, /<h1[^>]*id="hero-title"/);
+assert.match(homepage, /assets\/velardream-records\.jpg/);
+assert.ok(fs.statSync(path.join(root, 'assets/velardream-records.jpg')).size > 10000, 'Missing supplied label artwork');
+for (const section of ['artists', 'releases', 'genres', 'about']) {
+  assert.ok(homepage.includes('id="' + section + '"'), 'Missing section ' + section);
+  assert.ok(homepage.includes('href="#' + section + '"'), 'Missing navigation to ' + section);
+}
+assert.match(homepage, /<meta name="description"/);
+assert.match(homepage, /alt="VELARDREAM RECORDS/);
 const sw = read('sw.js');
 assert.match(sw, /CACHE_PREFIX/);
 assert.match(sw, /isPublicAsset/);
+assert.match(sw, /velardream-records\.jpg/);
+assert.match(sw, /CACHE_PREFIX \+ 'v2'/);
 assert.ok(!sw.includes('cache.put(req, response)'), 'Never cache unfiltered responses');
 assert.match(read('firestore.rules'), /allow read, write: if false;/);
 for (const file of ['index.html','app/index.html','style.css','main.js','sw.js','manifest.webmanifest','favicon.svg']) {
