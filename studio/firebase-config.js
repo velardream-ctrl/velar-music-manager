@@ -1,4 +1,11 @@
-/* Firebase web configuration is PUBLIC (not a secret). Until a SEPARATE VELAR project
-   is created, keep this null so the protected workspace cannot open.
-   Never paste a service-account JSON, private key, OAuth client secret, or user email. */
-window.VELAR_FIREBASE_CONFIG = null;
+/* Public Firebase Web App config; never put OAuth secrets or service accounts here.
+   Server-side Firestore rules and vmm_admins/{uid} protect private material.
+   Firebase project dedicated to VELARDREAM RECORDS, separate from Sanastoyhteiso. */
+window.VELAR_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyA4Qr-x3zr2URRFRsui1HTbaLqcBfrKKK0",
+  authDomain: "velardream-records-studio.firebaseapp.com",
+  projectId: "velardream-records-studio",
+  storageBucket: "velardream-records-studio.firebasestorage.app",
+  messagingSenderId: "880625703377",
+  appId: "1:880625703377:web:fc799a186054276d28a8f0"
+};

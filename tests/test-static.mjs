@@ -81,7 +81,12 @@ assert.ok(studioJs.includes('doc.exists&&doc.data()&&doc.data().enabled===true')
 assert.ok(studioJs.includes('signInWithPopup(provider)'), 'Google sign-in must not use redirect');
 assert.ok(studioJs.includes("collection('vmm_lyrics')"), 'Lyrics collection required');
 assert.ok(studioJs.includes('firebase.firestore.FieldValue.serverTimestamp()'), 'Server timestamp required');
-assert.ok(studioConfig.includes('window.VELAR_FIREBASE_CONFIG = null;'), 'Unconfigured studio must fail closed');
+assert.ok(studioConfig.includes('window.VELAR_FIREBASE_CONFIG = {'), 'Web app config must be present');
+assert.ok(studioConfig.includes('projectId: "velardream-records-studio"'), 'Wrong Firebase project');
+assert.ok(studioConfig.includes('authDomain: "velardream-records-studio.firebaseapp.com"'), 'Wrong Auth domain');
+assert.ok(studioConfig.includes('appId: "1:880625703377:web:fc799a186054276d28a8f0"'), 'Wrong web app ID');
+assert.ok(!studioConfig.includes('serviceAccount') && !/BEGIN PRIVATE KEY|client_secret|private_key/.test(studioConfig), 'Private credentials must never be stored in web config');
+assert.ok(studioJs.includes("prompt:'select_account'"), 'Google popup must allow account selection');
 assert.ok(studioCss.includes('@media print'), 'A4 print baseline required');
 assert.ok(studioRules.includes("request.auth.token.firebase.sign_in_provider == 'google.com'"));
 assert.ok(studioRules.includes('match /vmm_admins/{uid}'));
