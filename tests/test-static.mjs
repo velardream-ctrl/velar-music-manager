@@ -53,7 +53,7 @@ for (const file of ['index.html', 'app/index.html']) {
   const base = path.dirname(file);
   for (const match of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
     if (match[1].startsWith('http') || match[1].startsWith('#')) continue;
-    const target = path.join(root, base, match[1].split('#')[0]);
+    const target = path.join(root, base, match[1].split(/[?#]/)[0]);
     if (match[1] === '../') continue;
     assert.ok(fs.existsSync(target), `${file} -> broken ${match[1]}`);
   }
