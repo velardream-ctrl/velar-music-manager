@@ -1,0 +1,13 @@
+.DS_Store
+node_modules/
+.env
+.env.*
+!*.example
+*.local
+private/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jsonl
+.DIRECTORY

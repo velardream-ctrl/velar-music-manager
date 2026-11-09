@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Safe default for a not-yet-configured project. DO NOT weaken before tests.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

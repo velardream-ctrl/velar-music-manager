@@ -1,0 +1,16 @@
+name: Verify safe VELAR shell
+on:
+  push:
+  pull_request:
+jobs:
+  static-safety:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm test
+      - run: node --check main.js && node --check sw.js
