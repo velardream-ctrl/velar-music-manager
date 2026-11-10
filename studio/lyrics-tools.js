@@ -9,7 +9,7 @@
   holder.id='vmm-lyrics-tools';
   holder.innerHTML='<div class="vmm-lyric-buttons"><button type="button" id="vmm-paste-text">Вставить текст</button><button type="button" id="vmm-clean-suno">Очистить Suno</button><button type="button" data-vmm-section="Куплет">Куплет</button><button type="button" data-vmm-section="Припев">Припев</button><button type="button" data-vmm-section="Бридж">Бридж</button><button type="button" data-vmm-section="Финал">Финал</button><button type="button" id="vmm-bold-text"><strong>Жирный</strong></button><button type="button" id="vmm-undo-clean" class="hidden">Отменить очистку</button></div><p id="vmm-lyric-note" class="sync-note">Вставь текст с командами Suno: известные служебные команды будут удалены, а куплеты и припевы оформлены автоматически.</p><div id="vmm-clean-preview" class="hidden"><p>Результат очистки. Незнакомые команды и слова в скобках сохранены.</p><textarea id="vmm-clean-result" rows="6" readonly></textarea><div class="vmm-lyric-buttons"><button type="button" id="vmm-apply-clean">Применить</button><button type="button" id="vmm-cancel-clean">Отмена</button></div></div>';
   el('vmm-lyrics-toolbar').appendChild(holder);
-  var cleanOriginal='',lastProof=null,renderTimer=null,renderSeq=0,undoClean=null,suppressAutoOnce=false;
+  var cleanOriginal='',lastProof=null,renderTimer=null,renderSeq=0,undoClean=null,suppressAutoOnce=false,autoDisabledAfterUndo=false;
   function el(n){return document.getElementById(n);}
   function note(s){el('vmm-lyric-note').textContent=s;}
   function meta(){return window.VMM_STUDIO&&window.VMM_STUDIO.getLyricsMeta?window.VMM_STUDIO.getLyricsMeta():null;}
@@ -137,7 +137,7 @@
   }
   function recordLoaded(){
     if(readerActive)toggleReader(true);
-    lastInput=body.value;undoClean=null;
+    lastInput=body.value;undoClean=null;autoDisabledAfterUndo=false;
     var undo=el('vmm-undo-clean');if(undo)undo.className='hidden';
     var clean=el('vmm-clean-preview');if(clean)clean.className='hidden';
     note('Текст готов. Вставь команды Suno — они очистятся автоматически. «Лист A4» покажет две колонки.');
@@ -220,7 +220,7 @@
     if(!undoClean)return;
     if(body.value!==undoClean.after){note('После очистки текст уже изменён. Автоматическая отмена заблокирована, чтобы не стереть новые слова.');return;}
     body.value=undoClean.before;
-    undoClean=null;this.className='hidden';suppressAutoOnce=true;
+    undoClean=null;this.className='hidden';suppressAutoOnce=true;autoDisabledAfterUndo=true;
     body.dispatchEvent(new Event('input',{bubbles:true}));
     note('Предыдущий текст восстановлен в редакторе. Сохранённая запись Firestore не менялась.');
   };
@@ -261,7 +261,7 @@
     navigator.clipboard.readText().then(function(t){
       if(!t.trim())return note('Буфер обмена пуст.');
       if(body.value.trim()&&!window.confirm('Заменить текст песни текстом из буфера? Старый вариант будет доступен через «Отменить очистку» до следующего редактирования.'))return;
-      body.value=t;
+      body.value=t;autoDisabledAfterUndo=false;
       if(!autoCleanEditor('paste',t)){body.dispatchEvent(new Event('input',{bubbles:true}));note('Текст вставлен в редактор.');}
     }).catch(function(){note('Разрешение на буфер не предоставлено. Вставь текст обычным способом.');body.focus();});
   };
@@ -272,10 +272,11 @@
     // Never run while a saved record is being populated programmatically.
     var latest=body.value;
     if(suppressAutoOnce){suppressAutoOnce=false;lastInput=latest;schedulePreview();return;}
+    if(autoDisabledAfterUndo){lastInput=latest;schedulePreview();return;}
     if(latest!==lastInput && autoCleanEditor('input',latest)){lastInput=body.value;return;}
     lastInput=body.value;schedulePreview();
   });
-  body.addEventListener('paste',function(){setTimeout(function(){
+  body.addEventListener('paste',function(){autoDisabledAfterUndo=false;setTimeout(function(){
     if(autoCleanEditor('paste'))lastInput=body.value;
     else schedulePreview();
   },0);});
