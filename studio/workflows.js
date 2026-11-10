@@ -129,11 +129,12 @@
       e.preventDefault();if(busy)return;var f=this,k=f.elements.platform.value,u=tr(f.elements.url.value);
       if(!direct(k,u))return tell('Разрешены только прямые адреса конкретных треков; ссылка на альбом или поиск не подходит.');
       var existing=urlValue(t,k);
-      if(direct(k,existing))return tell('Для этой композиции уже есть подтверждённый трек. Изменение допускается только после отдельной проверки.');
+      if(direct(k,existing)&&normalized(k,existing)===normalized(k,u))return tell('Эта прямая ссылка уже сохранена в каталоге.');
+      if(direct(k,existing)&&!window.confirm('В каталоге уже есть подтверждённая ссылка. Создать отдельное предложение для её ручной замены? Старая ссылка останется без изменений до подтверждения.'))return;
       if(proposals.some(function(x){return row(x.catalogRow)===row(t.sourceRow)&&x.platform===k&&normalized(k,x.url)===normalized(k,u)&&x.status!=='Отклонено';}))return tell('Такой кандидат уже существует.');
       busy=true;tell('Проверяем право владельца и сохраняем предложение…');
       authenticated(function(){var p=db.collection('vmm_links').doc(),audit=db.collection('vmm_audit').doc(),batch=db.batch();
-        batch.set(p,{catalogRow:String(t.sourceRow),title:t.title,platform:k,url:u,status:'Ожидает подтверждения',source:'Ручное добавление · VELARDREAM Studio',createdAt:ts(),updatedAt:ts(),updatedBy:user.uid});
+        batch.set(p,{catalogRow:String(t.sourceRow),title:t.title,platform:k,url:u,status:'Ожидает подтверждения',source:'Ручное добавление · VELARDREAM Studio',replacesUrl:existing||'',createdAt:ts(),updatedAt:ts(),updatedBy:user.uid});
         batch.set(audit,{time:ts(),operation:'Ссылка предложена',subject:t.title,result:k,referenceId:p.id,actor:user.uid});
         batch.commit().then(function(){busy=false;open('platforms');}).catch(function(err){busy=false;tell('Ошибка записи: '+err.message);});
       });
@@ -161,9 +162,9 @@
     if(!t)return tell('Песня не найдена по строке каталога; сначала проверь импорт.');
     if(!direct(k,u))return tell('Неправильная прямая ссылка. Подтверждение запрещено.');
     var previous=urlValue(t,k);
-    if(direct(k,previous))return tell('В каталоге уже есть подтверждённая прямая ссылка. Запись не перезаписана.');
-    if(previous && k!=='spotify' && safeUrl(previous))return tell('В каталоге уже есть ссылка. Ручная замена через эту форму запрещена.');
-    if(previous && k==='spotify' && !spotifyAlbum(previous))return tell('Замена возможна только для прежней Spotify-ссылки на альбом.');
+    if(direct(k,previous)&&tr(p.replacesUrl)!==tr(previous))return tell('В каталоге уже есть другая прямая ссылка; новое предложение не разрешает её замену.');
+    if(previous && k!=='spotify' && safeUrl(previous) && tr(p.replacesUrl)!==tr(previous))return tell('Ссылка уже занята. Для её замены сначала создай отдельное предложение из карточки композиции.');
+    if(previous && k==='spotify' && direct(k,previous) && tr(p.replacesUrl)!==tr(previous))return tell('Существующий Spotify-трек нельзя заменить без отдельного подтверждённого предложения.');
     for(var i=0;i<catalog.length;i++){
       var other=catalog[i];if(other.id!==t.id&&direct(k,urlValue(other,k))&&normalized(k,urlValue(other,k))===normalized(k,u))return tell('Такой трек уже закреплён за другой композицией: '+other.title);
     }
@@ -178,9 +179,10 @@
           var a=snaps[0],b=snaps[1];if(!a.exists||!b.exists)throw new Error('Запись не найдена.');
           var actual=a.data(),proposal=b.data();
           if(!pending(proposal))throw new Error('Предложение уже обработано.');
+          if(row(proposal.catalogRow)!==row(t.sourceRow)||proposal.platform!==k||tr(proposal.url)!==u)throw new Error('Предложение изменилось после открытия. Повтори проверку.');
           var old=(actual.links||{})[k]||'';
-          if(direct(k,old))throw new Error('Уже существует прямая ссылка.');
-          if(old && !(k==='spotify'&&spotifyAlbum(old)) && safeUrl(old))throw new Error('Старая ссылка изменилась, подтвердить замену нельзя.');
+          if(direct(k,old)&&tr(proposal.replacesUrl)!==tr(old))throw new Error('Прямая ссылка уже существует. Для замены требуется отдельное предложение с точным прежним URL.');
+          if(old && !(k==='spotify'&&spotifyAlbum(old)) && safeUrl(old) && tr(proposal.replacesUrl)!==tr(old))throw new Error('Старая ссылка изменилась, подтвердить замену нельзя.');
           var links={},orig=actual.links||{};Object.keys(orig).forEach(function(key){links[key]=orig[key];});links[k]=u;
           var rowValues=Array.isArray(actual.legacyRow)?actual.legacyRow.slice():null;
           if(rowValues&&fieldMap[k]!==undefined){rowValues[fieldMap[k]]=u;rowValues[statusMap[k]]='Подтверждено вручную · VELARDREAM Studio';}
