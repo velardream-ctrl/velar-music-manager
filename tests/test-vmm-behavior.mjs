@@ -69,6 +69,10 @@ assert.match(clean.text,/\*\*Припев\*\*/);
 assert.match(clean.text,/Ла-ла-ла!/);
 assert.ok(!clean.text.includes('Male vocals'));
 assert.ok(clean.removed>=3);
+assert.ok(l.cleanSuno('Это [скобки внутри слов] моих песен').text.includes('[скобки внутри слов]'),'Must not lose bracketed lyric words');
+assert.ok(l.cleanSuno('[неизвестная ремарка]\nСлова').text.includes('[неизвестная ремарка]'),'Unknown cues must not be removed silently');
+assert.ok(l.cleanSuno('[Verse 1]\nСлова').text.includes('**Куплет 1**'));
+
 const rendered=l.printRows('**Куплет 1**\nДве строки\nдля печати');
 assert.match(rendered,/Две строки<br>для печати/);
 assert.match(rendered,/<h2>Куплет 1<\/h2>/);
