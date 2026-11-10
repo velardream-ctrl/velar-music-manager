@@ -115,10 +115,30 @@
     };
     frame.srcdoc=documentHTML(parsed.text,15,false);
   }
+  function recordLoaded(){
+    lastInput=body.value;undoClean=null;
+    var undo=el('vmm-undo-clean');if(undo)undo.className='hidden';
+    var clean=el('vmm-clean-preview');if(clean)clean.className='hidden';
+    note('Текст готов. Вставь команды Suno — они очистятся автоматически. «Лист A4» покажет две колонки.');
+    if(el('vmm-paper-view').className.indexOf('hidden')<0)schedulePreview();
+  }
+  function autoCleanEditor(reason,original){
+    var current=body.value,result=cleanSuno(current);
+    if(!result.removed)return false;
+    // Preserve the unmodified raw input for explicit undo (never save raw input by accident).
+    undoClean={before:original===undefined?current:original,after:result.text};
+    body.value=result.text;
+    el('vmm-undo-clean').className='';
+    note('Автоматически обработано команд Suno: '+result.removed+'. Чтобы вернуть исходный код, нажми «Отменить очистку».');
+    body.dispatchEvent(new Event('input',{bubbles:true}));
+    return true;
+  }
+
   function schedulePreview(){
     if(undoClean&&body.value!==undoClean.after){undoClean=null;var undoNode=el('vmm-undo-clean');if(undoNode)undoNode.className='hidden';}
     lastProof=null;
     if(renderTimer)clearTimeout(renderTimer);
+    if(el('vmm-paper-view').className.indexOf('hidden')!==-1)return;
     renderTimer=setTimeout(function(){
       renderTimer=null;
       if(form.className.indexOf('hidden')!==-1)return;
@@ -134,7 +154,12 @@
     stage.style.height=(1123*scale)+'px';
   }
   function print(e){
-    e.preventDefault();e.stopImmediatePropagation();
+    if(e){e.preventDefault();e.stopImmediatePropagation();}
+    if(el('vmm-paper-view').className.indexOf('hidden')!==-1){
+      el('lyric-view-paper').click();
+      note('Лист A4 открыт. Проверь расположение текста, затем повторно нажми «Печать / PDF».');
+      return;
+    }
     if(!lastProof||lastProof.source!==body.value||lastProof.title!==title()||lastProof.language!==lang()||lastProof.version!==version()){
       note('Сначала дождись автоматической проверки листа A4 и повтори печать.');preview();return;
     }
@@ -193,19 +218,29 @@
   el('vmm-show-a4').onclick=preview;
   el('vmm-paste-text').onclick=function(){
     if(!navigator.clipboard||!navigator.clipboard.readText){
-      note('В Safari удерживай палец в поле текста и выбери «Вставить». Предпросмотр сформируется автоматически.');body.focus();return;
+      note('Удерживай палец в поле текста и нажми «Вставить». Suno очистится автоматически.');body.focus();return;
     }
-    navigator.clipboard.readText().then(function(text){
-      if(!text.trim())return note('Буфер обмена пуст.');
-      if(body.value.trim()&&!window.confirm('Заменить текущий текст содержимым буфера? Сохранённая запись не изменится до нажатия «Сохранить текст».'))return;
-      body.value=text;body.dispatchEvent(new Event('input',{bubbles:true}));note('Текст вставлен. Автоматически формируем A4 в две колонки.');
-    }).catch(function(){
-      note('Safari не предоставил доступ к буферу. Удержи палец на поле текста и выбери «Вставить».');body.focus();
-    });
+    navigator.clipboard.readText().then(function(t){
+      if(!t.trim())return note('Буфер обмена пуст.');
+      if(body.value.trim()&&!window.confirm('Заменить текст песни текстом из буфера? Старый вариант будет доступен через «Отменить очистку» до следующего редактирования.'))return;
+      body.value=t;
+      if(!autoCleanEditor('paste',t)){body.dispatchEvent(new Event('input',{bubbles:true}));note('Текст вставлен в редактор.');}
+    }).catch(function(){note('Разрешение на буфер не предоставлено. Вставь текст обычным способом.');body.focus();});
   };
 
-  body.addEventListener('input',schedulePreview);
-  body.addEventListener('paste',function(){setTimeout(schedulePreview,0);});
+  var lastInput='';
+  body.addEventListener('input',function(){
+    // Covers iPhone paste, typed brackets and clipboard fallback.
+    // Never run while a saved record is being populated programmatically.
+    var latest=body.value;
+    if(latest!==lastInput && autoCleanEditor('input',latest)){lastInput=body.value;return;}
+    lastInput=body.value;schedulePreview();
+  });
+  body.addEventListener('paste',function(){setTimeout(function(){
+    if(autoCleanEditor('paste'))lastInput=body.value;
+    else schedulePreview();
+  },0);});
+
 
   // Programmatic lyric selection does not fire input; the main editor calls this hook.
   window.VMM_LYRICS_TOOLS={refreshPreview:schedulePreview,cleanSuno:cleanSuno,print:print,onRecordLoaded:recordLoaded};
