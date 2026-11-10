@@ -11,7 +11,7 @@
   pane.setAttribute('aria-live', 'polite');
   shell.appendChild(pane);
   var catalog = [], proposals = [], auxiliary = [], current = 'overview';
-  var filter = '', mode = 'all', page = 0, selected = '', busy = false;
+  var filter = '', mode = 'all', page = 0, selected = '', busy = false, artist = 'all', chosen = Object.create(null);
   var collections = {contacts:'vmm_contacts',outreach:'vmm_outreach',recordings:'vmm_recordings',extras:'vmm_platforms',audit:'vmm_audit'};
   var labels = {overview:'Обзор',catalog:'Каталог релизов',platforms:'Площадки и ссылки',contacts:'Контакты',outreach:'Рассылки',recordings:'Фонограммы',extras:'Доп. площадки',audit:'Журнал'};
   var platforms = {spotify:'Spotify',appleMusic:'Apple Music',youtube:'YouTube',yandex:'Яндекс Музыка',vk:'VK Музыка',zvuk:'Звук'};
@@ -85,6 +85,7 @@
     var q=tr(filter).toLocaleLowerCase('ru').replace(/ё/g,'е');
     return catalog.filter(function(t){
       if(q && [t.title,t.artist,t.album,t.upc,t.isrc].join(' ').toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)<0)return false;
+      if(artist!=='all'&&t.artist!==artist)return false;
       if(mode==='missing')return !direct('spotify',urlValue(t,'spotify'))||!direct('appleMusic',urlValue(t,'appleMusic'))||!direct('youtube',urlValue(t,'youtube'));
       if(mode==='ready')return ['spotify','appleMusic','youtube'].every(function(k){return direct(k,urlValue(t,k));});
       if(mode==='spotify'||mode==='appleMusic'||mode==='youtube')return !direct(mode,urlValue(t,mode));
@@ -99,11 +100,38 @@
   }
   function catalogPage(){
     var a=searchRows(),begin=page*30;if(begin>=a.length&&page>0){page=0;begin=0;}
-    pane.innerHTML=heading('Каталог релизов','Поиск по названию, артисту, UPC и ISRC')+'<div class="vmm-filter"><input id="vmm-search" type="search" placeholder="Поиск композиции, UPC, ISRC" value="'+esc(filter)+'"><select id="vmm-mode"><option value="all">Все</option><option value="missing">Недостающие ссылки</option><option value="ready">Все три площадки</option><option value="spotify">Без Spotify</option><option value="appleMusic">Без Apple Music</option><option value="youtube">Без YouTube</option></select></div><div class="vmm-rows">'+a.slice(begin,begin+30).map(function(t){return '<button data-act="track" data-row="'+row(t.sourceRow)+'"><strong>'+esc(t.title)+'</strong><small>'+esc(t.artist)+' · '+esc(t.upc||'нет UPC')+' · '+esc(t.isrc||'нет ISRC')+'</small><span class="vmm-flags">'+flags(t)+'</span></button>';}).join('')+'</div><div class="vmm-paging"><span>Записей: '+a.length+' · '+(a.length?begin+1:0)+'–'+Math.min(begin+30,a.length)+'</span><div><button data-act="prev" '+(!page?'disabled':'')+'>← Назад</button><button data-act="next" '+(begin+30>=a.length?'disabled':'')+'>Далее →</button></div></div>';
-    id('vmm-mode').value=mode;
-    id('vmm-search').oninput=function(){filter=this.value;page=0;catalogPage();var e=id('vmm-search');e.focus();e.setSelectionRange(e.value.length,e.value.length);};
+    var allArtists=Object.create(null);catalog.forEach(function(t){if(t.artist)allArtists[t.artist]=true;});
+    var actorOptions=Object.keys(allArtists).sort().map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>';}).join('');
+    var picked=Object.keys(chosen).filter(function(k){return chosen[k];}).length;
+    pane.innerHTML=heading('Каталог релизов','Поиск по названию, артисту, UPC и ISRC')+
+      '<div class="vmm-filter"><input id="vmm-search" type="search" placeholder="Поиск композиции, UPC, ISRC" value="'+esc(filter)+'">'+
+      '<select id="vmm-mode"><option value="all">Все</option><option value="missing">Недостающие ссылки</option><option value="ready">Все три площадки</option><option value="spotify">Без Spotify</option><option value="appleMusic">Без Apple Music</option><option value="youtube">Без YouTube</option></select>'+
+      '<select id="vmm-artist"><option value="all">Все артисты</option>'+actorOptions+'</select></div>'+
+      '<div class="vmm-action-links"><button data-act="print-catalog">Печать / PDF каталога</button><button data-act="clear-selection">Снять отметки</button><span id="vmm-selected-count" class="sync-note">Выбрано: '+picked+' (если ничего не выбрано, печатается весь каталог)</span></div>'+
+      '<div class="vmm-rows">'+a.slice(begin,begin+30).map(function(t){
+        var r=row(t.sourceRow);
+        return '<div class="vmm-catalog-row"><label class="vmm-row-select"><input type="checkbox" data-vmm-select="'+r+'"'+(chosen[r]?' checked':'')+'> Выбрать</label>'+
+        '<button data-act="track" data-row="'+r+'"><strong>'+esc(t.title)+'</strong><small>'+esc(t.artist)+' · '+esc(t.upc||'нет UPC')+' · '+esc(t.isrc||'нет ISRC')+'</small><span class="vmm-flags">'+flags(t)+'</span></button></div>';
+      }).join('')+'</div><div class="vmm-paging"><span>Записей: '+a.length+' · '+(a.length?begin+1:0)+'–'+Math.min(begin+30,a.length)+'</span><div><button data-act="prev" '+(!page?'disabled':'')+'>← Назад</button><button data-act="next" '+(begin+30>=a.length?'disabled':'')+'>Далее →</button></div></div>';
+    id('vmm-mode').value=mode;id('vmm-artist').value=artist;
+    id('vmm-search').oninput=function(){filter=this.value;page=0;catalogPage();refocus();};
     id('vmm-mode').onchange=function(){mode=this.value;page=0;catalogPage();};
+    id('vmm-artist').onchange=function(){artist=this.value;page=0;catalogPage();};
   }
+  function printCatalog(){
+    var selection=Object.keys(chosen).filter(function(k){return chosen[k];});
+    var rows=catalog.filter(function(t){return !selection.length||chosen[row(t.sourceRow)];});
+    if(!rows.length){tell('Каталог пока пуст.');return;}
+    var popup=window.open('about:blank','_blank');
+    if(!popup){tell('Safari заблокировал окно печати. Разреши всплывающие окна.');return;}
+    var cells=rows.map(function(t){return '<tr><td>'+esc(t.title)+'</td><td>'+esc(t.artist)+'</td><td>'+esc(t.upc)+'</td><td>'+esc(t.isrc)+'</td></tr>';}).join('');
+    var html='<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VELAR · Каталог</title><style>'+
+      '@page{size:A4;margin:11mm}body{font:11px/1.4 Arial,sans-serif;color:#111;background:#fff}h1{font-size:21px;margin:0 0 7px}p{color:#444;margin:0 0 14px}table{width:100%;border-collapse:collapse}th,td{text-align:left;border-bottom:1px solid #bbb;padding:5px 3px;overflow-wrap:anywhere}tr{break-inside:avoid}thead{display:table-header-group}#bar{padding:10px 0}#bar button{font:15px Arial;padding:8px 15px}@media print{#bar{display:none}}'+
+      '</style></head><body><div id="bar"><button id="print-action">Печать / PDF</button></div><h1>VELAR · Музыкальный каталог</h1><p>Композиции: '+rows.length+'</p><table><thead><tr><th>Название</th><th>Исполнитель</th><th>UPC</th><th>ISRC</th></tr></thead><tbody>'+cells+'</tbody></table></body></html>';
+    try{popup.document.open();popup.document.write(html);popup.document.close();popup.document.getElementById('print-action').onclick=function(){popup.print();};popup.focus();}
+    catch(e){try{popup.close();}catch(ignore){}tell('Не удалось открыть печать: '+e.message);}
+  }
+
   function searchUrl(k,t){
     var q=encodeURIComponent([t.title,t.artist].join(' '));
     return k==='spotify'?'https://open.spotify.com/search/'+q:k==='appleMusic'?'https://music.apple.com/fi/search?term='+q:'https://music.youtube.com/search?q='+q;
@@ -268,12 +296,15 @@
       else getDocs(collections[type]).then(function(records){auxiliary=records;if(type==='audit')auditPage();else additionalPage(type);}).catch(function(e){pane.innerHTML='<h2>Ошибка загрузки</h2><p>'+esc(e.message)+'</p>';});
     });
   }
+  pane.addEventListener('change',function(e){if(e.target&&e.target.getAttribute('data-vmm-select')){var r=e.target.getAttribute('data-vmm-select');chosen[r]=!!e.target.checked;var n=id('vmm-selected-count');if(n)n.textContent='Выбрано: '+Object.keys(chosen).filter(function(k){return chosen[k];}).length;}});
   pane.addEventListener('click',function(e){
     var t=e.target;while(t&&t!==pane&&!t.getAttribute('data-act'))t=t.parentNode;
     if(!t||t===pane)return;
     var a=t.getAttribute('data-act');
     if(a==='retry')return open(current);
     if(a==='catalog')return open('catalog');
+    if(a==='print-catalog')return printCatalog();
+    if(a==='clear-selection'){chosen=Object.create(null);return catalogPage();}
     if(a==='prev'){page=Math.max(0,page-1);return catalogPage();}
     if(a==='next'){page++;return catalogPage();}
     if(a==='track')return trackPage(t.getAttribute('data-row'));
