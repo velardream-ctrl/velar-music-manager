@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const html=read('studio/index.html');
+const studio=read('studio/studio.js');
+const tools=read('studio/lyrics-tools.js');
+assert.match(html,/id="lyric-song-select"/);
+assert.match(html,/id="lyric-version-select"/);
+assert.match(html,/id="lyric-view-editor"/);
+assert.match(html,/id="lyric-view-paper"/);
+assert.match(html,/id="vmm-performance-reader"/);
+assert.match(html,/id="share-lyric"/);
+assert.ok(!/name="(?:title|upc|catalogRow|language|version)"/.test(html),'No editable or hidden metadata identity inputs');
+assert.ok(!/id="lyric-list"/.test(html),'No old double-column editor/list');
+assert.match(studio,/function confirmDiscard/);
+assert.match(studio,/beforeunload/);
+assert.match(studio,/source:'server'/);
+assert.match(studio,/function songForLyric/);
+assert.match(studio,/Never match by UPC alone/);
+assert.match(studio,/titleKey\(t.title\)===titleKey\(x.title\)/);
+assert.match(studio,/function newVersion/);
+assert.match(studio,/db\.runTransaction/);
+assert.match(studio,/tx\.get\(ref\)/);
+assert.match(studio,/String\(snapshot\.data\(\)\.text\|\|''\)!==before/);
+// An existing lyric edit must not send catalog identity fields, not even their previous values.
+const edit=studio.match(/tx\.update\(ref,\{([^}]+)\}\);/);
+assert.ok(edit,'Existing-lyric update must exist');
+assert.ok(edit[1].includes('text:current'));
+for(const forbidden of ['title:','upc:','catalogRow:','language:','version:']){
+ assert.ok(!edit[1].includes(forbidden),'Immutable lyric field accidentally written on edit: '+forbidden);
+}
+assert.match(studio,/if\(!navigator\.onLine\)/);
+assert.match(studio,/saveBusy=true;body\(\)\.readOnly=true/);
+assert.match(studio,/window\.VMM_STUDIO/);
+assert.match(tools,/function autoCleanEditor/);
+assert.match(tools,/cleanSuno\(current\)/);
+assert.match(tools,/suppressAutoOnce=true/);
+assert.match(tools,/function toggleReader/);
+assert.match(tools,/function share/);
+assert.match(tools,/navigator\.share/);
+assert.match(tools,/column-count:2/);
+assert.match(tools,/lastProof/);
+assert.ok(!/localStorage\.setItem|sessionStorage\.setItem|google\.script\.run/.test(studio+tools));
+console.log('PASS: immutable metadata, conflict-safe saves, unsaved edits, one-window tabs, Suno/performer/A4 protections');
