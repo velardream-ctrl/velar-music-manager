@@ -108,8 +108,8 @@
     return u.split('?')[0].replace(/\/$/,'').toLowerCase();
   }
   function metrics() {
-    var m={total:catalog.length,spotify:0,appleMusic:0,youtube:0,all:0};
-    catalog.forEach(function(t){var n=0;['spotify','appleMusic','youtube'].forEach(function(k){if(direct(k,urlValue(t,k))){m[k]++;n++;}});if(n===3)m.all++;});
+    var m={total:catalog.length,spotify:0,appleMusic:0,youtube:0,all:0,spotifyAlbum:0};
+    catalog.forEach(function(t){var n=0;if(spotifyAlbum(urlValue(t,'spotify')))m.spotifyAlbum++;['spotify','appleMusic','youtube'].forEach(function(k){if(direct(k,urlValue(t,k))){m[k]++;n++;}});if(n===3)m.all++;});
     return m;
   }
   function flags(t) {
@@ -147,9 +147,9 @@
     var overall=totalSlots?Math.round(100*doneSlots/totalSlots):0;
     pane.innerHTML=heading('Обзор каталога','Статистика по прямым ссылкам на песни · Spotify, Apple Music, YouTube')+
       '<div class="vmm-metrics vmm-metrics-progress">'+
-      progressCard('Всего релизов',m.total,m.total,'В музыкальном каталоге','releases')+
-      progressCard('Spotify',m.spotify,m.total,'Не хватает: '+(m.total-m.spotify),'spotify')+
+      progressCard('Всего композиций',m.total,m.total,'Единый музыкальный каталог','releases')+
       progressCard('Apple Music',m.appleMusic,m.total,'Не хватает: '+(m.total-m.appleMusic),'apple')+
+      progressCard('Spotify',m.spotify,m.total,'Не хватает: '+(m.total-m.spotify)+(m.spotifyAlbum?' · '+m.spotifyAlbum+' альбомов вместо треков':''),'spotify')+
       progressCard('YouTube',m.youtube,m.total,'Не хватает: '+(m.total-m.youtube),'youtube')+
       '</div>'+
       '<div class="vmm-card vmm-overall"><div class="vmm-overall-head"><h3>Общая готовность ссылок</h3><strong>'+overall+'%</strong></div>'+
@@ -237,7 +237,13 @@
   function platformPage(){
     var q=tr(filter).toLowerCase();
     var items=proposals.filter(function(x){if(mode==='pending'&&!pending(x))return false;if(mode==='approved'&&x.status!=='Подтверждено')return false;if(mode==='rejected'&&x.status!=='Отклонено')return false;return [x.title,x.platform,x.url,x.status].join(' ').toLowerCase().indexOf(q)>=0;});
+    var m=metrics(),pendingCount=proposals.filter(pending).length;
     pane.innerHTML=heading('Проверка музыкальных ссылок','Новые кандидаты не изменяют каталог до подтверждения')+
+      '<div class="vmm-metrics vmm-metrics-progress">'+
+      progressCard('На проверке',pendingCount,proposals.length,'В очереди предложений','releases')+
+      progressCard('Apple Music',m.appleMusic,m.total,'Прямых ссылок из каталога','apple')+
+      progressCard('Spotify',m.spotify,m.total,'Прямых ссылок из каталога','spotify')+
+      progressCard('YouTube',m.youtube,m.total,'Прямых ссылок из каталога','youtube')+'</div>'+
       '<div class="vmm-filter"><input type="search" id="vmm-search" placeholder="Песня, площадка, URL" value="'+esc(filter)+'"><select id="vmm-mode"><option value="pending">Ожидают решения</option><option value="all">Вся история</option><option value="approved">Подтверждённые</option><option value="rejected">Отклонённые</option></select></div>'+
       '<p class="sync-note">В очереди: '+proposals.filter(pending).length+' · в истории: '+proposals.length+'</p><div class="vmm-rows">'+items.slice(0,150).map(function(x){
         return '<div class="vmm-proposal"><div><strong>'+esc(x.title)+'</strong><small>'+esc(platforms[platformKey(x.platform)]||x.platform)+' · '+esc(x.status)+'</small>'+linkButton(x.url,'Открыть для проверки')+'</div><div class="vmm-actions">'+(pending(x)?'<button data-act="approve" data-id="'+esc(x.id)+'">Подтвердить</button><button data-act="reject" data-id="'+esc(x.id)+'">Отклонить</button>':'')+'</div></div>';
