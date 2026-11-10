@@ -8,9 +8,9 @@ for(const p of ['studio/workflows.js','studio/lyrics-tools.js','studio/studio.js
  assert.equal(result.status,0,p+': '+result.stderr);
 }
 assert.match(html,/<script src="workflows\.js\?v=2"><\/script>/);
-assert.match(html,/<script src="lyrics-tools\.js\?v=2"><\/script>/);
+assert.match(html,/<script src="lyrics-tools\.js\?v=3"><\/script>/);
 assert.ok(html.indexOf('import.js?v=1')<html.indexOf('workflows.js?v=2'));
-assert.ok(html.indexOf('workflows.js?v=2')<html.indexOf('lyrics-tools.js?v=2'));
+assert.ok(html.indexOf('workflows.js?v=2')<html.indexOf('lyrics-tools.js?v=3'));
 for(const k of ['overview','catalog','platforms','recordings','contacts','outreach','extras','audit'])assert.ok(workflows.includes(k));
 for(const path of ["'vmm_admins'","'vmm_catalog'","'vmm_links'","'vmm_audit'","'vmm_recordings'","'vmm_contacts'","'vmm_outreach'","'vmm_platforms'"])assert.ok(workflows.includes(path),'Firestore collection missing: '+path);
 assert.match(workflows,/get\(\{source:'server'\}\)/);
@@ -25,7 +25,11 @@ assert.match(workflows,/Яндекс Музыка/);
 assert.match(workflows,/Площадки и ссылки/);
 assert.match(workflows,/window\.confirm/);
 assert.match(studio,/VMM_STUDIO/);
-assert.match(studio,/duplicate=lyrics\.some/);
+assert.match(studio,/confirmDiscard/);
+assert.match(studio,/tx\.update\(ref,\{text:current/);
+assert.match(studio,/snapshot\.data\(\)\.text/);
+assert.ok(!/name="(?:title|upc|catalogRow|language|version)"/.test(html),'Do not expose editable song identity fields');
+assert.match(studio,/window\.VMM_STUDIO/);
 assert.match(lyrics,/cleanSuno/);
 assert.match(lyrics,/cleanOriginal!==body.value/);
 assert.match(lyrics,/data-vmm-section/);
