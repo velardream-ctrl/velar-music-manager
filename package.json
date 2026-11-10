@@ -4,7 +4,7 @@
   "private": true,
   "description": "Safe public foundation for velardream.com",
   "scripts": {
-    "test": "node tests/test-static.mjs && node tests/test-import.mjs && node tests/test-workflows.mjs && node tests/test-vmm-behavior.mjs && node tests/test-lyrics-safety.mjs"
+    "test": "node tests/test-static.mjs && node tests/test-import.mjs && node tests/test-workflows.mjs && node tests/test-vmm-behavior.mjs && node tests/test-lyrics-safety.mjs && node tests/test-lyrics-interaction.mjs"
   },
   "engines": {
     "node": ">=18"
