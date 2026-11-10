@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import cp from 'node:child_process';
+const read = p => fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const html=read('studio/index.html'),css=read('studio/studio.css'),studio=read('studio/studio.js'),workflows=read('studio/workflows.js'),lyrics=read('studio/lyrics-tools.js'),rules=read('firestore.rules');
+for(const p of ['studio/workflows.js','studio/lyrics-tools.js','studio/studio.js','studio/import.js']){
+ const result=cp.spawnSync(process.execPath,['--check',new URL('../'+p,import.meta.url).pathname],{encoding:'utf8'});
+ assert.equal(result.status,0,p+': '+result.stderr);
+}
+assert.match(html,/<script src="workflows\.js\?v=1"><\/script>/);
+assert.match(html,/<script src="lyrics-tools\.js\?v=1"><\/script>/);
+assert.ok(html.indexOf('import.js?v=1')<html.indexOf('workflows.js?v=1'));
+assert.ok(html.indexOf('workflows.js?v=1')<html.indexOf('lyrics-tools.js?v=1'));
+for(const k of ['overview','catalog','platforms','recordings','contacts','outreach','extras','audit'])assert.ok(workflows.includes(k));
+for(const path of ["'vmm_admins'","'vmm_catalog'","'vmm_links'","'vmm_audit'","'vmm_recordings'","'vmm_contacts'","'vmm_outreach'","'vmm_platforms'"])assert.ok(workflows.includes(path),'Firestore collection missing: '+path);
+assert.match(workflows,/get\(\{source:'server'\}\)/);
+assert.match(workflows,/\.enabled!==true/);
+assert.match(workflows,/runTransaction/);
+assert.match(workflows,/batch\.commit\(\)/);
+assert.match(workflows,/Подтверждено вручную/);
+assert.match(workflows,/Ожидает подтверждения/);
+assert.match(workflows,/Отклонено/);
+assert.match(workflows,/Spotify/);
+assert.match(workflows,/Яндекс Музыка/);
+assert.match(workflows,/Площадки и ссылки/);
+assert.match(workflows,/window\.confirm/);
+assert.match(studio,/VMM_STUDIO/);
+assert.match(studio,/duplicate=lyrics\.some/);
+assert.match(lyrics,/cleanSuno/);
+assert.match(lyrics,/cleanOriginal!==body.value/);
+assert.match(lyrics,/lastProof/);
+assert.match(lyrics,/scrollWidth/);
+assert.match(lyrics,/column-count:2/);
+assert.match(lyrics,/Печать \/ PDF/);
+assert.match(css,/safe-area-inset-bottom/);
+assert.match(css,/position:fixed/);
+assert.match(rules,/match \/vmm_catalog/);
+assert.match(rules,/match \/vmm_links/);
+for(const [p,text] of [['studio/workflows.js',workflows],['studio/lyrics-tools.js',lyrics],['studio/studio.js',studio]]){
+ assert.ok(!/BEGIN PRIVATE KEY|private_key|google\.com\/spreadsheets\/d\/|velardream@gmail\.com/i.test(text),'private data leaked to '+p);
+}
+assert.ok(!/google\.script\.run/.test(workflows+lyrics),'new modules must only use Firebase');
+console.log('PASS: VMM workflows, auth gate, link review, lyric print, mobile menu and safe source checks');

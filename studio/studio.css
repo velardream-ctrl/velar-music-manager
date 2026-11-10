@@ -26,3 +26,85 @@
 .records-detail{white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1630;border:1px solid #e2c79334;border-radius:12px;padding:16px;margin:0;min-height:140px;color:#d7e0f0;font:400 .85rem/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 @media(max-width:700px){.records-grid{grid-template-columns:1fr}.records-list{max-height:280px}.import-body{padding:14px}.records-detail{font-size:.81rem}}
 @media print{.import-panel,.records-browser{display:none!important}}
+
+
+/* VMM RUN-043: owner-only workspace UI; cosmic colors inherited from Studio */
+#vmm-workflows .vmm-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+#vmm-workflows .vmm-head h2{margin:0;font-size:1.65rem}
+#vmm-workflows .vmm-head .sync-note{margin:5px 0}
+#vmm-workflows .vmm-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+#vmm-workflows .vmm-metrics>div{padding:13px;border-radius:12px;border:1px solid #e3c7932e;background:#0b1830;color:#b9c5dc;font-size:.81rem}
+#vmm-workflows .vmm-metrics strong{display:block;font-size:1.75rem;color:#ecd19e;line-height:1.4;margin-top:4px}
+#vmm-workflows .vmm-filter{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0}
+#vmm-workflows .vmm-filter input{flex:1 1 240px}
+#vmm-workflows input,#vmm-workflows select,#vmm-workflows textarea{background:#0c1630;color:#f6ecdd;border-radius:9px;border:1px solid #c6b68a57;padding:10px;font:inherit;max-width:100%}
+#vmm-workflows input[type=search]{min-width:0}
+#vmm-workflows button:not(.btn-small){background:#e7c993;color:#15213b;border:0;border-radius:9px;padding:10px 14px;font:inherit;font-weight:700;cursor:pointer}
+#vmm-workflows button:disabled{opacity:.4}
+#vmm-workflows .vmm-rows{border:1px solid #e0ca982f;border-radius:11px;overflow:hidden;margin-top:12px}
+#vmm-workflows .vmm-rows>button{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;border-radius:0!important;width:100%;text-align:left;background:#101c35!important;border-bottom:1px solid #ffffff15!important;color:#f5e9d5!important;padding:13px 15px!important}
+#vmm-workflows .vmm-rows>button:hover{background:#1d2c4d!important}
+#vmm-workflows .vmm-rows>button strong{font-weight:700;font-size:.94rem;flex:1 1 150px}
+#vmm-workflows .vmm-rows small{color:#a6b7d4;font-size:.8rem;line-height:1.5}
+#vmm-workflows .vmm-flags{display:flex;gap:4px}
+#vmm-workflows .vmm-flag{display:inline-flex;justify-content:center;align-items:center;width:25px;height:25px;background:#29344a;color:#73839e;border-radius:6px;font-size:.76rem}
+#vmm-workflows .vmm-flag.yes{background:#294230;color:#baf39b}
+#vmm-workflows .vmm-flag.partial{background:#513c21;color:#eccc8c}
+#vmm-workflows .vmm-paging,#vmm-workflows .vmm-detail{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;flex-wrap:wrap;border-bottom:1px solid #e4d5af18}
+#vmm-workflows .vmm-paging div{display:flex;gap:8px}
+#vmm-workflows .vmm-card{border:1px solid #e0ca9833;padding:16px;margin:15px 0;background:#101c35;border-radius:14px}
+#vmm-workflows .vmm-card h3{margin:0 0 9px}
+#vmm-workflows .vmm-action-links,#vmm-workflows .vmm-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:10px}
+#vmm-workflows .vmm-out{display:inline-flex;color:#f1d4a6;text-decoration:underline;padding:5px 0;overflow-wrap:anywhere;font-size:.85rem}
+#vmm-workflows .vmm-proposal,#vmm-workflows .vmm-audit-line{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px;border-bottom:1px solid #ffffff19;background:#101c35}
+#vmm-workflows .vmm-proposal>div:first-child{flex:1;min-width:180px}
+#vmm-workflows .vmm-proposal strong,#vmm-workflows .vmm-audit-line strong{display:block}
+#vmm-workflows .vmm-proposal small,#vmm-workflows .vmm-audit-line small{display:block;color:#9cabca}
+#vmm-workflows form label{display:block;color:#d4d6de;font-size:.85rem;margin:12px 0}
+#vmm-workflows form input,#vmm-workflows form textarea,#vmm-workflows form select{width:100%;margin-top:5px}
+#vmm-workflows .vmm-danger{background:#4b2631!important;color:#ffd6de!important}
+@media(max-width:1150px){#vmm-workflows .vmm-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){
+ #workspace .workspace{margin-bottom:20px;padding-bottom:108px}
+ #workspace .workspace-grid{display:block}
+ #workspace .sidebar{position:fixed;left:10px;right:10px;bottom:calc(9px + env(safe-area-inset-bottom,0px));top:auto;z-index:90;width:auto;min-height:0;max-height:none;display:flex;flex-direction:row;align-items:stretch;gap:5px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:8px;border:1px solid #d8bf8f75;border-radius:17px;background:#0a1836f5;box-shadow:0 15px 35px #0008;-webkit-overflow-scrolling:touch}
+ #workspace .sidebar button{flex:0 0 auto;min-width:83px;white-space:normal;text-align:center;font-size:.73rem;line-height:1.25;padding:9px 10px}
+ #workspace .sidebar .nav-active{background:#e5c9952c;color:#f6dcaf}
+ #workspace .workspace-content{min-width:0}
+ #vmm-workflows .vmm-head h2{font-size:1.35rem}
+ #vmm-workflows .vmm-rows>button{display:block;text-align:left}
+ #vmm-workflows .vmm-rows>button strong,#vmm-workflows .vmm-rows>button small{display:block;margin-bottom:4px}
+ #vmm-workflows .vmm-detail{display:block}
+}
+@media(max-width:380px){#vmm-workflows .vmm-metrics{gap:6px}#vmm-workflows .vmm-metrics>div{padding:9px}#vmm-workflows .vmm-metrics strong{font-size:1.4rem}}
+@media print{#vmm-workflows,#workspace .sidebar{display:none!important}}
+
+@media(max-width:800px){
+ #workspace.workspace{padding-bottom:104px}
+ #workspace .workspace-content{padding-bottom:80px}
+}
+
+#vmm-workflows .vmm-catalog-row{display:flex;align-items:stretch;gap:0;background:#101c35;border-bottom:1px solid #ffffff15}
+#vmm-workflows .vmm-catalog-row .vmm-row-select{display:flex;align-items:center;gap:7px;flex:0 0 105px;padding:8px 10px;color:#b5c4dd;font-size:.78rem;white-space:nowrap;border-right:1px solid #ffffff1b}
+#vmm-workflows .vmm-catalog-row .vmm-row-select input{width:17px;height:17px;accent-color:#ecd29b}
+#vmm-workflows .vmm-catalog-row>button{display:flex;align-items:center;justify-content:space-between;flex:1;gap:10px;text-align:left;border-radius:0!important;background:transparent!important;color:#f6e8d5!important;padding:12px!important}
+#vmm-workflows .vmm-catalog-row>button:hover{background:#203154!important}
+#vmm-workflows .vmm-catalog-row>button strong{flex:1}
+@media(max-width:620px){
+ #vmm-workflows .vmm-catalog-row{flex-direction:column}
+ #vmm-workflows .vmm-catalog-row .vmm-row-select{border-right:0;border-bottom:1px solid #ffffff18;flex:0 0 auto}
+ #vmm-workflows .vmm-catalog-row>button{display:block}
+ #vmm-workflows .vmm-catalog-row>button strong,#vmm-workflows .vmm-catalog-row>button small{display:block}
+}
+
+
+/* Lyrics Studio 1.3 restoration: the A4 iframe must use physical page dimensions. */
+#vmm-lyrics-tools{margin:14px 0;border:1px solid #d8c08f38;border-radius:12px;padding:13px;background:#111d36}
+#vmm-lyrics-tools .vmm-lyric-buttons{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+#vmm-lyrics-tools .vmm-lyric-buttons button{padding:9px 14px;border:1px solid #ddc39370;border-radius:9px;background:#293958;color:#e9d2a9;cursor:pointer}
+#vmm-lyrics-tools textarea{display:block;width:100%;background:#0c1630;color:#f4eddf;border:1px solid #c6b68a57;border-radius:10px;padding:10px;font-size:.84rem;line-height:1.6}
+#vmm-lyrics-tools #vmm-paper-status{padding:7px 0;margin:0}
+#vmm-paper-stage{position:relative;width:100%;height:500px;background:#ebe8e2;overflow:hidden;border-radius:6px}
+#vmm-paper-frame{position:absolute;left:0;top:0;width:794px;height:1123px;border:0;background:#fff;display:block;transform-origin:top left}
+@media(max-width:800px){#vmm-lyrics-tools{padding:10px}#vmm-lyrics-tools .vmm-lyric-buttons button{flex:1 1 auto}}
+@media print{#vmm-lyrics-tools{display:none!important}}
