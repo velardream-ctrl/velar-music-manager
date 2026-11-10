@@ -176,19 +176,28 @@
   }
   function renderRecords(){
     var box=id('vmm-r-records'),t=song();if(!box||!t)return;
-    var items=recordings.filter(function(r){return r.catalogId===t.id;});
-    box.innerHTML=items.length?items.map(function(r){
+    var items=recordings.filter(function(r){return r.catalogId===t.id&&!r.archived;});
+    var archived=recordings.filter(function(r){return r.catalogId===t.id&&r.archived;});
+    var live=items.length?items.map(function(r){
       var offline=isSaved(r.driveFileId),name=esc(r.variant||'Фонограмма'),date=r.createdAt&&r.createdAt.toDate?r.createdAt.toDate().toLocaleDateString('ru-RU'):'';
+      var inDrive=!!(r.id&&r.id.indexOf('offline:')!==0&&r.driveFileId);
       return '<div class="vmm-r-track">'+
         '<div class="vmm-r-track-info"><strong>'+name+'</strong><small>'+esc((r.filename||'')+' · '+mb(r.size))+(date?' · '+date:'')+'</small></div>'+
         '<div class="vmm-r-track-actions">'+
           '<button type="button" data-r-action="play" data-r-id="'+esc(r.driveFileId)+'">▶ Слушать</button>'+
           '<button type="button" data-r-action="download" data-r-id="'+esc(r.driveFileId)+'">↓ Скачать</button>'+
           '<label class="vmm-r-offline-check"><input type="checkbox" data-r-offline="'+esc(r.driveFileId)+'" '+(offline?'checked':'')+'> Офлайн'+(offline?' ✓':'')+'</label>'+
+          (inDrive?'<button type="button" class="vmm-r-trash-btn" data-r-action="trash" data-r-id="'+esc(r.driveFileId)+'">В корзину</button>':'')+
         '</div></div>';
     }).join(''):'<p class="sync-note">У этой песни пока нет фонограммы. Загрузи MP3 или FLAC выше.</p>';
+    var archiveHTML=archived.length?'<details class="vmm-r-archive"><summary>Корзина фонограмм ('+archived.length+')</summary><p class="sync-note">Записи скрыты из репертуара, файлы находятся в корзине Google Drive. Их можно восстановить.</p>'+
+      archived.map(function(r){return '<div class="vmm-r-track">'+
+        '<div class="vmm-r-track-info"><strong>'+esc(r.variant||'Фонограмма')+'</strong><small>'+esc(r.filename||'')+'</small></div>'+
+        '<button type="button" data-r-action="restore" data-r-id="'+esc(r.driveFileId)+'">Восстановить</button></div>';}).join('')+'</details>':'';
+    box.innerHTML=live+archiveHTML;
     updateStorage();
   }
+
   function renderFolder(){
     var target=id('vmm-r-folder');if(!target)return;
     if(driveFolderId&&/^[\w-]+$/.test(driveFolderId))target.innerHTML='<a target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/'+esc(driveFolderId)+'">Папка Google Drive</a>';
@@ -453,6 +462,87 @@
       if(v&&target)target.textContent+=' Память сайта: '+mb(v.usage||0)+' из доступных '+mb(v.quota||0)+'.';
     });
   }
+  // Only recordings created through this Studio may be moved to Drive Trash.
+  // Keep the song, lyrics and full audit history untouched.
+  function validateManagedRecording(r){
+    if(!r||!r.id||r.id.indexOf('offline:')===0||!r.catalogId||!r.driveFileId||!r.filename)throw new Error('Удалять можно только записи, загруженные этим кабинетом.');
+    if(!song()||r.catalogId!==songId)throw new Error('Композиция изменилась; выбери запись снова.');
+    return db.collection('vmm_recordings').doc(r.id);
+  }
+  function folderForArchive(){
+    return db.collection('vmm_recordings').doc('__audio_settings').get({source:'server'}).then(function(d){
+      if(!d.exists||!d.data()||!d.data().folderId)throw new Error('Не найдена папка VELARDREAM в базе. Никакие файлы не перемещены.');
+      return String(d.data().folderId);
+    });
+  }
+  function driveInfo(r,folderId){
+    return request('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(r.driveFileId)+'?fields=id,name,parents,trashed',{}).then(function(m){
+      if(m.id!==r.driveFileId||m.name!==r.filename||!m.parents||m.parents.indexOf(folderId)<0){
+        throw new Error('Файл не совпадает с записью или находится вне папки VELARDREAM. Действие отменено.');
+      }
+      return m;
+    });
+  }
+  function archiveMetadata(r,archived){
+    var ref=validateManagedRecording(r),audit=db.collection('vmm_audit').doc();
+    return db.runTransaction(function(tx){return tx.get(ref).then(function(snapshot){
+      if(!snapshot.exists)throw new Error('Запись отсутствует в Firestore.');
+      var data=snapshot.data();
+      if(data.driveFileId!==r.driveFileId||data.catalogId!==r.catalogId||data.filename!==r.filename){
+        throw new Error('Сведения о файле изменились. Обнови каталог.');
+      }
+      tx.update(ref,archived?{
+        archived:true,archivedAt:firebase.firestore.FieldValue.serverTimestamp(),archivedBy:user.uid
+      }:{
+        archived:false,restoredAt:firebase.firestore.FieldValue.serverTimestamp(),restoredBy:user.uid
+      });
+      tx.set(audit,{time:firebase.firestore.FieldValue.serverTimestamp(),
+        operation:archived?'Фонограмма перемещена в корзину':'Фонограмма восстановлена',
+        subject:data.title||r.title||'',result:r.filename,referenceId:r.id,actor:user.uid});
+    });});
+  }
+  function moveRecording(r,toTrash){
+    if(busy)return;
+    if(!navigator.onLine)return msg('Для перемещения в корзину или восстановления нужен интернет.');
+    try{validateManagedRecording(r);}catch(err){return msg(err.message);}
+    if(toTrash&&r.archived)return msg('Эта запись уже в корзине.');
+    if(!toTrash&&!r.archived)return msg('Эта запись уже находится в репертуаре.');
+    var action=toTrash?'переместить в корзину Google Drive':'восстановить из корзины Google Drive';
+    if(!window.confirm('Ты хочешь '+action+' файл «'+r.filename+'»?\n\nТекст песни и запись каталога НЕ удаляются. Операция будет записана в журнал.'))return;
+    busy=true;msg('Проверяем Google Drive и запись в Firestore…');
+    connect().then(folderForArchive).then(function(folderId){
+      return driveInfo(r,folderId);
+    }).then(function(m){
+      if(!!m.trashed===toTrash)return m;
+      return request('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(r.driveFileId)+'?fields=id,name,trashed',{
+        method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({trashed:toTrash})
+      });
+    }).then(function(m){
+      if(!m||m.id!==r.driveFileId||!!m.trashed!==toTrash)throw new Error('Google Drive не подтвердил перемещение файла.');
+      msg('Google Drive подтверждён. Обновляем только связанную запись…');
+      return archiveMetadata(r,toTrash);
+    }).then(function(){
+      r.archived=toTrash;
+      if(toTrash&&audioFileId===r.driveFileId)clearAudio();
+      if(toTrash&&window.VMM_OFFLINE&&isSaved(r.driveFileId)){
+        return window.VMM_OFFLINE.remove(user.uid,r.driveFileId).then(function(){
+          saved=saved.filter(function(s){return s.fileId!==r.driveFileId;});
+          return '';
+        }).catch(function(err){
+          return ' Локальная офлайн-копия не удалена: '+err.message+'. Сними галочку офлайн после восстановления.';
+        });
+      }
+      return '';
+    }).then(function(warning){
+      busy=false;renderRecords();
+      msg((toTrash?'Готово: файл в корзине Google Drive, запись скрыта, история сохранена.':
+        'Готово: файл восстановлен и снова доступен в репертуаре.')+warning);
+    }).catch(function(err){
+      busy=false;renderRecords();
+      msg('Операция не завершена полностью: '+err.message+
+        '. Если Google Drive уже переместил файл, не удаляй данные вручную: повтори эту же операцию.');
+    });
+  }
   function actions(e){
     var target=e.target;
     while(target&&target!==panel&&!target.getAttribute('data-r-action'))target=target.parentNode;
@@ -461,6 +551,8 @@
     if(!r)return;
     if(action==='play')play(r);
     if(action==='download')download(r);
+    if(action==='trash')moveRecording(r,true);
+    if(action==='restore')moveRecording(r,false);
   }
   function offlineChanges(e){
     var input=e.target,attr=input&&input.getAttribute('data-r-offline');

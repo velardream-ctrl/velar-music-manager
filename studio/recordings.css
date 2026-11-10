@@ -67,3 +67,11 @@
 #vmm-r-results .sync-note{margin:4px 1px;font-size:.9rem;color:#d4c6a5}
 #vmm-repertoire .vmm-r-suggestion{display:block;min-height:48px;width:100%;box-sizing:border-box;text-align:left;white-space:normal;word-break:break-word;border:1px solid #65789a;border-radius:10px;padding:10px 14px;background:#243756;color:#fff8e8;font:inherit;font-size:16px;cursor:pointer}
 #vmm-repertoire .vmm-r-suggestion:focus,#vmm-repertoire .vmm-r-suggestion:active{background:#e8cc94;color:#14203b;outline:2px solid #e8cc94}
+
+/* RUN-050: deliberate, reversible recording removal. */
+#vmm-repertoire .vmm-r-trash-btn{color:#f4c9bd;border-color:#c77c75;background:#422632}
+#vmm-repertoire .vmm-r-trash-btn:focus-visible{outline:2px solid #f3c69a;outline-offset:2px}
+.vmm-r-archive{margin:18px 0;border:1px dashed #9e8773;border-radius:12px;padding:12px;background:#181f32}
+.vmm-r-archive summary{cursor:pointer;color:#f0ce9a;font-weight:650;min-height:44px;align-content:center}
+.vmm-r-archive .vmm-r-track{background:#2b2631}
+.vmm-r-archive button{min-height:44px;padding:10px 14px;border-radius:8px;border:1px solid #cab586;background:#e6c891;color:#18233c;font:inherit}
