@@ -19,7 +19,7 @@ function loadLyrics(){
   const altered=source.replace(/\}\(\)\);\s*$/,"window.__test={cleanSuno:cleanSuno,heading:heading,printRows:printRows,documentHTML:documentHTML};}());");
   const nodes={};
   function elem(){return {value:'',className:'',innerHTML:'',parentNode:{parentNode:{insertBefore(){}},nextSibling:null},addEventListener(){},setAttribute(){},style:{}};}
-  const form=elem();form.elements={title:{value:'Тестовая песня',addEventListener(){}},language:{value:'Русский'},version:{value:'Основная'}};
+  const form=elem();form.elements={title:{value:'Тестовая песня',addEventListener(){}},language:{value:'Русский',addEventListener(){}},version:{value:'Основная',addEventListener(){}}};
   const body=elem();
   const doc={getElementById(k){if(k==='lyric-form')return form;if(k==='lyric-body')return body;return nodes[k]||(nodes[k]=elem());},createElement(){return elem();}};
   const ctx={document:doc,window:{addEventListener(){}},Event:function(){},String,Array,Promise,Number,Math};
