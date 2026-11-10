@@ -8,7 +8,7 @@
   panel.id='vmm-repertoire';
   panel.className='panel hidden';
   shell.appendChild(panel);
-  var db=null,user=null,driveToken='',driveFolderId='',busy=false,active=false,listenersAttached=false;
+  var db=null,user=null,driveToken='',driveFolderId='',busy=false,active=false,listenersAttached=false,suggestOpen=false;
   var catalog=[],lyrics=[],recordings=[],saved=[],songId='',audioFileId='',audioURL='',mode='a4';
   var MAX=50*1024*1024,DRIVE_SCOPE='https://www.googleapis.com/auth/drive.file',FOLDER='VELARDREAM RECORDS - Фонограммы';
   function id(s){return document.getElementById(s);}
@@ -47,7 +47,8 @@
       '<div class="vmm-r-heading"><div><p class="eyebrow">VELARDREAM · REPERTOIRE</p><h2>Фонограммы и тексты песен</h2><p class="sync-note">Каталог · плеер · A4 · крупный текст · офлайн</p></div>'+
       '<button type="button" id="vmm-r-connect" class="btn-small secondary">Подключить Google Drive</button></div>'+
       '<p id="vmm-r-status" role="status" class="sync-note"></p>'+
-      '<div class="vmm-r-pick"><label for="vmm-r-search">Найти композицию</label><input id="vmm-r-search" type="search" placeholder="Название песни или исполнитель" autocomplete="off">'+
+      '<div class="vmm-r-pick"><label for="vmm-r-search">Найти композицию</label><input id="vmm-r-search" type="search" placeholder="Название песни или исполнитель" autocomplete="off" aria-controls="vmm-r-results">'+
+      '<div id="vmm-r-results" class="vmm-r-results" role="status" aria-live="polite"></div>'+
       '<label for="vmm-r-song">Выбрать песню</label><select id="vmm-r-song"><option value="">Выбери песню…</option></select></div>'+
       '<div id="vmm-r-song-section" class="hidden">'+
       '<div class="vmm-r-tools"><strong id="vmm-r-song-title"></strong><span id="vmm-r-folder"></span></div>'+
@@ -62,23 +63,63 @@
       '<div id="vmm-r-lyrics" class="vmm-r-lyrics"></div></div>'+
       '<p id="vmm-r-storage" class="sync-note"></p>';
     id('vmm-r-connect').onclick=function(){connect().then(ensureFolder).then(function(){msg('Google Drive подключён. Можно загружать и воспроизводить записи.');renderFolder();}).catch(function(e){msg('Google Drive: '+e.message);});};
-    id('vmm-r-search').oninput=renderSongs;
+    id('vmm-r-search').oninput=function(){suggestOpen=true;renderSongs();};
+    id('vmm-r-search').onkeydown=function(e){if(e.key==='Enter'){var q=norm(this.value),matches=catalog.filter(function(t){return norm(clean(t.title)+' '+clean(t.artist||'')).indexOf(q)>=0;});if(q&&matches.length){e.preventDefault();chooseSearchResult(matches[0]);}}};
     id('vmm-r-song').onchange=function(){setSong(this.value);};
     id('vmm-r-file').onchange=function(){var file=this.files&&this.files[0];if(file)upload(file);this.value='';};
     id('vmm-r-a4').onclick=function(){setMode('a4');};
     id('vmm-r-large').onclick=function(){setMode('large');};
     if(!listenersAttached){panel.addEventListener('click',actions);panel.addEventListener('change',offlineChanges);listenersAttached=true;}
   }
+  function chooseSearchResult(t){
+    if(!t)return;
+    suggestOpen=false;
+    id('vmm-r-search').value=clean(t.title);
+    setSong(t.id);
+    var section=id('vmm-r-song-section');
+    if(section&&section.scrollIntoView)section.scrollIntoView({block:'nearest',behavior:'smooth'});
+  }
   function renderSongs(){
-    var sel=id('vmm-r-song');if(!sel)return;
-    var q=norm(id('vmm-r-search').value),previous=songId;
+    var sel=id('vmm-r-song'),input=id('vmm-r-search'),suggestions=id('vmm-r-results');
+    if(!sel||!input)return;
+    var q=norm(input.value),previous=String(songId||''),results=[];
     sel.innerHTML='<option value="">Выбери песню…</option>';
     catalog.forEach(function(t){
       var label=clean(t.title)+(t.artist?' — '+clean(t.artist):'');
       if(q&&norm(label).indexOf(q)<0&&String(t.id)!==previous)return;
+      if(!q||norm(label).indexOf(q)>=0)results.push(t);
       var opt=document.createElement('option');opt.value=t.id;opt.textContent=label;sel.appendChild(opt);
     });
+    // The native select remains available. iPhone users also get directly
+    // tappable search results, without opening a second selector.
     sel.value=previous||'';
+    if(!suggestions)return;
+    while(suggestions.firstChild)suggestions.removeChild(suggestions.firstChild);
+    var summary=document.createElement('p');summary.className='sync-note';
+    if(!catalog.length){
+      summary.textContent='Список песен пока пуст. Обнови страницу или проверь подключение к базе.';
+    }else if(!q){
+      summary.textContent='В каталоге '+catalog.length+' песен. Начни вводить название — совпадения появятся здесь.';
+    }else if(!results.length){
+      summary.textContent='По запросу «'+input.value+'» песен не найдено. Проверь написание или обнови каталог.';
+    }else{
+      summary.textContent='Найдено: '+results.length+'. Нажми на название песни.';
+    }
+    suggestions.appendChild(summary);
+    if(suggestOpen&&q&&results.length){
+      results.slice(0,25).forEach(function(t){
+        var button=document.createElement('button');
+        button.type='button';button.className='vmm-r-suggestion';
+        button.textContent=clean(t.title)+(t.artist?' — '+clean(t.artist):'');
+        button.onclick=function(){chooseSearchResult(t);};
+        suggestions.appendChild(button);
+      });
+      if(results.length>25){
+        var foot=document.createElement('p');foot.className='sync-note';
+        foot.textContent='Показаны первые 25 результатов. Уточни запрос.';
+        suggestions.appendChild(foot);
+      }
+    }
   }
   function setSong(key){
     if(songId!==key){clearAudio();audioFileId='';}
@@ -202,6 +243,7 @@
   }
   function open(){
     if(active){show(panel,true);return;}
+    suggestOpen=false;
     active=true;header();
     var tabs=document.querySelectorAll('#workspace [data-panel]');
     for(var i=0;i<tabs.length;i++)tabs[i].className=tabs[i].getAttribute('data-panel')==='recordings'?'nav-active':'';
@@ -219,7 +261,9 @@
     provider.setCustomParameters({prompt:'select_account'});
     // Reauthentication must be launched directly from a button/file/checkbox click.
     return u.reauthenticateWithPopup(provider).then(function(result){
-      var cred=firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+      // Firebase Auth 8.x puts the Google OAuth credential on the result.
+      // credentialFromResult is absent in the version loaded by Studio.
+      var cred=result&&result.credential;
       if(!result.user||result.user.uid!==user.uid||!cred||!cred.accessToken)throw new Error('Не удалось подтвердить тот же аккаунт Google.');
       driveToken=cred.accessToken;return driveToken;
     });
