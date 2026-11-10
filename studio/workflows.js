@@ -15,8 +15,8 @@
   var collections = {contacts:'vmm_contacts',outreach:'vmm_outreach',recordings:'vmm_recordings',extras:'vmm_platforms',audit:'vmm_audit'};
   var labels = {overview:'Обзор',catalog:'Каталог релизов',platforms:'Площадки и ссылки',contacts:'Контакты',outreach:'Рассылки',recordings:'Фонограммы',extras:'Доп. площадки',audit:'Журнал'};
   var platforms = {spotify:'Spotify',appleMusic:'Apple Music',youtube:'YouTube',yandex:'Яндекс Музыка',vk:'VK Музыка',zvuk:'Звук'};
-  var fieldMap = {spotify:10,appleMusic:8,youtube:12,yandex:14,zvuk:16};
-  var statusMap = {spotify:11,appleMusic:9,youtube:13,yandex:15,zvuk:17};
+  var fieldMap = {spotify:10,appleMusic:8,youtube:12,zvuk:16}; // Yandex legacy column 14 stores ALBUM links, never overwrite with track.
+  var statusMap = {spotify:11,appleMusic:9,youtube:13,zvuk:17};
   var user = null, db = null;
   function id(x) { return document.getElementById(x); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c];}); }
@@ -65,7 +65,14 @@
   function loadCommon(then) {
     Promise.all([getDocs('vmm_catalog'),getDocs('vmm_links')]).then(function(a){catalog=a[0];proposals=a[1];then();}).catch(function(e){pane.innerHTML='<h2>Ошибка загрузки</h2><p>'+esc(e.message)+'</p><button data-act="retry">Повторить</button>';});
   }
-  function urlValue(t,k){return (t&&t.links&&t.links[k])||'';}
+  function urlValue(t,k){
+    if(!t||!t.links)return '';
+    if(k==='yandex'){
+      // Legacy links.yandex and column 14 are album references; keep them intact.
+      return t.links.yandexTrack || (direct('yandex',t.links.yandex||'')?t.links.yandex:'');
+    }
+    return t.links[k]||'';
+  }
   function direct(k,u){
     u=tr(u);
     if(!/^https:\/\//i.test(u))return false;
@@ -160,6 +167,8 @@
       var u=urlValue(t,k),ok=direct(k,u);
       body+='<div class="vmm-detail"><strong>'+esc(platforms[k])+'</strong><span>'+ (ok?linkButton(u,'Открыть трек'):k==='spotify'&&spotifyAlbum(u)?linkButton(u,'Альбом · заменить'): '<span class="muted">Нет подтверждённой прямой ссылки</span>')+'</span></div>';
     });
+    if(t.links&&safeUrl(t.links.yandex)&&/^https:\/\/music\.yandex\.(?:ru|com)\/album\//i.test(t.links.yandex))body+='<div class="vmm-detail"><strong>Яндекс Музыка · альбом</strong><span>'+linkButton(t.links.yandex,'Открыть альбом')+'</span></div>';
+    if(t.links&&safeUrl(t.links.vkArtist))body+='<div class="vmm-detail"><strong>VK · профиль исполнителя</strong><span>'+linkButton(t.links.vkArtist,'Открыть профиль')+'</span></div>';
     body+='</div><div class="vmm-card"><h3>Найти композицию</h3><div class="vmm-action-links">'+['spotify','appleMusic','youtube'].map(function(k){return linkButton(searchUrl(k,t),platforms[k]);}).join('')+'</div><p class="sync-note">Поисковые ссылки не считаются прямыми URL треков.</p></div>';
     body+='<div class="vmm-actions"><button data-act="propose" data-row="'+row(t.sourceRow)+'">+ Предложить ссылку</button><button data-act="lyrics-track" data-row="'+row(t.sourceRow)+'">✎ Текст песни</button><button data-act="catalog">← К каталогу</button></div>';
     pane.innerHTML=body;
@@ -223,10 +232,10 @@
           var actual=a.data(),proposal=b.data();
           if(!pending(proposal))throw new Error('Предложение уже обработано.');
           if(row(proposal.catalogRow)!==row(t.sourceRow)||platformKey(proposal.platform)!==k||tr(proposal.url)!==u)throw new Error('Предложение изменилось после открытия. Повтори проверку.');
-          var old=(actual.links||{})[k]||'';
+          var old=(actual.links||{})[k==='yandex'?'yandexTrack':k]||'';if(k==='yandex'&&!old&&direct('yandex',(actual.links||{}).yandex||''))old=actual.links.yandex;
           if(direct(k,old)&&tr(proposal.replacesUrl)!==tr(old))throw new Error('Прямая ссылка уже существует. Для замены требуется отдельное предложение с точным прежним URL.');
           if(old && !(k==='spotify'&&spotifyAlbum(old)) && safeUrl(old) && tr(proposal.replacesUrl)!==tr(old))throw new Error('Старая ссылка изменилась, подтвердить замену нельзя.');
-          var links={},orig=actual.links||{};Object.keys(orig).forEach(function(key){links[key]=orig[key];});links[k]=u;
+          var links={},orig=actual.links||{};Object.keys(orig).forEach(function(key){links[key]=orig[key];});links[k==='yandex'?'yandexTrack':k]=u;
           var rowValues=Array.isArray(actual.legacyRow)?actual.legacyRow.slice():null;
           if(rowValues&&fieldMap[k]!==undefined){rowValues[fieldMap[k]]=u;rowValues[statusMap[k]]='Подтверждено вручную · VELARDREAM Studio';}
           var update={links:links,updatedAt:ts(),updatedBy:user.uid};
