@@ -9,7 +9,7 @@
   holder.id='vmm-lyrics-tools';
   holder.innerHTML='<div class="vmm-lyric-buttons"><button type="button" id="vmm-paste-text">Вставить текст</button><button type="button" id="vmm-clean-suno">Очистить Suno</button><button type="button" data-vmm-section="Куплет">Куплет</button><button type="button" data-vmm-section="Припев">Припев</button><button type="button" data-vmm-section="Бридж">Бридж</button><button type="button" data-vmm-section="Финал">Финал</button><button type="button" id="vmm-bold-text"><strong>Жирный</strong></button><button type="button" id="vmm-undo-clean" class="hidden">Отменить очистку</button></div><p id="vmm-lyric-note" class="sync-note">Вставь текст с командами Suno: известные служебные команды будут удалены, а куплеты и припевы оформлены автоматически.</p><div id="vmm-clean-preview" class="hidden"><p>Результат очистки. Незнакомые команды и слова в скобках сохранены.</p><textarea id="vmm-clean-result" rows="6" readonly></textarea><div class="vmm-lyric-buttons"><button type="button" id="vmm-apply-clean">Применить</button><button type="button" id="vmm-cancel-clean">Отмена</button></div></div>';
   el('vmm-lyrics-toolbar').appendChild(holder);
-  var cleanOriginal='',lastProof=null,renderTimer=null,renderSeq=0,undoClean=null;
+  var cleanOriginal='',lastProof=null,renderTimer=null,renderSeq=0,undoClean=null,suppressAutoOnce=false;
   function el(n){return document.getElementById(n);}
   function note(s){el('vmm-lyric-note').textContent=s;}
   function meta(){return window.VMM_STUDIO&&window.VMM_STUDIO.getLyricsMeta?window.VMM_STUDIO.getLyricsMeta():null;}
@@ -197,7 +197,7 @@
     if(!undoClean)return;
     if(body.value!==undoClean.after){note('После очистки текст уже изменён. Автоматическая отмена заблокирована, чтобы не стереть новые слова.');return;}
     body.value=undoClean.before;
-    undoClean=null;this.className='hidden';
+    undoClean=null;this.className='hidden';suppressAutoOnce=true;
     body.dispatchEvent(new Event('input',{bubbles:true}));
     note('Предыдущий текст восстановлен в редакторе. Сохранённая запись Firestore не менялась.');
   };
@@ -233,6 +233,7 @@
     // Covers iPhone paste, typed brackets and clipboard fallback.
     // Never run while a saved record is being populated programmatically.
     var latest=body.value;
+    if(suppressAutoOnce){suppressAutoOnce=false;lastInput=latest;schedulePreview();return;}
     if(latest!==lastInput && autoCleanEditor('input',latest)){lastInput=body.value;return;}
     lastInput=body.value;schedulePreview();
   });
