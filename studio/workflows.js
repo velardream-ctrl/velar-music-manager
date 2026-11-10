@@ -27,6 +27,21 @@
   function tell(s) {var node=id('vmm-w-status');if(node) node.textContent=s||''; }
   function refocus(){var e=id('vmm-search');if(!e)return;e.focus();try{var p=e.value.length;e.setSelectionRange(p,p);}catch(ignore){}}
   function ts(){return firebase.firestore.FieldValue.serverTimestamp();}
+  function platformKey(k){return k==='apple'?'appleMusic':k==='vkArtist'?'vk':k;}
+  function formattedDate(value){
+    if(!value)return '';
+    var d=null;
+    if(value&&typeof value.toDate==='function')d=value.toDate();
+    else if(value&&typeof value.seconds==='number')d=new Date(value.seconds*1000);
+    else if(typeof value==='string'||typeof value==='number'){var parsed=Date.parse(value);if(isFinite(parsed))d=new Date(parsed);}
+    if(d&&!isNaN(d.getTime()))return d.toLocaleString('ru-RU');
+    return String(value).slice(0,50);
+  }
+  function millis(value){
+    if(value&&typeof value.toMillis==='function')return value.toMillis();
+    if(value&&typeof value.seconds==='number')return value.seconds*1000;
+    var d=Date.parse(value);return isFinite(d)?d:0;
+  }
   function authenticated(fn) {
     if (!id('workspace') || id('workspace').className.indexOf('hidden') !== -1) {pane.innerHTML='<p>Необходим вход владельца.</p>';return;}
     if (!window.firebase || !firebase.apps.length) {pane.innerHTML='<p>Firebase ещё загружается.</p>';return;}
@@ -159,7 +174,7 @@
       var existing=urlValue(t,k);
       if(direct(k,existing)&&normalized(k,existing)===normalized(k,u))return tell('Эта прямая ссылка уже сохранена в каталоге.');
       if(direct(k,existing)&&!window.confirm('В каталоге уже есть подтверждённая ссылка. Создать отдельное предложение для её ручной замены? Старая ссылка останется без изменений до подтверждения.'))return;
-      if(proposals.some(function(x){return row(x.catalogRow)===row(t.sourceRow)&&x.platform===k&&normalized(k,x.url)===normalized(k,u)&&x.status!=='Отклонено';}))return tell('Такой кандидат уже существует.');
+      if(proposals.some(function(x){return row(x.catalogRow)===row(t.sourceRow)&&platformKey(x.platform)===k&&normalized(k,x.url)===normalized(k,u)&&x.status!=='Отклонено';}))return tell('Такой кандидат уже существует.');
       busy=true;tell('Проверяем право владельца и сохраняем предложение…');
       authenticated(function(){var p=db.collection('vmm_links').doc(),audit=db.collection('vmm_audit').doc(),batch=db.batch();
         batch.set(p,{catalogRow:String(t.sourceRow),title:t.title,platform:k,url:u,status:'Ожидает подтверждения',source:'Ручное добавление · VELARDREAM Studio',replacesUrl:existing||'',createdAt:ts(),updatedAt:ts(),updatedBy:user.uid});
@@ -175,7 +190,7 @@
     pane.innerHTML=heading('Проверка музыкальных ссылок','Новые кандидаты не изменяют каталог до подтверждения')+
       '<div class="vmm-filter"><input type="search" id="vmm-search" placeholder="Песня, площадка, URL" value="'+esc(filter)+'"><select id="vmm-mode"><option value="pending">Ожидают решения</option><option value="all">Вся история</option><option value="approved">Подтверждённые</option><option value="rejected">Отклонённые</option></select></div>'+
       '<p class="sync-note">В очереди: '+proposals.filter(pending).length+' · в истории: '+proposals.length+'</p><div class="vmm-rows">'+items.slice(0,150).map(function(x){
-        return '<div class="vmm-proposal"><div><strong>'+esc(x.title)+'</strong><small>'+esc(platforms[x.platform]||x.platform)+' · '+esc(x.status)+'</small>'+linkButton(x.url,'Открыть для проверки')+'</div><div class="vmm-actions">'+(pending(x)?'<button data-act="approve" data-id="'+esc(x.id)+'">Подтвердить</button><button data-act="reject" data-id="'+esc(x.id)+'">Отклонить</button>':'')+'</div></div>';
+        return '<div class="vmm-proposal"><div><strong>'+esc(x.title)+'</strong><small>'+esc(platforms[platformKey(x.platform)]||x.platform)+' · '+esc(x.status)+'</small>'+linkButton(x.url,'Открыть для проверки')+'</div><div class="vmm-actions">'+(pending(x)?'<button data-act="approve" data-id="'+esc(x.id)+'">Подтвердить</button><button data-act="reject" data-id="'+esc(x.id)+'">Отклонить</button>':'')+'</div></div>';
       }).join('')+'</div><p id="vmm-w-status" class="sync-note">'+(items.length>150?'Показаны первые 150 результатов; уточни поиск.':'')+'</p>';
     id('vmm-mode').value=mode;
     id('vmm-search').oninput=function(){filter=this.value;platformPage();refocus();};
@@ -207,7 +222,7 @@
           var a=snaps[0],b=snaps[1];if(!a.exists||!b.exists)throw new Error('Запись не найдена.');
           var actual=a.data(),proposal=b.data();
           if(!pending(proposal))throw new Error('Предложение уже обработано.');
-          if(row(proposal.catalogRow)!==row(t.sourceRow)||proposal.platform!==k||tr(proposal.url)!==u)throw new Error('Предложение изменилось после открытия. Повтори проверку.');
+          if(row(proposal.catalogRow)!==row(t.sourceRow)||platformKey(proposal.platform)!==k||tr(proposal.url)!==u)throw new Error('Предложение изменилось после открытия. Повтори проверку.');
           var old=(actual.links||{})[k]||'';
           if(direct(k,old)&&tr(proposal.replacesUrl)!==tr(old))throw new Error('Прямая ссылка уже существует. Для замены требуется отдельное предложение с точным прежним URL.');
           if(old && !(k==='spotify'&&spotifyAlbum(old)) && safeUrl(old) && tr(proposal.replacesUrl)!==tr(old))throw new Error('Старая ссылка изменилась, подтвердить замену нельзя.');
@@ -282,10 +297,10 @@
     });
   }
   function auditPage() {
-    auxiliary.sort(function(a,b){return String(b.time||'').localeCompare(String(a.time||''));});
+    auxiliary.sort(function(a,b){return millis(b.time)-millis(a.time);});
     var q=tr(filter).toLowerCase(),items=auxiliary.filter(function(x){return [x.operation,x.subject,x.result,x.time].join(' ').toLowerCase().indexOf(q)>=0;});
     pane.innerHTML=heading('Журнал изменений','История сохраняется отдельно от каталога и текстов')+
-      '<div class="vmm-filter"><input type="search" id="vmm-search" placeholder="Поиск события" value="'+esc(filter)+'"></div><p class="sync-note">Всего: '+auxiliary.length+'</p><div class="vmm-rows">'+items.slice(0,180).map(function(x){return '<div class="vmm-audit-line"><strong>'+esc(x.operation)+'</strong><small>'+esc(x.subject)+' · '+esc(x.result)+'</small></div>';}).join('')+'</div>';
+      '<div class="vmm-filter"><input type="search" id="vmm-search" placeholder="Поиск события" value="'+esc(filter)+'"></div><p class="sync-note">Всего: '+auxiliary.length+'</p><div class="vmm-rows">'+items.slice(0,180).map(function(x){return '<div class="vmm-audit-line"><strong>'+esc(x.operation)+'</strong><small>'+esc(x.subject)+' · '+esc(x.result)+' · '+esc(formattedDate(x.time))+'</small></div>';}).join('')+'</div>';
     id('vmm-search').oninput=function(){filter=this.value;auditPage();refocus();};
   }
   function open(type) {
