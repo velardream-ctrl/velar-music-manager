@@ -6,7 +6,7 @@ function stub(){return {className:'',textContent:'',style:{},firstChild:null,app
 function loadWorkflows(){
   const source=read('studio/workflows.js');
   assert.match(source,/\}\(\)\);\s*$/);
-  const altered=source.replace(/\}\(\)\);\s*$/,"window.__test={direct:direct,normalized:normalized,spotifyAlbum:spotifyAlbum,pending:pending};}());");
+  const altered=source.replace(/\}\(\)\);\s*$/,"window.__test={direct:direct,normalized:normalized,spotifyAlbum:spotifyAlbum,pending:pending,platformKey:platformKey,urlValue:urlValue,formattedDate:formattedDate,millis:millis,metrics:metrics,progressCard:progressCard,setCatalog:function(x){catalog=x;}};}());");
   const shell=stub(),side=stub();
   const doc={querySelector(x){if(x==='.workspace-content')return shell;if(x==='#workspace .sidebar')return side;return null;},querySelectorAll(){return [];},createElement(){return stub();},getElementById(){return null;}};
   const ctx={document:doc,window:{},Object,Array,Promise,String,Number,Math,parseInt,isFinite,encodeURIComponent};
@@ -19,7 +19,7 @@ function loadLyrics(){
   const altered=source.replace(/\}\(\)\);\s*$/,"window.__test={cleanSuno:cleanSuno,heading:heading,printRows:printRows,documentHTML:documentHTML};}());");
   const nodes={};
   function elem(){return {value:'',className:'',innerHTML:'',parentNode:{parentNode:{insertBefore(){}},nextSibling:null},addEventListener(){},setAttribute(){},style:{}};}
-  const form=elem();form.elements={title:{value:'Тестовая песня',addEventListener(){}},language:{value:'Русский'},version:{value:'Основная'}};
+  const form=elem();form.elements={title:{value:'Тестовая песня',addEventListener(){}},language:{value:'Русский',addEventListener(){}},version:{value:'Основная',addEventListener(){}}};
   const body=elem();
   const doc={getElementById(k){if(k==='lyric-form')return form;if(k==='lyric-body')return body;return nodes[k]||(nodes[k]=elem());},createElement(){return elem();}};
   const ctx={document:doc,window:{addEventListener(){}},Event:function(){},String,Array,Promise,Number,Math};
@@ -40,6 +40,38 @@ assert.equal(w.normalized('appleMusic','https://music.apple.com/fi/album/x/123?i
 assert.notEqual(w.normalized('appleMusic','https://music.apple.com/fi/album/x/123?i=1234'),w.normalized('appleMusic','https://music.apple.com/fi/album/x/123?i=5678'));
 assert.ok(w.pending({status:'Ожидает подтверждения'}));
 assert.ok(!w.pending({status:'Подтверждено'}));
+
+assert.equal(w.platformKey('apple'),'appleMusic','legacy Apple proposals should map to canonical key');
+assert.equal(w.platformKey('spotify'),'spotify');
+const yandexAlbum='https://music.yandex.ru/album/123456';
+const yandexSong='https://music.yandex.ru/album/123456/track/654321';
+assert.ok(!w.direct('yandex',yandexAlbum),'Yandex albums should not be counted as confirmed tracks');
+assert.ok(w.direct('yandex',yandexSong));
+const catalogRecord={links:{yandex:yandexAlbum,spotify:'',appleMusic:''}};
+assert.equal(w.urlValue(catalogRecord,'yandex'),'','an album link should not masquerade as a track');
+catalogRecord.links.yandexTrack=yandexSong;
+assert.equal(w.urlValue(catalogRecord,'yandex'),yandexSong,'new track link must use separate field');
+assert.equal(catalogRecord.links.yandex,yandexAlbum,'original album link must remain unchanged');
+assert.equal(w.millis({seconds:1700000000}),1700000000000);
+const legacySerial=46312.5;
+assert.equal(w.millis(String(legacySerial)),Date.UTC(1899,11,30)+Math.round(legacySerial*86400000));
+assert.match(w.formattedDate(String(legacySerial)),/^\d\d\.\d\d\.\d{4} 12:00$/);
+assert.ok(w.millis('46312')<2000000000000,'Five-digit Sheets serial must not become year 46312');
+assert.ok(w.formattedDate({seconds:1700000000}).length>0);
+
+w.setCatalog([
+ {id:'a',links:{spotify:'https://open.spotify.com/track/6Ti53MNZfQirZoZFcyDzpJ',appleMusic:'https://music.apple.com/fi/album/test/1234?i=5678',youtube:'https://youtu.be/2P5GrU_lE2k'}},
+ {id:'b',links:{spotify:'https://open.spotify.com/album/6Ti53MNZfQirZoZFcyDzpJ',appleMusic:'',youtube:'62'}}
+]);
+const m=w.metrics();
+assert.equal(m.total,2);
+assert.equal(m.spotify,1);
+assert.equal(m.appleMusic,1);
+assert.equal(m.youtube,1);
+assert.equal(m.all,1);
+assert.match(w.progressCard('Spotify',1,2,'Не хватает: 1','spotify'),/aria-valuenow="50"/);
+assert.match(w.progressCard('Spotify',1,2,'Не хватает: 1','spotify'),/width:50%/);
+
 const l=loadLyrics();
 assert.equal(l.heading('Verse 2: male vocal'),'Куплет 2');
 assert.equal(l.heading('Final Chorus'),'Финальный припев');
@@ -50,6 +82,10 @@ assert.match(clean.text,/\*\*Припев\*\*/);
 assert.match(clean.text,/Ла-ла-ла!/);
 assert.ok(!clean.text.includes('Male vocals'));
 assert.ok(clean.removed>=3);
+assert.ok(l.cleanSuno('Это [скобки внутри слов] моих песен').text.includes('[скобки внутри слов]'),'Must not lose bracketed lyric words');
+assert.ok(l.cleanSuno('[неизвестная ремарка]\nСлова').text.includes('[неизвестная ремарка]'),'Unknown cues must not be removed silently');
+assert.ok(l.cleanSuno('[Verse 1]\nСлова').text.includes('**Куплет 1**'));
+
 const rendered=l.printRows('**Куплет 1**\nДве строки\nдля печати');
 assert.match(rendered,/Две строки<br>для печати/);
 assert.match(rendered,/<h2>Куплет 1<\/h2>/);

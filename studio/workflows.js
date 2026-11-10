@@ -15,8 +15,8 @@
   var collections = {contacts:'vmm_contacts',outreach:'vmm_outreach',recordings:'vmm_recordings',extras:'vmm_platforms',audit:'vmm_audit'};
   var labels = {overview:'Обзор',catalog:'Каталог релизов',platforms:'Площадки и ссылки',contacts:'Контакты',outreach:'Рассылки',recordings:'Фонограммы',extras:'Доп. площадки',audit:'Журнал'};
   var platforms = {spotify:'Spotify',appleMusic:'Apple Music',youtube:'YouTube',yandex:'Яндекс Музыка',vk:'VK Музыка',zvuk:'Звук'};
-  var fieldMap = {spotify:10,appleMusic:8,youtube:12,yandex:14,zvuk:16};
-  var statusMap = {spotify:11,appleMusic:9,youtube:13,yandex:15,zvuk:17};
+  var fieldMap = {spotify:10,appleMusic:8,youtube:12,zvuk:16}; // Yandex legacy column 14 stores ALBUM links, never overwrite with track.
+  var statusMap = {spotify:11,appleMusic:9,youtube:13,zvuk:17};
   var user = null, db = null;
   function id(x) { return document.getElementById(x); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c];}); }
@@ -27,6 +27,36 @@
   function tell(s) {var node=id('vmm-w-status');if(node) node.textContent=s||''; }
   function refocus(){var e=id('vmm-search');if(!e)return;e.focus();try{var p=e.value.length;e.setSelectionRange(p,p);}catch(ignore){}}
   function ts(){return firebase.firestore.FieldValue.serverTimestamp();}
+  function platformKey(k){return k==='apple'?'appleMusic':k==='vkArtist'?'vk':k;}
+  function asDate(value) {
+    if(!value)return null;
+    if(value&&typeof value.toDate==='function')return value.toDate();
+    if(value&&typeof value.seconds==='number')return new Date(value.seconds*1000);
+    // The 2026 legacy audit export contains Google Sheets serial dates (e.g. 46312.5).
+    // Test this BEFORE Date.parse: JS interprets five-digit integers as calendar years.
+    var str=String(value).trim();
+    if(/^\d{4,6}(?:\.\d+)?$/.test(str)){
+      var serial=Number(str);
+      if(serial>20000&&serial<90000)return new Date(Math.round((serial-25569)*86400000));
+    }
+    var parsed=Date.parse(str);
+    return isFinite(parsed)?new Date(parsed):null;
+  }
+  function formattedDate(value) {
+    var d=asDate(value);
+    if(!d || isNaN(d.getTime()))return String(value||'').slice(0,50);
+    var str=String(value).trim();
+    if(/^\d{4,6}(?:\.\d+)?$/.test(str) && Number(str)>20000 && Number(str)<90000){
+      // A Sheets serial contains local wall-clock time with no time zone.
+      function pad(n){return ('0'+n).slice(-2);}
+      return pad(d.getUTCDate())+'.'+pad(d.getUTCMonth()+1)+'.'+d.getUTCFullYear()+' '+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes());
+    }
+    return d.toLocaleString('ru-RU');
+  }
+  function millis(value) {
+    var d=asDate(value);
+    return d&&!isNaN(d.getTime())?d.getTime():0;
+  }
   function authenticated(fn) {
     if (!id('workspace') || id('workspace').className.indexOf('hidden') !== -1) {pane.innerHTML='<p>Необходим вход владельца.</p>';return;}
     if (!window.firebase || !firebase.apps.length) {pane.innerHTML='<p>Firebase ещё загружается.</p>';return;}
@@ -50,7 +80,14 @@
   function loadCommon(then) {
     Promise.all([getDocs('vmm_catalog'),getDocs('vmm_links')]).then(function(a){catalog=a[0];proposals=a[1];then();}).catch(function(e){pane.innerHTML='<h2>Ошибка загрузки</h2><p>'+esc(e.message)+'</p><button data-act="retry">Повторить</button>';});
   }
-  function urlValue(t,k){return (t&&t.links&&t.links[k])||'';}
+  function urlValue(t,k){
+    if(!t||!t.links)return '';
+    if(k==='yandex'){
+      // Legacy links.yandex and column 14 are album references; keep them intact.
+      return t.links.yandexTrack || (direct('yandex',t.links.yandex||'')?t.links.yandex:'');
+    }
+    return t.links[k]||'';
+  }
   function direct(k,u){
     u=tr(u);
     if(!/^https:\/\//i.test(u))return false;
@@ -71,8 +108,8 @@
     return u.split('?')[0].replace(/\/$/,'').toLowerCase();
   }
   function metrics() {
-    var m={total:catalog.length,spotify:0,appleMusic:0,youtube:0,all:0};
-    catalog.forEach(function(t){var n=0;['spotify','appleMusic','youtube'].forEach(function(k){if(direct(k,urlValue(t,k))){m[k]++;n++;}});if(n===3)m.all++;});
+    var m={total:catalog.length,spotify:0,appleMusic:0,youtube:0,all:0,spotifyAlbum:0};
+    catalog.forEach(function(t){var n=0;if(spotifyAlbum(urlValue(t,'spotify')))m.spotifyAlbum++;['spotify','appleMusic','youtube'].forEach(function(k){if(direct(k,urlValue(t,k))){m[k]++;n++;}});if(n===3)m.all++;});
     return m;
   }
   function flags(t) {
@@ -94,11 +131,37 @@
   }
   function heading(title,sub){return '<div class="vmm-head"><div><p class="eyebrow">VELARDREAM · MUSIC MANAGER</p><h2>'+esc(title)+'</h2><p class="sync-note">'+esc(sub||'')+'</p></div><button class="btn-small" data-act="retry">↻ Обновить</button></div>';}
   function linkButton(u,text){return safeUrl(u)?'<a class="vmm-out" target="_blank" rel="noopener noreferrer" href="'+esc(u)+'">'+esc(text)+' ↗</a>':'<span class="muted">Не установлена</span>';}
-  function overview() {
-    var m=metrics(),todo=catalog.filter(function(t){return !direct('spotify',urlValue(t,'spotify'))||!direct('appleMusic',urlValue(t,'appleMusic'))||!direct('youtube',urlValue(t,'youtube'));});
-    pane.innerHTML=heading('Обзор каталога','Живая статистика подтверждённых прямых ссылок')+'<div class="vmm-metrics"><div>Композиции<strong>'+m.total+'</strong></div><div>Apple Music<strong>'+m.appleMusic+'</strong></div><div>Spotify<strong>'+m.spotify+'</strong></div><div>YouTube<strong>'+m.youtube+'</strong></div></div><p class="sync-note">Полностью заполнены три площадки: '+m.all+' · требуют проверки: '+todo.length+'</p><h3>Приоритет — недостающие ссылки</h3><div class="vmm-rows">'+todo.slice(0,12).map(function(t){return '<button data-act="track" data-row="'+row(t.sourceRow)+'"><strong>'+esc(t.title)+'</strong><small>'+esc(t.artist)+' · '+flags(t)+'</small></button>';}).join('')+'</div>';
+  function progressCard(label,filled,total,detail,kind){
+    var pct=total?Math.round(100*filled/total):0,missing=Math.max(0,total-filled);
+    return '<div class="vmm-progress-card '+esc(kind||'')+'">'+
+      '<span class="vmm-progress-title">'+esc(label)+'</span>'+
+      '<strong class="vmm-progress-count">'+filled+' <small>/ '+total+'</small></strong>'+
+      '<span class="vmm-progress-meta">'+esc(detail||('Не хватает: '+missing))+'</span>'+
+      '<div class="vmm-progress-line" role="progressbar" aria-label="'+esc(label)+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct+'"><span style="width:'+pct+'%"></span></div>'+
+      '<div class="vmm-progress-percent">'+pct+'% <small>заполнено</small></div></div>';
   }
+  function overview() {
+    if(!catalog.length){pane.innerHTML=heading('Обзор каталога','Данные доступны только владельцу')+'<div class="vmm-card"><h3>Каталог Firestore пока пуст</h3><p>Исходный Google Apps Script и резервная копия не затронуты. Если перенос ещё не выполнялся, открой безопасный импорт и проверь файл перед загрузкой.</p><button data-act="open-import">Открыть импорт данных</button></div>';return;}
+    var m=metrics(),todo=catalog.filter(function(t){return !direct('spotify',urlValue(t,'spotify'))||!direct('appleMusic',urlValue(t,'appleMusic'))||!direct('youtube',urlValue(t,'youtube'));});
+    var totalSlots=m.total*3,doneSlots=m.spotify+m.appleMusic+m.youtube;
+    var overall=totalSlots?Math.round(100*doneSlots/totalSlots):0;
+    pane.innerHTML=heading('Обзор каталога','Статистика по прямым ссылкам на песни · Spotify, Apple Music, YouTube')+
+      '<div class="vmm-metrics vmm-metrics-progress">'+
+      progressCard('Всего композиций',m.total,m.total,'Единый музыкальный каталог','releases')+
+      progressCard('Apple Music',m.appleMusic,m.total,'Не хватает: '+(m.total-m.appleMusic),'apple')+
+      progressCard('Spotify',m.spotify,m.total,'Не хватает: '+(m.total-m.spotify)+(m.spotifyAlbum?' · '+m.spotifyAlbum+' альбомов вместо треков':''),'spotify')+
+      progressCard('YouTube',m.youtube,m.total,'Не хватает: '+(m.total-m.youtube),'youtube')+
+      '</div>'+
+      '<div class="vmm-card vmm-overall"><div class="vmm-overall-head"><h3>Общая готовность ссылок</h3><strong>'+overall+'%</strong></div>'+
+      '<p class="sync-note">'+doneSlots+' из '+totalSlots+' ссылок заполнено · '+(totalSlots-doneSlots)+' отсутствуют · релизов со всеми тремя площадками: '+m.all+' из '+m.total+'</p>'+
+      '<div class="vmm-progress-line vmm-total-progress" role="progressbar" aria-label="Общая готовность ссылок" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+overall+'"><span style="width:'+overall+'%"></span></div></div>'+
+      '<h3>Требуют проверки: '+todo.length+' композиций</h3>'+
+      '<div class="vmm-rows">'+todo.slice(0,12).map(function(t){return '<button data-act="track" data-row="'+row(t.sourceRow)+'"><strong>'+esc(t.title)+'</strong><small>'+esc(t.artist)+' · '+flags(t)+'</small></button>';}).join('')+'</div>'+
+      '<div class="vmm-actions"><button data-act="missing-catalog">Показать все недостающие ссылки</button></div>';
+  }
+
   function catalogPage(){
+    if(!catalog.length){pane.innerHTML=heading('Каталог релизов','Защищённая база данных')+'<div class="vmm-card"><h3>В Firebase пока нет композиций</h3><p>Для заполнения используй прежний файл импорта. Не создавай дубликаты вручную.</p><button data-act="open-import">Открыть безопасный импорт</button></div>';return;}
     var a=searchRows(),begin=page*30;if(begin>=a.length&&page>0){page=0;begin=0;}
     var allArtists=Object.create(null);catalog.forEach(function(t){if(t.artist)allArtists[t.artist]=true;});
     var actorOptions=Object.keys(allArtists).sort().map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>';}).join('');
@@ -145,6 +208,8 @@
       var u=urlValue(t,k),ok=direct(k,u);
       body+='<div class="vmm-detail"><strong>'+esc(platforms[k])+'</strong><span>'+ (ok?linkButton(u,'Открыть трек'):k==='spotify'&&spotifyAlbum(u)?linkButton(u,'Альбом · заменить'): '<span class="muted">Нет подтверждённой прямой ссылки</span>')+'</span></div>';
     });
+    if(t.links&&safeUrl(t.links.yandex)&&/^https:\/\/music\.yandex\.(?:ru|com)\/album\//i.test(t.links.yandex))body+='<div class="vmm-detail"><strong>Яндекс Музыка · альбом</strong><span>'+linkButton(t.links.yandex,'Открыть альбом')+'</span></div>';
+    if(t.links&&safeUrl(t.links.vkArtist))body+='<div class="vmm-detail"><strong>VK · профиль исполнителя</strong><span>'+linkButton(t.links.vkArtist,'Открыть профиль')+'</span></div>';
     body+='</div><div class="vmm-card"><h3>Найти композицию</h3><div class="vmm-action-links">'+['spotify','appleMusic','youtube'].map(function(k){return linkButton(searchUrl(k,t),platforms[k]);}).join('')+'</div><p class="sync-note">Поисковые ссылки не считаются прямыми URL треков.</p></div>';
     body+='<div class="vmm-actions"><button data-act="propose" data-row="'+row(t.sourceRow)+'">+ Предложить ссылку</button><button data-act="lyrics-track" data-row="'+row(t.sourceRow)+'">✎ Текст песни</button><button data-act="catalog">← К каталогу</button></div>';
     pane.innerHTML=body;
@@ -159,7 +224,7 @@
       var existing=urlValue(t,k);
       if(direct(k,existing)&&normalized(k,existing)===normalized(k,u))return tell('Эта прямая ссылка уже сохранена в каталоге.');
       if(direct(k,existing)&&!window.confirm('В каталоге уже есть подтверждённая ссылка. Создать отдельное предложение для её ручной замены? Старая ссылка останется без изменений до подтверждения.'))return;
-      if(proposals.some(function(x){return row(x.catalogRow)===row(t.sourceRow)&&x.platform===k&&normalized(k,x.url)===normalized(k,u)&&x.status!=='Отклонено';}))return tell('Такой кандидат уже существует.');
+      if(proposals.some(function(x){return row(x.catalogRow)===row(t.sourceRow)&&platformKey(x.platform)===k&&normalized(k,x.url)===normalized(k,u)&&x.status!=='Отклонено';}))return tell('Такой кандидат уже существует.');
       busy=true;tell('Проверяем право владельца и сохраняем предложение…');
       authenticated(function(){var p=db.collection('vmm_links').doc(),audit=db.collection('vmm_audit').doc(),batch=db.batch();
         batch.set(p,{catalogRow:String(t.sourceRow),title:t.title,platform:k,url:u,status:'Ожидает подтверждения',source:'Ручное добавление · VELARDREAM Studio',replacesUrl:existing||'',createdAt:ts(),updatedAt:ts(),updatedBy:user.uid});
@@ -172,10 +237,16 @@
   function platformPage(){
     var q=tr(filter).toLowerCase();
     var items=proposals.filter(function(x){if(mode==='pending'&&!pending(x))return false;if(mode==='approved'&&x.status!=='Подтверждено')return false;if(mode==='rejected'&&x.status!=='Отклонено')return false;return [x.title,x.platform,x.url,x.status].join(' ').toLowerCase().indexOf(q)>=0;});
+    var m=metrics(),pendingCount=proposals.filter(pending).length;
     pane.innerHTML=heading('Проверка музыкальных ссылок','Новые кандидаты не изменяют каталог до подтверждения')+
+      '<div class="vmm-metrics vmm-metrics-progress">'+
+      progressCard('На проверке',pendingCount,proposals.length,'В очереди предложений','releases')+
+      progressCard('Apple Music',m.appleMusic,m.total,'Прямых ссылок из каталога','apple')+
+      progressCard('Spotify',m.spotify,m.total,'Прямых ссылок из каталога','spotify')+
+      progressCard('YouTube',m.youtube,m.total,'Прямых ссылок из каталога','youtube')+'</div>'+
       '<div class="vmm-filter"><input type="search" id="vmm-search" placeholder="Песня, площадка, URL" value="'+esc(filter)+'"><select id="vmm-mode"><option value="pending">Ожидают решения</option><option value="all">Вся история</option><option value="approved">Подтверждённые</option><option value="rejected">Отклонённые</option></select></div>'+
       '<p class="sync-note">В очереди: '+proposals.filter(pending).length+' · в истории: '+proposals.length+'</p><div class="vmm-rows">'+items.slice(0,150).map(function(x){
-        return '<div class="vmm-proposal"><div><strong>'+esc(x.title)+'</strong><small>'+esc(platforms[x.platform]||x.platform)+' · '+esc(x.status)+'</small>'+linkButton(x.url,'Открыть для проверки')+'</div><div class="vmm-actions">'+(pending(x)?'<button data-act="approve" data-id="'+esc(x.id)+'">Подтвердить</button><button data-act="reject" data-id="'+esc(x.id)+'">Отклонить</button>':'')+'</div></div>';
+        return '<div class="vmm-proposal"><div><strong>'+esc(x.title)+'</strong><small>'+esc(platforms[platformKey(x.platform)]||x.platform)+' · '+esc(x.status)+'</small>'+linkButton(x.url,'Открыть для проверки')+'</div><div class="vmm-actions">'+(pending(x)?'<button data-act="approve" data-id="'+esc(x.id)+'">Подтвердить</button><button data-act="reject" data-id="'+esc(x.id)+'">Отклонить</button>':'')+'</div></div>';
       }).join('')+'</div><p id="vmm-w-status" class="sync-note">'+(items.length>150?'Показаны первые 150 результатов; уточни поиск.':'')+'</p>';
     id('vmm-mode').value=mode;
     id('vmm-search').oninput=function(){filter=this.value;platformPage();refocus();};
@@ -207,11 +278,11 @@
           var a=snaps[0],b=snaps[1];if(!a.exists||!b.exists)throw new Error('Запись не найдена.');
           var actual=a.data(),proposal=b.data();
           if(!pending(proposal))throw new Error('Предложение уже обработано.');
-          if(row(proposal.catalogRow)!==row(t.sourceRow)||proposal.platform!==k||tr(proposal.url)!==u)throw new Error('Предложение изменилось после открытия. Повтори проверку.');
-          var old=(actual.links||{})[k]||'';
+          if(row(proposal.catalogRow)!==row(t.sourceRow)||platformKey(proposal.platform)!==k||tr(proposal.url)!==u)throw new Error('Предложение изменилось после открытия. Повтори проверку.');
+          var old=(actual.links||{})[k==='yandex'?'yandexTrack':k]||'';if(k==='yandex'&&!old&&direct('yandex',(actual.links||{}).yandex||''))old=actual.links.yandex;
           if(direct(k,old)&&tr(proposal.replacesUrl)!==tr(old))throw new Error('Прямая ссылка уже существует. Для замены требуется отдельное предложение с точным прежним URL.');
           if(old && !(k==='spotify'&&spotifyAlbum(old)) && safeUrl(old) && tr(proposal.replacesUrl)!==tr(old))throw new Error('Старая ссылка изменилась, подтвердить замену нельзя.');
-          var links={},orig=actual.links||{};Object.keys(orig).forEach(function(key){links[key]=orig[key];});links[k]=u;
+          var links={},orig=actual.links||{};Object.keys(orig).forEach(function(key){links[key]=orig[key];});links[k==='yandex'?'yandexTrack':k]=u;
           var rowValues=Array.isArray(actual.legacyRow)?actual.legacyRow.slice():null;
           if(rowValues&&fieldMap[k]!==undefined){rowValues[fieldMap[k]]=u;rowValues[statusMap[k]]='Подтверждено вручную · VELARDREAM Studio';}
           var update={links:links,updatedAt:ts(),updatedBy:user.uid};
@@ -282,10 +353,10 @@
     });
   }
   function auditPage() {
-    auxiliary.sort(function(a,b){return String(b.time||'').localeCompare(String(a.time||''));});
+    auxiliary.sort(function(a,b){return millis(b.time)-millis(a.time);});
     var q=tr(filter).toLowerCase(),items=auxiliary.filter(function(x){return [x.operation,x.subject,x.result,x.time].join(' ').toLowerCase().indexOf(q)>=0;});
     pane.innerHTML=heading('Журнал изменений','История сохраняется отдельно от каталога и текстов')+
-      '<div class="vmm-filter"><input type="search" id="vmm-search" placeholder="Поиск события" value="'+esc(filter)+'"></div><p class="sync-note">Всего: '+auxiliary.length+'</p><div class="vmm-rows">'+items.slice(0,180).map(function(x){return '<div class="vmm-audit-line"><strong>'+esc(x.operation)+'</strong><small>'+esc(x.subject)+' · '+esc(x.result)+'</small></div>';}).join('')+'</div>';
+      '<div class="vmm-filter"><input type="search" id="vmm-search" placeholder="Поиск события" value="'+esc(filter)+'"></div><p class="sync-note">Всего: '+auxiliary.length+'</p><div class="vmm-rows">'+items.slice(0,180).map(function(x){return '<div class="vmm-audit-line"><strong>'+esc(x.operation)+'</strong><small>'+esc(x.subject)+' · '+esc(x.result)+' · '+esc(formattedDate(x.time))+'</small></div>';}).join('')+'</div>';
     id('vmm-search').oninput=function(){filter=this.value;auditPage();refocus();};
   }
   function open(type) {
@@ -302,7 +373,9 @@
     if(!t||t===pane)return;
     var a=t.getAttribute('data-act');
     if(a==='retry')return open(current);
+    if(a==='open-import'){var details=id('data-import');if(details){details.open=true;details.scrollIntoView();}return;}
     if(a==='catalog')return open('catalog');
+    if(a==='missing-catalog'){current='catalog';filter='';mode='missing';page=0;navActive('catalog');catalogPage();return;}
     if(a==='print-catalog')return printCatalog();
     if(a==='clear-selection'){chosen=Object.create(null);return catalogPage();}
     if(a==='prev'){page=Math.max(0,page-1);return catalogPage();}

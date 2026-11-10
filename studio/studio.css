@@ -108,3 +108,25 @@
 #vmm-paper-frame{position:absolute;left:0;top:0;width:794px;height:1123px;border:0;background:#fff;display:block;transform-origin:top left}
 @media(max-width:800px){#vmm-lyrics-tools{padding:10px}#vmm-lyrics-tools .vmm-lyric-buttons button{flex:1 1 auto}}
 @media print{#vmm-lyrics-tools{display:none!important}}
+
+
+/* RUN-044 · Four restored legacy statistics cards and actual percentage bars */
+#vmm-workflows .vmm-metrics-progress{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#vmm-workflows .vmm-progress-card{display:flex;flex-direction:column;align-items:stretch;min-width:0;min-height:166px;padding:17px 15px 13px;border:1px solid #e4c68e36;border-radius:15px;background:linear-gradient(135deg,#1a2946 0%,#101c35 100%)}
+#vmm-workflows .vmm-progress-title{display:block;color:#b9c6de;font-size:.82rem}
+#vmm-workflows .vmm-progress-count{display:block;color:#f2dfbd;font-size:clamp(1.55rem,2.5vw,2.15rem);font-weight:800;line-height:1.32;letter-spacing:-.03em;margin-top:10px}
+#vmm-workflows .vmm-progress-count small{font-size:.47em;font-weight:500;color:#a0b1ca}
+#vmm-workflows .vmm-progress-meta{display:block;color:#a2b5d1;font-size:.74rem;margin-top:4px;min-height:1.3em}
+#vmm-workflows .vmm-progress-line{width:100%;height:9px;border-radius:20px;background:#30405d;overflow:hidden;margin-top:auto;display:block}
+#vmm-workflows .vmm-progress-line>span{display:block;height:100%;border-radius:inherit;background:#edcf93;transition:width .25s ease}
+#vmm-workflows .vmm-progress-card.spotify .vmm-progress-line>span{background:#9cccab}
+#vmm-workflows .vmm-progress-card.apple .vmm-progress-line>span{background:#b5a8f1}
+#vmm-workflows .vmm-progress-card.youtube .vmm-progress-line>span{background:#d8a7a7}
+#vmm-workflows .vmm-progress-percent{display:flex;justify-content:space-between;align-items:center;margin-top:7px;font-size:.78rem;font-weight:700;color:#ebd49e}
+#vmm-workflows .vmm-progress-percent small{font-size:.69rem;font-weight:400;color:#98abc9}
+#vmm-workflows .vmm-overall{margin:15px 0 20px}
+#vmm-workflows .vmm-overall-head{display:flex;align-items:center;justify-content:space-between;gap:15px}
+#vmm-workflows .vmm-overall-head strong{color:#ecd19e;font-size:1.4rem}
+#vmm-workflows .vmm-total-progress{margin:13px 0 2px;height:12px}
+@media(max-width:1120px){#vmm-workflows .vmm-metrics-progress{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:440px){#vmm-workflows .vmm-metrics-progress{gap:8px}#vmm-workflows .vmm-progress-card{padding:12px 11px 10px;min-height:146px}#vmm-workflows .vmm-progress-title{font-size:.74rem}#vmm-workflows .vmm-progress-count{font-size:1.48rem}#vmm-workflows .vmm-progress-meta{font-size:.69rem}}
