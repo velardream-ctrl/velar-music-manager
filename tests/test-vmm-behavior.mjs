@@ -6,7 +6,7 @@ function stub(){return {className:'',textContent:'',style:{},firstChild:null,app
 function loadWorkflows(){
   const source=read('studio/workflows.js');
   assert.match(source,/\}\(\)\);\s*$/);
-  const altered=source.replace(/\}\(\)\);\s*$/,"window.__test={direct:direct,normalized:normalized,spotifyAlbum:spotifyAlbum,pending:pending,platformKey:platformKey,urlValue:urlValue,formattedDate:formattedDate,millis:millis};}());");
+  const altered=source.replace(/\}\(\)\);\s*$/,"window.__test={direct:direct,normalized:normalized,spotifyAlbum:spotifyAlbum,pending:pending,platformKey:platformKey,urlValue:urlValue,formattedDate:formattedDate,millis:millis,metrics:metrics,progressCard:progressCard,setCatalog:function(x){catalog=x;}};}());");
   const shell=stub(),side=stub();
   const doc={querySelector(x){if(x==='.workspace-content')return shell;if(x==='#workspace .sidebar')return side;return null;},querySelectorAll(){return [];},createElement(){return stub();},getElementById(){return null;}};
   const ctx={document:doc,window:{},Object,Array,Promise,String,Number,Math,parseInt,isFinite,encodeURIComponent};
@@ -58,6 +58,19 @@ assert.equal(w.millis(String(legacySerial)),Date.UTC(1899,11,30)+Math.round(lega
 assert.match(w.formattedDate(String(legacySerial)),/^\d\d\.\d\d\.\d{4} 12:00$/);
 assert.ok(w.millis('46312')<2000000000000,'Five-digit Sheets serial must not become year 46312');
 assert.ok(w.formattedDate({seconds:1700000000}).length>0);
+
+w.setCatalog([
+ {id:'a',links:{spotify:'https://open.spotify.com/track/6Ti53MNZfQirZoZFcyDzpJ',appleMusic:'https://music.apple.com/fi/album/test/1234?i=5678',youtube:'https://youtu.be/2P5GrU_lE2k'}},
+ {id:'b',links:{spotify:'https://open.spotify.com/album/6Ti53MNZfQirZoZFcyDzpJ',appleMusic:'',youtube:'62'}}
+]);
+const m=w.metrics();
+assert.equal(m.total,2);
+assert.equal(m.spotify,1);
+assert.equal(m.appleMusic,1);
+assert.equal(m.youtube,1);
+assert.equal(m.all,1);
+assert.match(w.progressCard('Spotify',1,2,'Не хватает: 1','spotify'),/aria-valuenow="50"/);
+assert.match(w.progressCard('Spotify',1,2,'Не хватает: 1','spotify'),/width:50%/);
 
 const l=loadLyrics();
 assert.equal(l.heading('Verse 2: male vocal'),'Куплет 2');
