@@ -174,6 +174,7 @@
     var keys=document.querySelectorAll('[data-panel]');
     for(var i=0;i<keys.length;i++)keys[i].className=keys[i].getAttribute('data-panel')===id?'nav-active':'';
     show(el('panel-lyrics'),id==='lyrics');show(el('panel-future'),id!=='lyrics');
+    if(id!=='recordings'&&window.VMM_RECORDINGS)window.VMM_RECORDINGS.hide();
     if(id!=='lyrics'){text(el('future-title'),sections[id]||'Раздел');text(el('future-message'),'Раздел работает в защищённой Firestore.');}
   }
   function showWorkspace(){
@@ -183,6 +184,7 @@
   }
   function unauthorized(note){
     authorized=false;saveBusy=false;lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
+    if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
     show(workspace,false);show(gate,true);message(note);if(auth)signIn.disabled=false;
   }
   function save(e){
@@ -236,7 +238,13 @@
         user=next;
         if(!user){unauthorized('Вход через Google необходим для доступа к личным материалам.');return;}
         if(!user.emailVerified){unauthorized('Google не подтвердил электронную почту аккаунта.');return;}
-        db.collection('vmm_admins').doc(user.uid).get({source:'server'}).then(function(doc){
+        // Offline access only if this exact verified admin doc was previously cached by Firestore.
+        // Never grant offline access from a localStorage flag or an unverified email.
+        var adminRead=db.collection('vmm_admins').doc(user.uid).get({source:'server'});
+        if(!navigator.onLine)adminRead=adminRead.catch(function(){
+          return db.collection('vmm_admins').doc(user.uid).get({source:'cache'});
+        });
+        adminRead.then(function(doc){
           if(doc.exists&&doc.data()&&doc.data().enabled===true)showWorkspace();
           else unauthorized('Аккаунт Google не включён в список администраторов VELARDREAM.');
         }).catch(function(err){unauthorized('Проверка разрешения владельца не удалась: '+err.message);});
