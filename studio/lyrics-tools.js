@@ -114,6 +114,7 @@
     frame.srcdoc=documentHTML(parsed.text,15,false);
   }
   function schedulePreview(){
+    if(undoClean&&body.value!==undoClean.after){undoClean=null;var undoNode=el('vmm-undo-clean');if(undoNode)undoNode.className='hidden';}
     lastProof=null;
     if(renderTimer)clearTimeout(renderTimer);
     renderTimer=setTimeout(function(){
