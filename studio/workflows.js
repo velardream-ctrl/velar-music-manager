@@ -35,7 +35,7 @@
     database.collection('vmm_admins').doc(u.uid).get({source:'server'}).then(function(s){
       if(!s.exists || !s.data() || s.data().enabled!==true) throw new Error('Нет доступа администратора.');
       user=u;db=database;fn();
-    }).catch(function(e){pane.innerHTML='<h2>Доступ не подтверждён</h2><p>'+esc(e.message)+'</p>';});
+    }).catch(function(e){busy=false;pane.innerHTML='<h2>Доступ не подтверждён</h2><p>'+esc(e.message)+'</p>';});
   }
   function navActive(key){
     var buttons=document.querySelectorAll('#workspace [data-panel]');
@@ -66,6 +66,7 @@
     u=tr(u);
     if(k==='spotify'){var m=u.match(/\/track\/([A-Za-z0-9]{22})/i);return m?m[1]:u.split('?')[0];}
     if(k==='youtube'){var y=u.match(/(?:[?&]v=|youtu\.be\/)([A-Za-z0-9_-]{11})/i);return y?y[1]:u.split('?')[0];}
+    if(k==='appleMusic'){var song=u.match(/[?&]i=(\d+)/i);if(song)return 'apple-song-'+song[1];}
     return u.split('?')[0].replace(/\/$/,'').toLowerCase();
   }
   function metrics() {
@@ -116,7 +117,7 @@
       body+='<div class="vmm-detail"><strong>'+esc(platforms[k])+'</strong><span>'+ (ok?linkButton(u,'Открыть трек'):k==='spotify'&&spotifyAlbum(u)?linkButton(u,'Альбом · заменить'): '<span class="muted">Нет подтверждённой прямой ссылки</span>')+'</span></div>';
     });
     body+='</div><div class="vmm-card"><h3>Найти композицию</h3><div class="vmm-action-links">'+['spotify','appleMusic','youtube'].map(function(k){return linkButton(searchUrl(k,t),platforms[k]);}).join('')+'</div><p class="sync-note">Поисковые ссылки не считаются прямыми URL треков.</p></div>';
-    body+='<div class="vmm-actions"><button data-act="propose" data-row="'+row(t.sourceRow)+'">+ Предложить ссылку</button><button data-act="catalog">← К каталогу</button></div>';
+    body+='<div class="vmm-actions"><button data-act="propose" data-row="'+row(t.sourceRow)+'">+ Предложить ссылку</button><button data-act="lyrics-track" data-row="'+row(t.sourceRow)+'">✎ Текст песни</button><button data-act="catalog">← К каталогу</button></div>';
     pane.innerHTML=body;
   }
   function proposalForm(n){
@@ -273,6 +274,7 @@
     if(a==='prev'){page=Math.max(0,page-1);return catalogPage();}
     if(a==='next'){page++;return catalogPage();}
     if(a==='track')return trackPage(t.getAttribute('data-row'));
+    if(a==='lyrics-track'){var lyricTrack=findTrack(t.getAttribute('data-row'));if(!lyricTrack||!window.VMM_STUDIO)return tell('Редактор текстов пока недоступен.');show(pane,false);window.VMM_STUDIO.openForTrack(lyricTrack).catch(function(err){open('catalog');tell('Ошибка редактора: '+err.message);});return;}
     if(a==='propose')return proposalForm(t.getAttribute('data-row'));
     if(a==='approve')return approve(t.getAttribute('data-id'));
     if(a==='reject')return reject(t.getAttribute('data-id'));
