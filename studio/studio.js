@@ -267,6 +267,7 @@
   form().onsubmit=save;
   body().addEventListener('input',refreshToolbar);
   el('print-lyric').onclick=function(){if(window.VMM_LYRICS_TOOLS)window.VMM_LYRICS_TOOLS.print();else text(el('save-message'),'Печать пока не загружена.');};
+  el('share-lyric').onclick=function(){if(window.VMM_LYRICS_TOOLS&&window.VMM_LYRICS_TOOLS.share)window.VMM_LYRICS_TOOLS.share();else text(el('save-message'),'Функция передачи пока недоступна.');};
   var nav=document.querySelectorAll('#workspace [data-panel]');
   for(var i=0;i<nav.length;i++){
     nav[i].addEventListener('click',function(e){
