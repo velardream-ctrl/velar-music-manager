@@ -7,9 +7,9 @@
   if(!form||!body)return;
   var holder=document.createElement('section');
   holder.id='vmm-lyrics-tools';
-  holder.innerHTML='<div class="vmm-lyric-buttons"><button type="button" id="vmm-paste-text">Вставить из буфера</button><button type="button" id="vmm-clean-suno">Очистить Suno</button><button type="button" id="vmm-show-a4">Лист A4 · две колонки</button></div><p id="vmm-lyric-note" class="sync-note">Вставь текст с командами Suno в поле выше. Лист A4 создаётся автоматически; исходник не меняется до подтверждения очистки.</p><div id="vmm-clean-preview" class="hidden"><p>Сравни автоматически очищенный текст с оригиналом. Незнакомые команды в квадратных скобках сохранены для проверки.</p><textarea id="vmm-clean-result" rows="8" readonly></textarea><div class="vmm-lyric-buttons"><button type="button" id="vmm-apply-clean">Применить очищенный текст</button><button type="button" id="vmm-cancel-clean">Отмена</button></div></div><div id="vmm-paper-preview" class="hidden"><p id="vmm-paper-status" class="sync-note"></p><div id="vmm-paper-stage"><iframe id="vmm-paper-frame" title="Предпросмотр листа A4"></iframe></div><p class="sync-note">Печать: формат A4, две колонки, масштаб 100%, поля без дополнительных отступов и колонтитулов.</p></div>';
+  holder.innerHTML='<div class="vmm-lyric-buttons"><button type="button" id="vmm-paste-text">Вставить из буфера</button><button type="button" id="vmm-clean-suno">Очистить Suno</button><button type="button" id="vmm-show-a4">Лист A4 · две колонки</button></div><div class="vmm-lyric-buttons vmm-lyric-format"><button type="button" data-vmm-section="Куплет">Куплет</button><button type="button" data-vmm-section="Припев">Припев</button><button type="button" data-vmm-section="Бридж">Бридж</button><button type="button" data-vmm-section="Финал">Финал</button><button type="button" id="vmm-bold-text"><strong>Жирный</strong></button><button type="button" id="vmm-undo-clean" class="hidden">Отменить очистку</button></div><p id="vmm-lyric-note" class="sync-note">Вставь текст с командами Suno в поле выше. Лист A4 создаётся автоматически; исходник не меняется до подтверждения очистки.</p><div id="vmm-clean-preview" class="hidden"><p>Сравни автоматически очищенный текст с оригиналом. Незнакомые команды в квадратных скобках сохранены для проверки.</p><textarea id="vmm-clean-result" rows="8" readonly></textarea><div class="vmm-lyric-buttons"><button type="button" id="vmm-apply-clean">Применить очищенный текст</button><button type="button" id="vmm-cancel-clean">Отмена</button></div></div><div id="vmm-paper-preview" class="hidden"><p id="vmm-paper-status" class="sync-note"></p><div id="vmm-paper-stage"><iframe id="vmm-paper-frame" title="Предпросмотр листа A4"></iframe></div><p class="sync-note">Печать: формат A4, две колонки, масштаб 100%, поля без дополнительных отступов и колонтитулов.</p></div>';
   body.parentNode.parentNode.insertBefore(holder,body.parentNode.nextSibling);
-  var cleanOriginal='',lastProof=null,renderTimer=null,renderSeq=0;
+  var cleanOriginal='',lastProof=null,renderTimer=null,renderSeq=0,undoClean=null;
   function el(n){return document.getElementById(n);}
   function note(s){el('vmm-lyric-note').textContent=s;}
   function title(){return String(form.elements.title.value||'').trim();}
@@ -145,6 +145,35 @@
     }catch(err){try{win.close();}catch(ignore){}note('Не удалось открыть печать: '+err.message);}
   }
 
+  function replaceSelection(txt,wrap){
+    if(form.className.indexOf('hidden')!==-1)return;
+    var start=body.selectionStart||0,end=body.selectionEnd||0;
+    var current=body.value,selected=current.slice(start,end),replacement=wrap?txt+selected+txt:txt;
+    body.value=current.slice(0,start)+replacement+current.slice(end);
+    body.focus();
+    try{body.setSelectionRange(start+(wrap?txt.length:replacement.length),start+(wrap?txt.length+selected.length:replacement.length));}catch(ignore){}
+    body.dispatchEvent(new Event('input',{bubbles:true}));
+  }
+  holder.addEventListener('click',function(e){
+    var target=e.target;
+    while(target&&target!==holder&&!target.getAttribute('data-vmm-section'))target=target.parentNode;
+    if(!target||target===holder)return;
+    var section=target.getAttribute('data-vmm-section');
+    if(section)replaceSelection('\n**'+section+'**\n',false);
+  });
+  el('vmm-bold-text').onclick=function(){
+    if(body.selectionStart===body.selectionEnd){note('Сначала выдели слова в редакторе, затем нажми «Жирный».');body.focus();return;}
+    replaceSelection('**',true);
+  };
+  el('vmm-undo-clean').onclick=function(){
+    if(!undoClean)return;
+    if(body.value!==undoClean.after){note('После очистки текст уже изменён. Автоматическая отмена заблокирована, чтобы не стереть новые слова.');return;}
+    body.value=undoClean.before;
+    undoClean=null;this.className='hidden';
+    body.dispatchEvent(new Event('input',{bubbles:true}));
+    note('Предыдущий текст восстановлен в редакторе. Сохранённая запись Firestore не менялась.');
+  };
+
   el('vmm-clean-suno').onclick=function(){
     cleanOriginal=body.value;var result=cleanSuno(cleanOriginal);
     if(!result.removed){note('Команд Suno в квадратных скобках не обнаружено.');return;}
@@ -154,7 +183,7 @@
   el('vmm-apply-clean').onclick=function(){
     if(cleanOriginal!==body.value){note('Текст изменился после предварительного просмотра. Сначала повтори очистку.');return;}
     if(!window.confirm('Применить очищенный вариант? Автоматически сохранён он НЕ будет — для сохранения отдельно нажми кнопку «Сохранить текст».'))return;
-    body.value=el('vmm-clean-result').value;body.dispatchEvent(new Event('input',{bubbles:true}));
+    undoClean={before:cleanOriginal,after:el('vmm-clean-result').value};el('vmm-undo-clean').className='';body.value=undoClean.after;body.dispatchEvent(new Event('input',{bubbles:true}));
     el('vmm-clean-preview').className='hidden';lastProof=null;schedulePreview();note('Очистка применена в редакторе. Проверь слова и нажми «Сохранить текст» только после сверки.');
   };
   el('vmm-cancel-clean').onclick=function(){el('vmm-clean-preview').className='hidden';note('Очистка отменена; исходный текст не изменён.');};
