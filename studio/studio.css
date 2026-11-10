@@ -130,3 +130,71 @@
 #vmm-workflows .vmm-total-progress{margin:13px 0 2px;height:12px}
 @media(max-width:1120px){#vmm-workflows .vmm-metrics-progress{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:440px){#vmm-workflows .vmm-metrics-progress{gap:8px}#vmm-workflows .vmm-progress-card{padding:12px 11px 10px;min-height:146px}#vmm-workflows .vmm-progress-title{font-size:.74rem}#vmm-workflows .vmm-progress-count{font-size:1.48rem}#vmm-workflows .vmm-progress-meta{font-size:.69rem}}
+
+
+/* RUN-045 · Single-window Lyrics Studio. No editable catalog identifiers. */
+#panel-lyrics.lyrics-workspace{max-width:100%;padding:clamp(16px,2.5vw,32px)}
+#panel-lyrics .lyrics-head{padding-bottom:8px;align-items:flex-start}
+#panel-lyrics .lyrics-head h2{font:700 clamp(1.9rem,4.5vw,2.8rem)/1.15 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:-.035em}
+#panel-lyrics .lyrics-head .eyebrow{color:#d9ed88;font-weight:700}
+#panel-lyrics .lyrics-head .sync-note{margin:5px 0 0}
+#panel-lyrics .lyrics-picker{margin:20px 0 24px;max-width:980px}
+#panel-lyrics .lyrics-picker>label,#panel-lyrics .lyrics-version-head>label{display:block;color:#bcc8dd;font-size:.92rem;margin:10px 0 6px}
+#panel-lyrics .lyrics-picker input,#panel-lyrics .lyrics-picker select{display:block;width:100%;background:#172139;color:#f1ecdf;border:1px solid #abb4be55;border-radius:12px;padding:13px 15px;font:inherit;font-size:1rem;min-height:46px;min-width:0}
+#panel-lyrics .lyrics-picker input:focus,#panel-lyrics .lyrics-picker select:focus{outline:2px solid #d9c18388;outline-offset:1px}
+#panel-lyrics .lyrics-picker select{margin-top:7px}
+#panel-lyrics .lyrics-version-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}
+#panel-lyrics .lyrics-version-head label{margin:0}
+#panel-lyrics #new-lyric{background:#293651;color:#e9d5ae;border:1px solid #e7cf9b5d;font-size:.83rem;padding:8px 13px}
+#panel-lyrics #lyric-loaded-at{margin:7px 0 0}
+#panel-lyrics .lyrics-single-window{width:100%;border:none;max-width:1100px}
+#panel-lyrics .lyrics-selected-heading{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:8px 0 14px;font-size:.98rem}
+#panel-lyrics .lyrics-selected-heading strong{color:#eee4cf}
+#panel-lyrics .lyrics-selected-heading span{color:#a9b6cf}
+#panel-lyrics .lyrics-main-actions{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin:12px 0 25px}
+#panel-lyrics .lyrics-main-actions button{font-weight:700;font-size:.98rem;border-radius:12px;padding:11px 20px;border:1px solid #bfa775;background:#e9cea0;color:#132039}
+#panel-lyrics .lyrics-main-actions button.secondary{background:#25314a;color:#efdfc3;border-color:#71809d70}
+#panel-lyrics .lyrics-main-actions button:disabled{opacity:.48}
+#panel-lyrics .lyrics-view-switch{display:flex;gap:10px;margin:0 0 17px}
+#panel-lyrics .lyrics-view-switch button{padding:12px 21px;border-radius:12px;border:1px solid #8690aa65;background:#243047;color:#e3e6ef;font-weight:700}
+#panel-lyrics .lyrics-view-switch button.is-active{background:#e9cea0;color:#172039;border-color:#e9cea0}
+#panel-lyrics .poem-label{margin:8px 0;font-size:.86rem;color:#bdc8db}
+#panel-lyrics #lyric-body{display:block;width:100%;min-height:340px;border:1px solid #b3a78552;background:#0b142a;border-radius:13px;padding:19px;color:#f8f4eb;font:1.02rem/1.72 ui-monospace,Consolas,Menlo,monospace;resize:vertical;overflow-wrap:break-word;tab-size:2}
+#panel-lyrics #vmm-lyrics-toolbar{margin:0 0 13px}
+#panel-lyrics #vmm-lyrics-tools{margin:0;padding:12px;background:#101b33}
+#panel-lyrics #vmm-lyrics-tools .vmm-lyric-buttons{margin:3px 0 8px}
+#panel-lyrics #vmm-lyrics-tools .vmm-lyric-buttons button{font-size:.86rem;padding:9px 11px;flex:0 1 auto}
+#panel-lyrics #vmm-lyrics-tools .sync-note{margin:8px 0 2px;font-size:.78rem}
+#panel-lyrics #vmm-paper-view{background:#121d34;border:1px solid #ffffff20;border-radius:14px;padding:12px;overflow:hidden}
+#panel-lyrics #vmm-paper-preview{width:100%}
+#panel-lyrics #vmm-paper-stage{background:#dedbd5;border:1px solid #e9e9e9;border-radius:6px}
+#panel-lyrics #vmm-paper-status{color:#dfd6bd;font-size:.82rem;margin:0 0 12px}
+#panel-lyrics .lyrics-empty{border:1px dashed #d1c08e4b;background:#101b33}
+#panel-lyrics #save-message{margin:16px 0 8px;min-height:1.4rem;color:#dfd2b2;font-size:.86rem}
+@media(max-width:800px){
+ #panel-lyrics .lyrics-view-switch button{flex:1 1 50%}
+ #panel-lyrics .lyrics-single-window{padding-bottom:125px}
+ #panel-lyrics #vmm-lyrics-tools .vmm-lyric-buttons button{font-size:.8rem;flex:1 1 auto}
+ #panel-lyrics #lyric-body{font-size:16px;min-height:380px}
+ #panel-lyrics #vmm-paper-view{padding:8px}
+ #panel-lyrics .lyrics-main-actions button{flex:1 1 auto}
+}
+@media print{#panel-lyrics{display:none!important}}
+
+
+/* RUN-045 · Read from the song on stage without printing or exposing private URLs. */
+#panel-lyrics .vmm-reader-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+#panel-lyrics .vmm-reader-actions button{background:#2b3753;color:#f0daae;border:1px solid #e2c69380;border-radius:10px;font-weight:700;padding:10px 15px;font-size:.87rem}
+#panel-lyrics #vmm-performance-reader{background:#101726;color:#f5f4ee;border:1px solid #e6d8b53b;border-radius:12px;padding:clamp(16px,4vw,38px);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:clamp(1.16rem,2vw,1.55rem);line-height:1.65;min-height:450px}
+#panel-lyrics #vmm-performance-reader h3{text-align:center;font-size:1.35em;margin:0 0 4px}
+#panel-lyrics #vmm-performance-reader .vmm-reader-meta{text-align:center;color:#b7bfd0;font-size:.66em;margin:0 0 25px}
+#panel-lyrics #vmm-performance-reader h2{text-align:center;font-weight:700;font-family:inherit;font-size:.92em;margin:18px 0 5px}
+#panel-lyrics #vmm-performance-reader .stanza{margin:0 0 16px;overflow-wrap:break-word}
+@media(min-width:900px){#panel-lyrics #vmm-performance-reader{column-count:2;column-gap:45px}#panel-lyrics #vmm-performance-reader h3,#panel-lyrics #vmm-performance-reader .vmm-reader-meta{column-span:all}#panel-lyrics #vmm-performance-reader .stanza{break-inside:avoid}}
+@media(max-width:800px){#panel-lyrics #vmm-performance-reader{font-size:clamp(19px,5.8vw,25px);line-height:1.7;padding:14px}#panel-lyrics .vmm-reader-actions button{width:100%}}
+
+
+/* Legacy iOS 12 fallbacks: browsers that ignore CSS clamp() keep readable sizes. */
+#panel-lyrics .lyrics-head h2{font-size:2.2rem;font-size:clamp(1.9rem,4.5vw,2.8rem);font-weight:700;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.15}
+#panel-lyrics #vmm-performance-reader{font-size:21px;font-size:clamp(1.16rem,2vw,1.55rem)}
+@media(max-width:800px){#panel-lyrics #vmm-performance-reader{font-size:21px;font-size:clamp(19px,5.8vw,25px)}}

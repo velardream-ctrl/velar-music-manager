@@ -16,15 +16,16 @@ function loadWorkflows(){
 function loadLyrics(){
   const source=read('studio/lyrics-tools.js');
   assert.match(source,/\}\(\)\);\s*$/);
-  const altered=source.replace(/\}\(\)\);\s*$/,"window.__test={cleanSuno:cleanSuno,heading:heading,printRows:printRows,documentHTML:documentHTML};}());");
+  const altered=source.replace(/\}\(\)\);\s*$/,"window.__test={cleanSuno:cleanSuno,heading:heading,printRows:printRows,documentHTML:documentHTML,autoCleanEditor:autoCleanEditor,recordLoaded:recordLoaded};}());");
   const nodes={};
-  function elem(){return {value:'',className:'',innerHTML:'',parentNode:{parentNode:{insertBefore(){}},nextSibling:null},addEventListener(){},setAttribute(){},style:{}};}
+  function elem(){return {value:'',className:'',innerHTML:'',events:{},appendChild(){},parentNode:{parentNode:{insertBefore(){}},nextSibling:null},addEventListener(event,fn){this.events[event]=fn;},dispatchEvent(ev){if(this.events[ev.type])this.events[ev.type](ev);},setAttribute(){},style:{}};}
   const form=elem();form.elements={title:{value:'Тестовая песня',addEventListener(){}},language:{value:'Русский',addEventListener(){}},version:{value:'Основная',addEventListener(){}}};
   const body=elem();
+  nodes['vmm-paper-view']=elem();nodes['vmm-paper-view'].className='hidden';
   const doc={getElementById(k){if(k==='lyric-form')return form;if(k==='lyric-body')return body;return nodes[k]||(nodes[k]=elem());},createElement(){return elem();}};
-  const ctx={document:doc,window:{addEventListener(){}},Event:function(){},String,Array,Promise,Number,Math};
+  const ctx={document:doc,window:{addEventListener(){},VMM_STUDIO:{getLyricsMeta(){return {title:'Тестовая песня',language:'Русский',version:'Основная'};}}},Event:function(type){this.type=type;},String,Array,Promise,Number,Math};
   vm.runInNewContext(altered,ctx,{timeout:1000});
-  return ctx.window.__test;
+  return {api:ctx.window.__test,body,ui:nodes};
 }
 const w=loadWorkflows();
 assert.ok(w.direct('spotify','https://open.spotify.com/track/6Ti53MNZfQirZoZFcyDzpJ'));
@@ -72,7 +73,7 @@ assert.equal(m.all,1);
 assert.match(w.progressCard('Spotify',1,2,'Не хватает: 1','spotify'),/aria-valuenow="50"/);
 assert.match(w.progressCard('Spotify',1,2,'Не хватает: 1','spotify'),/width:50%/);
 
-const l=loadLyrics();
+const widget=loadLyrics(),l=widget.api;
 assert.equal(l.heading('Verse 2: male vocal'),'Куплет 2');
 assert.equal(l.heading('Final Chorus'),'Финальный припев');
 const clean=l.cleanSuno('[Verse 2: Male vocals]\nЯ люблю эту песню!\n[Instrumental break]\n[Chorus]\nЛа-ла-ла!');
@@ -85,6 +86,15 @@ assert.ok(clean.removed>=3);
 assert.ok(l.cleanSuno('Это [скобки внутри слов] моих песен').text.includes('[скобки внутри слов]'),'Must not lose bracketed lyric words');
 assert.ok(l.cleanSuno('[неизвестная ремарка]\nСлова').text.includes('[неизвестная ремарка]'),'Unknown cues must not be removed silently');
 assert.ok(l.cleanSuno('[Verse 1]\nСлова').text.includes('**Куплет 1**'));
+
+// Integration-level check: typing/pasting recognized Suno metadata updates the editor,
+// but unknown bracketed lyrics remain intact; undo is wired and can restore raw text.
+widget.body.value='[Verse 1]\nПесня моя\n[Chorus]\nПрипев!';
+widget.body.dispatchEvent({type:'input'});
+assert.equal(widget.body.value.includes('[Verse 1]'),false);
+assert.ok(widget.body.value.includes('**Куплет 1**'));
+assert.ok(widget.body.value.includes('Песня моя'));
+assert.ok(widget.ui['vmm-undo-clean'].className!=='hidden');
 
 const rendered=l.printRows('**Куплет 1**\nДве строки\nдля печати');
 assert.match(rendered,/Две строки<br>для печати/);
