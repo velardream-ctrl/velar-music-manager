@@ -177,7 +177,7 @@
   }
   function print(e){
     if(e){e.preventDefault();e.stopImmediatePropagation();}
-    if(readerActive){toggleReader(true);note('Вернулись к листу A4. Проверь страницу и нажми «Печать / PDF» ещё раз.');return;}
+    if(readerActive){toggleReader(true);note('Вернулись к листу A4. Нажми «Печать / PDF» ещё раз.');return;}
     if(el('vmm-paper-view').className.indexOf('hidden')!==-1){
       el('lyric-view-paper').click();
       note('Лист A4 открыт. Проверь расположение текста, затем повторно нажми «Печать / PDF».');
@@ -186,14 +186,13 @@
     if(!lastProof||lastProof.source!==body.value||lastProof.title!==title()||lastProof.language!==lang()||lastProof.version!==version()){
       note('Сначала дождись автоматической проверки листа A4 и повтори печать.');preview();return;
     }
-    var win=window.open('about:blank','_blank');
-    if(!win){note('Safari заблокировал окно печати. Разреши всплывающие окна для сайта.');return;}
-    try{
-      win.document.open();win.document.write(documentHTML(lastProof.text,lastProof.font,true));win.document.close();
-      var button=win.document.getElementById('print-action');if(button)button.onclick=function(){win.focus();win.print();};
-      win.focus();
-      note('Открылся отдельный лист A4 в две колонки. Нажми «Печать / PDF» в новой вкладке.');
-    }catch(err){try{win.close();}catch(ignore){}note('Не удалось открыть печать: '+err.message);}
+    if(!window.VMM_PRINT_EXPORT){note('Модуль печати ещё не загружен. Обнови страницу.');return;}
+    window.VMM_PRINT_EXPORT.show({
+      title:title(),language:lang(),version:version(),
+      text:lastProof.text,font:lastProof.font,
+      rowsHTML:printRows(lastProof.text),
+      pageHTML:documentHTML(lastProof.text,lastProof.font,false)
+    });
   }
 
   function replaceSelection(txt,wrap){
@@ -243,10 +242,24 @@
   function share(){
     if(!body.value.trim())return note('Выбери песню с текстом перед отправкой.');
     var cleaned=cleanSuno(body.value).text;
+    var name=window.VMM_PRINT_EXPORT?window.VMM_PRINT_EXPORT.safeName(title()):String(title()||'Текст песни').replace(/[\\/:*?"<>|]/g,' ').trim();
+    var file=null;
+    try{if(typeof File!=='undefined')file=new File([cleaned],name+'.txt',{type:'text/plain;charset=utf-8'});}catch(ignore){}
+    if(file&&navigator.share&&navigator.canShare){
+      var supported=false;
+      try{supported=navigator.canShare({files:[file]});}catch(ignore){}
+      if(supported){
+        navigator.share({files:[file],title:title()||'Текст песни'}).catch(function(err){
+          if(!err||err.name!=='AbortError')note('Не удалось передать файл: '+(err&&err.message||'ошибка'));
+        });
+        return;
+      }
+    }
     if(navigator.share){
       navigator.share({title:title()||'Текст песни',text:cleaned}).catch(function(err){
         if(!err||err.name!=='AbortError')note('Не удалось открыть меню передачи: '+(err&&err.message||'ошибка'));
       });
+      note('На этом устройстве передаётся текст, а не файл с названием песни.');
       return;
     }
     if(navigator.clipboard&&navigator.clipboard.writeText){
