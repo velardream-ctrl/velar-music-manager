@@ -28,19 +28,34 @@
   function refocus(){var e=id('vmm-search');if(!e)return;e.focus();try{var p=e.value.length;e.setSelectionRange(p,p);}catch(ignore){}}
   function ts(){return firebase.firestore.FieldValue.serverTimestamp();}
   function platformKey(k){return k==='apple'?'appleMusic':k==='vkArtist'?'vk':k;}
-  function formattedDate(value){
-    if(!value)return '';
-    var d=null;
-    if(value&&typeof value.toDate==='function')d=value.toDate();
-    else if(value&&typeof value.seconds==='number')d=new Date(value.seconds*1000);
-    else if(typeof value==='string'||typeof value==='number'){var parsed=Date.parse(value);if(isFinite(parsed))d=new Date(parsed);}
-    if(d&&!isNaN(d.getTime()))return d.toLocaleString('ru-RU');
-    return String(value).slice(0,50);
+  function asDate(value) {
+    if(!value)return null;
+    if(value&&typeof value.toDate==='function')return value.toDate();
+    if(value&&typeof value.seconds==='number')return new Date(value.seconds*1000);
+    // The 2026 legacy audit export contains Google Sheets serial dates (e.g. 46312.5).
+    // Test this BEFORE Date.parse: JS interprets five-digit integers as calendar years.
+    var str=String(value).trim();
+    if(/^\d{4,6}(?:\.\d+)?$/.test(str)){
+      var serial=Number(str);
+      if(serial>20000&&serial<90000)return new Date(Math.round((serial-25569)*86400000));
+    }
+    var parsed=Date.parse(str);
+    return isFinite(parsed)?new Date(parsed):null;
   }
-  function millis(value){
-    if(value&&typeof value.toMillis==='function')return value.toMillis();
-    if(value&&typeof value.seconds==='number')return value.seconds*1000;
-    var d=Date.parse(value);return isFinite(d)?d:0;
+  function formattedDate(value) {
+    var d=asDate(value);
+    if(!d || isNaN(d.getTime()))return String(value||'').slice(0,50);
+    var str=String(value).trim();
+    if(/^\d{4,6}(?:\.\d+)?$/.test(str) && Number(str)>20000 && Number(str)<90000){
+      // A Sheets serial contains local wall-clock time with no time zone.
+      function pad(n){return ('0'+n).slice(-2);}
+      return pad(d.getUTCDate())+'.'+pad(d.getUTCMonth()+1)+'.'+d.getUTCFullYear()+' '+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes());
+    }
+    return d.toLocaleString('ru-RU');
+  }
+  function millis(value) {
+    var d=asDate(value);
+    return d&&!isNaN(d.getTime())?d.getTime():0;
   }
   function authenticated(fn) {
     if (!id('workspace') || id('workspace').className.indexOf('hidden') !== -1) {pane.innerHTML='<p>Необходим вход владельца.</p>';return;}
