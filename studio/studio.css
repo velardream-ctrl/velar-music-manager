@@ -192,3 +192,9 @@
 #panel-lyrics #vmm-performance-reader .stanza{margin:0 0 16px;overflow-wrap:break-word}
 @media(min-width:900px){#panel-lyrics #vmm-performance-reader{column-count:2;column-gap:45px}#panel-lyrics #vmm-performance-reader h3,#panel-lyrics #vmm-performance-reader .vmm-reader-meta{column-span:all}#panel-lyrics #vmm-performance-reader .stanza{break-inside:avoid}}
 @media(max-width:800px){#panel-lyrics #vmm-performance-reader{font-size:clamp(19px,5.8vw,25px);line-height:1.7;padding:14px}#panel-lyrics .vmm-reader-actions button{width:100%}}
+
+
+/* Legacy iOS 12 fallbacks: browsers that ignore CSS clamp() keep readable sizes. */
+#panel-lyrics .lyrics-head h2{font-size:2.2rem;font-size:clamp(1.9rem,4.5vw,2.8rem);font-weight:700;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.15}
+#panel-lyrics #vmm-performance-reader{font-size:21px;font-size:clamp(1.16rem,2vw,1.55rem)}
+@media(max-width:800px){#panel-lyrics #vmm-performance-reader{font-size:21px;font-size:clamp(19px,5.8vw,25px)}}
