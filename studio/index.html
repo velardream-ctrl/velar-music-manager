@@ -78,6 +78,7 @@
               <div class="lyrics-main-actions">
                 <button type="submit" id="save-lyric" class="accent" disabled>Сохранить</button>
                 <button id="print-lyric" type="button" class="secondary">Печать / PDF</button>
+                <button id="share-lyric" type="button" class="secondary">Поделиться</button>
               </div>
               <div class="lyrics-view-switch" role="group" aria-label="Вид текста">
                 <button type="button" id="lyric-view-editor" class="is-active" aria-pressed="true">Редактор</button>
@@ -89,6 +90,8 @@
                 <textarea name="text" id="lyric-body" rows="18" placeholder="[Verse 1]&#10;Текст песни…&#10;&#10;[Chorus]&#10;Припев…&#10;&#10;Команды Suno удаляются автоматически после вставки, но оригинал можно восстановить." spellcheck="true"></textarea>
               </div>
               <div id="vmm-paper-view" class="hidden" aria-label="Лист песни в двух колонках">
+                <div class="vmm-reader-actions"><button type="button" id="vmm-read-mode" aria-pressed="false">Читать крупно</button><span class="sync-note">Режим сцены · без печати</span></div>
+                <div id="vmm-performance-reader" class="hidden" role="document" aria-label="Крупный текст для выступления"></div>
                 <div id="vmm-paper-preview" class="hidden">
                   <p id="vmm-paper-status" class="sync-note" role="status"></p>
                   <div id="vmm-paper-stage"><iframe id="vmm-paper-frame" title="Лист A4, две колонки"></iframe></div>
