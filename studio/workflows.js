@@ -132,10 +132,12 @@
   function heading(title,sub){return '<div class="vmm-head"><div><p class="eyebrow">VELARDREAM · MUSIC MANAGER</p><h2>'+esc(title)+'</h2><p class="sync-note">'+esc(sub||'')+'</p></div><button class="btn-small" data-act="retry">↻ Обновить</button></div>';}
   function linkButton(u,text){return safeUrl(u)?'<a class="vmm-out" target="_blank" rel="noopener noreferrer" href="'+esc(u)+'">'+esc(text)+' ↗</a>':'<span class="muted">Не установлена</span>';}
   function overview() {
+    if(!catalog.length){pane.innerHTML=heading('Обзор каталога','Данные доступны только владельцу')+'<div class="vmm-card"><h3>Каталог Firestore пока пуст</h3><p>Исходный Google Apps Script и резервная копия не затронуты. Если перенос ещё не выполнялся, открой безопасный импорт и проверь файл перед загрузкой.</p><button data-act="open-import">Открыть импорт данных</button></div>';return;}
     var m=metrics(),todo=catalog.filter(function(t){return !direct('spotify',urlValue(t,'spotify'))||!direct('appleMusic',urlValue(t,'appleMusic'))||!direct('youtube',urlValue(t,'youtube'));});
     pane.innerHTML=heading('Обзор каталога','Живая статистика подтверждённых прямых ссылок')+'<div class="vmm-metrics"><div>Композиции<strong>'+m.total+'</strong></div><div>Apple Music<strong>'+m.appleMusic+'</strong></div><div>Spotify<strong>'+m.spotify+'</strong></div><div>YouTube<strong>'+m.youtube+'</strong></div></div><p class="sync-note">Полностью заполнены три площадки: '+m.all+' · требуют проверки: '+todo.length+'</p><h3>Приоритет — недостающие ссылки</h3><div class="vmm-rows">'+todo.slice(0,12).map(function(t){return '<button data-act="track" data-row="'+row(t.sourceRow)+'"><strong>'+esc(t.title)+'</strong><small>'+esc(t.artist)+' · '+flags(t)+'</small></button>';}).join('')+'</div>';
   }
   function catalogPage(){
+    if(!catalog.length){pane.innerHTML=heading('Каталог релизов','Защищённая база данных')+'<div class="vmm-card"><h3>В Firebase пока нет композиций</h3><p>Для заполнения используй прежний файл импорта. Не создавай дубликаты вручную.</p><button data-act="open-import">Открыть безопасный импорт</button></div>';return;}
     var a=searchRows(),begin=page*30;if(begin>=a.length&&page>0){page=0;begin=0;}
     var allArtists=Object.create(null);catalog.forEach(function(t){if(t.artist)allArtists[t.artist]=true;});
     var actorOptions=Object.keys(allArtists).sort().map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>';}).join('');
@@ -341,6 +343,7 @@
     if(!t||t===pane)return;
     var a=t.getAttribute('data-act');
     if(a==='retry')return open(current);
+    if(a==='open-import'){var details=id('data-import');if(details){details.open=true;details.scrollIntoView();}return;}
     if(a==='catalog')return open('catalog');
     if(a==='print-catalog')return printCatalog();
     if(a==='clear-selection'){chosen=Object.create(null);return catalogPage();}
