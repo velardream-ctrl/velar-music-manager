@@ -8,7 +8,7 @@
   panel.id='vmm-repertoire';
   panel.className='panel hidden';
   shell.appendChild(panel);
-  var db=null,user=null,driveToken='',driveFolderId='',busy=false,active=false;
+  var db=null,user=null,driveToken='',driveFolderId='',busy=false,active=false,listenersAttached=false;
   var catalog=[],lyrics=[],recordings=[],saved=[],songId='',audioFileId='',audioURL='',mode='a4';
   var MAX=50*1024*1024,DRIVE_SCOPE='https://www.googleapis.com/auth/drive.file',FOLDER='VELARDREAM RECORDS - Фонограммы';
   function id(s){return document.getElementById(s);}
@@ -67,8 +67,7 @@
     id('vmm-r-file').onchange=function(){var file=this.files&&this.files[0];if(file)upload(file);this.value='';};
     id('vmm-r-a4').onclick=function(){setMode('a4');};
     id('vmm-r-large').onclick=function(){setMode('large');};
-    panel.addEventListener('click',actions);
-    panel.addEventListener('change',offlineChanges);
+    if(!listenersAttached){panel.addEventListener('click',actions);panel.addEventListener('change',offlineChanges);listenersAttached=true;}
   }
   function renderSongs(){
     var sel=id('vmm-r-song');if(!sel)return;
@@ -176,6 +175,7 @@
     if(!window.firebase||!firebase.apps.length)return Promise.reject(new Error('Авторизация ещё загружается.'));
     var u=firebase.auth().currentUser;
     if(!u||!u.emailVerified||!u.providerData.some(function(x){return x.providerId==='google.com';}))return Promise.reject(new Error('Войди в личный кабинет Google.'));
+    if(user&&user.uid!==u.uid){driveToken='';driveFolderId='';catalog=[];lyrics=[];recordings=[];saved=[];songId='';clearAudio();}
     db=firebase.firestore();user=u;
     return db.collection('vmm_admins').doc(u.uid).get({source:navigator.onLine?'server':'cache'}).then(function(s){
       if(!s.exists||!s.data()||s.data().enabled!==true)throw new Error('Нет подтверждённых прав владельца.');
@@ -187,7 +187,7 @@
       return Promise.all([getDocs('vmm_catalog').catch(function(){return [];}),getDocs('vmm_lyrics').catch(function(){return [];}),getDocs('vmm_recordings').catch(function(){return [];}),window.VMM_OFFLINE?readCache():Promise.resolve()]);
     }).then(function(result){
       var current=songId;
-      catalog=unique(result[0].concat(catalog),'id'===null?function(x){return x.id;}:function(x){return x.id;});
+      catalog=unique(result[0].concat(catalog),function(x){return x.id;});
       lyrics=result[1];
       recordings=unique(result[2].filter(function(x){return x.driveFileId&&x.catalogId;}).concat(recordings),function(x){return x.driveFileId;});
       catalog.sort(function(a,b){return clean(a.title).localeCompare(clean(b.title),'ru');});
@@ -273,7 +273,7 @@
         var chunk=file.slice(start,end,mime);
         return fetch(url,{
           method:'PUT',
-          headers:{'Content-Type':mime,'Content-Range':'bytes '+start+'-'+(end-1)+'/'+file.size},
+          headers:{'Authorization':'Bearer '+driveToken,'Content-Type':mime,'Content-Range':'bytes '+start+'-'+(end-1)+'/'+file.size},
           body:chunk
         }).then(function(resp){
           if(resp.status===308){
@@ -352,7 +352,9 @@
   function shareDownload(blob,r){
     var name=clean(r.filename)||'audio.mp3',file;
     try{file=new File([blob],name,{type:r.mimeType||'audio/mpeg'});}catch(ignore){file=null;}
-    if(file&&navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+    var canShare=false;
+    try{canShare=!!(file&&navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}));}catch(ignore){}
+    if(canShare){
       return navigator.share({files:[file],title:r.title}).catch(function(err){if(err.name!=='AbortError')msg('Передача файла: '+err.message);});
     }
     var url=URL.createObjectURL(blob),link=document.createElement('a');
@@ -412,5 +414,6 @@
     var input=e.target,attr=input&&input.getAttribute('data-r-offline');
     if(attr){var r=record(attr);if(r)offlineOn(r,!!input.checked);}
   }
-  window.VMM_RECORDINGS={open:open,hide:hide,translit:translit,filename:filename};
+  function reset(){hide();clearAudio();driveToken='';driveFolderId='';db=null;user=null;catalog=[];lyrics=[];recordings=[];saved=[];songId='';audioFileId='';busy=false;}
+  window.VMM_RECORDINGS={open:open,hide:hide,reset:reset,translit:translit,filename:filename};
 }());
