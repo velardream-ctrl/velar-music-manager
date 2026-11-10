@@ -25,6 +25,7 @@
   function el(tag, props) { var n=document.createElement(tag);Object.keys(props||{}).forEach(function(k){n.setAttribute(k,props[k]);});return n; }
   function show(n, yes) {if(!n)return;n.className=n.className.replace(/\s*hidden\b/g,'')+(yes?'':' hidden');}
   function tell(s) {var node=id('vmm-w-status');if(node) node.textContent=s||''; }
+  function refocus(){var e=id('vmm-search');if(!e)return;e.focus();try{var p=e.value.length;e.setSelectionRange(p,p);}catch(ignore){}}
   function ts(){return firebase.firestore.FieldValue.serverTimestamp();}
   function authenticated(fn) {
     if (!id('workspace') || id('workspace').className.indexOf('hidden') !== -1) {pane.innerHTML='<p>Необходим вход владельца.</p>';return;}
@@ -148,7 +149,7 @@
         return '<div class="vmm-proposal"><div><strong>'+esc(x.title)+'</strong><small>'+esc(platforms[x.platform]||x.platform)+' · '+esc(x.status)+'</small>'+linkButton(x.url,'Открыть для проверки')+'</div><div class="vmm-actions">'+(pending(x)?'<button data-act="approve" data-id="'+esc(x.id)+'">Подтвердить</button><button data-act="reject" data-id="'+esc(x.id)+'">Отклонить</button>':'')+'</div></div>';
       }).join('')+'</div><p id="vmm-w-status" class="sync-note">'+(items.length>150?'Показаны первые 150 результатов; уточни поиск.':'')+'</p>';
     id('vmm-mode').value=mode;
-    id('vmm-search').oninput=function(){filter=this.value;platformPage();};
+    id('vmm-search').oninput=function(){filter=this.value;platformPage();refocus();};
     id('vmm-mode').onchange=function(){mode=this.value;platformPage();};
   }
   function proposeById(identifier){for(var i=0;i<proposals.length;i++)if(proposals[i].id===identifier)return proposals[i];return null;}
@@ -214,7 +215,7 @@
     var q=tr(filter).toLowerCase(),a=auxiliary.filter(function(x){return JSON.stringify(x).toLowerCase().indexOf(q)>=0;});
     var title=labels[type],descr=type==='outreach'?'Создание и хранение черновиков. Автоматическая отправка выключена.':'Записи хранятся в защищённой базе владельца.';
     pane.innerHTML=heading(title,descr)+'<div class="vmm-filter"><input id="vmm-search" type="search" placeholder="Поиск по записям" value="'+esc(filter)+'"><button data-act="new-extra">+ Добавить</button></div><p class="sync-note">Всего записей: '+auxiliary.length+'</p><div class="vmm-rows">'+a.slice(0,150).map(function(x){return '<button data-act="edit-extra" data-id="'+esc(x.id)+'"><strong>'+esc(x.name||x.subject||x.title||x.platform||'(Без названия)')+'</strong><small>'+esc(x.organization||x.type||x.recipient||x.url||'Открыть для редактирования')+'</small></button>';}).join('')+'</div><p id="vmm-w-status" class="sync-note"></p>';
-    id('vmm-search').oninput=function(){filter=this.value;additionalPage(type);};
+    id('vmm-search').oninput=function(){filter=this.value;additionalPage(type);refocus();};
   }
   function extraEditor(type,identifier){
     var item=null;for(var i=0;i<auxiliary.length;i++)if(auxiliary[i].id===identifier)item=auxiliary[i];
@@ -255,7 +256,7 @@
     var q=tr(filter).toLowerCase(),items=auxiliary.filter(function(x){return [x.operation,x.subject,x.result,x.time].join(' ').toLowerCase().indexOf(q)>=0;});
     pane.innerHTML=heading('Журнал изменений','История сохраняется отдельно от каталога и текстов')+
       '<div class="vmm-filter"><input type="search" id="vmm-search" placeholder="Поиск события" value="'+esc(filter)+'"></div><p class="sync-note">Всего: '+auxiliary.length+'</p><div class="vmm-rows">'+items.slice(0,180).map(function(x){return '<div class="vmm-audit-line"><strong>'+esc(x.operation)+'</strong><small>'+esc(x.subject)+' · '+esc(x.result)+'</small></div>';}).join('')+'</div>';
-    id('vmm-search').oninput=function(){filter=this.value;auditPage();};
+    id('vmm-search').oninput=function(){filter=this.value;auditPage();refocus();};
   }
   function open(type) {
     if(!labels[type]||type==='lyrics')return;
