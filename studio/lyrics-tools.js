@@ -7,9 +7,9 @@
   if(!form||!body)return;
   var holder=document.createElement('section');
   holder.id='vmm-lyrics-tools';
-  holder.innerHTML='<div class="vmm-lyric-buttons"><button type="button" id="vmm-clean-suno">Очистить команды Suno</button><button type="button" id="vmm-show-a4">Лист A4 · две колонки</button></div><p id="vmm-lyric-note" class="sync-note">Исходный текст не изменяется без твоего подтверждения.</p><div id="vmm-clean-preview" class="hidden"><p>Проверь очищенный текст перед заменой. Слова вне квадратных скобок сохранены.</p><textarea id="vmm-clean-result" rows="8" readonly></textarea><div class="vmm-lyric-buttons"><button type="button" id="vmm-apply-clean">Применить очищенный текст</button><button type="button" id="vmm-cancel-clean">Отмена</button></div></div><div id="vmm-paper-preview" class="hidden"><p id="vmm-paper-status" class="sync-note"></p><div id="vmm-paper-stage"><iframe id="vmm-paper-frame" title="Предпросмотр листа A4"></iframe></div></div>';
+  holder.innerHTML='<div class="vmm-lyric-buttons"><button type="button" id="vmm-paste-text">Вставить из буфера</button><button type="button" id="vmm-clean-suno">Очистить Suno</button><button type="button" id="vmm-show-a4">Лист A4 · две колонки</button></div><p id="vmm-lyric-note" class="sync-note">Вставь текст с командами Suno в поле выше. Лист A4 создаётся автоматически; исходник не меняется до подтверждения очистки.</p><div id="vmm-clean-preview" class="hidden"><p>Сравни автоматически очищенный текст с оригиналом. Незнакомые команды в квадратных скобках сохранены для проверки.</p><textarea id="vmm-clean-result" rows="8" readonly></textarea><div class="vmm-lyric-buttons"><button type="button" id="vmm-apply-clean">Применить очищенный текст</button><button type="button" id="vmm-cancel-clean">Отмена</button></div></div><div id="vmm-paper-preview" class="hidden"><p id="vmm-paper-status" class="sync-note"></p><div id="vmm-paper-stage"><iframe id="vmm-paper-frame" title="Предпросмотр листа A4"></iframe></div><p class="sync-note">Печать: формат A4, две колонки, масштаб 100%, поля без дополнительных отступов и колонтитулов.</p></div>';
   body.parentNode.parentNode.insertBefore(holder,body.parentNode.nextSibling);
-  var cleanOriginal='',lastProof=null;
+  var cleanOriginal='',lastProof=null,renderTimer=null,renderSeq=0;
   function el(n){return document.getElementById(n);}
   function note(s){el('vmm-lyric-note').textContent=s;}
   function title(){return String(form.elements.title.value||'').trim();}
@@ -33,16 +33,24 @@
     if(/^(?:instrumental|interlude|solo|интерлюдия|проигрыш|музыкальный проигрыш)(?=$|[\s:—–(),.;-])/i.test(s))return 'Проигрыш';
     return '';
   }
-  function cleanSuno(input){
-    var count=0;var text=String(input||'').replace(/\r\n?/g,'\n');
-    text=text.replace(/\[([\s\S]*?)\]/g,function(all,cue){
-      count++;
-      var h=heading(cue);
-      return h?'\n**'+h+'**\n':'';
-    }).replace(/^\s*\[[^\]\n]*$/gm,'');
-    text=text.replace(/\n{4,}/g,'\n\n\n').trim();
-    return {text:text,removed:count};
+  function isMusicCue(cue){
+    var x=String(cue||'').trim();
+    return /^(?:instrumental|interlude|solo|guitar|piano|drums?|bass|saxophone|violin|synth|outro|intro|breakdown|break|fade|build|drop|riff|vocal(?:s)?|spoken|whisper|harmony|adlib|echo|reverb|music|beat|tempo|bpm|style|genre|mood|key|repeat|distorted|quiet|loud|soft|female|male|duet|choir|music\s+fades|проигрыш|инструментал|соло|голос|хор|ритм|темп|музыка)(?:$|[\s:,_;./!()—–-])/i.test(x);
   }
+  function cleanSuno(input){
+    var count=0,recognized=0;var text=String(input||'').replace(/\r\n?/g,'\n');
+    // Only replace standalone one-line tags. Inline brackets in actual lyrics
+    // and unknown cues must be preserved (a lyric should never be silently lost).
+    text=text.replace(/(^|\n)[ \t]*\[([^\]\r\n]{1,240})\][ \t]*(?=\n|$)/g,function(all,prefix,cue){
+      var h=heading(cue);
+      if(h){count++;recognized++;return prefix+'**'+h+'**';}
+      if(isMusicCue(cue)){count++;return prefix;}
+      return all;
+    });
+    text=text.replace(/\n{4,}/g,'\n\n\n').trim();
+    return {text:text,removed:count,headings:recognized};
+  }
+
   function printRows(text){
     var lines=String(text||'').replace(/\r\n?/g,'\n').split('\n'),parts=[],stanza=[];
     function flush(){if(stanza.length){parts.push('<div class="stanza">'+stanza.map(function(x){return esc(x);}).join('<br>')+'</div>');stanza=[];}}
@@ -59,7 +67,7 @@
   }
   function documentHTML(text,font,toolbar){
     var html='<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(title()||'Текст песни')+' — VELAR</title><style>'+
-      '@page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;background:#e0e0e0;color:#111;font-family:Arial,sans-serif}.sheet{width:210mm;height:297mm;padding:5mm;background:#fff;overflow:hidden;margin:0 auto}.top{text-align:center;margin:0 0 9px}.top h1{font:bold 19px/1.15 Arial;margin:0 0 4px}.top p{font:11px Arial;margin:0;color:#555}.words{height:calc(100% - 48px);overflow:hidden;column-count:2;column-gap:9mm;column-fill:auto;font:'+font+'px/1.28 Arial,sans-serif}.words h2{font:bold 1.04em Arial;margin:4px 0 4px;break-after:avoid;page-break-after:avoid}.words .stanza{margin:0 0 9px;break-inside:avoid;page-break-inside:avoid;white-space:normal;overflow-wrap:break-word}#toolbar{padding:10px;text-align:center;background:#18233b;color:#fff;font:14px Arial}#toolbar button{font:inherit;padding:10px 15px;border:0;background:#e2c68d;border-radius:7px}@media print{body{background:#fff}#toolbar{display:none}.sheet{margin:0;box-shadow:none}}'+
+      '@page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;background:#e0e0e0;color:#111;font-family:Arial,sans-serif}.sheet{width:210mm;height:297mm;padding:5mm;background:#fff;overflow:hidden;margin:0 auto}.top{text-align:center;margin:0 0 9px}.top h1{font:bold 19px/1.15 Arial;margin:0 0 4px}.top p{font:11px Arial;margin:0;color:#555}.words{height:calc(100% - 48px);overflow:hidden;column-count:2;column-gap:9mm;column-fill:balance;font:'+font+'px/1.28 Arial,sans-serif}.words h2{font:bold 1.04em Arial;margin:4px 0 4px;break-after:avoid;page-break-after:avoid}.words .stanza{margin:0 0 9px;break-inside:avoid;page-break-inside:avoid;white-space:normal;overflow-wrap:break-word}#toolbar{padding:10px;text-align:center;background:#18233b;color:#fff;font:14px Arial}#toolbar button{font:inherit;padding:10px 15px;border:0;background:#e2c68d;border-radius:7px}@media print{body{background:#fff}#toolbar{display:none}.sheet{margin:0;box-shadow:none}}'+
       '</style></head><body>'+(toolbar?'<div id="toolbar">Только текст песни · A4 · две колонки <button type="button" id="print-action">Печать / PDF</button></div>':'')+
       '<div class="sheet" id="sheet"><div class="top"><h1>'+esc(title()||'Текст песни')+'</h1><p>'+esc(lang()+(form.elements.version.value?' · '+form.elements.version.value:''))+'</p></div>'+
       '<div class="words" id="words">'+printRows(text)+'</div></div></body></html>';
