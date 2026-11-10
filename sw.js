@@ -5,13 +5,13 @@ var CACHE_NAME = CACHE_PREFIX + 'v7';
 /* Only private studio SOURCE FILES are cached. Never cache Firestore, Drive files,
    authenticated responses, user lyrics or audio through this Service Worker. */
 var STUDIO_PREFIX='velar-studio-shell-';
-var STUDIO_CACHE=STUDIO_PREFIX+'v3';
+var STUDIO_CACHE=STUDIO_PREFIX+'v4';
 var STUDIO_ASSETS=[
   './studio/','./studio/index.html','./studio/studio.css?v=5',
-  './studio/recordings.css?v=2','./studio/studio.js?v=4',
+  './studio/recordings.css?v=3','./studio/studio.js?v=4',
   './studio/import.js?v=1','./studio/workflows.js?v=3',
   './studio/lyrics-tools.js?v=4','./studio/print-export.js?v=1',
-  './studio/offline-repertoire.js?v=1','./studio/recordings.js?v=2',
+  './studio/offline-repertoire.js?v=1','./studio/recordings.js?v=3',
   './studio/firebase-config.js'
 ];
 var SDK_ASSETS=[
