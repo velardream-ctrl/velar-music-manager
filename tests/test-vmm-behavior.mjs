@@ -53,6 +53,10 @@ catalogRecord.links.yandexTrack=yandexSong;
 assert.equal(w.urlValue(catalogRecord,'yandex'),yandexSong,'new track link must use separate field');
 assert.equal(catalogRecord.links.yandex,yandexAlbum,'original album link must remain unchanged');
 assert.equal(w.millis({seconds:1700000000}),1700000000000);
+const legacySerial=46312.5;
+assert.equal(w.millis(String(legacySerial)),Date.UTC(1899,11,30)+Math.round(legacySerial*86400000));
+assert.match(w.formattedDate(String(legacySerial)),/^\d\d\.\d\d\.\d{4} 12:00$/);
+assert.ok(w.millis('46312')<2000000000000,'Five-digit Sheets serial must not become year 46312');
 assert.ok(w.formattedDate({seconds:1700000000}).length>0);
 
 const l=loadLyrics();
