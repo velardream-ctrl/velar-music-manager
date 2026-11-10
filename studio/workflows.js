@@ -131,11 +131,35 @@
   }
   function heading(title,sub){return '<div class="vmm-head"><div><p class="eyebrow">VELARDREAM · MUSIC MANAGER</p><h2>'+esc(title)+'</h2><p class="sync-note">'+esc(sub||'')+'</p></div><button class="btn-small" data-act="retry">↻ Обновить</button></div>';}
   function linkButton(u,text){return safeUrl(u)?'<a class="vmm-out" target="_blank" rel="noopener noreferrer" href="'+esc(u)+'">'+esc(text)+' ↗</a>':'<span class="muted">Не установлена</span>';}
+  function progressCard(label,filled,total,detail,kind){
+    var pct=total?Math.round(100*filled/total):0,missing=Math.max(0,total-filled);
+    return '<div class="vmm-progress-card '+esc(kind||'')+'">'+
+      '<span class="vmm-progress-title">'+esc(label)+'</span>'+
+      '<strong class="vmm-progress-count">'+filled+' <small>/ '+total+'</small></strong>'+
+      '<span class="vmm-progress-meta">'+esc(detail||('Не хватает: '+missing))+'</span>'+
+      '<div class="vmm-progress-line" role="progressbar" aria-label="'+esc(label)+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pct+'"><span style="width:'+pct+'%"></span></div>'+
+      '<div class="vmm-progress-percent">'+pct+'% <small>заполнено</small></div></div>';
+  }
   function overview() {
     if(!catalog.length){pane.innerHTML=heading('Обзор каталога','Данные доступны только владельцу')+'<div class="vmm-card"><h3>Каталог Firestore пока пуст</h3><p>Исходный Google Apps Script и резервная копия не затронуты. Если перенос ещё не выполнялся, открой безопасный импорт и проверь файл перед загрузкой.</p><button data-act="open-import">Открыть импорт данных</button></div>';return;}
     var m=metrics(),todo=catalog.filter(function(t){return !direct('spotify',urlValue(t,'spotify'))||!direct('appleMusic',urlValue(t,'appleMusic'))||!direct('youtube',urlValue(t,'youtube'));});
-    pane.innerHTML=heading('Обзор каталога','Живая статистика подтверждённых прямых ссылок')+'<div class="vmm-metrics"><div>Композиции<strong>'+m.total+'</strong></div><div>Apple Music<strong>'+m.appleMusic+'</strong></div><div>Spotify<strong>'+m.spotify+'</strong></div><div>YouTube<strong>'+m.youtube+'</strong></div></div><p class="sync-note">Полностью заполнены три площадки: '+m.all+' · требуют проверки: '+todo.length+'</p><h3>Приоритет — недостающие ссылки</h3><div class="vmm-rows">'+todo.slice(0,12).map(function(t){return '<button data-act="track" data-row="'+row(t.sourceRow)+'"><strong>'+esc(t.title)+'</strong><small>'+esc(t.artist)+' · '+flags(t)+'</small></button>';}).join('')+'</div>';
+    var totalSlots=m.total*3,doneSlots=m.spotify+m.appleMusic+m.youtube;
+    var overall=totalSlots?Math.round(100*doneSlots/totalSlots):0;
+    pane.innerHTML=heading('Обзор каталога','Статистика по прямым ссылкам на песни · Spotify, Apple Music, YouTube')+
+      '<div class="vmm-metrics vmm-metrics-progress">'+
+      progressCard('Всего релизов',m.total,m.total,'В музыкальном каталоге','releases')+
+      progressCard('Spotify',m.spotify,m.total,'Не хватает: '+(m.total-m.spotify),'spotify')+
+      progressCard('Apple Music',m.appleMusic,m.total,'Не хватает: '+(m.total-m.appleMusic),'apple')+
+      progressCard('YouTube',m.youtube,m.total,'Не хватает: '+(m.total-m.youtube),'youtube')+
+      '</div>'+
+      '<div class="vmm-card vmm-overall"><div class="vmm-overall-head"><h3>Общая готовность ссылок</h3><strong>'+overall+'%</strong></div>'+
+      '<p class="sync-note">'+doneSlots+' из '+totalSlots+' ссылок заполнено · '+(totalSlots-doneSlots)+' отсутствуют · релизов со всеми тремя площадками: '+m.all+' из '+m.total+'</p>'+
+      '<div class="vmm-progress-line vmm-total-progress" role="progressbar" aria-label="Общая готовность ссылок" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+overall+'"><span style="width:'+overall+'%"></span></div></div>'+
+      '<h3>Требуют проверки: '+todo.length+' композиций</h3>'+
+      '<div class="vmm-rows">'+todo.slice(0,12).map(function(t){return '<button data-act="track" data-row="'+row(t.sourceRow)+'"><strong>'+esc(t.title)+'</strong><small>'+esc(t.artist)+' · '+flags(t)+'</small></button>';}).join('')+'</div>'+
+      '<div class="vmm-actions"><button data-act="missing-catalog">Показать все недостающие ссылки</button></div>';
   }
+
   function catalogPage(){
     if(!catalog.length){pane.innerHTML=heading('Каталог релизов','Защищённая база данных')+'<div class="vmm-card"><h3>В Firebase пока нет композиций</h3><p>Для заполнения используй прежний файл импорта. Не создавай дубликаты вручную.</p><button data-act="open-import">Открыть безопасный импорт</button></div>';return;}
     var a=searchRows(),begin=page*30;if(begin>=a.length&&page>0){page=0;begin=0;}
@@ -345,6 +369,7 @@
     if(a==='retry')return open(current);
     if(a==='open-import'){var details=id('data-import');if(details){details.open=true;details.scrollIntoView();}return;}
     if(a==='catalog')return open('catalog');
+    if(a==='missing-catalog'){current='catalog';filter='';mode='missing';page=0;navActive('catalog');catalogPage();return;}
     if(a==='print-catalog')return printCatalog();
     if(a==='clear-selection'){chosen=Object.create(null);return catalogPage();}
     if(a==='prev'){page=Math.max(0,page-1);return catalogPage();}
