@@ -154,12 +154,12 @@
     body().focus();
   }
   function updateLoaded(id){
-    return Promise.all([db.collection('vmm_catalog').limit(1200).get(),db.collection('vmm_lyrics').limit(500).get()]).then(function(result){
-      catalog=[];result[0].forEach(function(doc){var d=doc.data();d.id=doc.id;catalog.push(d);});
+    return Promise.all([db.collection('vmm_catalog').limit(1200).get().catch(function(){return null;}),db.collection('vmm_lyrics').limit(500).get()]).then(function(result){
+      catalog=[];if(result[0])result[0].forEach(function(doc){var d=doc.data();d.id=doc.id;catalog.push(d);});
       lyrics=[];result[1].forEach(function(doc){var x=doc.data();x.id=doc.id;lyrics.push(x);});
       lyrics.sort(function(a,b){return name(a.title).localeCompare(name(b.title),'ru');});
       songOptions();
-      text(el('sync-status'),'Песен в каталоге: '+catalog.length+' · сохранено текстов: '+lyrics.length+(navigator.onLine?' · в сети':' · офлайн'));
+      text(el('sync-status'),(result[0]?'Песен в каталоге: '+catalog.length:'Каталог временно недоступен')+' · сохранено текстов: '+lyrics.length+(navigator.onLine?' · в сети':' · офлайн'));
       if(id){
         for(var i=0;i<lyrics.length;i++)if(lyrics[i].id===id){var song=songForLyric(lyrics[i]);if(song)songKey='catalog:'+song.id;else songKey='legacy:'+lyrics[i].id;break;}
         renderSongChoices();
