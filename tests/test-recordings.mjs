@@ -42,7 +42,7 @@ assert.match(code,/function reset\(\)/);
 assert.ok(!/localStorage|sessionStorage|apiKey\s*[:=]|BEGIN PRIVATE KEY/.test(code+offline),'No sensitive data or tokens in source/storage');
 assert.match(offline,/indexedDB\.open/);
 assert.match(offline,/blob:item\.blob/);
-assert.match(offline,/s\.uid===uid/);
+assert.match(offline,/v\.uid===uid/);
 assert.match(offline,/navigator\.storage\.persist/);
 assert.match(studio,/source:'cache'/);
 assert.match(studio,/VMM_RECORDINGS\.reset/);
