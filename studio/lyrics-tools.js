@@ -55,7 +55,7 @@
 
   function printRows(text){
     var lines=String(text||'').replace(/\r\n?/g,'\n').split('\n'),parts=[],stanza=[];
-    function flush(){if(stanza.length){parts.push('<div class="stanza">'+stanza.map(function(x){return esc(x);}).join('<br>')+'</div>');stanza=[];}}
+    function flush(){if(stanza.length){parts.push('<div class="stanza">'+stanza.map(function(x){return esc(x).replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');}).join('<br>')+'</div>');stanza=[];}}
     for(var i=0;i<lines.length;i++){
       var s=lines[i].trim(),head=null;
       if(!s){flush();continue;}
@@ -75,6 +75,26 @@
       '<div class="words" id="words">'+printRows(text)+'</div></div></body></html>';
     return html;
   }
+  var readerActive=false;
+  function renderReader(){
+    var source=cleanSuno(body.value).text;
+    el('vmm-performance-reader').innerHTML='<h3>'+esc(title()||'Текст песни')+'</h3><p class="vmm-reader-meta">'+esc(lang()+(version()?' · '+version():''))+'</p>'+printRows(source);
+  }
+  function toggleReader(forceOff){
+    readerActive=forceOff?false:!readerActive;
+    el('vmm-read-mode').textContent=readerActive?'Показать A4':'Читать крупно';
+    el('vmm-read-mode').setAttribute('aria-pressed',readerActive?'true':'false');
+    el('vmm-performance-reader').className=readerActive?'':'hidden';
+    if(readerActive){
+      el('vmm-paper-preview').className='hidden';
+      renderReader();
+      note('Режим сцены: увеличенный текст только для чтения. Сохранённые данные не меняются.');
+    }else{
+      el('vmm-paper-preview').className='';
+      schedulePreview();
+    }
+  }
+
   function frameFit(font){
     var doc=el('vmm-paper-frame').contentDocument;if(!doc)return false;
     var words=doc.getElementById('words'),sheet=doc.getElementById('sheet');if(!words||!sheet)return false;
@@ -116,6 +136,7 @@
     frame.srcdoc=documentHTML(parsed.text,15,false);
   }
   function recordLoaded(){
+    if(readerActive)toggleReader(true);
     lastInput=body.value;undoClean=null;
     var undo=el('vmm-undo-clean');if(undo)undo.className='hidden';
     var clean=el('vmm-clean-preview');if(clean)clean.className='hidden';
@@ -139,6 +160,7 @@
     lastProof=null;
     if(renderTimer)clearTimeout(renderTimer);
     if(el('vmm-paper-view').className.indexOf('hidden')!==-1)return;
+    if(readerActive){renderReader();return;}
     renderTimer=setTimeout(function(){
       renderTimer=null;
       if(form.className.indexOf('hidden')!==-1)return;
@@ -155,6 +177,7 @@
   }
   function print(e){
     if(e){e.preventDefault();e.stopImmediatePropagation();}
+    if(readerActive){toggleReader(true);note('Вернулись к листу A4. Проверь страницу и нажми «Печать / PDF» ещё раз.');return;}
     if(el('vmm-paper-view').className.indexOf('hidden')!==-1){
       el('lyric-view-paper').click();
       note('Лист A4 открыт. Проверь расположение текста, затем повторно нажми «Печать / PDF».');
@@ -215,7 +238,22 @@
     el('vmm-clean-preview').className='hidden';lastProof=null;schedulePreview();note('Очистка применена в редакторе. Проверь слова и нажми «Сохранить текст» только после сверки.');
   };
   el('vmm-cancel-clean').onclick=function(){el('vmm-clean-preview').className='hidden';note('Очистка отменена; исходный текст не изменён.');};
-  el('vmm-show-a4').onclick=preview;
+
+  el('vmm-read-mode').onclick=function(){toggleReader(false);};
+  function share(){
+    if(!body.value.trim())return note('Выбери песню с текстом перед отправкой.');
+    var cleaned=cleanSuno(body.value).text;
+    if(navigator.share){
+      navigator.share({title:title()||'Текст песни',text:cleaned}).catch(function(err){
+        if(!err||err.name!=='AbortError')note('Не удалось открыть меню передачи: '+(err&&err.message||'ошибка'));
+      });
+      return;
+    }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(cleaned).then(function(){note('Очищенный текст скопирован. Его можно вставить в письмо или сообщение.');}).catch(function(){note('Буфер недоступен. Выдели текст и скопируй вручную.');});
+    }else note('На этом устройстве системное меню «Поделиться» недоступно.');
+  }
+
   el('vmm-paste-text').onclick=function(){
     if(!navigator.clipboard||!navigator.clipboard.readText){
       note('Удерживай палец в поле текста и нажми «Вставить». Suno очистится автоматически.');body.focus();return;
@@ -244,6 +282,6 @@
 
 
   // Programmatic lyric selection does not fire input; the main editor calls this hook.
-  window.VMM_LYRICS_TOOLS={refreshPreview:schedulePreview,cleanSuno:cleanSuno,print:print,onRecordLoaded:recordLoaded};
+  window.VMM_LYRICS_TOOLS={refreshPreview:schedulePreview,cleanSuno:cleanSuno,print:print,share:share,onRecordLoaded:recordLoaded};
   window.addEventListener('resize',function(){if(el('vmm-paper-preview').className.indexOf('hidden')<0)resizePreview();});
 }());
