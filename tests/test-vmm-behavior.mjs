@@ -6,7 +6,7 @@ function stub(){return {className:'',textContent:'',style:{},firstChild:null,app
 function loadWorkflows(){
   const source=read('studio/workflows.js');
   assert.match(source,/\}\(\)\);\s*$/);
-  const altered=source.replace(/\}\(\)\);\s*$/,"window.__test={direct:direct,normalized:normalized,spotifyAlbum:spotifyAlbum,pending:pending};}());");
+  const altered=source.replace(/\}\(\)\);\s*$/,"window.__test={direct:direct,normalized:normalized,spotifyAlbum:spotifyAlbum,pending:pending,platformKey:platformKey,urlValue:urlValue,formattedDate:formattedDate,millis:millis};}());");
   const shell=stub(),side=stub();
   const doc={querySelector(x){if(x==='.workspace-content')return shell;if(x==='#workspace .sidebar')return side;return null;},querySelectorAll(){return [];},createElement(){return stub();},getElementById(){return null;}};
   const ctx={document:doc,window:{},Object,Array,Promise,String,Number,Math,parseInt,isFinite,encodeURIComponent};
@@ -40,6 +40,21 @@ assert.equal(w.normalized('appleMusic','https://music.apple.com/fi/album/x/123?i
 assert.notEqual(w.normalized('appleMusic','https://music.apple.com/fi/album/x/123?i=1234'),w.normalized('appleMusic','https://music.apple.com/fi/album/x/123?i=5678'));
 assert.ok(w.pending({status:'Ожидает подтверждения'}));
 assert.ok(!w.pending({status:'Подтверждено'}));
+
+assert.equal(w.platformKey('apple'),'appleMusic','legacy Apple proposals should map to canonical key');
+assert.equal(w.platformKey('spotify'),'spotify');
+const yandexAlbum='https://music.yandex.ru/album/123456';
+const yandexSong='https://music.yandex.ru/album/123456/track/654321';
+assert.ok(!w.direct('yandex',yandexAlbum),'Yandex albums should not be counted as confirmed tracks');
+assert.ok(w.direct('yandex',yandexSong));
+const catalogRecord={links:{yandex:yandexAlbum,spotify:'',appleMusic:''}};
+assert.equal(w.urlValue(catalogRecord,'yandex'),'','an album link should not masquerade as a track');
+catalogRecord.links.yandexTrack=yandexSong;
+assert.equal(w.urlValue(catalogRecord,'yandex'),yandexSong,'new track link must use separate field');
+assert.equal(catalogRecord.links.yandex,yandexAlbum,'original album link must remain unchanged');
+assert.equal(w.millis({seconds:1700000000}),1700000000000);
+assert.ok(w.formattedDate({seconds:1700000000}).length>0);
+
 const l=loadLyrics();
 assert.equal(l.heading('Verse 2: male vocal'),'Куплет 2');
 assert.equal(l.heading('Final Chorus'),'Финальный припев');
