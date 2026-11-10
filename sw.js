@@ -5,7 +5,7 @@ var CACHE_NAME = CACHE_PREFIX + 'v7';
 /* Only private studio SOURCE FILES are cached. Never cache Firestore, Drive files,
    authenticated responses, user lyrics or audio through this Service Worker. */
 var STUDIO_PREFIX='velar-studio-shell-';
-var STUDIO_CACHE=STUDIO_PREFIX+'v1';
+var STUDIO_CACHE=STUDIO_PREFIX+'v2';
 var STUDIO_ASSETS=[
   './studio/','./studio/index.html','./studio/studio.css?v=5',
   './studio/recordings.css?v=1','./studio/studio.js?v=4',
@@ -25,6 +25,10 @@ function allowStudioStatic(url){
   });
 }
 function allowFirebaseSdk(url){return SDK_ASSETS.indexOf(url)!==-1;}
+function studioNavigation(url){
+  var base=new URL('./studio/',self.registration.scope);
+  return url.origin===base.origin&&(url.pathname===base.pathname||url.pathname===base.pathname+'index.html');
+}
 var ASSETS = [
   './', './index.html', './app/', './app/index.html',
   './style.css', './style.css?v=7', './main.js', './manifest.webmanifest',
@@ -61,7 +65,7 @@ self.addEventListener('fetch', function (event) {
   var req = event.request;
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
-  if (allowStudioStatic(url.href) || allowFirebaseSdk(url.href)) {
+  if (allowStudioStatic(url.href) || allowFirebaseSdk(url.href) || studioNavigation(url)) {
     // Only exact allowlisted source URLs. Never cache Google Drive/Firestore
     // responses, authenticated APIs, dynamic data or uploaded audio.
     event.respondWith(caches.open(STUDIO_CACHE).then(function(cache){
@@ -69,7 +73,9 @@ self.addEventListener('fetch', function (event) {
         return fetch(req).then(function(response){
           if(response&&response.ok){var copy=response.clone();event.waitUntil(cache.put(req,copy));}
           return response;
-        }).catch(function(){return cache.match(req);});
+        }).catch(function(){return cache.match(req).then(function(found){
+          return found||cache.match(new URL('./studio/',self.registration.scope).href);
+        });});
       }
       return cache.match(req).then(function(found){
         return found||fetch(req).then(function(response){
