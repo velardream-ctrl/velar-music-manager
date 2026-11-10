@@ -7,7 +7,7 @@ const html=read('studio/index.html');
 const sw=read('sw.js');
 assert.ok(!source.includes('firebase.auth.GoogleAuthProvider.credentialFromResult'),'Firebase 8 must not call v9 helper');
 assert.match(source,/var cred=result&&result\.credential/);
-assert.match(source,/aria-controls=\\"vmm-r-results/);
+assert.match(source,/aria-controls="vmm-r-results/);
 assert.match(source,/function chooseSearchResult/);
 assert.match(source,/Найдено: /);
 assert.match(source,/errors\.push\('каталог:/);
