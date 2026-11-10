@@ -83,3 +83,16 @@
  #workspace.workspace{padding-bottom:104px}
  #workspace .workspace-content{padding-bottom:80px}
 }
+
+#vmm-workflows .vmm-catalog-row{display:flex;align-items:stretch;gap:0;background:#101c35;border-bottom:1px solid #ffffff15}
+#vmm-workflows .vmm-catalog-row .vmm-row-select{display:flex;align-items:center;gap:7px;flex:0 0 105px;padding:8px 10px;color:#b5c4dd;font-size:.78rem;white-space:nowrap;border-right:1px solid #ffffff1b}
+#vmm-workflows .vmm-catalog-row .vmm-row-select input{width:17px;height:17px;accent-color:#ecd29b}
+#vmm-workflows .vmm-catalog-row>button{display:flex;align-items:center;justify-content:space-between;flex:1;gap:10px;text-align:left;border-radius:0!important;background:transparent!important;color:#f6e8d5!important;padding:12px!important}
+#vmm-workflows .vmm-catalog-row>button:hover{background:#203154!important}
+#vmm-workflows .vmm-catalog-row>button strong{flex:1}
+@media(max-width:620px){
+ #vmm-workflows .vmm-catalog-row{flex-direction:column}
+ #vmm-workflows .vmm-catalog-row .vmm-row-select{border-right:0;border-bottom:1px solid #ffffff18;flex:0 0 auto}
+ #vmm-workflows .vmm-catalog-row>button{display:block}
+ #vmm-workflows .vmm-catalog-row>button strong,#vmm-workflows .vmm-catalog-row>button small{display:block}
+}
