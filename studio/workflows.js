@@ -403,8 +403,9 @@
   for(var i=0;i<nav.length;i++){
     nav[i].addEventListener('click',function(e){
       var type=this.getAttribute('data-panel');
-      if(type==='lyrics'){show(pane,false);return;}
-      if(labels[type]){e.preventDefault();e.stopImmediatePropagation();open(type);}
+      if(type==='lyrics'){show(pane,false);if(window.VMM_RECORDINGS)window.VMM_RECORDINGS.hide();return;}
+      if(type==='recordings'&&window.VMM_RECORDINGS){e.preventDefault();e.stopImmediatePropagation();window.VMM_RECORDINGS.open();return;}
+      if(labels[type]){if(window.VMM_RECORDINGS)window.VMM_RECORDINGS.hide();e.preventDefault();e.stopImmediatePropagation();open(type);}
     },true);
   }
 }());
