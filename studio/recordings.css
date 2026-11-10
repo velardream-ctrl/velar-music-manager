@@ -61,3 +61,9 @@
  .vmm-r-track-actions button{font-size:14px;padding:10px}
  .vmm-r-large .vmm-r-text-content{font-size:29px}
 }
+
+/* RUN-049: visible, touch-friendly results under the iPhone search field. */
+#vmm-r-results{display:flex;flex-direction:column;gap:6px;margin:0 0 4px}
+#vmm-r-results .sync-note{margin:4px 1px;font-size:.9rem;color:#d4c6a5}
+#vmm-repertoire .vmm-r-suggestion{display:block;min-height:48px;width:100%;box-sizing:border-box;text-align:left;white-space:normal;word-break:break-word;border:1px solid #65789a;border-radius:10px;padding:10px 14px;background:#243756;color:#fff8e8;font:inherit;font-size:16px;cursor:pointer}
+#vmm-repertoire .vmm-r-suggestion:focus,#vmm-repertoire .vmm-r-suggestion:active{background:#e8cc94;color:#14203b;outline:2px solid #e8cc94}
