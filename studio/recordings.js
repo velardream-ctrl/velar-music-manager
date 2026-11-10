@@ -224,8 +224,14 @@
   }
   function load(){
     msg('Открываем репертуар…');
+    var errors=[];
     return verify().then(function(){
-      return Promise.all([getDocs('vmm_catalog').catch(function(){return [];}),getDocs('vmm_lyrics').catch(function(){return [];}),getDocs('vmm_recordings').catch(function(){return [];}),window.VMM_OFFLINE?readCache():Promise.resolve()]);
+      return Promise.all([
+        getDocs('vmm_catalog').catch(function(e){errors.push('каталог: '+e.message);return [];}),
+        getDocs('vmm_lyrics').catch(function(e){errors.push('тексты: '+e.message);return [];}),
+        getDocs('vmm_recordings').catch(function(e){errors.push('фонограммы: '+e.message);return [];}),
+        window.VMM_OFFLINE?readCache().catch(function(e){errors.push('офлайн: '+e.message);}):Promise.resolve()
+      ]);
     }).then(function(result){
       var current=songId;
       catalog=unique(result[0].concat(catalog),function(x){return x.id;});
@@ -234,7 +240,9 @@
       catalog.sort(function(a,b){return clean(a.title).localeCompare(clean(b.title),'ru');});
       renderSongs();setSong(current);
       msg('Композиции: '+catalog.length+' · фонограммы: '+recordings.length+' · сохранено офлайн: '+saved.length+
-         (navigator.onLine?' · в сети':' · без интернета'));
+         (navigator.onLine?' · в сети':' · без интернета')+
+         (errors.length?' · Не удалось прочитать '+errors.join('; '):'')+
+         (!catalog.length?' · Каталог пуст: поиск пока невозможен.':'') );
       return db.collection('vmm_recordings').doc('__audio_settings').get().then(function(d){
         if(d.exists&&d.data())driveFolderId=String(d.data().folderId||'');
         renderFolder();
