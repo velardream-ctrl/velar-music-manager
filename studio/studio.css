@@ -78,3 +78,8 @@
 }
 @media(max-width:380px){#vmm-workflows .vmm-metrics{gap:6px}#vmm-workflows .vmm-metrics>div{padding:9px}#vmm-workflows .vmm-metrics strong{font-size:1.4rem}}
 @media print{#vmm-workflows,#workspace .sidebar{display:none!important}}
+
+@media(max-width:800px){
+ #workspace.workspace{padding-bottom:104px}
+ #workspace .workspace-content{padding-bottom:80px}
+}
