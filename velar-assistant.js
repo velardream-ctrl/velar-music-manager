@@ -141,7 +141,7 @@
    }
    var suggested=window.VELAR_FAQ&&window.VELAR_FAQ.answer(q,data,settings);
    if(suggested)return suggested;
-   if(contains(q,'оператор,свяжи с автором,человек,сотрудничество,сотрудничать,певец,певица,артист для песни,выступление,выступить,концерт,предложение,коллаборация,контакт,почта,написать автору')){
+   if(contains(q,'оператор,поговорить с оператором,свяжи с автором,человек,сотрудничество,сотрудничать,певец,певица,артист для песни,выступление,выступить,концерт,предложение,коллаборация,контакт,почта,написать автору')){
      return {text:replyText(settings,settings.contactEmail?'contactEnabled':'contactDisabled'),
        action:settings.contactEmail?'email':'link',target:settings.contactEmail?'':'#playlists',
        label:replyText(settings,settings.contactEmail?'contactEnabledButton':'contactDisabledButton')};
