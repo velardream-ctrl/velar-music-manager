@@ -80,7 +80,7 @@ assert.notEqual(snippet,rec,'Cannot test internal module, export point changed')
 vm.runInNewContext(snippet,{window,document,Promise,console,Math,Date,Number,String,Array,Object,Error,navigator:{onLine:true}},{timeout:1000});
 const t=window.VMM_RECORDINGS._test;
 t.header();
-elems['vmm-r-text-wrapper'].className='hidden';
+document.getElementById('vmm-r-text-wrapper').className='hidden';
 t.set([{id:'1',title:'Дикая вишня',artist:'Velar'}],
  [{fileId:'drive-1',catalogId:'1',title:'Дикая вишня',variant:'Минусовка',filename:'dikaya_vishnya.flac',size:35000000}]);
 t.renderOfflineList();
