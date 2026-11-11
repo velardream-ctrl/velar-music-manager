@@ -533,7 +533,7 @@
    }
    search.oninput=searchSongs;choices.onchange=updateSources;searchSongs();
    wrap.appendChild(button('+ Выбрать релиз',function(){
-     var row=songs[Number(choices.value)],provider=sources.value;
+     var row=songs[Number(choices.value)],provider=sources.value||(sources.children[0]&&sources.children[0].value)||'';
      if(!row){info('Нет подходящей песни с прямой ссылкой.');return;}
      if(data.releases.cards.length>=12){info('На главной максимум 12 релизов.');return;}
      var url=provider==='spotify'?row.spotify:row.youtube;
