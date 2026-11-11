@@ -157,6 +157,8 @@ function tickOne(){
 function tickAll(){
  let n=0;while(scheduled.size){assert.ok(n++<650,'Typing is not bounded');tickOne();}
 }
+config.genres.assistant.quickTopics=[{label:'Любовь',query:'любовь'}];
+deviceWindow.VELAR_ASSISTANT.render(config);
 const control=host.querySelector('.velar-assistant-launch');
 control.onclick();
 const conversation=host.querySelector('.velar-assistant-log');
