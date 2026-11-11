@@ -56,7 +56,7 @@
     // Never allow private Google Drive links or arbitrary Cloud Storage URLs.
     if(/^https:\/\/firebasestorage\.googleapis\.com\//i.test(s)){
       if(!/^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/velardream-records-studio\.firebasestorage\.app\/o\/public%2fartist-avatars%2f[a-z0-9-]{1,80}%2f[0-9]{13}-[a-f0-9]{16}\.(?:webp|jpg)\?alt=media&token=[a-z0-9_-]+$/i.test(s))
-        throw new Error(label+': разрешён только опубликованный портрет VELARDREAM.');
+        throw new Error(label+': приватные ссылки Storage запрещены; разрешён только опубликованный портрет VELARDREAM.');
       return s;
     }
     return url(s,label);
