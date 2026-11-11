@@ -1,0 +1,118 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const schemaSrc=read('landing-schema.js'),publicSrc=read('landing-public.js');
+const html=read('index.html'),css=read('style.css');
+const editor=read('studio/landing-editor.js'),studio=read('studio/studio.js');
+const workflows=read('studio/workflows.js'),sw=read('sw.js');
+const w={};vm.runInNewContext(schemaSrc,{window:w,Array,String,Object,JSON,Number,Error},{timeout:1000});
+const api=w.VMM_LANDING_SCHEMA;
+assert.equal(api.songUrl('https://open.spotify.com/track/0123456789ABCDEFGHIJKL?si=test','spotify'),
+  'https://open.spotify.com/track/0123456789ABCDEFGHIJKL');
+assert.equal(api.songUrl('https://youtu.be/ABCDEFGHIjk?t=30','youtube'),
+  'https://www.youtube.com/watch?v=ABCDEFGHIjk');
+assert.equal(api.songUrl('https://www.youtube.com/watch?feature=share&v=ABCDEFGHIjk','youtube'),
+  'https://www.youtube.com/watch?v=ABCDEFGHIjk');
+for(const invalid of ['https://open.spotify.com/artist/0123456789ABCDEFGHIJKL',
+  'https://open.spotify.com/album/0123456789ABCDEFGHIJKL',
+  'https://drive.google.com/file/d/private',
+  'javascript:alert(1)','https://attacker.example/track/0123456789ABCDEFGHIJKL']){
+  assert.equal(api.songUrl(invalid,'spotify'),'');
+}
+assert.equal(api.songUrl('https://www.youtube.com/@djvelar','youtube'),'');
+const original=api.defaults();
+const s1={title:'Белая берёза',provider:'spotify',url:'https://open.spotify.com/track/0123456789ABCDEFGHIJKL'};
+const s2={title:'Журавли',provider:'youtube',url:'https://youtu.be/ABCDEFGHIjk'};
+const profile={title:'DJ Velar',artistId:'velar',visible:true,imageShape:'square',imageData:'',
+  imageUrl:'https://example.com/velar.jpg',featuredTracks:[s1,s2]};
+const other={title:'Илья Дмитриев',artistId:'ilya-dmitriev',visible:true,
+  imageUrl:'https://example.com/ilya.jpg',featuredTracks:[s2]};
+const page=api.normalize({...original,artists:{...original.artists,cards:[profile,other]}});
+assert.equal(page.artists.cards[0].featuredTracks.length,2);
+assert.equal(page.artists.cards[0].featuredTracks[1].url,'https://www.youtube.com/watch?v=ABCDEFGHIjk');
+assert.deepEqual(Object.keys(page.artists.cards[0].featuredTracks[0]),['title','provider','url']);
+assert.doesNotMatch(JSON.stringify(page),/privateRecording|sourceRow|accessToken/);
+const invalid=(track)=>api.normalize({...original,artists:{...original.artists,cards:[{...profile,featuredTracks:[track]}]}});
+assert.throws(()=>invalid({...s1,url:'https://open.spotify.com/artist/0123456789ABCDEFGHIJKL'}),/прямая ссылка/);
+assert.throws(()=>invalid({...s1,provider:'vk'}),/Spotify или YouTube/);
+assert.throws(()=>invalid({...s1,title:''}),/обязательно/);
+assert.throws(()=>api.normalize({...original,artists:{...original.artists,cards:[
+  {...profile,featuredTracks:[s1,s1]}
+]}}),/повторов/);
+assert.throws(()=>api.normalize({...original,artists:{...original.artists,cards:[
+  {...profile,featuredTracks:[s1,s2,s1,s2]}
+]}}),/не более трёх/);
+assert.deepEqual(Array.from(api.normalize({...original,artists:{...original.artists,cards:[{
+  ...profile,featuredTracks:undefined
+}]}}).artists.cards[0].featuredTracks),[]);
+const elements={};
+function el(tag='div'){
+ const node={tagName:tag,children:[],className:'',textContent:'',attributes:{},style:{},
+  appendChild(child){this.children.push(child);return child;},
+  removeChild(child){this.children.splice(this.children.indexOf(child),1);},
+  get firstChild(){return this.children[0]||null;},
+  setAttribute(name,value){this.attributes[name]=value;},
+  getAttribute(name){return this.attributes[name];},
+  set innerHTML(value){this._innerHTML=value;this.children=[];},
+  get innerHTML(){return this._innerHTML||'';}
+ };
+ return node;
+}
+const ids=['public-hero-subtitle','public-hero-intro','artists-title','public-artists-intro',
+ 'releases-title','public-releases-intro','genres-title','public-genres-intro','about-title',
+ 'public-about-intro','public-about-notice','public-genres-tags','public-artists-cards',
+ 'public-releases-cards'];
+for(const id of ids)elements[id]=el();
+elements['public-artists-cards'].innerHTML='<p>СКОРО</p>';
+elements['public-artists-cards'].className='feature feature-artists';
+const document={readyState:'complete',getElementById:id=>elements[id]||null,createElement:el};
+let listener=null;
+const firebase={apps:[{}],firestore(){return {collection(){return {doc(){return {
+ onSnapshot(fn){listener=fn;}
+};}};}};}};
+w.firebase=firebase;w.VELAR_FIREBASE_CONFIG={projectId:'test'};
+vm.runInNewContext(publicSrc,{window:w,document,firebase,Array,Object,String,Error},{timeout:1000});
+assert.equal(typeof listener,'function');
+listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:page})});
+const host=elements['public-artists-cards'];
+assert.equal(host.className,'cms-artist-stories');
+assert.equal(host.children.length,2);
+const first=host.children[0];
+assert.equal(first.children[0].tagName,'article');
+assert.match(first.children[1].className,/cms-music-panel/);
+assert.match(host.children[1].className,/cms-artist-story--reverse/);
+const panel=first.children[1],list=panel.children[1],player=panel.children[2];
+assert.equal(list.children.length,2);
+assert.equal(player.children[0].className,'cms-music-hint');
+list.children[0].onclick();
+assert.equal(player.children[0].tagName,'iframe');
+assert.equal(player.children[0].src,'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
+assert.match(player.children[0].attributes.allow,/encrypted-media/);
+assert.equal(player.children[0].loading,'lazy');
+assert.equal(player.children[1].href,s1.url);
+assert.equal(list.children[0].attributes['aria-pressed'],'true');
+list.children[1].onclick();
+assert.equal(player.children.length,2,'One official iframe at a time, no duplicate audio players');
+assert.equal(player.children[0].src,'https://www.youtube-nocookie.com/embed/ABCDEFGHIjk');
+assert.equal(list.children[0].attributes['aria-pressed'],'false');
+assert.equal(list.children[1].attributes['aria-pressed'],'true');
+const plain=api.normalize({...original,artists:{...original.artists,cards:[
+ {...profile,featuredTracks:[]},{...other,featuredTracks:[]}
+]}});
+listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:plain})});
+assert.match(host.className,/cms-artist-tiles/);
+assert.equal(host.children[0].tagName,'article');
+assert.match(css,/#artists\.showcase\{display:block/);
+assert.match(css,/cms-artist-story--reverse/);
+assert.match(css,/@media\(max-width:800px\)/);
+assert.match(editor,/function artistMusicControls/);
+assert.match(editor,/effective\(t,trackLinks\.overrides\)/);
+assert.match(editor,/selected\.length>=3/);
+assert.match(editor,/markChanged\(\)/);
+assert.match(studio,/show\(el\('vmm-workflows'\),false\)/);
+assert.match(workflows,/show\(id\('panel-landing'\),false\)/);
+assert.match(html,/style\.css\?v=12/);
+assert.match(html,/landing-public\.js\?v=4/);
+assert.match(sw,/CACHE_PREFIX \+ 'v12'/);
+console.log('PASS: RUN-067 curated song schema, safe official embeds, alternating desktop/mobile gallery, no Overview below landing CMS');
