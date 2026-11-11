@@ -41,6 +41,7 @@
       <a href="#releases">Релизы</a>
       <a href="#playlists">Плейлисты</a>
       <a href="#genres">Жанры</a>
+      <a href="#languages">Языки</a>
       <a href="#about">О проекте</a>
     </nav>
   </header>
@@ -164,14 +165,37 @@
       <section id="universe" class="universe-section" aria-labelledby="universe-title">
         <p class="universe-overline">VELARDREAM / EXPLORE THE SOUND</p>
         <h2 id="universe-title">Вселенная, которую можно услышать</h2>
-        <p class="universe-intro">Исследуйте созвездия артистов, клипов и релизов. Каждое движение открывает новый маршрут к музыке.</p>
+        <p class="universe-intro" id="universe-intro">Исследуйте созвездия артистов, клипов и релизов. Каждое движение открывает новый маршрут к музыке.</p>
         <button type="button" id="velar-universe-toggle" class="universe-toggle"
           aria-expanded="false" aria-controls="velar-universe-panel">Исследовать вселенную</button>
         <div id="velar-universe-panel" class="universe-panel hidden">
           <div class="universe-scene" aria-label="Интерактивная карта разделов">
+            <div class="universe-orbit-controls" aria-label="Повернуть созвездия">
+              <button type="button" id="universe-orbit-left" aria-label="Повернуть созвездия влево">←</button>
+              <span>КОСМИЧЕСКАЯ НАВИГАЦИЯ</span>
+              <button type="button" id="universe-orbit-right" aria-label="Повернуть созвездия вправо">→</button>
+            </div>
             <div id="velar-universe-stage" class="universe-stage"></div>
           </div>
           <div id="velar-universe-details" class="universe-details" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- RUN-072: language groups are published from the existing approved landing
+           document. The official logo crystal is reused, with no video or audio preload. -->
+      <section id="languages" class="languages-section" aria-labelledby="languages-title">
+        <p class="universe-overline">VELARDREAM / THE UNIVERSE OF LANGUAGES</p>
+        <h2 id="languages-title">Музыка на языках Вселенной</h2>
+        <p class="languages-intro" id="languages-intro">Реальные и вымышленные языки — музыкальные миры, которые можно исследовать.</p>
+        <div class="language-cosmos">
+          <div class="language-cosmos-core" aria-hidden="true">
+            <span class="language-cosmos-glow"></span>
+            <img src="assets/velardream-symbol.svg" width="100" height="180" alt="" loading="lazy" decoding="async">
+          </div>
+          <div id="public-language-orbit" class="language-orbit" role="group" aria-label="Выбор языка песни"></div>
+        </div>
+        <div id="public-language-detail" class="language-detail" aria-live="polite">
+          <p>Выберите язык — здесь откроется подборка его песен.</p>
         </div>
       </section>
 
