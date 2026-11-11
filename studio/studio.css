@@ -510,3 +510,28 @@ body.vmm-print-open{overflow:hidden}
  background:#11203a;color:#f4e3c8;font-size:16px;
 }
 #panel-landing .landing-language-editor{margin-top:18px}
+
+
+/* RUN-073: accessible batch tag assignment on old Samsung/iOS12. */
+#panel-landing .landing-topic-catalog-row{
+ display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0;
+ padding:8px 10px;margin:6px 0;background:#132947;border:1px solid #938775;
+ border-radius:10px;
+}
+#panel-landing .landing-topic-catalog-row .landing-checkbox{
+ display:flex;flex:1 1 220px;align-items:center;gap:9px;min-width:0;
+ overflow-wrap:anywhere;font-size:.91rem;
+}
+#panel-landing .landing-topic-catalog-row .landing-checkbox input{
+ width:22px;height:22px;flex:0 0 22px;accent-color:#e9c98f;
+}
+#panel-landing .landing-topic-catalog-row select{
+ width:auto;flex:0 0 135px;min-width:118px;min-height:44px;
+ font-size:16px;margin:0;
+}
+#panel-landing .landing-topic-editor{margin-top:19px}
+@media(max-width:480px){
+ #panel-landing .landing-topic-catalog-row select{
+   flex:1 0 100%;max-width:none;width:100%;
+ }
+}

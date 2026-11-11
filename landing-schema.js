@@ -12,7 +12,8 @@
       {id:'playlists',label:'Плейлисты',description:'Авторские музыкальные подборки',target:'playlists',visible:true},
       {id:'genres',label:'Жанры',description:'От оперы и этно до современного звука',target:'genres',visible:true},
       {id:'radio',label:'VELAR RADIO',description:'Официальный плейлист по выбору слушателя',target:'playlists',visible:true},
-      {id:'languages',label:'Миры языков',description:'Реальные и вымышленные языки моих песен',target:'languages',visible:true}
+      {id:'languages',label:'Миры языков',description:'Реальные и вымышленные языки моих песен',target:'languages',visible:true},
+      {id:'topics',label:'Миры чувств',description:'Любовь, свадьба, космос и другие темы песен',target:'topics',visible:true}
     ];
   }
   function defaultLanguages(){
@@ -27,6 +28,36 @@
       ['ur','Урду',false],['beaver','Бобриный язык',true],
       ['alien','Инопланетный язык',true]
     ].map(function(item){return {code:item[0],label:item[1],fictional:item[2],visible:true,tracks:[]};});
+  }
+  function defaultTopics(){
+    // These are editorial themes, NOT claims that a specific song is about
+    // any of them. Owner approval is required for every track association.
+    return [
+      ['love','Любовь','Песни о любви и близости'],
+      ['wedding','Свадьба','Свадебные песни и музыка для торжества'],
+      ['loyalty','Верность','Верность, доверие и преданность'],
+      ['jealousy','Ревность','Ревность, сомнения и сложные чувства'],
+      ['faith','Вера и религия','Духовные мотивы, вера и размышления'],
+      ['space','Космос','Звёзды, вселенная и далёкие миры'],
+      ['sadness','Грусть','Грустные песни, размышления и воспоминания'],
+      ['humor','Юмор','Смешные и ироничные песни'],
+      ['happiness','Счастье','Радость жизни и счастливые мгновения'],
+      ['friendship','Дружба','Дружба и человеческие отношения'],
+      ['family','Семья','Семейные чувства и тепло дома'],
+      ['children','Дети','Песни о детях и детстве'],
+      ['mother','Мама','Песни о матери и материнской любви'],
+      ['homeland','Родина','Малая родина, родные места и память'],
+      ['nature','Природа','Леса, озёра, животные и времена года'],
+      ['dreams','Мечты','Мечты, фантазия и вдохновение'],
+      ['hope','Надежда','Надежда и светлое будущее'],
+      ['separation','Расставание','Прощание, потеря и разлука'],
+      ['nostalgia','Ностальгия','Воспоминания о прошлом'],
+      ['celebration','Праздник','Музыка для праздников'],
+      ['dance','Танцы','Танцевальные песни и ритмы'],
+      ['journey','Путешествия','Дороги, путешествия и открытия']
+    ].map(function(row){
+      return {slug:row[0],label:row[1],description:row[2],visible:true,tracks:[]};
+    });
   }
   function defaults(){
     return {
@@ -58,7 +89,10 @@
           nodes:defaultUniverseNodes()},
         languages:{heading:'Музыка на языках Вселенной',
           intro:'От знакомых голосов мира до придуманных языков. Выберите язык, чтобы увидеть подтверждённые песни на нём.',
-          entries:defaultLanguages()}
+          entries:defaultLanguages()},
+        topics:{heading:'Созвездия чувств и историй',
+          intro:'Откройте музыку по теме: от свадебных песен и любви до космоса, юмора и светлой грусти.',
+          entries:defaultTopics()}
       },
       about:{
         heading:'VELARDREAM RECORDS',
@@ -215,7 +249,7 @@
     var nodes=typeof item.nodes==='undefined'?def.nodes:item.nodes;
     if(!Array.isArray(nodes)||nodes.length>12)throw new Error('Созвездия: максимум 12 меню.');
     var used={},allowed={artists:true,releases:true,playlists:true,genres:true,
-      languages:true,about:true,radio:true};
+      languages:true,topics:true,about:true,radio:true};
     var cleaned=nodes.map(function(n,i){
       if(!n||typeof n!=='object'||Array.isArray(n))throw new Error('Созвездие '+(i+1)+': неверный объект.');
       var ident=plain(n.id||'','Код созвездия '+(i+1),30,true).toLowerCase();
@@ -271,6 +305,38 @@
       'Языковые миры — заголовок',160,true),
       intro:plain(typeof item.intro==='string'?item.intro:def.intro,
       'Языковые миры — описание',450,true),entries:results};
+  }
+  function topicsConfig(raw,def){
+    var x=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+    var topics=typeof x.entries==='undefined'?def.entries:x.entries;
+    if(!Array.isArray(topics)||topics.length>60)
+      throw new Error('Темы песен: максимум 60 тематических миров.');
+    var seen={};
+    var result=topics.map(function(topic,i){
+      if(!topic||typeof topic!=='object'||Array.isArray(topic))
+        throw new Error('Тема '+(i+1)+': требуется объект.');
+      var slug=plain(topic.slug||'','Код темы '+(i+1),35,true).toLowerCase();
+      if(!/^[a-z0-9-]{2,35}$/.test(slug)||seen[slug])
+        throw new Error('Тема: уникальный код латиницей, цифрами или дефисом.');
+      seen[slug]=true;
+      var label=plain(topic.label||'','Название темы '+(i+1),70,topic.visible===true);
+      var description=plain(topic.description||'','Описание темы '+(i+1),350,false);
+      var tracks=typeof topic.tracks==='undefined'?[]:topic.tracks;
+      if(!Array.isArray(tracks)||tracks.length>300)
+        throw new Error('Тема '+slug+': максимум 300 песен.');
+      var used={};
+      var chosen=tracks.map(function(t,j){
+        var mapped=languageTrack(t,j+1); // same strict official whitelist
+        if(used[mapped.url])throw new Error('Тема '+slug+': дублирование песни.');
+        used[mapped.url]=true;return mapped;
+      });
+      return {slug:slug,label:label,description:description,
+        visible:topic.visible===true,tracks:chosen};
+    });
+    return {heading:plain(typeof x.heading==='string'?x.heading:def.heading,
+      'Заголовок тематических миров',160,true),
+      intro:plain(typeof x.intro==='string'?x.intro:def.intro,
+      'Описание тематических миров',450,true),entries:result};
   }
   function card(x,type,index){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Карточка '+index+': неверный формат.');
@@ -357,6 +423,7 @@
     result.genres.tags=tags.map(function(tag,i){return plain(tag,'Жанр '+(i+1),35,true);});
     result.genres.universe=universeConfig(genres.universe,d.genres.universe);
     result.genres.languages=languagesConfig(genres.languages,d.genres.languages);
+    result.genres.topics=topicsConfig(genres.topics,d.genres.topics);
     result.about.notice=plain(typeof about.notice==='string'?about.notice:d.about.notice,'О проекте — объявление',600,false);
     if(JSON.stringify(result).length>780000)throw new Error('Изображений слишком много: уменьшай фотографии или используй меньше карточек (ограничение размера страницы).');
     return result;
@@ -367,5 +434,6 @@
     releaseMediaUrl:releaseMediaUrl,playlistUrl:playlistUrl,radioConfig:radioConfig,
     subscriptionUrl:subscriptionUrl,playlistCard:playlistCard,subscriptionCard:subscriptionCard,
     universeConfig:universeConfig,languagesConfig:languagesConfig,
-    defaultUniverseNodes:defaultUniverseNodes,defaultLanguages:defaultLanguages};
+    defaultUniverseNodes:defaultUniverseNodes,defaultLanguages:defaultLanguages,
+    defaultTopics:defaultTopics,topicsConfig:topicsConfig};
 }());

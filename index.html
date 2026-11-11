@@ -19,15 +19,16 @@
   <link rel="apple-touch-icon" href="assets/velardream-app-icon-192.png">
   <link rel="preload" href="assets/velardream-crystal.png" as="image">
   <style>html{background:#0a1023}body{margin:0;background:#0a1023;color:#f6f2ee;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}.public-site{background:radial-gradient(ellipse at 52% 7%,#1f2f54 0%,#101b38 26%,#0a1023 62%)}.hero{min-height:660px;text-align:center}.art-wrap{width:100%;max-width:315px!important;margin:-8px auto 12px!important}.hero-mark{display:block;width:100%;height:auto}.hero-title{font-family:Georgia,"Times New Roman",serif;font-weight:400;color:#fff5e6}.brand-main,.brand-records{display:block}@media(max-width:740px){.art-wrap{max-width:215px!important;margin:-5px auto 12px!important}}@media(max-width:370px){.art-wrap{max-width:195px!important}}</style>
-  <link rel="stylesheet" href="style.css?v=16">
+  <link rel="stylesheet" href="style.css?v=17">
   <title>VELARDREAM RECORDS — артисты, релизы и музыка</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" defer></script>
   <script src="studio/firebase-config.js" defer></script>
-  <script src="landing-schema.js?v=6" defer></script>
-  <script src="landing-public.js?v=7" defer></script>
-  <script src="universe.js?v=3" defer></script>
+  <script src="landing-schema.js?v=7" defer></script>
+  <script src="landing-public.js?v=8" defer></script>
+  <script src="universe.js?v=4" defer></script>
   <script src="languages-public.js?v=1" defer></script>
+  <script src="topics-public.js?v=1" defer></script>
   <script src="living-art.js?v=1" defer></script>
   <script src="main.js" defer></script>
 </head>
@@ -43,6 +44,7 @@
       <a href="#playlists">Плейлисты</a>
       <a href="#genres">Жанры</a>
       <a href="#languages">Языки</a>
+      <a href="#topics">Темы песен</a>
       <a href="#about">О проекте</a>
     </nav>
   </header>
@@ -197,6 +199,28 @@
         </div>
         <div id="public-language-detail" class="language-detail" aria-live="polite">
           <p>Выберите язык — здесь откроется подборка его песен.</p>
+        </div>
+      </section>
+
+      <!-- RUN-073: curated topic planets with the existing crystal, no hidden media.
+           Search indexing deliberately remains disabled while the site is built. -->
+      <section id="topics" class="topics-section" aria-labelledby="topics-title">
+        <p class="universe-overline">VELARDREAM / CONSTELLATIONS OF FEELINGS</p>
+        <h2 id="topics-title">Созвездия чувств и историй</h2>
+        <p class="topics-intro" id="topics-intro">Откройте музыку по теме: любовь, свадьба, космос, юмор и другие музыкальные истории.</p>
+        <div class="topics-cosmos">
+          <div class="topics-cosmos-core" aria-hidden="true">
+            <span class="topics-cosmos-glow"></span>
+            <img src="assets/velardream-symbol.svg" width="100" height="180" alt="" loading="lazy" decoding="async">
+          </div>
+          <div id="public-topic-orbit" class="topics-orbit" role="group" aria-label="Тематические планеты песен"></div>
+        </div>
+        <h3 class="topics-cloud-title">Облако музыкальных тем</h3>
+        <div id="public-topic-cloud" class="topics-cloud" role="group" aria-label="Все темы и настроения">
+          <span>Любовь</span><span>Свадьба</span><span>Верность</span><span>Ревность</span><span>Вера и религия</span><span>Космос</span><span>Грусть</span><span>Юмор</span>
+        </div>
+        <div id="public-topic-detail" class="topic-detail" aria-live="polite">
+          <p>Выберите тему, чтобы открыть её песни.</p>
         </div>
       </section>
 

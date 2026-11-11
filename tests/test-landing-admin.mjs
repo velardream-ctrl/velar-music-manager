@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const schema=read('landing-schema.js'),choicesSrc=read('studio/artist-choices.js'),linksSrc=read('studio/artist-track-links.js'),source=read('studio/landing-editor.js'),studio=read('studio/studio.js');
-const nodes={},tabNames=['hero','artists','releases','playlists','universe','languages','genres','about','publish'];
+const nodes={},tabNames=['hero','artists','releases','playlists','universe','languages','topics','genres','about','publish'];
 function elem(tag='div'){
  const el={tagName:tag,type:'',value:'',textContent:'',className:'',disabled:false,checked:false,
    children:[],events:{},style:{},attributes:{},
@@ -200,11 +200,11 @@ assert.ok(addWorld);addWorld.onclick();
 assert.equal(api.isDirty(),true);
 get('landing-save').onclick();await flush();
 const newWorlds=records.get('vmm_public_drafts/landing').content.genres.universe.nodes;
-assert.equal(newWorlds.length,8);
-assert.equal(newWorlds[7].visible,false,'A new constellation must be hidden until curator approval');
-assert.equal(records.get('vmm_public_pages/landing').content.genres.universe.nodes.length,7);
-get('landing-publish').onclick();await flush();
+assert.equal(newWorlds.length,9);
+assert.equal(newWorlds[8].visible,false,'A new constellation must be hidden until curator approval');
 assert.equal(records.get('vmm_public_pages/landing').content.genres.universe.nodes.length,8);
+get('landing-publish').onclick();await flush();
+assert.equal(records.get('vmm_public_pages/landing').content.genres.universe.nodes.length,9);
 // Language-specific songs are manually selected from the owner-only catalog.
 nav[5].onclick();await flush();
 const english=traverse(get('landing-fields'),n=>n.tagName==='button'&&
@@ -232,6 +232,41 @@ languageDraft=records.get('vmm_public_drafts/landing').content.genres.languages.
 assert.equal(languageDraft.length,14);
 assert.equal(languageDraft[13].visible,false);
 assert.equal(records.get('vmm_public_pages/landing').content.genres.languages.entries.length,13);
+// RUN-073: attach one song to many topics using the same checkbox concept
+// as artist-track assignments, and verify draft remains private.
+nav[6].onclick();await flush();
+assert.equal(findInput('Название темы').value,'Любовь');
+const firstTopic=traverse(get('landing-fields'),n=>n.className==='landing-topic-catalog-row');
+assert.ok(firstTopic,'Catalog songs appear as selectable checkboxes for the chosen theme');
+const loveCheckbox=firstTopic.children[0].children[0];
+assert.equal(loveCheckbox.type,'checkbox');
+loveCheckbox.checked=true;loveCheckbox.onchange.call(loveCheckbox);
+assert.equal(api.isDirty(),true);
+let topicSave=traverse(get('landing-fields'),n=>n.textContent.indexOf('Свадьба · ')===0);
+assert.ok(topicSave);
+topicSave.onclick();
+assert.equal(findInput('Название темы').value,'Свадьба');
+const weddingRow=traverse(get('landing-fields'),n=>n.className==='landing-topic-catalog-row');
+assert.ok(weddingRow);
+weddingRow.children[0].children[0].checked=true;
+weddingRow.children[0].children[0].onchange.call(weddingRow.children[0].children[0]);
+get('landing-save').onclick();await flush();
+const topicsDraft=records.get('vmm_public_drafts/landing').content.genres.topics;
+assert.equal(topicsDraft.entries.find(x=>x.slug==='love').tracks.length,1);
+assert.equal(topicsDraft.entries.find(x=>x.slug==='wedding').tracks.length,1);
+assert.equal(topicsDraft.entries.find(x=>x.slug==='love').tracks[0].url,
+ topicsDraft.entries.find(x=>x.slug==='wedding').tracks[0].url,
+ 'One song must be assignable to multiple topics');
+assert.equal(records.get('vmm_public_pages/landing').content.genres.topics.entries.find(x=>x.slug==='wedding').tracks.length,0,
+ 'Tag assignments must not become public until explicitly published');
+get('landing-publish').onclick();await flush();
+assert.equal(records.get('vmm_public_pages/landing').content.genres.topics.entries.find(x=>x.slug==='wedding').tracks.length,1);
+const newTopic=traverse(get('landing-fields'),n=>n.textContent==='+ Добавить тему');
+assert.ok(newTopic);newTopic.onclick();
+get('landing-save').onclick();await flush();
+assert.equal(records.get('vmm_public_drafts/landing').content.genres.topics.entries.length,23);
+assert.equal(records.get('vmm_public_drafts/landing').content.genres.topics.entries[22].visible,false);
+assert.equal(records.get('vmm_public_pages/landing').content.genres.topics.entries.length,22);
 // Remote write must never be overwritten by stale admin tab.
 nav[0].onclick();
 findInput('Подзаголовок').input('Несохранённый локальный текст');
