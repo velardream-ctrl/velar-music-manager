@@ -140,10 +140,10 @@ assert.doesNotMatch(universeJS,/setInterval\(|setTimeout\(|getContext\(['"]webgl
 assert.doesNotMatch(publicJS,/autoplay=1|loop=1|muted=1|setInterval\(/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(css,/.cms-release-art::before/);
-assert.match(html,/universe\.js\?v=2/);
-assert.match(html,/style\.css\?v=15/);
-assert.match(sw,/CACHE_PREFIX \+ 'v15'/);
-assert.match(sw,/STUDIO_PREFIX\+'v19'/);
+assert.match(html,/universe\.js\?v=3/);
+assert.match(html,/style\.css\?v=16/);
+assert.match(sw,/CACHE_PREFIX \+ 'v16'/);
+assert.match(sw,/STUDIO_PREFIX\+'v20'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);
 console.log('PASS: RUN-069/070 safe releases, Spotify playlists, subscribers, opt-in radio, one active iframe and lazy 2.5D universe');
