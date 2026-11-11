@@ -9,7 +9,7 @@
   panel.className='panel hidden';
   shell.appendChild(panel);
   var db=null,user=null,driveToken='',driveFolderId='',busy=false,active=false,listenersAttached=false,suggestOpen=false;
-  var catalog=[],lyrics=[],recordings=[],saved=[],songId='',audioFileId='',audioURL='',mode='a4';
+  var catalog=[],lyrics=[],recordings=[],saved=[],songId='',audioFileId='',audioURL='',mode='a4',textVisible=false,uploadMessage='';
   var MAX=50*1024*1024,DRIVE_SCOPE='https://www.googleapis.com/auth/drive.file',FOLDER='VELARDREAM RECORDS - Фонограммы';
   function id(s){return document.getElementById(s);}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','&quot;':'&quot;',"'":'&#39;'}[c];});}
@@ -46,7 +46,8 @@
     panel.innerHTML=
       '<div class="vmm-r-heading"><div><p class="eyebrow">VELARDREAM · REPERTOIRE</p><h2>Фонограммы и тексты песен</h2><p class="sync-note">Каталог · плеер · A4 · крупный текст · офлайн</p></div>'+
       '<button type="button" id="vmm-r-connect" class="btn-small secondary">Подключить Google Drive</button></div>'+
-      '<p id="vmm-r-status" role="status" class="sync-note"></p>'+
+      '<p id="vmm-r-status" role="status" class="sync-note"></p>'+ 
+      '<div id="vmm-r-offline-list" class="vmm-r-offline-list" aria-label="Офлайн-подборка"></div>'+ 
       '<div class="vmm-r-pick"><label for="vmm-r-search">Найти композицию</label><input id="vmm-r-search" type="search" placeholder="Название песни или исполнитель" autocomplete="off" aria-controls="vmm-r-results">'+
       '<div id="vmm-r-results" class="vmm-r-results" role="status" aria-live="polite"></div>'+
       '<label for="vmm-r-song">Выбрать песню</label><select id="vmm-r-song"><option value="">Выбери песню…</option></select></div>'+
@@ -56,17 +57,19 @@
       '<label for="vmm-r-file" class="vmm-r-file-label">Загрузить MP3 или FLAC (до 50 МБ)</label><input id="vmm-r-file" type="file" accept=".mp3,.flac,audio/mpeg,audio/flac,audio/x-flac">'+
       '<p class="sync-note">Файл переименуется латиницей по названию песни и сохранится в твою закрытую папку Google Drive. Доступ к файлам остаётся личным.</p></div>'+
       '<div id="vmm-r-records" class="vmm-r-records"></div>'+
-      '<div class="vmm-r-player"><label for="vmm-r-audio">Прослушивание</label><audio id="vmm-r-audio" controls preload="none"></audio><p id="vmm-r-now" class="sync-note">Выбери запись, чтобы включить её.</p></div>'+
+      '<div class="vmm-r-player"><button type="button" id="vmm-r-toggle-text" class="vmm-r-player-title" aria-expanded="false">Прослушивание · показать текст</button><audio id="vmm-r-audio" controls preload="none"></audio><p id="vmm-r-now" class="sync-note">Выбери запись, чтобы включить её.</p></div>'+ 
+      '<div id="vmm-r-text-wrapper" class="hidden">'+ 
       '<div class="vmm-r-text-tools"><strong>Текст композиции</strong><div role="group" aria-label="Вид текста">'+
       '<button type="button" id="vmm-r-a4" class="is-active" aria-pressed="true">A4 · две колонки</button>'+
       '<button type="button" id="vmm-r-large" aria-pressed="false">Читать крупно</button></div></div>'+
-      '<div id="vmm-r-lyrics" class="vmm-r-lyrics"></div></div>'+
+      '<div id="vmm-r-lyrics" class="vmm-r-lyrics"></div></div></div>'+ 
       '<p id="vmm-r-storage" class="sync-note"></p>';
-    id('vmm-r-connect').onclick=function(){connect().then(ensureFolder).then(function(){msg('Google Drive подключён. Можно загружать и воспроизводить записи.');renderFolder();}).catch(function(e){msg('Google Drive: '+e.message);});};
+    id('vmm-r-connect').onclick=function(){connect(true).then(ensureFolder).then(function(){msg('Google Drive подключён. Можно загружать и воспроизводить записи.');renderFolder();}).catch(function(e){msg('Google Drive: '+e.message);});};
     id('vmm-r-search').oninput=function(){suggestOpen=true;renderSongs();};
     id('vmm-r-search').onkeydown=function(e){if(e.key==='Enter'){var q=norm(this.value),matches=catalog.filter(function(t){return norm(clean(t.title)+' '+clean(t.artist||'')).indexOf(q)>=0;});if(q&&matches.length){e.preventDefault();chooseSearchResult(matches[0]);}}};
     id('vmm-r-song').onchange=function(){setSong(this.value);};
     id('vmm-r-file').onchange=function(){var file=this.files&&this.files[0];if(file)upload(file);this.value='';};
+    id('vmm-r-toggle-text').onclick=function(){toggleText(!textVisible);};
     id('vmm-r-a4').onclick=function(){setMode('a4');};
     id('vmm-r-large').onclick=function(){setMode('large');};
     if(!listenersAttached){panel.addEventListener('click',actions);panel.addEventListener('change',offlineChanges);listenersAttached=true;}
@@ -122,13 +125,16 @@
     }
   }
   function setSong(key){
-    if(songId!==key){clearAudio();audioFileId='';}
+    if(songId!==key){clearAudio();audioFileId='';textVisible=false;}
     songId=String(key||'');renderSongs();
     var t=song();
     show(id('vmm-r-song-section'),!!t);
     if(!t)return;
     id('vmm-r-song-title').textContent=t.title;
-    renderFolder();renderRecords();renderLyrics();
+    renderFolder();renderRecords();renderLyrics();toggleText(textVisible);
+    if(user&&window.VMM_OFFLINE&&window.VMM_OFFLINE.rememberSelection&&saved.some(function(s){return s.catalogId===t.id;})){
+      window.VMM_OFFLINE.rememberSelection(user.uid,t.id).catch(function(){});
+    }
   }
   function matchingLyrics(t){
     if(!t)return[];
@@ -166,6 +172,12 @@
     el.innerHTML='<div class="vmm-r-text-title"><strong>'+esc(t.title)+'</strong><span>'+esc(current.language||'')+(current.version?' · '+esc(current.version):'')+'</span></div>'+
       '<div class="vmm-r-text-content">'+rowsHTML(current.text)+'</div>';
   }
+  function toggleText(yes){
+    textVisible=!!yes;
+    show(id('vmm-r-text-wrapper'),textVisible);
+    var btn=id('vmm-r-toggle-text');
+    if(btn){btn.textContent=textVisible?'Прослушивание · скрыть текст':'Прослушивание · показать текст';btn.setAttribute('aria-expanded',textVisible?'true':'false');}
+  }
   function setMode(which){
     mode=which;
     id('vmm-r-a4').className=mode==='a4'?'is-active':'';
@@ -173,6 +185,20 @@
     id('vmm-r-a4').setAttribute('aria-pressed',mode==='a4'?'true':'false');
     id('vmm-r-large').setAttribute('aria-pressed',mode==='large'?'true':'false');
     renderLyrics();
+  }
+  function renderOfflineList(){
+    var target=id('vmm-r-offline-list');if(!target)return;
+    if(!saved.length){
+      target.innerHTML='<p class="sync-note">Офлайн-подборка пуста. Отметь галочкой нужные фонограммы — здесь они останутся доступными после возвращения на сайт.</p>';
+      return;
+    }
+    var rows=saved.slice().sort(function(a,b){return clean(a.title).localeCompare(clean(b.title),'ru');});
+    target.innerHTML='<h3>Офлайн-подборка · '+rows.length+'</h3>'+
+      '<p class="sync-note">Выбранные фонограммы хранятся на этом устройстве. Тексты раскрываются только при прослушивании.</p>'+
+      rows.map(function(s){
+        return '<button type="button" class="vmm-r-pinned" data-r-action="offline-play" data-r-id="'+esc(s.fileId)+'">'+
+          '<span>▶ '+esc(s.title||'Без названия')+'</span><small>'+esc(s.variant||'Фонограмма')+' · '+mb(s.size)+' · офлайн ✓</small></button>';
+      }).join('');
   }
   function renderRecords(){
     var box=id('vmm-r-records'),t=song();if(!box||!t)return;
@@ -232,14 +258,16 @@
     });
   }
   function load(){
-    msg('Открываем репертуар…');
-    var errors=[];
+    msg(uploadMessage||'Открываем репертуар…');
+    var errors=[],lastPinned='';
     return verify().then(function(){
       return Promise.all([
         getDocs('vmm_catalog').catch(function(e){errors.push('каталог: '+e.message);return [];}),
         getDocs('vmm_lyrics').catch(function(e){errors.push('тексты: '+e.message);return [];}),
         getDocs('vmm_recordings').catch(function(e){errors.push('фонограммы: '+e.message);return [];}),
-        window.VMM_OFFLINE?readCache().catch(function(e){errors.push('офлайн: '+e.message);}):Promise.resolve()
+        window.VMM_OFFLINE?readCache().catch(function(e){errors.push('офлайн: '+e.message);}):Promise.resolve(),
+        window.VMM_OFFLINE&&window.VMM_OFFLINE.lastSelection?
+          window.VMM_OFFLINE.lastSelection(user.uid).catch(function(){return '';}):Promise.resolve('')
       ]);
     }).then(function(result){
       var current=songId;
@@ -247,11 +275,16 @@
       lyrics=result[1];
       recordings=unique(result[2].filter(function(x){return x.driveFileId&&x.catalogId;}).concat(recordings),function(x){return x.driveFileId;});
       catalog.sort(function(a,b){return clean(a.title).localeCompare(clean(b.title),'ru');});
-      renderSongs();setSong(current);
-      msg('Композиции: '+catalog.length+' · фонограммы: '+recordings.length+' · сохранено офлайн: '+saved.length+
+      lastPinned=result[4]||'';
+      if(!current||!catalog.some(function(t){return t.id===current;})){
+        var pinned=saved.filter(function(s){return s.catalogId===lastPinned;});
+        current=pinned.length?lastPinned:(saved.length?saved[0].catalogId:'');
+      }
+      renderOfflineList();renderSongs();setSong(current);
+      msg(uploadMessage||('Композиции: '+catalog.length+' · фонограммы: '+recordings.length+' · сохранено офлайн: '+saved.length+
          (navigator.onLine?' · в сети':' · без интернета')+
          (errors.length?' · Не удалось прочитать '+errors.join('; '):'')+
-         (!catalog.length?' · Каталог пуст: поиск пока невозможен.':'') );
+         (!catalog.length?' · Каталог пуст: поиск пока невозможен.':'')));
       return db.collection('vmm_recordings').doc('__audio_settings').get().then(function(d){
         if(d.exists&&d.data())driveFolderId=String(d.data().folderId||'');
         renderFolder();
@@ -260,17 +293,19 @@
   }
   function open(){
     if(active){show(panel,true);return;}
-    suggestOpen=false;
+    suggestOpen=false;textVisible=false;
     active=true;header();
+    if(window.VMM_STUDIO&&window.VMM_STUDIO.rememberPanel)window.VMM_STUDIO.rememberPanel('recordings');
+    if(uploadMessage)msg(uploadMessage);
     var tabs=document.querySelectorAll('#workspace [data-panel]');
     for(var i=0;i<tabs.length;i++)tabs[i].className=tabs[i].getAttribute('data-panel')==='recordings'?'nav-active':'';
     show(id('panel-lyrics'),false);show(id('panel-future'),false);show(id('vmm-workflows'),false);show(panel,true);
     load();
   }
   function hide(){active=false;show(panel,false);}
-  function connect(){
+  function connect(force){
     if(!navigator.onLine)return Promise.reject(new Error('Для подключения Google Drive нужен интернет.'));
-    if(driveToken)return Promise.resolve(driveToken);
+    if(driveToken&&!force)return Promise.resolve(driveToken);
     var u=firebase.auth().currentUser;
     if(!u||!user||u.uid!==user.uid)return Promise.reject(new Error('Нужен вход владельца.'));
     var provider=new firebase.auth.GoogleAuthProvider();
@@ -356,7 +391,7 @@
     });
   }
   function upload(file){
-    if(busy)return;
+    if(busy)return msg('Загрузка или другая операция уже выполняется. Дождись завершения перед выбором нового файла.');
     var t=song();if(!t)return msg('Сначала выбери песню.');
     var ext=(file.name.split('.').pop()||'').toLowerCase();
     if(ext!=='mp3'&&ext!=='flac')return msg('Разрешены только .mp3 и .flac. Конвертируй другой формат заранее.');
@@ -364,7 +399,7 @@
     if(!navigator.onLine)return msg('Загрузка в Google Drive требует подключения к интернету.');
     var variant=clean(id('vmm-r-variant').value)||'Минусовка';
     var name=filename(t,variant,ext),mime=ext==='flac'?'audio/flac':'audio/mpeg';
-    busy=true;msg('Запрашиваем доступ к Google Drive…');
+    busy=true;uploadMessage='';msg('Запрашиваем доступ к Google Drive…');
     connect().then(ensureFolder).then(function(folder){
       msg('Загружаем '+name+'…');
       return uploadBytes(file,name,folder,mime);
@@ -378,10 +413,12 @@
       batch.set(audit,{time:firebase.firestore.FieldValue.serverTimestamp(),operation:'Фонограмма загружена',subject:t.title,
         result:name,referenceId:ref.id,actor:user.uid});
       return batch.commit().then(function(){
-        entry.id=ref.id;recordings.push(entry);busy=false;renderRecords();
-        msg('Загружено: '+name+'. Можно слушать, скачать или отметить для офлайн.');
+        entry.id=ref.id;recordings.push(entry);busy=false;
+        uploadMessage='Загружено: '+name+'. Можно слушать, скачать или отметить для офлайн.';
+        if(songId===t.id){renderRecords();msg(uploadMessage);}
+        else msg(uploadMessage+' Запись прикреплена к '+t.title+' — выбери её в каталоге.');
       }).catch(function(err){throw new Error('Файл уже в Google Drive, но запись в каталоге не создалась: '+name+'. '+err.message);});
-    }).catch(function(e){busy=false;msg('Ошибка загрузки: '+e.message);});
+    }).catch(function(e){busy=false;uploadMessage='Ошибка загрузки: '+e.message;msg(uploadMessage);});
   }
   function audioBlob(r){
     var s=stored(r.driveFileId);
@@ -403,6 +440,7 @@
     var task=stored(r.driveFileId)?audioBlob(r):connect().then(function(){return audioBlob(r);});
     task.then(function(blob){
       if(!active||songId!==r.catalogId)return;
+      toggleText(true);
       clearAudio();audioURL=URL.createObjectURL(blob);audioFileId=r.driveFileId;
       a.src=audioURL;a.load();
       id('vmm-r-now').textContent=clean(r.title)+' · '+clean(r.variant)+' · '+mb(blob.size);
@@ -433,7 +471,7 @@
     if(!checked){
       window.VMM_OFFLINE.remove(user.uid,r.driveFileId).then(function(){
         saved=saved.filter(function(s){return s.fileId!==r.driveFileId;});
-        renderRecords();msg('Убрано из офлайн-подборки. В Google Drive файл сохранён.');
+        renderRecords();renderOfflineList();msg('Убрано из офлайн-подборки. В Google Drive файл сохранён.');
       }).catch(function(e){renderRecords();msg('Не удалось убрать офлайн: '+e.message);});
       return;
     }
@@ -450,7 +488,9 @@
       }).then(function(){return window.VMM_OFFLINE.persist();});
     }).then(function(){
       return readCache().then(function(){
-        renderRecords();msg('Готово: '+r.title+' сохранена офлайн на этом устройстве. Перед концертом проверь без интернета.');
+        renderRecords();renderOfflineList();
+        if(window.VMM_OFFLINE.rememberSelection)window.VMM_OFFLINE.rememberSelection(user.uid,r.catalogId).catch(function(){});
+        msg('Готово: '+r.title+' сохранена офлайн на этом устройстве. Перед концертом проверь без интернета.');
       });
     }).catch(function(e){renderRecords();msg('Не удалось сохранить офлайн: '+e.message);});
   }
@@ -534,11 +574,11 @@
       }
       return '';
     }).then(function(warning){
-      busy=false;renderRecords();
+      busy=false;renderRecords();renderOfflineList();
       msg((toTrash?'Готово: файл в корзине Google Drive, запись скрыта, история сохранена.':
         'Готово: файл восстановлен и снова доступен в репертуаре.')+warning);
     }).catch(function(err){
-      busy=false;renderRecords();
+      busy=false;renderRecords();renderOfflineList();
       msg('Операция не завершена полностью: '+err.message+
         '. Если Google Drive уже переместил файл, не удаляй данные вручную: повтори эту же операцию.');
     });
@@ -549,6 +589,7 @@
     if(!target||target===panel)return;
     var action=target.getAttribute('data-r-action'),r=record(target.getAttribute('data-r-id'));
     if(!r)return;
+    if(action==='offline-play'){setSong(r.catalogId);if(songId===r.catalogId)play(r);return;}
     if(action==='play')play(r);
     if(action==='download')download(r);
     if(action==='trash')moveRecording(r,true);
@@ -558,6 +599,6 @@
     var input=e.target,attr=input&&input.getAttribute('data-r-offline');
     if(attr){var r=record(attr);if(r)offlineOn(r,!!input.checked);}
   }
-  function reset(){hide();clearAudio();driveToken='';driveFolderId='';db=null;user=null;catalog=[];lyrics=[];recordings=[];saved=[];songId='';audioFileId='';busy=false;}
+  function reset(){hide();clearAudio();driveToken='';driveFolderId='';db=null;user=null;catalog=[];lyrics=[];recordings=[];saved=[];songId='';audioFileId='';busy=false;textVisible=false;uploadMessage='';}
   window.VMM_RECORDINGS={open:open,hide:hide,reset:reset,translit:translit,filename:filename};
 }());
