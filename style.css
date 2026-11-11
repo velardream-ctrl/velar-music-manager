@@ -100,3 +100,12 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
   .brand-main{font-size:clamp(1.9rem,9.3vw,2.5rem)}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+
+/* RUN-059: the hero arrow is an SVG, not a platform-colored Unicode emoji. */
+.button-primary .button-arrow{
+  display:inline-block;
+  width:1.08em;height:1.08em;
+  margin-left:.35em;vertical-align:-.14em;
+  color:inherit;stroke:currentColor;
+  flex:0 0 auto;
+}

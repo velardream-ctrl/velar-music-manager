@@ -118,14 +118,19 @@
     var pane=id('vmm-r-system');if(!pane)return;
     pane.open=true;syncSystemMenu();
   }
-  // The sentinel is outside the sticky player, so compacting never moves it.
+  // Firefox uses scroll anchoring when a sticky element changes height.
+  // Hysteresis + a state-only class change prevent scroll-jump feedback loops.
   function updateMiniPlayer(){
     var card=id('vmm-r-player-card'),sentinel=id('vmm-r-player-sentinel');
-    if(!card||!sentinel)return;
-    var system=id('vmm-r-system');
-    var past=!!(sentinel.getBoundingClientRect&&sentinel.getBoundingClientRect().bottom<0);
-    var minimize=!!(active&&playerVisible&&textVisible&&past&&!editOpen&&!(system&&system.open));
-    card.className=card.className.replace(/\s*\bis-minimized\b/g,'')+(minimize?' is-minimized':'');
+    if(!card||!sentinel||!sentinel.getBoundingClientRect)return;
+    var system=id('vmm-r-system'),rect=sentinel.getBoundingClientRect();
+    var minimized=/(^|\s)is-minimized(\s|$)/.test(card.className);
+    // Require a little scroll past the player before minimizing and don't
+    // expand again until the sentinel is visibly back inside the viewport.
+    var past=minimized?rect.bottom<24:rect.bottom< -48;
+    var target=!!(active&&playerVisible&&textVisible&&past&&!editOpen&&!(system&&system.open));
+    if(target===minimized)return; // Don't mutate layout on every scroll event.
+    card.className=card.className.replace(/\s*\bis-minimized\b/g,'')+(target?' is-minimized':'');
   }
   function installMiniPlayerListener(){
     if(compactListenerAttached||!window.addEventListener)return;
