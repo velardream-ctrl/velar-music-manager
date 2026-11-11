@@ -9,7 +9,7 @@
   panel.className='panel hidden';
   shell.appendChild(panel);
   var db=null,user=null,driveToken='',driveFolderId='',busy=false,active=false,listenersAttached=false,suggestOpen=false;
-  var catalog=[],lyrics=[],recordings=[],saved=[],songId='',audioFileId='',audioURL='',mode='a4',textVisible=false,uploadMessage='',editOpen=false,playRequestId=0,formSongId='',playerVisible=false;
+  var catalog=[],lyrics=[],recordings=[],saved=[],songId='',audioFileId='',audioURL='',mode='a4',textVisible=false,uploadMessage='',editOpen=false,playRequestId=0,formSongId='',playerVisible=false,playerScrub=false,playerPending=false;
   var MAX=50*1024*1024,DRIVE_SCOPE='https://www.googleapis.com/auth/drive.file',FOLDER='VELARDREAM RECORDS - Фонограммы';
   function id(s){return document.getElementById(s);}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','&quot;':'&quot;',"'":'&#39;'}[c];});}
@@ -41,6 +41,92 @@
     var items=[],seen={};
     list.forEach(function(x){var v=key(x);if(!v||seen[v])return;seen[v]=true;items.push(x);});
     return items;
+  }
+  function stageTime(seconds){
+    var n=Number(seconds);
+    if(!isFinite(n)||n<0)return '0:00';
+    var count=Math.floor(n),minutes=Math.floor(count/60),secs=count%60;
+    return minutes+':'+(secs<10?'0':'')+secs;
+  }
+  function stageDuration(a){
+    var d=a?Number(a.duration):0;
+    return isFinite(d)&&d>0?d:0;
+  }
+  function stagePaint(position){
+    var s=id('vmm-r-seek');if(!s)return;
+    var p=Math.max(0,Math.min(100,Number(position)||0));
+    s.style.background='linear-gradient(to right,#dfc28b 0%,#dfc28b '+p+'%,#465573 '+p+'%,#465573 100%)';
+  }
+  function syncStagePlayer(){
+    var a=id('vmm-r-audio'),button=id('vmm-r-play'),slider=id('vmm-r-seek');
+    if(!a||!button||!slider)return;
+    var loaded=!!audioFileId&&!playerPending,hasDuration=stageDuration(a)>0,
+      duration=stageDuration(a),time=Number(a.currentTime);
+    if(!isFinite(time)||time<0)time=0;
+    if(duration)time=Math.min(time,duration);
+    var playing=loaded&&a.paused===false&&!a.ended;
+    button.disabled=!loaded;
+    button.setAttribute('aria-pressed',playing?'true':'false');
+    button.setAttribute('aria-label',playing?'Пауза':'Воспроизвести');
+    slider.disabled=!loaded||!hasDuration;
+    var back=id('vmm-r-back'),next=id('vmm-r-next');
+    if(back)back.disabled=!loaded||!hasDuration;
+    if(next)next.disabled=!loaded||!hasDuration;
+    if(!playerScrub){
+      slider.value=String(duration?Math.round(time/duration*1000):0);
+      stagePaint(duration?time/duration*100:0);
+      var elapsed=id('vmm-r-elapsed'),remain=id('vmm-r-remaining');
+      if(elapsed)elapsed.textContent=stageTime(time);
+      if(remain)remain.textContent=duration?'-'+stageTime(Math.max(0,duration-time)):'—:—';
+      slider.setAttribute('aria-valuetext',stageTime(time)+' из '+(duration?stageTime(duration):'неизвестно'));
+    }
+  }
+  function stageSeekTo(seconds){
+    var a=id('vmm-r-audio'),d=stageDuration(a);
+    if(!a||!audioFileId||!d)return;
+    var value=Math.max(0,Math.min(d,Number(seconds)||0));
+    try{a.currentTime=value;}catch(err){msg('Перемотка недоступна: '+err.message);}
+    syncStagePlayer();
+  }
+  function stageToggle(){
+    var a=id('vmm-r-audio');
+    if(!a||!audioFileId||playerPending)return;
+    if(a.paused!==false||a.ended){
+      if(a.ended)stageSeekTo(0);
+      try{
+        var p=a.play();
+        if(p&&typeof p.catch==='function')p.catch(function(err){
+          msg('Не удалось начать воспроизведение: '+err.message+'. Открой «Системные функции плеера» и запусти файл там.');
+          syncStagePlayer();
+        });
+      }catch(err){msg('Не удалось включить плеер: '+err.message);}
+    }else a.pause();
+    syncStagePlayer();
+  }
+  function bindStagePlayer(){
+    var audio=id('vmm-r-audio'),slider=id('vmm-r-seek');
+    id('vmm-r-play').onclick=stageToggle;
+    id('vmm-r-back').onclick=function(){var a=id('vmm-r-audio');if(a)stageSeekTo(Number(a.currentTime)-10);};
+    id('vmm-r-next').onclick=function(){var a=id('vmm-r-audio');if(a)stageSeekTo(Number(a.currentTime)+10);};
+    slider.oninput=function(){
+      var d=stageDuration(audio);if(!audioFileId||!d)return;
+      playerScrub=true;
+      var secs=d*Math.max(0,Math.min(1000,Number(slider.value)||0))/1000;
+      var elapsed=id('vmm-r-elapsed'),remaining=id('vmm-r-remaining');
+      if(elapsed)elapsed.textContent=stageTime(secs);
+      if(remaining)remaining.textContent='-'+stageTime(Math.max(0,d-secs));
+      slider.setAttribute('aria-valuetext',stageTime(secs)+' из '+stageTime(d));
+      stagePaint(secs/d*100);
+    };
+    slider.onchange=function(){
+      var d=stageDuration(audio),desired=d*Math.max(0,Math.min(1000,Number(slider.value)||0))/1000;
+      playerScrub=false;
+      stageSeekTo(desired);
+    };
+    ['loadedmetadata','durationchange','timeupdate','play','pause','ended','seeking','seeked','canplay','waiting','emptied','error'].forEach(function(name){
+      audio.addEventListener(name,syncStagePlayer);
+    });
+    syncStagePlayer();
   }
   function header(){
     panel.innerHTML=
@@ -89,6 +175,7 @@
     id('vmm-r-song').onchange=function(){setSong(this.value,false);};
     id('vmm-r-file').onchange=function(){var file=this.files&&this.files[0];if(file)upload(file);this.value='';};
     id('vmm-r-toggle-text').onclick=function(){toggleText(!textVisible);};
+    bindStagePlayer();
     id('vmm-r-download').onclick=function(){var r=record(audioFileId);if(editOpen&&r&&!r.archived&&r.catalogId===songId)download(r);};
     id('vmm-r-edit').onclick=function(){
       var r=record(audioFileId);
