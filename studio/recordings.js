@@ -55,7 +55,9 @@
   function stagePaint(position){
     var s=id('vmm-r-seek');if(!s)return;
     var p=Math.max(0,Math.min(100,Number(position)||0));
-    s.style.background='linear-gradient(to right,#dfc28b 0%,#dfc28b '+p+'%,#465573 '+p+'%,#465573 100%)';
+    // The progress fill belongs to the 6px track, not the full 44px tap area.
+    if(s.style.setProperty)s.style.setProperty('--vmm-progress',p+'%');
+    else s.style['--vmm-progress']=p+'%';
   }
   function syncStagePlayer(){
     var a=id('vmm-r-audio'),button=id('vmm-r-play'),slider=id('vmm-r-seek');
@@ -74,6 +76,9 @@
     var back=id('vmm-r-back'),next=id('vmm-r-next');
     if(back)back.disabled=!loaded||!hasDuration;
     if(next)next.disabled=!loaded||!hasDuration;
+    var route=id('vmm-r-route'),more=id('vmm-r-more');
+    if(route)route.disabled=!loaded;
+    if(more)more.disabled=!loaded;
     if(!playerScrub){
       slider.value=String(duration?Math.round(time/duration*1000):0);
       stagePaint(duration?time/duration*100:0);
@@ -105,9 +110,40 @@
     }else a.pause();
     syncStagePlayer();
   }
+  function syncSystemMenu(){
+    var pane=id('vmm-r-system'),button=id('vmm-r-more');
+    if(!pane||!button)return;
+    button.setAttribute('aria-expanded',pane.open?'true':'false');
+    button.setAttribute('aria-label',pane.open?'Закрыть системное меню плеера':'Открыть системное меню плеера');
+  }
+  function showNativePlayer(){
+    var pane=id('vmm-r-system');if(!pane)return;
+    pane.open=true;syncSystemMenu();
+  }
   function bindStagePlayer(){
     var audio=id('vmm-r-audio'),slider=id('vmm-r-seek');
     id('vmm-r-play').onclick=stageToggle;
+    id('vmm-r-route').onclick=function(){
+      if(!audioFileId)return;
+      // MUST be invoked synchronously from a user tap for iOS AirPlay.
+      if(typeof audio.webkitShowPlaybackTargetPicker==='function'){
+        try{audio.webkitShowPlaybackTargetPicker();return;}
+        catch(err){msg('Выбор устройства недоступен: '+err.message);}
+      }
+      // Other browsers keep every native media control reachable.
+      showNativePlayer();
+    };
+    id('vmm-r-more').onclick=function(){
+      var pane=id('vmm-r-system');if(!pane)return;
+      pane.open=!pane.open;syncSystemMenu();
+    };
+    id('vmm-r-system').ontoggle=syncSystemMenu;
+    audio.addEventListener('webkitcurrentplaybacktargetiswirelesschanged',function(){
+      var route=id('vmm-r-route');if(!route)return;
+      var wireless=!!audio.webkitCurrentPlaybackTargetIsWireless;
+      route.className='vmm-r-quick-btn'+(wireless?' is-wireless':'');
+      route.setAttribute('aria-label',wireless?'Беспроводное устройство подключено. Изменить вывод звука':'Вывод звука на другое устройство');
+    });
     id('vmm-r-back').onclick=function(){var a=id('vmm-r-audio');if(a)stageSeekTo(Number(a.currentTime)-10);};
     id('vmm-r-next').onclick=function(){var a=id('vmm-r-audio');if(a)stageSeekTo(Number(a.currentTime)+10);};
     slider.oninput=function(){
@@ -128,7 +164,7 @@
     ['loadedmetadata','durationchange','timeupdate','play','pause','ended','seeking','seeked','canplay','waiting','emptied','error'].forEach(function(name){
       audio.addEventListener(name,syncStagePlayer);
     });
-    syncStagePlayer();
+    syncStagePlayer();syncSystemMenu();
   }
   function header(){
     panel.innerHTML=
