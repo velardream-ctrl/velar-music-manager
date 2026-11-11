@@ -14,7 +14,7 @@ assert.doesNotMatch(html,/class="crystal-journey-crystal"[\s\S]{0,250}assets\/ve
 assert.match(html,/href="#universe" id="hero-crystal-link"/);
 assert.match(html,/living-art\.js\?v=1/);
 assert.match(html,/universe\.js\?v=5/);
-assert.match(html,/style\.css\?v=18/);
+assert.match(html,/style\.css\?v=19/);
 assert.match(universe,/crystal\.src='assets\/velardream-symbol\.svg'/);
 assert.match(universe,/var center=el\('button','universe-core'\)/);
 assert.match(universe,/universe-beam is-active/);
