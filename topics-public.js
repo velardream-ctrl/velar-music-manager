@@ -89,7 +89,7 @@
    }
    return false;
  }
- function play(slug,url){return select(slug,url);}
+ function openFromChat(slug,url){return select(slug,url);}
 
  function render(value){
    var cloud=byId('public-topic-cloud'),orbit=byId('public-topic-orbit');
@@ -121,5 +121,5 @@
    });
    select(active);
  }
- window.VELAR_TOPICS={render:render,entries:entries,select:select,play:play};
+ window.VELAR_TOPICS={render:render,entries:entries,select:select,openFromChat:openFromChat};
 }());

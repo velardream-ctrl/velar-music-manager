@@ -257,10 +257,10 @@
            window.location.hash='topics';
          }else if(choice.action==='song'){
            var openedSong=false;
-           if(choice.kind==='topic'&&window.VELAR_TOPICS&&window.VELAR_TOPICS.play)
-             openedSong=window.VELAR_TOPICS.play(choice.target,choice.url);
-           if(choice.kind==='language'&&window.VELAR_LANGUAGES&&window.VELAR_LANGUAGES.play)
-             openedSong=window.VELAR_LANGUAGES.play(choice.target,choice.url);
+           if(choice.kind==='topic'&&window.VELAR_TOPICS&&window.VELAR_TOPICS.openFromChat)
+             openedSong=window.VELAR_TOPICS.openFromChat(choice.target,choice.url);
+           if(choice.kind==='language'&&window.VELAR_LANGUAGES&&window.VELAR_LANGUAGES.openFromChat)
+             openedSong=window.VELAR_LANGUAGES.openFromChat(choice.target,choice.url);
            window.location.hash=choice.kind==='language'?'languages':'topics';
            if(!openedSong&&choice.kind==='topic'&&window.VELAR_TOPICS&&window.VELAR_TOPICS.select)
              window.VELAR_TOPICS.select(choice.target);

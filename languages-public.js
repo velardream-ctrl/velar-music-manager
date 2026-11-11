@@ -97,7 +97,7 @@
    }
    return false;
  }
- function play(code,url){return show(code,url);}
+ function openFromChat(code,url){return show(code,url);}
 
  function render(config){
    var orbit=id('public-language-orbit'),detail=id('public-language-detail');
@@ -129,5 +129,5 @@
    });
    show(current);
  }
- window.VELAR_LANGUAGES={render:render,entries:entries,show:show,play:play};
+ window.VELAR_LANGUAGES={render:render,entries:entries,show:show,openFromChat:openFromChat};
 }());
