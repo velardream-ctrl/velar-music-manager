@@ -112,10 +112,26 @@
     if(!pane||!button)return;
     button.setAttribute('aria-expanded',pane.open?'true':'false');
     button.setAttribute('aria-label',pane.open?'Закрыть системное меню плеера':'Открыть системное меню плеера');
+    updateMiniPlayer();
   }
   function showNativePlayer(){
     var pane=id('vmm-r-system');if(!pane)return;
     pane.open=true;syncSystemMenu();
+  }
+  // The sentinel is outside the sticky player, so compacting never moves it.
+  function updateMiniPlayer(){
+    var card=id('vmm-r-player-card'),sentinel=id('vmm-r-player-sentinel');
+    if(!card||!sentinel)return;
+    var system=id('vmm-r-system');
+    var past=!!(sentinel.getBoundingClientRect&&sentinel.getBoundingClientRect().bottom<0);
+    var minimize=!!(active&&playerVisible&&textVisible&&past&&!editOpen&&!(system&&system.open));
+    card.className=card.className.replace(/\s*\bis-minimized\b/g,'')+(minimize?' is-minimized':'');
+  }
+  function installMiniPlayerListener(){
+    if(compactListenerAttached||!window.addEventListener)return;
+    compactListenerAttached=true;
+    window.addEventListener('scroll',updateMiniPlayer,false);
+    window.addEventListener('resize',updateMiniPlayer,false);
   }
   function bindStagePlayer(){
     var audio=id('vmm-r-audio'),slider=id('vmm-r-seek');
@@ -160,6 +176,7 @@
       audio.addEventListener(name,syncStagePlayer);
     });
     syncStagePlayer();syncSystemMenu();
+    installMiniPlayerListener();
   }
   function header(){
     panel.innerHTML=
@@ -220,7 +237,7 @@
     id('vmm-r-edit').onclick=function(){
       var r=record(audioFileId);
       if(!r||r.archived||r.catalogId!==songId){msg('Сначала выбери нужную запись кнопкой «Слушать».');return;}
-      editOpen=!editOpen;renderPlayerEditor();
+      editOpen=!editOpen;renderPlayerEditor();updateMiniPlayer();
     };
     id('vmm-r-offline-toggle').onclick=function(){
       var r=record(audioFileId);
@@ -304,9 +321,9 @@
     var t=song();
     show(id('vmm-r-song-section'),!!t&&!playback);
     show(id('vmm-r-player-section'),!!t&&playback);
-    if(!t){renderPlayerEditor();return;}
+    if(!t){renderPlayerEditor();updateMiniPlayer();return;}
     id('vmm-r-song-title').textContent=t.title;
-    renderFolder();renderRecords();renderLyrics();toggleText(textVisible);
+    renderFolder();renderRecords();renderLyrics();toggleText(textVisible);updateMiniPlayer();
     if(user&&window.VMM_OFFLINE&&window.VMM_OFFLINE.rememberSelection&&saved.some(function(s){return s.catalogId===t.id;})){
       window.VMM_OFFLINE.rememberSelection(user.uid,t.id).catch(function(){});
     }
@@ -353,6 +370,7 @@
     var btn=id('vmm-r-toggle-text');
     if(btn)btn.setAttribute('aria-expanded',textVisible?'true':'false');
     var caption=id('vmm-r-toggle-text-label');if(caption)caption.textContent=textVisible?'Скрыть текст':'Показать текст';
+    updateMiniPlayer();
   }
   function setMode(which){
     mode=which;
@@ -385,6 +403,7 @@
       button.title=editOpen?'Закрыть управление фонограммой':'Редактировать выбранную фонограмму';
     }
     show(pane,editOpen&&valid);
+    updateMiniPlayer();
     if(!valid)return;
     var target=id('vmm-r-edit-target');
     if(target)target.textContent=(selected.title||song().title||'Песня')+' · '+(selected.variant||'Фонограмма');
@@ -496,7 +515,7 @@
     }).catch(function(e){msg('Ошибка репертуара: '+e.message);});
   }
   function open(){
-    if(active){show(panel,true);return;}
+    if(active){show(panel,true);updateMiniPlayer();return;}
     suggestOpen=false;textVisible=false;playerVisible=false;formSongId='';
     active=true;header();
     if(window.VMM_STUDIO&&window.VMM_STUDIO.rememberPanel)window.VMM_STUDIO.rememberPanel('recordings');
@@ -506,7 +525,7 @@
     show(id('panel-lyrics'),false);show(id('panel-future'),false);show(id('panel-data'),false);show(id('vmm-workflows'),false);show(panel,true);
     load();
   }
-  function hide(){active=false;editOpen=false;renderPlayerEditor();show(panel,false);}
+  function hide(){active=false;editOpen=false;renderPlayerEditor();show(panel,false);updateMiniPlayer();}
   function connect(force){
     if(!navigator.onLine)return Promise.reject(new Error('Для подключения Google Drive нужен интернет.'));
     if(driveToken&&!force)return Promise.resolve(driveToken);
