@@ -1,3 +1,5 @@
+> **NEW CANONICAL ENTRYPOINT (11.11.2026):** [Complete project map / cross-chat recovery (RU)](docs/MASTER_PROJECT_MAP_AND_HANDOFF_RU.md) · [Rebuild and safe reuse guide (RU)](docs/INSTALLATION_AND_MIGRATION_RU.md). Verify the actual main HEAD, PR, CI, Pages and the latest work journal before modifying anything. The older status text below is historical.
+
 > **Project continuity (2026-11-11):** [Engineering log (RU)](docs/WORK_ACTIVITY_LOG_RU.md) · [Handoff runbook](docs/PROJECT_HANDOFF_RU.md) · [Reusable-site blueprint](docs/REUSABLE_SITE_TEMPLATE_RU.md). The older setup prose below is historical. Consult recent PRs, CI and on-device tests.
 
 # VELARDREAM RECORDS — velardream.com
