@@ -9,7 +9,7 @@
   panel.className='panel hidden';
   shell.appendChild(panel);
   var db=null,user=null,driveToken='',driveFolderId='',busy=false,active=false,listenersAttached=false,suggestOpen=false;
-  var catalog=[],lyrics=[],recordings=[],saved=[],songId='',audioFileId='',audioURL='',mode='a4',textVisible=false,uploadMessage='',editOpen=false,playRequestId=0,formSongId='',playerVisible=false,playerScrub=false,playerPending=false,compactListenerAttached=false,cloudPins=[],cloudPinsLoaded=false,cloudSyncPromise=null,cloudDownloadPromise=null,cloudGeneration=0,cloudStatus='';
+  var catalog=[],lyrics=[],recordings=[],saved=[],songId='',audioFileId='',audioURL='',mode='a4',textVisible=false,uploadMessage='',editOpen=false,playRequestId=0,formSongId='',playerVisible=false,playerScrub=false,playerPending=false,compactListenerAttached=false,cloudPins=[],cloudPinsLoaded=false,cloudSyncPromise=null,cloudDownloadPromise=null,cloudGeneration=0,cloudStatus='',cloudResyncRequested=false;
   var MAX=50*1024*1024,DRIVE_SCOPE='https://www.googleapis.com/auth/drive.file',FOLDER='VELARDREAM RECORDS - Фонограммы';
   function id(s){return document.getElementById(s);}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','&quot;':'&quot;',"'":'&#39;'}[c];});}
@@ -502,7 +502,7 @@
     if(!missing.length){setCloudStatus('Подборка синхронизирована. Фонограммы доступны офлайн.');return Promise.resolve();}
     var total=missing.length,done=0,errors=[];
     var work=inSeries(missing,function(p){
-      if(!syncValid(uid,generation)||!driveToken||!navigator.onLine||stored(p.fileId))return;
+      if(!syncValid(uid,generation)||!driveToken||!navigator.onLine||stored(p.fileId)||!cloudPins.some(function(x){return x.fileId===p.fileId;}))return;
       var r=record(p.fileId);
       if(!r||r.archived||r.catalogId!==p.catalogId){errors.push(p.title+': запись отсутствует в каталоге');return;}
       setCloudStatus('Загружаем офлайн: '+(done+1)+' из '+total+' — '+p.title+'…');
@@ -535,7 +535,8 @@
     return cloudDownloadPromise;
   }
   function refreshCloudPins(){
-    if(cloudSyncPromise)return cloudSyncPromise;
+    if(cloudSyncPromise){cloudResyncRequested=true;return cloudSyncPromise;}
+    cloudResyncRequested=false;
     if(!user||!db||!window.VMM_CLOUD_PINS||!window.VMM_OFFLINE||!navigator.onLine){
       renderCloudStatus();return Promise.resolve();
     }
@@ -578,11 +579,12 @@
     cloudSyncPromise=job.then(function(){
       cloudSyncPromise=null;
       if(syncValid(uid,generation)){
+        if(cloudResyncRequested){cloudResyncRequested=false;return refreshCloudPins();}
         cloudStatus='';renderOfflineList();return downloadCloudPins();
       }
     },function(err){
       cloudSyncPromise=null;
-      if(syncValid(uid,generation))setCloudStatus('Не удалось синхронизировать подборку: '+
+      if(syncValid(uid,generation))setCloudStatus('Не удалось синхронизировать подборку: '
         err.message+'. Существующие локальные файлы сохранены.');
     });
     return cloudSyncPromise;
