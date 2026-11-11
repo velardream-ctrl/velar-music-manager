@@ -214,3 +214,10 @@
 - [ ] В ответе пользователю дал ссылку на этот **постоянный master** и отметил, что реально проверено, а что ещё нет.
 
 **Главные постоянные ссылки:** [инструкция установки и переноса](INSTALLATION_AND_MIGRATION_RU.md) · [репозиторий](https://github.com/velardream-ctrl/velar-music-manager) · [журнал](WORK_ACTIVITY_LOG_RU.md) · [handoff](PROJECT_HANDOFF_RU.md) · [шаблон RUN](RUN_TEMPLATE_RU.md) · [план шаблона](REUSABLE_SITE_TEMPLATE_RU.md) · [настройка Studio](PRIVATE_STUDIO_SETUP_RU.md) · [инструкция Firebase CMS](RUN061_FIRESTORE_PUBLICATION_RU.md) · [GitHub Actions](https://github.com/velardream-ctrl/velar-music-manager/actions) · [живой сайт](https://velardream.com/) · [Studio](https://velardream.com/studio/).
+
+
+## Дополнение RUN-082 — анимация набора текста VELAR Assistant (11.11.2026)
+- В общем ядре локального чата анимация ответов реализована JS-состоянием, а CSS отвечает только за мигающий курсор. Нельзя реализовывать «печать по буквам» простым clip/width в CSS — это режет слова и ухудшает доступность.
+- Конфигурация находится в опубликованном документе `genres.assistant.typing` (`enabled:true`, `speedMs:35`, допустимо 15–90), редактируется в Studio и проходит черновик → публикацию. Значения по умолчанию нормализуются для старой схемы.
+- При новом ответе, закрытии и render заканчивать предыдущую анимацию, очищать таймер, показывать доступный полный текст, не оставлять мигающие «призрачные» ответы. Respect reduced motion и ES5/Safari12. Никакой серверной генерации, сохранения сообщений или сетевых запросов.
+- Детальная история и CI в `WORK_ACTIVITY_LOG_RU.md`, актуальный статус публикации в `PROJECT_HANDOFF_RU.md`; ручной Safari iPhone после merge проверяется отдельно.
