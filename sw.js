@@ -5,9 +5,9 @@ var CACHE_NAME = CACHE_PREFIX + 'v9';
 /* Only private studio SOURCE FILES are cached. Never cache Firestore, Drive files,
    authenticated responses, user lyrics or audio through this Service Worker. */
 var STUDIO_PREFIX='velar-studio-shell-';
-var STUDIO_CACHE=STUDIO_PREFIX+'v14';
+var STUDIO_CACHE=STUDIO_PREFIX+'v15';
 var STUDIO_ASSETS=[
-  './studio/','./studio/index.html','./studio/studio.css?v=8','./studio/landing-editor.js?v=1',
+  './studio/','./studio/index.html','./studio/studio.css?v=9','./studio/artist-choices.js?v=1','./studio/artist-track-links.js?v=1','./studio/landing-editor.js?v=2',
   './studio/recordings.css?v=11','./studio/studio.js?v=9',
   './studio/import.js?v=1','./studio/workflows.js?v=5',
   './studio/lyrics-tools.js?v=4','./studio/print-export.js?v=1',
@@ -31,7 +31,7 @@ function studioNavigation(url){
 }
 var ASSETS = [
   './', './index.html', './app/', './app/index.html',
-  './style.css', './style.css?v=9', './main.js', './landing-schema.js?v=1', './landing-public.js?v=1', './manifest.webmanifest',
+  './style.css', './style.css?v=9', './main.js', './landing-schema.js?v=2', './landing-public.js?v=1', './manifest.webmanifest',
   './favicon.svg', './favicon.svg?v=2', './assets/velardream-crystal.png', './assets/velardream-symbol.svg', './assets/velardream-app-icon-192.png', './assets/velardream-app-icon-512.png'
 ];
 function isPublicAsset(url) {
