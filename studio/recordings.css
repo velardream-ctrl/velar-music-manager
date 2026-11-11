@@ -340,3 +340,89 @@
  #vmm-repertoire .vmm-r-clock{font-size:.79rem}
  #vmm-repertoire .vmm-r-quick-actions{padding:3px 8px;gap:6px}
 }
+
+
+/* RUN-057 — one-row compact player; normal 44px touch target, ~33px gold icon.
+   Kept native AirPlay/overflow and the same <audio> playback engine. */
+#vmm-repertoire .vmm-r-controls-shell{margin:10px 0 4px;border-radius:12px}
+#vmm-repertoire .vmm-r-stage{
+  display:flex;flex-wrap:nowrap;align-items:center;gap:7px;
+  width:100%;min-height:56px;margin:0;padding:5px 9px;
+}
+#vmm-repertoire .vmm-r-play-button{
+  position:relative;isolation:isolate;
+  flex:0 0 44px;width:44px;min-width:44px;height:44px;
+  border:0;background:transparent;box-shadow:none;color:#14213a;
+  padding:0;display:inline-flex;justify-content:center;align-items:center;
+  border-radius:10px;
+}
+#vmm-repertoire .vmm-r-play-button::before{
+  content:'';position:absolute;z-index:-1;inset:5px;
+  border-radius:9px;background:#e6cb95;border:1px solid #f0d8aa;
+  box-shadow:0 2px 5px #0005;
+}
+#vmm-repertoire .vmm-r-play-button:active:not(:disabled){
+  background:transparent;transform:none;
+}
+#vmm-repertoire .vmm-r-play-button:active:not(:disabled)::before{background:#ffe5af}
+#vmm-repertoire .vmm-r-play-button svg{width:17px;height:17px}
+#vmm-repertoire .vmm-r-timeline{
+  display:flex;flex:1 1 55px;min-width:35px;gap:0;justify-content:center;
+}
+#vmm-repertoire .vmm-r-timeline input[type="range"]{height:34px;min-height:34px}
+#vmm-repertoire .vmm-r-clock{font-size:.77rem;padding:0;min-height:15px;line-height:1.1}
+#vmm-repertoire .vmm-r-quick-actions{
+  flex:0 0 auto;display:flex;gap:0;justify-content:flex-end;
+  align-items:center;margin:0;padding:0;
+  min-height:44px;border:0;background:transparent;
+}
+#vmm-repertoire .vmm-r-quick-btn{
+  width:44px;min-width:44px;height:44px;flex:0 0 44px;
+  padding:0;border-radius:9px;
+}
+#vmm-repertoire .vmm-r-quick-btn svg{width:21px;height:21px}
+#vmm-repertoire .vmm-r-player{
+  transition:none;scroll-margin-top:5px;
+}
+#vmm-repertoire #vmm-r-player-sentinel{display:block;height:1px;pointer-events:none}
+#vmm-repertoire .vmm-r-player.is-minimized{
+  top:0;z-index:30;
+  margin:0;padding:5px 7px;border-radius:0 0 12px 12px;
+  background:#101b34f8;box-shadow:0 6px 20px #0008;
+}
+#vmm-repertoire .vmm-r-player.is-minimized .vmm-r-player-head,
+#vmm-repertoire .vmm-r-player.is-minimized #vmm-r-now{
+  display:none;
+}
+#vmm-repertoire .vmm-r-player.is-minimized .vmm-r-controls-shell{margin:0}
+#vmm-repertoire .vmm-r-player.is-minimized .vmm-r-stage{min-height:48px;padding:2px 7px}
+#vmm-repertoire .vmm-r-player.is-minimized .vmm-r-play-button::before{inset:6px}
+#vmm-repertoire .vmm-r-player-sync{
+  position:relative;overflow:visible;
+  font-size:inherit;
+}
+#vmm-repertoire .vmm-r-player-sync svg{
+  display:block;flex:0 0 auto;width:28px;height:28px;
+  stroke-width:1.9px;
+}
+#vmm-repertoire .vmm-r-player-sync #vmm-r-sync-mark{
+  position:absolute;bottom:2px;right:3px;
+  display:block;color:#f4d89c;font-size:13px;line-height:1;font-weight:800;
+  text-shadow:0 1px 2px #091427,0 -1px 2px #091427;
+}
+@media(min-width:800px){
+ #vmm-repertoire .vmm-r-player-sync svg{width:31px;height:31px}
+ #vmm-repertoire .vmm-r-player-sync #vmm-r-sync-mark{font-size:15px}
+}
+@media(max-width:480px){
+ #vmm-repertoire .vmm-r-stage{min-height:53px;padding:4px 6px;gap:4px}
+ #vmm-repertoire .vmm-r-play-button{
+   flex:0 0 44px;width:44px;min-width:44px;height:44px;
+ }
+ #vmm-repertoire .vmm-r-play-button svg{width:16px;height:16px}
+ #vmm-repertoire .vmm-r-quick-actions{gap:0;padding:0;min-height:44px}
+ #vmm-repertoire .vmm-r-quick-btn{flex-basis:44px;min-width:44px;width:44px;height:44px}
+ #vmm-repertoire .vmm-r-clock{font-size:.73rem}
+ #vmm-repertoire .vmm-r-player.is-minimized{padding:4px 5px}
+ #vmm-repertoire .vmm-r-player.is-minimized .vmm-r-stage{padding:2px 4px}
+}
