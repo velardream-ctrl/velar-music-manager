@@ -50,13 +50,13 @@ assert.match(css,/#workspace \.sidebar\{\s*position:fixed;left:0;right:0;top:aut
 assert.match(css,/env\(safe-area-inset-bottom,0px\)/);
 assert.match(recordingsCss,/vmm-r-pinned/);
 assert.match(recordingsCss,/vmm-r-player-title/);
-assert.ok(html.includes('src="studio.js?v=5"'));
-assert.ok(html.includes('src="workflows.js?v=4"'));
-assert.ok(html.includes('src="recordings.js?v=5"'));
+assert.ok(html.includes('src="studio.js?v=6"'));
+assert.ok(html.includes('src="workflows.js?v=5"'));
+assert.ok(html.includes('src="recordings.js?v=6"'));
 assert.ok(html.includes('src="offline-repertoire.js?v=2"'));
 assert.ok(html.includes('href="studio.css?v=6"'));
-assert.ok(html.includes('href="recordings.css?v=5"'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v6'"));
+assert.ok(html.includes('href="recordings.css?v=6"'));
+assert.ok(sw.includes("STUDIO_PREFIX+'v7'"));
 
 // Live behavior: exercise controller view and pin behavior, without OAuth.
 const elems={};
