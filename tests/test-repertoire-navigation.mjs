@@ -51,12 +51,12 @@ assert.match(css,/env\(safe-area-inset-bottom,0px\)/);
 assert.match(recordingsCss,/vmm-r-pinned/);
 assert.match(recordingsCss,/vmm-r-player-title/);
 assert.ok(html.includes('src="studio.js?v=10"'));
-assert.ok(html.includes('src="workflows.js?v=6"'));
-assert.ok(html.includes('src="recordings.js?v=11"'));
+assert.ok(html.includes('src="workflows.js?v=7"'));
+assert.ok(html.includes('src="recordings.js?v=12"'));
 assert.ok(html.includes('src="offline-repertoire.js?v=3"'));
-assert.ok(html.includes('href="studio.css?v=11"'));
-assert.ok(html.includes('href="recordings.css?v=11"'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v17'"));
+assert.ok(html.includes('href="studio.css?v=12"'));
+assert.ok(html.includes('href="recordings.css?v=12"'));
+assert.ok(sw.includes("STUDIO_PREFIX+'v18'"));
 
 // Live behavior: exercise controller view and pin behavior, without OAuth.
 const elems={};
