@@ -92,7 +92,10 @@
           entries:defaultLanguages()},
         topics:{heading:'Созвездия чувств и историй',
           intro:'Откройте музыку по теме: от свадебных песен и любви до космоса, юмора и светлой грусти.',
-          entries:defaultTopics()}
+          entries:defaultTopics()},
+        assistant:{enabled:true,greetingEnabled:true,title:'VELAR · помощник',
+          welcome:'Добро пожаловать во вселенную VELARDREAM! Какое настроение у вас сегодня?',
+          contactEmail:'',rules:[]}
       },
       about:{
         heading:'VELARDREAM RECORDS',
@@ -338,6 +341,30 @@
       intro:plain(typeof x.intro==='string'?x.intro:def.intro,
       'Описание тематических миров',450,true),entries:result};
   }
+  // RUN-074 — only safe public chat configuration, not visitor messages or
+  // keys. No server-side LLM, email API or per-message Firestore writes.
+  function assistantConfig(raw,def){
+    var item=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+    var mail=plain(item.contactEmail||'','Публичная почта автора',160,false);
+    if(mail&&!/^[^\s@<>]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(mail))
+      throw new Error('Почта помощника: укажите корректный публичный email.');
+    var rules=typeof item.rules==='undefined'?def.rules:item.rules;
+    if(!Array.isArray(rules)||rules.length>25)
+      throw new Error('Помощник: максимум 25 правил ответов.');
+    var cleaned=rules.map(function(rule,i){
+      if(!rule||typeof rule!=='object'||Array.isArray(rule))
+        throw new Error('Помощник: правило '+(i+1)+' имеет неверный формат.');
+      var words=plain(rule.keywords||'','Слова правила '+(i+1),140,true);
+      if(!/^[^\u0000-\u001f<>\\]*$/.test(words)||!words.split(',').some(function(x){return x.trim().length>=2;}))
+        throw new Error('Ключевые слова правила: разделите слова запятыми.');
+      return {keywords:words,answer:plain(rule.answer||'','Ответ правила '+(i+1),500,true)};
+    });
+    return {enabled:item.enabled!==false,greetingEnabled:item.greetingEnabled!==false,
+      title:plain(typeof item.title==='string'?item.title:def.title,'Название помощника',55,true),
+      welcome:plain(typeof item.welcome==='string'?item.welcome:def.welcome,
+        'Приветствие помощника',250,true),
+      contactEmail:mail,rules:cleaned};
+  }
   function card(x,type,index){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Карточка '+index+': неверный формат.');
     var title=plain(x.title,'Название карточки '+index,110,!!x.visible);
@@ -424,6 +451,7 @@
     result.genres.universe=universeConfig(genres.universe,d.genres.universe);
     result.genres.languages=languagesConfig(genres.languages,d.genres.languages);
     result.genres.topics=topicsConfig(genres.topics,d.genres.topics);
+    result.genres.assistant=assistantConfig(genres.assistant,d.genres.assistant);
     result.about.notice=plain(typeof about.notice==='string'?about.notice:d.about.notice,'О проекте — объявление',600,false);
     if(JSON.stringify(result).length>780000)throw new Error('Изображений слишком много: уменьшай фотографии или используй меньше карточек (ограничение размера страницы).');
     return result;
@@ -435,5 +463,6 @@
     subscriptionUrl:subscriptionUrl,playlistCard:playlistCard,subscriptionCard:subscriptionCard,
     universeConfig:universeConfig,languagesConfig:languagesConfig,
     defaultUniverseNodes:defaultUniverseNodes,defaultLanguages:defaultLanguages,
-    defaultTopics:defaultTopics,topicsConfig:topicsConfig};
+    defaultTopics:defaultTopics,topicsConfig:topicsConfig,
+    assistantConfig:assistantConfig};
 }());
