@@ -448,6 +448,7 @@
 #vmm-repertoire #vmm-r-player-section{
   overflow-anchor:none;
   position:relative;
+  z-index:20; /* Keep the entire sticky stacking context above the lyrics. */
   isolation:isolate;
 }
 #vmm-repertoire #vmm-r-text-wrapper{
