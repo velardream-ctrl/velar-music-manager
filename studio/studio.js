@@ -258,7 +258,6 @@
     if(authorized&&authorizedUid!==user.uid){
       lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
       if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
-    if(window.VMM_LANDING&&window.VMM_LANDING.reset)window.VMM_LANDING.reset();
       if(window.VMM_LANDING&&window.VMM_LANDING.reset)window.VMM_LANDING.reset();
     }
     authorized=true;authorizedUid=user.uid;clearSignInWatchdog();signIn.disabled=false;signIn.textContent='Войти через Google';show(gate,false);show(workspace,true);
@@ -274,6 +273,7 @@
   function unauthorized(note){
     authorized=false;authorizedUid='';saveBusy=false;lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
     if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
+    if(window.VMM_LANDING&&window.VMM_LANDING.reset)window.VMM_LANDING.reset();
     show(workspace,false);show(gate,true);message(note);if(auth)signinReady();
   }
   function save(e){
