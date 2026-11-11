@@ -445,11 +445,11 @@
       '<p class="sync-note">Файлы остаются на каждом устройстве после закрытия сайта. Недостающие записи загружаются из личного Google Drive после разрешения доступа.</p>'+
       rows.map(function(s){
         return '<button type="button" class="vmm-r-pinned" data-r-action="offline-play" data-r-id="'+esc(s.fileId)+'">'+
-          '<span>▶ '+esc(s.title||'Без названия')+'</span><small>'+esc(s.variant||'Фонограмма')+' · '+mb(s.size)+' · офлайн ✓</small></button>';
+          '<span class="vmm-r-pinned-title"><span class="vmm-r-inline-play" aria-hidden="true"></span>'+esc(s.title||'Без названия')+'</span><small>'+esc(s.variant||'Фонограмма')+' · '+mb(s.size)+' · офлайн ✓</small></button>';
       }).join('')+
       pendingRows.map(function(s){
         return '<div class="vmm-r-pinned vmm-r-awaiting" role="status">'+
-          '<span>☁ '+esc(s.title||'Без названия')+'</span><small>'+esc(s.variant||'Фонограмма')+
+          '<span>В облаке · '+esc(s.title||'Без названия')+'</span><small>'+esc(s.variant||'Фонограмма')+
           ' · '+mb(s.size)+' · ожидает загрузки на это устройство</small></div>';
       }).join('');
     renderCloudStatus();
@@ -837,11 +837,11 @@
         var attempt=a.play();
         if(attempt&&typeof attempt.then==='function'){
           return attempt.then(function(){msg('Воспроизведение: '+r.title);syncStagePlayer();})
-            .catch(function(){msg('Файл готов. Нажми большую кнопку ▶, чтобы начать воспроизведение.');syncStagePlayer();});
+            .catch(function(){msg('Файл готов. Нажми большую кнопку воспроизведения, чтобы начать прослушивание.');syncStagePlayer();});
         }
         syncStagePlayer();msg('Файл готов к прослушиванию.');
       }catch(err){
-        syncStagePlayer();msg('Файл готов. Нажми большую кнопку ▶, чтобы начать воспроизведение.');
+        syncStagePlayer();msg('Файл готов. Нажми большую кнопку воспроизведения, чтобы начать прослушивание.');
       }
     }).catch(function(e){
       if(expectedRequest!==playRequestId)return;
