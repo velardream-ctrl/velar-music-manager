@@ -77,6 +77,7 @@
      button.setAttribute('aria-label','Слушать: '+track.title+' — '+(track.provider==='spotify'?'Spotify':'YouTube'));
      button.onclick=function(){
        if(active===index)return;
+       pauseOtherEmbeds();
        active=index;
        buttons.forEach(function(b,i){b.setAttribute('aria-pressed',i===index?'true':'false');});
        empty(player);
@@ -88,7 +89,7 @@
        frame.src=track.provider==='spotify'?
          'https://open.spotify.com/embed/track/'+validated.split('/').pop():
          'https://www.youtube-nocookie.com/embed/'+validated.split('v=')[1];
-       frame.loading='lazy';frame.setAttribute('allow','autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture');
+       frame.loading='lazy';frame.setAttribute('allow','clipboard-write; encrypted-media; fullscreen; picture-in-picture');
        frame.setAttribute('allowfullscreen','');
        frame.referrerPolicy='strict-origin-when-cross-origin';
        player.appendChild(frame);
@@ -383,6 +384,7 @@
    releaseGallery(value.releases);
    playlistGallery(value.releases);
    renderRadio(value.releases.radio);
+   if(window.VELAR_UNIVERSE&&window.VELAR_UNIVERSE.render)window.VELAR_UNIVERSE.render(value);
    return true;
  }
  function start(){
