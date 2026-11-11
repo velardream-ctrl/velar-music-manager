@@ -137,3 +137,12 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .cms-card-grid{grid-template-columns:1fr}
  .cms-card-art{height:185px}
 }
+
+/* RUN-065: keep one square source for both portrait appearances. */
+.cms-card-art.is-circle{
+ width:min(210px,72%);height:auto;aspect-ratio:1/1;
+ object-fit:cover;border-radius:50%;
+ margin:20px auto 0;
+ border:3px solid #dfc48f;
+ box-shadow:0 6px 26px #0005;
+}
