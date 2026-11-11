@@ -535,3 +535,34 @@ body.vmm-print-open{overflow:hidden}
    flex:1 0 100%;max-width:none;width:100%;
  }
 }
+
+
+/* RUN-075 — privacy-safe catalog language review. No extra public rendering. */
+#panel-landing .vmm-lang-bulk{
+ border-color:rgba(234,205,158,.7);margin:15px 0 23px;padding:14px;
+}
+#panel-landing .vmm-lang-bulk .landing-item-actions{display:flex;flex-wrap:wrap;gap:8px;margin:9px 0}
+#panel-landing .vmm-language-review-list{display:flex;flex-direction:column;gap:7px}
+#panel-landing .vmm-language-review-row{
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(120px,180px);
+ align-items:center;gap:5px 12px;padding:10px 11px;
+ border:1px solid rgba(181,174,161,.38);border-radius:9px;background:#142843;
+}
+#panel-landing .vmm-language-review-row>span{
+ font-size:.87rem;color:#f5e3c5;overflow-wrap:anywhere;
+}
+#panel-landing .vmm-language-review-row select{
+ min-width:0;width:100%;min-height:44px;
+ border:1px solid #bea77f;border-radius:8px;background:#203451;color:#ffebce;
+ padding:8px 10px;font-size:16px;
+}
+#panel-landing .vmm-language-review-row select:disabled{
+ opacity:.76;color:#c9d2e0;border-color:#77849a;
+}
+#panel-landing .vmm-language-review-row small{
+ grid-column:1 / -1;color:#adbed4;font-size:.74rem;line-height:1.3;
+}
+@media(max-width:570px){
+ #panel-landing .vmm-language-review-row{grid-template-columns:minmax(0,1fr)}
+ #panel-landing .vmm-language-review-row select{grid-column:1}
+}
