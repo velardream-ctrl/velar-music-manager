@@ -51,7 +51,7 @@ vm.runInNewContext(code,{window,document,navigator:{onLine:true},Promise,Math,Da
 const t=window.VMM_RECORDINGS._test;
 t.header();document.getElementById('vmm-r-editor').className='vmm-r-editor hidden';t.setup();t.renderRecords();
 assert.doesNotMatch(nodes['vmm-r-records'].innerHTML,/data-r-action="trash"|data-r-offline=/);
-assert.match(nodes['vmm-r-records'].innerHTML,/Офлайн ✓/);
+assert.match(nodes['vmm-r-records'].innerHTML,/Открыть в плеере/,'Cloud-only recordings remain explicitly playable');
 assert.equal(nodes['vmm-r-edit'].disabled,true,'Pencil disabled until playback record is selected');
 nodes['vmm-r-edit'].onclick();
 assert.match(nodes['vmm-r-status'].textContent,/Сначала выбери/);
