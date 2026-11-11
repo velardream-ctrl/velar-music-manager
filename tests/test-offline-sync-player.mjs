@@ -37,7 +37,7 @@ const api={
 };
 const window={VMM_OFFLINE:offline,VMM_CLOUD_PINS:api,addEventListener(){},__downloads:0};
 const replacement=[
- 'window.VMM_RECORDINGS={_test:{header:header,refresh:refreshCloudPins,reset:reset,',
+ 'window.VMM_RECORDINGS={_test:{header:header,refresh:refreshCloudPins,reset:reset,reloadCache:readCache,',
  'setup:function(token){user={uid:"owner001"};db={};active=true;driveToken=token||"";',
  'catalog=[{id:"song001",title:"Дикая вишня",artist:"Velar"}];',
  'recordings=[{id:"record1",driveFileId:"file_abc0001",catalogId:"song001",title:"Дикая вишня",artist:"Velar",',
@@ -70,6 +70,7 @@ app.reset();
 assert.equal(cached.length,1,'Logout must not erase locally saved songs');
 remote=[];
 app.setup('drive-token');
+await app.reloadCache(); // The production load() reads per-UID IndexedDB before reconciling pins.
 await app.refresh();
 assert.equal(cached.length,0,'Explicit remote unpin removes local copy on sync');
 assert.equal(removals,1);
