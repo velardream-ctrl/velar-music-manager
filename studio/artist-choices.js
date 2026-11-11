@@ -63,7 +63,7 @@
  }
  function newCard(candidate){
    if(!candidate||!candidate.id)throw new Error('Выбери артиста из списка.');
-   return {title:candidate.label,subtitle:'',description:'',url:'',imageUrl:'',visible:false,artistId:candidate.id};
+   return {title:candidate.label,subtitle:'',description:'',url:'',imageUrl:'',imageShape:'square',visible:false,artistId:candidate.id};
  }
  window.VMM_ARTIST_CHOICES={choices:choices,byId:byId,newCard:newCard,inferredId:inferredId};
 }());
