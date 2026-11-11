@@ -69,13 +69,13 @@ const fakeDb={
  };}
 };
 const firebase={firestore:{FieldValue:{serverTimestamp:()=>({})}}};
-const URL={createObjectURL(){return 'blob:local';},revokeObjectURL(){}};
+const fakeURL={createObjectURL(){return 'blob:local';},revokeObjectURL(){}};
 const injected=source.replace(
  'window.VMM_RECORDINGS={open:open,hide:hide,reset:reset,translit:translit,filename:filename};',
  'window.VMM_RECORDINGS={_test:{header:header,setSong:setSong,renderRecords:renderRecords,actions:actions,upload:upload,setup:function(){user=window.__user;db=window.__db;catalog=[{id:"song1",title:"Дикая вишня",artist:"Velar"},{id:"song2",title:"Журавли",artist:"Velar"}];active=true;connect=function(){return Promise.resolve("token");};ensureFolder=function(){return Promise.resolve("folder");};uploadBytes=function(){return window.__failed?Promise.reject(new Error("TEST upload failure")):Promise.resolve({id:"new-drive-id"});};},state:function(){return {songId:songId,formSongId:formSongId,playerVisible:playerVisible,selected:document.getElementById("vmm-r-song").value,records:recordings.length};},setOffline:function(item){saved=[item];}}};');
 assert.notEqual(injected,source,'Testing instrumentation must match the current module export');
 window.__user=user;window.__db=fakeDb;
-const ctx={document,window,navigator:{onLine:true},firebase,Promise,Array,Object,String,Number,Math,Date,URL,setTimeout,Error};
+const ctx={document,window,navigator:{onLine:true},firebase,Promise,Array,Object,String,Number,Math,Date,URL:fakeURL,setTimeout,Error};
 vm.runInNewContext(injected,ctx,{timeout:1000});
 const t=window.VMM_RECORDINGS._test;
 t.header();t.setup();
