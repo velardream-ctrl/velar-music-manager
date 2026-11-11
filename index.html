@@ -25,7 +25,8 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" defer></script>
   <script src="studio/firebase-config.js" defer></script>
   <script src="landing-schema.js?v=4" defer></script>
-  <script src="landing-public.js?v=5" defer></script>
+  <script src="landing-public.js?v=6" defer></script>
+  <script src="universe.js?v=1" defer></script>
   <script src="main.js" defer></script>
 </head>
 <body class="public-site">
@@ -117,6 +118,20 @@
           <div id="public-subscriptions" class="cms-subscription-links">
             <a class="cms-subscription-link" href="https://open.spotify.com/artist/1PNzGsDcFVuOMBN7Gw12tw" target="_blank" rel="noopener noreferrer">DJ Velar в Spotify</a>
           </div>
+        </div>
+      </section>
+
+      <section id="universe" class="universe-section" aria-labelledby="universe-title">
+        <p class="universe-overline">VELARDREAM / EXPLORE THE SOUND</p>
+        <h2 id="universe-title">Вселенная, которую можно услышать</h2>
+        <p class="universe-intro">Исследуйте созвездия артистов, клипов и релизов. Каждое движение открывает новый маршрут к музыке.</p>
+        <button type="button" id="velar-universe-toggle" class="universe-toggle"
+          aria-expanded="false" aria-controls="velar-universe-panel">Исследовать вселенную</button>
+        <div id="velar-universe-panel" class="universe-panel hidden">
+          <div class="universe-scene" aria-label="Интерактивная карта разделов">
+            <div id="velar-universe-stage" class="universe-stage"></div>
+          </div>
+          <div id="velar-universe-details" class="universe-details" aria-live="polite"></div>
         </div>
       </section>
 
