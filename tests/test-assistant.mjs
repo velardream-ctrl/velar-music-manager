@@ -14,7 +14,7 @@ assert.equal(settings.contactEmail,'');
 assert.deepEqual(Array.from(settings.rules),[]);
 assert.equal(w.VMM_LANDING_SCHEMA.normalize(w.VMM_LANDING_SCHEMA.defaults()).genres.assistant.enabled,true);
 assert.throws(()=>w.VMM_LANDING_SCHEMA.assistantConfig({contactEmail:'not-an-email'},settings),/email/);
-assert.throws(()=>w.VMM_LANDING_SCHEMA.assistantConfig({rules:[{keywords:'hey',answer:'<script>bad</script>'}]},settings),/.*?/, 'Plain text only: escaped rendering');
+assert.equal(w.VMM_LANDING_SCHEMA.assistantConfig({rules:[{keywords:'hey',answer:'<script>bad</script>'}]},settings).rules[0].answer,'<script>bad</script>','UI must render all replies with textContent, not innerHTML');
 assert.throws(()=>w.VMM_LANDING_SCHEMA.assistantConfig({rules:Array(26).fill({keywords:'x,y',answer:'A'})},settings),/25/);
 vm.runInNewContext(code,{window:w,document:doc,Array,String,Math,Number,Error},{timeout:1000});
 const answer=(s,terms=settings)=>w.VELAR_ASSISTANT.answer(s,w.VMM_LANDING_SCHEMA.defaults(),terms);
