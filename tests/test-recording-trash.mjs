@@ -14,9 +14,9 @@ assert.match(source,/archivedAt:firebase\.firestore\.FieldValue\.serverTimestamp
 assert.match(source,/data-r-action="trash"/);
 assert.match(source,/data-r-action="restore"/);
 assert.doesNotMatch(source,/request\([^\n]+method:'DELETE'/);
-assert.ok(html.includes('src="recordings.js?v=3"'));
-assert.ok(html.includes('href="recordings.css?v=3"'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v4'"));
+assert.ok(html.includes('src="recordings.js?v=4"'));
+assert.ok(html.includes('href="recordings.css?v=4"'));
+assert.ok(sw.includes("STUDIO_PREFIX+'v5'"));
 
 const nodes={};
 const element=()=>({textContent:'',innerHTML:'',className:'',style:{},appendChild(){},addEventListener(){},pause(){},load(){},removeAttribute(){},setAttribute(){}});
