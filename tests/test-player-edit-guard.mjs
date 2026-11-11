@@ -49,7 +49,7 @@ assert.notEqual(code,source,'Cannot inject test exports');
 window.__record=record;window.__stored=fakeStored;
 vm.runInNewContext(code,{window,document,navigator:{onLine:true},Promise,Math,Date,Number,String,Array,Object,Error},{timeout:1000});
 const t=window.VMM_RECORDINGS._test;
-t.header();nodes['vmm-r-editor'].className='vmm-r-editor hidden';t.setup();t.renderRecords();
+t.header();document.getElementById('vmm-r-editor').className='vmm-r-editor hidden';t.setup();t.renderRecords();
 assert.doesNotMatch(nodes['vmm-r-records'].innerHTML,/data-r-action="trash"|data-r-offline=/);
 assert.match(nodes['vmm-r-records'].innerHTML,/Офлайн ✓/);
 assert.equal(nodes['vmm-r-edit'].disabled,true,'Pencil disabled until playback record is selected');
