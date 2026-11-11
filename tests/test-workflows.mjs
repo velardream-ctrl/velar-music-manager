@@ -7,7 +7,7 @@ for(const p of ['studio/workflows.js','studio/lyrics-tools.js','studio/studio.js
  const result=cp.spawnSync(process.execPath,['--check',new URL('../'+p,import.meta.url).pathname],{encoding:'utf8'});
  assert.equal(result.status,0,p+': '+result.stderr);
 }
-assert.match(html,/<script src="workflows\.js\?v=3"><\/script>/);
+assert.match(html,/<script src="workflows\.js\?v=4"><\/script>/);
 assert.match(html,/<script src="lyrics-tools\.js\?v=4"><\/script>/);
 assert.ok(html.indexOf('import.js?v=1')<html.indexOf('workflows.js?v=4'));
 assert.ok(html.indexOf('workflows.js?v=4')<html.indexOf('lyrics-tools.js?v=4'));
