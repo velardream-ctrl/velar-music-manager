@@ -774,3 +774,87 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
    animation:none!important;transition:none!important;
  }
 }
+
+
+/* RUN-073 — cosmic themes / real curated tag cloud. CSS-only artwork, no fetch. */
+.topics-section{padding:63px 0 72px;text-align:center;border-bottom:1px solid rgba(223,195,145,.22);scroll-margin-top:20px}
+.topics-section h2{font:400 clamp(1.75rem,3.9vw,2.85rem)/1.16 Georgia,serif;color:#fbe6c6;margin:12px 0}
+.topics-intro{max-width:710px;margin:0 auto 22px;color:#c1cfe1;line-height:1.6;font-size:.95rem}
+.topics-cosmos{
+ position:relative;isolation:isolate;height:525px;border:1px solid rgba(230,195,138,.55);
+ border-radius:18px;overflow:hidden;
+ background:radial-gradient(circle at 50% 50%,rgba(72,94,145,.32),transparent 56%),
+ radial-gradient(circle at 14% 20%,#e9c891 0 1px,transparent 2px),
+ radial-gradient(circle at 80% 72%,#d8e7f2 0 1px,transparent 2px),
+ radial-gradient(circle at 55% 85%,#e8ce9f 0 1px,transparent 2px),#0c1931;
+}
+.topics-cosmos-core{position:absolute;left:50%;top:50%;width:115px;height:205px;
+ transform:translate(-50%,-50%);z-index:1;pointer-events:none}
+.topics-cosmos-core img{display:block;width:100%;height:100%;object-fit:contain;
+ filter:drop-shadow(0 0 14px rgba(246,212,151,.42))}
+.topics-cosmos-glow{position:absolute;inset:-35%;border-radius:50%;z-index:-1;
+ background:radial-gradient(ellipse,rgba(235,195,125,.2),rgba(99,143,207,.12) 45%,transparent 72%)}
+.topics-orbit{position:absolute;inset:0}
+.topic-planet{position:absolute;transform:translate(-50%,-50%);
+ display:flex;align-items:center;justify-content:center;flex-direction:column;
+ padding:8px 11px;min-height:58px;width:130px;
+ border:1px solid rgba(231,194,140,.7);border-radius:999px;
+ background:radial-gradient(ellipse at 32% 22%,#3a5378,#152847 74%);color:#efdbb9;
+ box-shadow:inset 0 0 15px rgba(222,198,153,.09),0 6px 19px #0005;
+ font:600 .77rem -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+ cursor:pointer;z-index:2;text-align:center}
+.topic-planet-name{line-height:1.24;overflow-wrap:anywhere}
+.topic-planet small{font-size:.66rem;opacity:.76;margin-top:3px;font-weight:400}
+.topic-planet:hover,.topic-planet[aria-pressed=true]{
+ border-color:#ffe3ad;background:#edcf98;color:#152440;
+ box-shadow:0 0 24px rgba(241,204,139,.35)}
+.topic-planet:focus-visible,.topic-tag:focus-visible,.topic-song:focus-visible,.topic-show-more:focus-visible{
+ outline:3px solid #f4d5a0;outline-offset:3px}
+.topics-cloud-title{font:400 1.5rem Georgia,serif;color:#f4e1c2;margin:30px 0 13px}
+.topics-cloud{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:9px;margin:0 auto;max-width:1050px}
+.topic-tag{display:inline-flex;align-items:center;min-height:41px;
+ background:rgba(30,49,76,.85);color:#e6cca2;border:1px solid rgba(224,190,142,.53);
+ padding:9px 14px;border-radius:50px;font:500 .85rem -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+ cursor:pointer}
+.topic-tag:hover,.topic-tag[aria-pressed=true]{background:#e9c992;color:#16243e;border-color:#ffdfac}
+.topic-detail{margin-top:21px;padding:22px 24px;text-align:left;min-width:0;
+ background:linear-gradient(155deg,#1d3151,#0f1c34);
+ border:1px solid rgba(224,192,141,.55);border-radius:16px}
+.topic-detail-heading h3{font:400 clamp(1.3rem,2.8vw,1.9rem) Georgia,serif;
+ color:#fee8c4;margin:9px 0 6px}
+.topic-detail-heading p,.topic-empty,.topic-count{font-size:.9rem;color:#bed0e6;line-height:1.5}
+.topic-song-list{display:flex;flex-direction:column;gap:8px;margin:15px 0}
+.topic-song{display:flex;align-items:center;gap:14px;width:100%;min-height:55px;
+ padding:9px 13px;text-align:left;background:#253b5d;color:#f2e0c2;
+ border:1px solid rgba(224,197,150,.43);border-radius:10px;cursor:pointer}
+.topic-song:hover,.topic-song[aria-pressed=true]{border-color:#f1d098;background:#314966}
+.topic-song-index{color:#e0c28d;font:400 1.05rem Georgia,serif}
+.topic-song-info{flex:1;min-width:0;display:flex;flex-direction:column}
+.topic-song-info strong{overflow-wrap:anywhere;font-size:.87rem}
+.topic-song-info small{font-size:.72rem;color:#c1d0e5}
+.topic-song-play{display:inline-flex;justify-content:center;align-items:center;
+ width:29px;height:29px;flex:0 0 29px;border:1px solid #e8c88d;border-radius:50%;color:#e8c88d}
+.topic-song-play::before{content:"";width:0;height:0;margin-left:3px;
+ border-top:5px solid transparent;border-bottom:5px solid transparent;border-left:8px solid currentColor}
+.topic-player{min-width:0}
+.topic-show-more{padding:10px 15px;border:1px solid #d0b47e;border-radius:10px;
+ background:#283e60;color:#f4d9ab;min-height:44px;cursor:pointer}
+@media(max-width:850px){
+ .topics-section{padding:42px 0 55px}
+ .topics-cosmos{height:auto;min-height:0;display:flex;flex-direction:column;padding:13px}
+ .topics-cosmos-core{position:relative;left:auto;top:auto;transform:none;
+ width:79px;height:144px;margin:0 auto 15px}
+ .topics-orbit{position:relative;inset:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+ .topic-planet{position:relative;top:auto!important;left:auto!important;transform:none!important;
+ width:100%;min-width:0}
+}
+@media(max-width:560px){
+ .topics-orbit{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .topic-planet{font-size:.75rem}
+ .topic-detail{padding:14px}
+ .topics-cloud{gap:7px}
+ .topic-tag{font-size:.8rem;padding:8px 12px}
+}
+@media(prefers-reduced-motion:reduce){
+ .topic-planet,.topic-tag,.topic-song{transition:none!important;animation:none!important}
+}
