@@ -150,6 +150,7 @@
       '<span id="vmm-r-player-sync" class="vmm-r-player-sync" role="status" aria-label="Фонограмма не выбрана" title="Фонограмма не выбрана"><span aria-hidden="true">☁</span><span id="vmm-r-sync-mark" aria-hidden="true">—</span></span>'+
       '<button type="button" id="vmm-r-edit" class="vmm-r-edit-toggle" aria-label="Редактировать выбранную фонограмму" title="Редактировать выбранную фонограмму" aria-controls="vmm-r-editor" aria-expanded="false">'+
       '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4 10.5-10.5z"/></svg></button></div>'+
+      '<div class="vmm-r-controls-shell">'+
       '<div class="vmm-r-stage" role="group" aria-label="Фирменный аудиоплеер VELARDREAM">'+
       '<button type="button" id="vmm-r-play" class="vmm-r-play-button" aria-label="Воспроизвести" aria-pressed="false" disabled>'+
       '<svg class="vmm-r-play-icon" viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M7 4.8c0-.7.8-1.1 1.4-.7l12 7.2c.6.3.6 1.1 0 1.5l-12 7.1c-.6.4-1.4 0-1.4-.7z"/></svg>'+
@@ -158,6 +159,11 @@
       '<div class="vmm-r-clock"><output id="vmm-r-elapsed" for="vmm-r-seek">0:00</output><output id="vmm-r-remaining" for="vmm-r-seek">—:—</output></div></div>'+
       '<button type="button" id="vmm-r-back" class="vmm-r-jump" aria-label="Назад на 10 секунд" disabled><span aria-hidden="true">↶</span><small>10</small></button>'+
       '<button type="button" id="vmm-r-next" class="vmm-r-jump" aria-label="Вперёд на 10 секунд" disabled><span aria-hidden="true">↷</span><small>10</small></button></div>'+
+      '<div class="vmm-r-quick-actions" role="group" aria-label="Вывод звука и дополнительные функции">'+
+      '<button type="button" id="vmm-r-route" class="vmm-r-quick-btn" aria-label="Вывод звука на другое устройство" title="Вывод звука" disabled>'+
+      '<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M12 12l-6 9h12z" fill="currentColor" stroke="none"/></svg></button>'+
+      '<button type="button" id="vmm-r-more" class="vmm-r-quick-btn" aria-label="Открыть системное меню плеера" title="Дополнительные функции" aria-controls="vmm-r-system" aria-expanded="false" disabled>'+
+      '<svg viewBox="0 0 24 24" width="23" height="23" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button></div></div>'+
       '<details id="vmm-r-system" class="vmm-r-system"><summary>Системные функции плеера</summary>'+
       '<p class="sync-note">AirPlay, системное меню и громкость устройства доступны в стандартном плеере iPhone.</p>'+
       '<audio id="vmm-r-audio" controls preload="none" x-webkit-airplay="allow"></audio></details>'+
