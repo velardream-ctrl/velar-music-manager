@@ -81,7 +81,9 @@ assert.equal(fiResult.actions[1].action,'language');
 const original=api.normalize(sample);
 assert.equal(original.genres.topics.entries.find(t=>t.slug==='love').tracks.length,1);
 sample.genres.topics.entries.find(t=>t.slug==='love').tracks=[{title:'Чужое',provider:'spotify',url:'https://drive.google.com/file/d/private'}];
-assert.equal(w.VELAR_FAQ.publishedSongs(sample).length,1,'Never suggest unapproved private links');
+assert.equal(w.VELAR_FAQ.publishedSongs(sample).length,2,'Other approved topic/language tracks remain visible');
+assert.ok(w.VELAR_FAQ.publishedSongs(sample).every(t=>t.url.indexOf('drive.google.com')===-1),
+ 'Never suggest unapproved private Drive links');
 const noSongsResult=answer('любовь',defaults);
 assert.ok(!noSongsResult.actions,'No fabricated play buttons when a topic is empty');
 assert.match(noSongsResult.text,/нет назначенных/);
