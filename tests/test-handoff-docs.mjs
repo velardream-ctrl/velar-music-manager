@@ -22,7 +22,7 @@ assert.match(log,/RUN-051/);
 assert.match(log,/RUN-052/);
 assert.match(log,/НАЧАЛ/);
 assert.match(log,/ЗАВЕРШИЛ/);
-assert.match(handoff,/PROJECT_HANDOFF/);
+assert.match(handoff,/точка входа/);
 assert.match(handoff,/github\.com\/velardream-ctrl\/velar-music-manager/);
 assert.match(template,/GitHub Template/);
 assert.match(template,/без утечки данных/);
