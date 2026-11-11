@@ -144,6 +144,113 @@
    }
    parent.appendChild(wrapper);
  }
+ function closeTrackEditor(){
+   if(trackDirty()&&!window.confirm('Есть несохранённые галочки песен. Отменить их?'))return false;
+   trackEditorArtist='';trackChecked={};trackSearch='';render();return true;
+ }
+ function openTrackEditor(artistId){
+   if(!catalogLoaded||!trackLinksLoaded){info('Сначала загрузим полный каталог и его связи.');return;}
+   if(trackSaving||busy)return;
+   if(trackEditorArtist===artistId){closeTrackEditor();return;}
+   if(trackDirty()&&!window.confirm('Есть несохранённые галочки другого артиста. Отменить их?'))return;
+   trackEditorArtist=artistId;trackSearch='';trackChecked={};
+   catalogArtists.forEach(function(t){
+     trackChecked[t.id]=window.VMM_ARTIST_TRACKS.effective(t,trackLinks.overrides)===artistId;
+   });
+   render();
+ }
+ function saveTrackLinks(artistId){
+   if(artistId!==trackEditorArtist||!catalogLoaded||!trackLinksLoaded||busy||trackSaving)return;
+   if(!navigator.onLine){info('Без сети изменения не сохраняются. Оставь галочки до подключения.');return;}
+   var tracks=catalogArtists.slice(),selected=tracks.filter(function(t){return !!trackChecked[t.id];}).map(function(t){return t.id;});
+   var current=trackLinks,changes=window.VMM_ARTIST_TRACKS.conflicts(current.overrides,artistId,selected,tracks);
+   if(changes.length){
+     var example=changes.slice(0,3).map(function(t){return t.title;}).join('; ');
+     if(!window.confirm('Переназначить '+changes.length+' песен от другого артиста? Примеры: '+example+
+        '. Исходные сведения релизов и фонограммы не меняются.'))return;
+   }
+   var account=uid,generation=loadGeneration;
+   trackSaving=true;updateButtons();info('Сохраняем привязки '+selected.length+' песен…');
+   authorized().then(function(a){
+     if(a.user.uid!==account||generation!==loadGeneration)throw new Error('Учётная запись изменилась.');
+     return window.VMM_ARTIST_TRACKS.save(db,account,artistId,selected,tracks,current.revision);
+   }).then(function(next){
+     if(generation!==loadGeneration||uid!==account)return;
+     trackLinks=next;trackSaving=false;render();
+     info('Готово! '+selected.length+' песен привязаны к артисту на сайте. Исходные исполнители и данные дистрибьютора не изменены. Публичный список релизов по-прежнему публикуется отдельно.');
+   }).catch(function(e){
+     if(generation!==loadGeneration||uid!==account)return;
+     trackSaving=false;updateButtons();info('Не удалось сохранить привязки: '+safeStatus(e));
+   });
+ }
+ function trackEditor(parent,item){
+   if(!item.artistId||item.artistId!==trackEditorArtist)return;
+   var box=document.createElement('div');box.className='landing-track-editor';
+   heading(box,'Песни артиста: '+(item.title||item.artistId),
+     'Отметь нужные композиции. Они связываются с артистом только внутри сайта: исходные записи каталога, Drive и имена у дистрибьютора не меняются. Сохранение не публикует закрытые треки.');
+   var search=document.createElement('input');search.type='search';search.className='landing-track-search';
+   search.placeholder='Найти песню или исходного исполнителя…';
+   search.value=trackSearch;search.setAttribute('aria-label','Поиск песен для назначения');
+   box.appendChild(search);
+   var toolbar=document.createElement('div');toolbar.className='landing-track-toolbar';
+   var selectFound=button('Отметить найденные',function(){
+     filtered().forEach(function(t){trackChecked[t.id]=true;});
+     drawRows();updateButtons();
+   });
+   var unselectFound=button('Снять отметки с найденных',function(){
+     filtered().forEach(function(t){trackChecked[t.id]=false;});
+     drawRows();updateButtons();
+   });
+   toolbar.appendChild(selectFound);toolbar.appendChild(unselectFound);box.appendChild(toolbar);
+   var stat=document.createElement('p');stat.className='sync-note';stat.setAttribute('role','status');box.appendChild(stat);
+   var rows=document.createElement('div');rows.className='landing-track-list';box.appendChild(rows);
+   var actions=document.createElement('div');actions.className='landing-track-toolbar';
+   var saveBtn=button('Сохранить привязки песен',function(){saveTrackLinks(item.artistId);},'landing-add');
+   var cancelBtn=button('Закрыть список',function(){closeTrackEditor();});
+   actions.appendChild(saveBtn);actions.appendChild(cancelBtn);box.appendChild(actions);
+   function filtered(){
+     var q=String(trackSearch||'').trim().toLocaleLowerCase('ru').replace(/ё/g,'е');
+     return catalogArtists.filter(function(t){
+       if(!q)return true;
+       return (String(t.title||'')+' '+String(t.artist||'')).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)>=0;
+     }).sort(function(a,b){return String(a.title||'').localeCompare(String(b.title||''),'ru');});
+   }
+   function drawRows(){
+     clear(rows);
+     var matching=filtered();
+     var assigned=catalogArtists.filter(function(t){return !!trackChecked[t.id];}).length;
+     var changed=trackDirty();
+     stat.textContent='Назначено артисту: '+assigned+' из '+catalogArtists.length+
+       '. Найдено: '+matching.length+(changed?' · Есть несохранённые галочки':'');
+     saveBtn.disabled=!changed||trackSaving||busy;
+     // Avoid thousands of checkboxes at once on iOS 12; bulk actions still
+     // operate on all filtered tracks, not only the first visible 80.
+     matching.slice(0,80).forEach(function(t){
+       var label=document.createElement('label');label.className='landing-track-row';
+       var check=document.createElement('input');check.type='checkbox';check.checked=!!trackChecked[t.id];
+       check.onchange=function(){
+         trackChecked[t.id]=!!this.checked;drawRows();updateButtons();
+       };
+       label.appendChild(check);
+       var name=document.createElement('span');
+       name.textContent=String(t.title||'Без названия')+' — '+String(t.artist||'Исполнитель не указан');
+       var assignedOther=window.VMM_ARTIST_TRACKS.effective(t,trackLinks.overrides);
+       if(assignedOther&&assignedOther!==item.artistId)name.textContent+=' · сейчас: '+assignedOther;
+       label.appendChild(name);rows.appendChild(label);
+     });
+     if(matching.length>80){
+       var note=document.createElement('p');note.className='sync-note';
+       note.textContent='Показаны первые 80 из '+matching.length+' песен. Уточни поиск. Кнопки отметят все найденные.';
+       rows.appendChild(note);
+     }
+     if(!matching.length){
+       var empty=document.createElement('p');empty.className='sync-note';empty.textContent='Совпадений нет.';
+       rows.appendChild(empty);
+     }
+   }
+   search.oninput=function(){trackSearch=this.value;drawRows();};
+   drawRows();parent.appendChild(box);
+ }
  function cardFields(parent,key){
    var list=data[key].cards,wrap=document.createElement('div');wrap.className='landing-cards';parent.appendChild(wrap);
    list.forEach(function(item,index){
@@ -152,8 +259,12 @@
      if(key==='artists'&&item.artistId){
        var candidate=window.VMM_ARTIST_CHOICES&&window.VMM_ARTIST_CHOICES.byId(artistOptions(),item.artistId);
        var linkInfo=document.createElement('p');linkInfo.className='sync-note landing-artist-source';
+       var actual=catalogLoaded&&trackLinksLoaded?catalogArtists.filter(function(t){
+         return window.VMM_ARTIST_TRACKS.effective(t,trackLinks.overrides)===item.artistId;
+       }).length:null;
        linkInfo.textContent='Профиль: '+item.artistId+
-         (candidate?' · '+candidate.count+' композиций по исходным именам':' · связь с каталогом уточняется')+
+         (actual!==null?' · '+actual+' песен привязано на сайте':
+           candidate?' · '+candidate.count+' композиций по исходным именам':' · связь с каталогом уточняется')+
          '. Изменение публичного имени не переименовывает релизы.';
        card.appendChild(linkInfo);
      }
@@ -176,6 +287,14 @@
      checkbox.onchange=function(){item.visible=this.checked;updateButtons();};
      var label=document.createElement('span');label.textContent='Показывать эту карточку на главной';
      check.appendChild(checkbox);check.appendChild(label);card.appendChild(check);
+     if(key==='artists'&&item.artistId){
+       var trackButton=button(trackEditorArtist===item.artistId?'Свернуть список песен':'Назначить песни',function(){
+         openTrackEditor(item.artistId);
+       },'landing-small');
+       trackButton.disabled=!catalogLoaded||!trackLinksLoaded||trackSaving;
+       card.appendChild(trackButton);
+       trackEditor(card,item);
+     }
      wrap.appendChild(card);
    });
    if(key==='releases'){
