@@ -71,9 +71,10 @@ assert.ok(!JSON.stringify(artistCard.innerHTML).includes('<script>'));
 const link=copy.children.find(x=>x.tagName==='a');
 assert.equal(link.href,'https://example.com/velar');
 assert.equal(link.rel,'noopener noreferrer');
-assert.equal(elements['public-releases-cards'].children.length,1);
-assert.equal(elements['public-releases-cards'].children[0].children[0].className,'cms-card-copy',
-  'Release cards without images must not gain an artist portrait frame');
+assert.equal(elements['public-releases-cards'].className,'cms-release-showcase');
+assert.equal(elements['public-releases-cards'].children[1].children.length,1);
+assert.equal(elements['public-releases-cards'].children[1].children[0].children[0].className,'cms-release-art',
+  'Release cards without images have a lightweight visual placeholder');
 // Changing the admin setting and publishing must switch the SAME photo to a circle.
 const circlePublished={...published,artists:{...published.artists,cards:published.artists.cards.map(x=>({...x,imageShape:'circle'}))}};
 listener({exists:true,data:()=>({schemaVersion:1,status:'published',content:circlePublished})});
