@@ -36,7 +36,7 @@ var wordSets={
  en:['the','of','in','my','your','night','nights','light','love','dream','dreams',
  'never','you','me','without','we','don','t','speak','hello','goodbye','highway',
  'forever','butterfly','whispers','winter','winter','woodland','northern','solace',
- 'echoes','silent','flowing','dancing','aurora','arctic','strings','ibiza',
+ 'echoes','silent','flowing','dancing','streams','aurora','arctic','strings','ibiza',
  'rave','dance','move','body','heart','life','forest','soul','rhythm','vampire',
  'stay','welcome','sunrise','haze','lightning','driving','engine','pulse',
  'desert','summer','reflection','reflections','dreamshift','galaxy','power',
