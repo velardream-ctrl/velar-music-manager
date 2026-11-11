@@ -15,7 +15,7 @@ assert.doesNotMatch(source,/data-r-action="trash"/,'Do not expose per-track tras
 assert.match(source,/duplicate&&!window\.confirm/,'Duplicate variant upload must require confirmation');
 assert.ok(html.includes('src="recordings.js?v=11"'));
 assert.ok(html.includes('href="recordings.css?v=11"'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v13'"));
+assert.ok(sw.includes("STUDIO_PREFIX+'v14'"));
 assert.match(css,/\.vmm-r-edit-toggle/);
 
 const nodes={}, clicks=[],confirmed=[];
