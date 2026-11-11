@@ -45,13 +45,13 @@
    try{value=window.VMM_LANDING_SCHEMA.normalize(content);}catch(e){return false;}
    assign('public-hero-subtitle',value.hero.subtitle);
    assign('public-hero-intro',value.hero.intro);
-   assign('public-artists-title',value.artists.heading);
+   assign('artists-title',value.artists.heading);
    assign('public-artists-intro',value.artists.intro);
-   assign('public-releases-title',value.releases.heading);
+   assign('releases-title',value.releases.heading);
    assign('public-releases-intro',value.releases.intro);
-   assign('public-genres-title',value.genres.heading);
+   assign('genres-title',value.genres.heading);
    assign('public-genres-intro',value.genres.intro);
-   assign('public-about-title',value.about.heading);
+   assign('about-title',value.about.heading);
    assign('public-about-intro',value.about.intro);
    assign('public-about-notice',value.about.notice);
    var tags=byId('public-genres-tags');if(tags){empty(tags);
