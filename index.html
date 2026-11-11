@@ -27,6 +27,7 @@
   <script src="landing-schema.js?v=5" defer></script>
   <script src="landing-public.js?v=6" defer></script>
   <script src="universe.js?v=1" defer></script>
+  <script src="living-art.js?v=1" defer></script>
   <script src="main.js" defer></script>
 </head>
 <body class="public-site">
@@ -61,6 +62,39 @@
         </div>
       </div>
       <a class="discover" href="#explore">Листайте дальше <svg class="public-ui-arrow" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v16M5 13l7 7 7-7"/></svg></a>
+    </section>
+
+    <!-- RUN-071: the existing crystal logo remains the source of this digital artwork.
+         All other layers are local CSS/SVG; no looping video, shaders or audio. -->
+    <section id="crystal-journey" class="crystal-journey" aria-labelledby="crystal-journey-title">
+      <div class="crystal-journey-stage">
+        <div class="crystal-journey-sky" aria-hidden="true">
+          <span class="crystal-journey-stars crystal-journey-stars--far"></span>
+          <span class="crystal-journey-stars crystal-journey-stars--near"></span>
+          <span class="crystal-journey-ring crystal-journey-ring--outer"></span>
+          <span class="crystal-journey-ring crystal-journey-ring--inner"></span>
+          <span class="crystal-journey-beam crystal-journey-beam--left"></span>
+          <span class="crystal-journey-beam crystal-journey-beam--right"></span>
+          <span class="crystal-journey-crystal">
+            <img src="assets/velardream-crystal.png" width="960" height="825" alt=""
+              loading="lazy" decoding="async">
+          </span>
+        </div>
+        <div class="crystal-journey-copy">
+          <p class="crystal-journey-kicker">VELARDREAM / DIGITAL ART EXPERIENCE</p>
+          <h2 id="crystal-journey-title">Музыка рождает свет. Свет создаёт вселенную.</h2>
+          <p class="crystal-journey-description">Один кристалл. Тысячи музыкальных историй. Прокручивайте страницу — пространство раскрывает новые грани.</p>
+          <div class="crystal-journey-stanzas" aria-hidden="true">
+            <span class="crystal-journey-stanza is-current">01 — Рождение света</span>
+            <span class="crystal-journey-stanza">02 — Пробуждение созвездий</span>
+            <span class="crystal-journey-stanza">03 — Путешествие к музыке</span>
+          </div>
+          <a href="#artists" class="crystal-journey-link">Открыть музыкальные миры
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 19 19 5M8 5h11v11"/></svg>
+          </a>
+        </div>
+      </div>
     </section>
 
     <div class="main-panels" id="explore">
