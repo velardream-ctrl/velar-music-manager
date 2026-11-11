@@ -3,7 +3,7 @@
    No OAuth tokens, private lyrics or audio blobs enter Firestore. ES5/Safari 12. */
 (function(){
   'use strict';
-  var PREFIX='__offline_pins__',LIMIT=250;
+  var PREFIX='__offline_pins__',LIMIT=800;
   function clean(s,max){return String(s==null?'':s).trim().slice(0,max||180);}
   function fileId(s){s=clean(s,180);return /^[A-Za-z0-9_-]{4,180}$/.test(s)?s:'';}
   function pin(item){
@@ -18,7 +18,8 @@
   function sanitize(rows){
     var seen={},list=[];
     (Array.isArray(rows)?rows:[]).forEach(function(item){
-      var p=pin(item);if(!p||seen[p.fileId]||list.length>=LIMIT)return;
+      var p=pin(item);if(!p||seen[p.fileId])return;
+      if(list.length>=LIMIT)throw new Error('В подборке больше '+LIMIT+' записей. Нельзя молча потерять часть выбора при синхронизации.');
       seen[p.fileId]=true;list.push(p);
     });
     return list;
