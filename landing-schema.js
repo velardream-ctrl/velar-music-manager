@@ -16,7 +16,8 @@
       releases:{
         heading:'Музыка, которую можно открыть заново',
         intro:'Синглы, альбомы, клипы и внешние плееры — без загрузки тяжёлых музыкальных файлов на собственный сервер.',
-        cards:[]
+        cards:[],
+        radio:{enabled:false,title:'VELAR RADIO',provider:'spotify',url:''}
       },
       genres:{
         heading:'От оперы до новых звуков',
@@ -89,6 +90,44 @@
       return selected;
     });
   }
+
+  // RUN-069 — strictly recognized public platform URLs; never accept
+  // raw HTML, arbitrary iframe src, private audio or tracking parameters.
+  function releaseMediaUrl(raw,provider){
+    if(typeof raw!=='string'||!raw.trim())return '';
+    var normalized=songUrl(raw,provider),m;
+    if(normalized)return normalized;
+    if(provider==='spotify'){
+      m=/^https:\/\/open\.spotify\.com\/album\/([A-Za-z0-9]{22})(?:\?[^#\s]*)?$/i.exec(raw.trim());
+      return m?'https://open.spotify.com/album/'+m[1]:'';
+    }
+    return '';
+  }
+  function playlistUrl(raw,provider){
+    if(typeof raw!=='string'||!raw.trim())return '';
+    var value=raw.trim(),m;
+    if(provider==='spotify'){
+      m=/^https:\/\/open\.spotify\.com\/playlist\/([A-Za-z0-9]{22})(?:\?[^#\s]*)?$/i.exec(value);
+      return m?'https://open.spotify.com/playlist/'+m[1]:'';
+    }
+    if(provider==='youtube'){
+      m=/^https:\/\/(?:(?:www|music)\.)?youtube\.com\/playlist\?list=([A-Za-z0-9_-]{12,80})(?:&[^#\s]*)?$/i.exec(value);
+      return m?'https://www.youtube.com/playlist?list='+m[1]:'';
+    }
+    return '';
+  }
+  function radioConfig(raw){
+    var x=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+    var enabled=x.enabled===true;
+    var provider=x.provider==='youtube'?'youtube':'spotify';
+    if(typeof x.provider!=='undefined'&&x.provider!=='youtube'&&x.provider!=='spotify')
+      throw new Error('VELAR RADIO: выбери Spotify или YouTube.');
+    var link=playlistUrl(x.url||'',provider);
+    if(x.url&&!link)throw new Error('VELAR RADIO: укажи официальную ссылку на публичный плейлист '+provider+'.');
+    if(enabled&&!link)throw new Error('VELAR RADIO: сначала укажи ссылку на плейлист.');
+    return {enabled:enabled,title:plain(typeof x.title==='string'?x.title:'VELAR RADIO','Название радио',70,true),
+      provider:provider,url:link};
+  }
   function card(x,type,index){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Карточка '+index+': неверный формат.');
     var title=plain(x.title,'Название карточки '+index,110,!!x.visible);
@@ -116,6 +155,26 @@
         throw new Error('Недопустимая фотография. Нужно сжатое WebP/JPEG до 90 КБ.');
       result.imageData=picture;
       result.featuredTracks=featuredTracks(x.featuredTracks);
+    }else if(type==='Релизы'){
+      var kinds={single:true,album:true,video:true};
+      var kind=x.kind||'single';
+      if(!kinds[kind])throw new Error('Тип релиза: сингл, альбом или видеоклип.');
+      var spotlight=x.spotlight||'none';
+      if(spotlight!=='none'&&spotlight!=='music'&&spotlight!=='video')
+        throw new Error('Главная витрина: выбери музыка, видео или без выделения.');
+      var provider=x.mediaProvider||'';
+      if(provider!==''&&provider!=='spotify'&&provider!=='youtube')
+        throw new Error('Плеер релиза: только Spotify или YouTube.');
+      var media=releaseMediaUrl(x.mediaUrl||'',provider);
+      if(x.mediaUrl&&!media)throw new Error('Релиз: требуется прямая ссылка Spotify на трек/альбом или YouTube на видео.');
+      if(kind==='video'&&provider==='spotify'&&media)
+        throw new Error('Видеоклип должен использовать YouTube.');
+      var image=x.imageData||'';
+      if(typeof image!=='string'||image.length>126000||
+        (image&&!/^data:image\/(webp|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(image)))
+        throw new Error('Обложка релиза: сжатое WebP/JPEG до 90 КБ.');
+      result.kind=kind;result.spotlight=spotlight;result.mediaProvider=provider;
+      result.mediaUrl=media;result.imageData=image;
     }
     return result;
   }
@@ -146,6 +205,7 @@
     };
     result.artists.cards=cards(artists,'Артисты');
     result.releases.cards=cards(releases,'Релизы');
+    result.releases.radio=radioConfig(releases.radio);
     var tags=typeof genres.tags==='undefined'?d.genres.tags:genres.tags;
     if(!Array.isArray(tags)||tags.length>20)throw new Error('Жанры: максимум 20 меток.');
     result.genres.tags=tags.map(function(tag,i){return plain(tag,'Жанр '+(i+1),35,true);});
@@ -155,5 +215,6 @@
   }
   function blankCard(){return {title:'',subtitle:'',description:'',url:'',imageUrl:'',visible:false};}
   window.VMM_LANDING_SCHEMA={defaults:defaults,normalize:normalize,blankCard:blankCard,
-    songUrl:songUrl,featuredTrack:featuredTrack,featuredTracks:featuredTracks};
+    songUrl:songUrl,featuredTrack:featuredTrack,featuredTracks:featuredTracks,
+    releaseMediaUrl:releaseMediaUrl,playlistUrl:playlistUrl,radioConfig:radioConfig};
 }());
