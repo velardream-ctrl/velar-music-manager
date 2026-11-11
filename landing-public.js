@@ -33,8 +33,19 @@
        var img=document.createElement('img');
        img.src=item.imageData||item.imageUrl;img.alt=item.title;img.loading='lazy';img.decoding='async';
        img.referrerPolicy='no-referrer';
-       img.className='cms-card-art'+(type==='artists'&&item.imageShape==='circle'?' is-circle':'');
-       card.appendChild(img);
+       if(type==='artists'){
+         // Artist portraits have TWO distinct layouts; do not use the
+         // rectangular 210/185px cover style intended for release covers.
+         var portraitShape=item.imageShape==='circle'?'circle':'square';
+         var frame=create('div','cms-artist-photo cms-artist-photo--'+portraitShape);
+         frame.appendChild(img);
+         card.className+=' cms-artist-card cms-artist-card--'+portraitShape;
+         img.className='cms-card-art cms-artist-photo-image';
+         card.appendChild(frame);
+       }else{
+         img.className='cms-card-art';
+         card.appendChild(img);
+       }
      }
      var copy=create('div','cms-card-copy');
      copy.appendChild(create('h3','',item.title));
