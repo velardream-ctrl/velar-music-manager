@@ -33,8 +33,8 @@ const privateObject={...def,secretToken:'abc123',lyrics:[{text:'не публи�
 const clean=JSON.stringify(api.normalize(privateObject));
 assert.doesNotMatch(clean,/secretToken|не публиковать/);
 assert.match(html,/landing-public\.js\?v=9/);
-assert.match(html,/landing-schema\.js\?v=10/);
-assert.match(studio,/landing-editor\.js\?v=11/);
+assert.match(html,/landing-schema\.js\?v=11/);
+assert.match(studio,/landing-editor\.js\?v=12/);
 assert.match(studio,/data-panel="landing"/);
 assert.match(studio,/data-landing-tab="universe"/);
 assert.match(studio,/data-landing-tab="languages"/);
@@ -52,6 +52,8 @@ assert.match(rules,/allow read, write: if false;/);
 
 const assistant=def.genres.assistant;
 assert.equal(assistant.quickTopics.length,4);
+assert.equal(assistant.typing.enabled,true);
+assert.equal(assistant.typing.speedMs,35);
 assert.equal(assistant.labels.launcher,'Помощник VELAR');
 assert.equal(assistant.labels.privacy,'Не сохраняем и не отправляем автору');
 assert.equal(assistant.avatars.reactions.heart,'heart');
@@ -62,6 +64,7 @@ const legacy={...def,genres:{...def.genres,assistant:{enabled:true,greetingEnabl
 const migrated=api.normalize(legacy).genres.assistant;
 assert.equal(migrated.labels.greetingBubble,'Привет из старой версии!');
 assert.equal(migrated.quickTopics.length,4);
+assert.equal(migrated.typing.enabled,true,'Older published configs gain default typing');
 assert.equal(migrated.avatars.greeting,'auto');
 const ownerConfig={...assistant,
  labels:{...assistant.labels,privacy:'',submit:'Отправить'},
@@ -72,12 +75,18 @@ const normalized=api.normalize({...def,genres:{...def.genres,assistant:ownerConf
 assert.equal(normalized.labels.privacy,'');
 assert.equal(normalized.labels.submit,'Отправить');
 assert.equal(normalized.quickTopics[0].query,'природа');
+const noTyping=api.normalize({...def,genres:{...def.genres,assistant:{...assistant,typing:{enabled:false,speedMs:80}}}}).genres.assistant;
+assert.equal(noTyping.typing.enabled,false);
+assert.equal(noTyping.typing.speedMs,80);
 assert.equal(normalized.avatars.greeting,'night');
 assert.equal(normalized.avatars.reactions.heart,'wave');
 assert.equal(normalized.avatars.keywordRules[0].source,'answer');
 function invalidAssistant(patch){
  return api.normalize({...def,genres:{...def.genres,assistant:{...assistant,...patch}}});
 }
+assert.throws(()=>invalidAssistant({typing:{enabled:true,speedMs:1}}),/15 до 90/);
+assert.throws(()=>invalidAssistant({typing:{enabled:true,speedMs:100}}),/15 до 90/);
+assert.throws(()=>invalidAssistant({typing:{enabled:true,speedMs:'35'}}),/15 до 90/);
 assert.throws(()=>invalidAssistant({quickTopics:Array(13).fill({label:'Тема',query:'музыка'})}),/12/);
 assert.throws(()=>invalidAssistant({quickTopics:[{label:' ',query:'музыка'}]}),/обязательно/);
 assert.throws(()=>invalidAssistant({labels:{...assistant.labels,submit:'x'.repeat(41)}}),/40/);
