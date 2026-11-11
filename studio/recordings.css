@@ -224,10 +224,13 @@
   padding:9px 8px;box-sizing:border-box;
   list-style:disclosure-closed;
 }
+/* RUN-068 — CSS chevron, not browser-dependent emoji/triangle glyph. */
 #vmm-repertoire .vmm-r-system summary::before{
-  content:'▸';margin-right:8px;color:#e8cb94;font-size:16px;
+ content:"";display:inline-block;flex:0 0 8px;width:8px;height:8px;
+ margin-right:11px;border-right:2px solid #e8cb94;border-bottom:2px solid #e8cb94;
+ transform:rotate(-45deg);transition:transform .16s;
 }
-#vmm-repertoire .vmm-r-system[open] summary::before{content:'▾'}
+#vmm-repertoire .vmm-r-system[open] summary::before{transform:rotate(45deg)}
 #vmm-repertoire .vmm-r-system[open]{
   border-top:1px solid #62718a70;padding-top:4px;
 }
@@ -474,4 +477,20 @@
 #vmm-repertoire #vmm-r-player-card.is-minimized button,
 #vmm-repertoire #vmm-r-player-card.is-minimized input{
   pointer-events:auto;
+}
+
+
+/* RUN-068: offline list play badge uses geometric CSS so Samsung cannot tint it blue. */
+#vmm-repertoire .vmm-r-pinned-title{
+ display:inline-flex;align-items:center;gap:11px;min-width:0;overflow-wrap:anywhere;
+}
+#vmm-repertoire .vmm-r-inline-play{
+ position:relative;display:inline-flex;align-items:center;justify-content:center;
+ flex:0 0 29px;width:29px;height:29px;border-radius:50%;
+ border:1px solid rgba(238,202,144,.8);color:#edcb92;
+}
+#vmm-repertoire .vmm-r-inline-play::before{
+ content:"";width:0;height:0;margin-left:2px;
+ border-top:5px solid transparent;border-bottom:5px solid transparent;
+ border-left:8px solid currentColor;
 }

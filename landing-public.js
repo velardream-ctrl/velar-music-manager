@@ -35,7 +35,7 @@
    if(item.subtitle)copy.appendChild(create('p','cms-card-subtitle',item.subtitle));
    if(item.description)copy.appendChild(create('p','',item.description));
    if(item.url){
-     var link=create('a','cms-card-link',type==='artists'?'Профиль артиста ↗':'Открыть релиз ↗');
+     var link=create('a','cms-card-link',type==='artists'?'Профиль артиста':'Открыть релиз');
      link.href=item.url;link.rel='noopener noreferrer';link.target='_blank';
      copy.appendChild(link);
    }
@@ -69,7 +69,12 @@
      details.appendChild(create('strong','',track.title));
      details.appendChild(create('small','',track.provider==='spotify'?'Spotify':'YouTube'));
      button.appendChild(details);
-     button.appendChild(create('span','cms-music-play-icon','▶'));
+     // Icon is an empty, decorative CSS vector, not a text triangle that
+     // Android/Samsung may replace with a blue system emoji.
+     var playIcon=create('span','cms-music-play-icon');
+     playIcon.setAttribute('aria-hidden','true');
+     button.appendChild(playIcon);
+     button.setAttribute('aria-label','Слушать: '+track.title+' — '+(track.provider==='spotify'?'Spotify':'YouTube'));
      button.onclick=function(){
        if(active===index)return;
        active=index;

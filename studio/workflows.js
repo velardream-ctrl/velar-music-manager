@@ -131,7 +131,7 @@
     });
   }
   function heading(title,sub){return '<div class="vmm-head"><div><p class="eyebrow">VELARDREAM · MUSIC MANAGER</p><h2>'+esc(title)+'</h2><p class="sync-note">'+esc(sub||'')+'</p></div><button class="btn-small" data-act="retry">↻ Обновить</button></div>';}
-  function linkButton(u,text){return safeUrl(u)?'<a class="vmm-out" target="_blank" rel="noopener noreferrer" href="'+esc(u)+'">'+esc(text)+' ↗</a>':'<span class="muted">Не установлена</span>';}
+  function linkButton(u,text){return safeUrl(u)?'<a class="vmm-out" target="_blank" rel="noopener noreferrer" href="'+esc(u)+'">'+esc(text)+'</a>':'<span class="muted">Не установлена</span>';}
   function progressCard(label,filled,total,detail,kind){
     var pct=total?Math.round(100*filled/total):0,missing=Math.max(0,total-filled);
     return '<div class="vmm-progress-card '+esc(kind||'')+'">'+

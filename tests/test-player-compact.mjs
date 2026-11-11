@@ -25,9 +25,9 @@ assert.match(css,/#vmm-repertoire \.vmm-r-timeline input\[type="range"\]\{[\s\S]
 assert.match(css,/#vmm-repertoire \.vmm-r-timeline input\[type="range"\]::-webkit-slider-runnable-track\{\s*height:6px/);
 assert.match(css,/::-webkit-slider-thumb\{\s*[\s\S]*?height:21px;width:21px/);
 assert.match(css,/\.vmm-r-system:not\(\[open\]\)\{display:none\}/);
-assert.ok(html.includes('recordings.js?v=11'));
-assert.ok(html.includes('recordings.css?v=11'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v17'"));
+assert.ok(html.includes('recordings.js?v=12'));
+assert.ok(html.includes('recordings.css?v=12'));
+assert.ok(sw.includes("STUDIO_PREFIX+'v18'"));
 
 let panel;const nodes={};
 function el(tag){
