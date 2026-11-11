@@ -1072,6 +1072,285 @@
    greet.appendChild(gt);parent.appendChild(greet);
    field(parent,'Имя помощника',assistant.title,function(v){assistant.title=v;});
    field(parent,'Текст приветствия',assistant.welcome,function(v){assistant.welcome=v;},true);
+   // RUN-080: all public labels are owner-editable. The chat continues to
+   // generate replies locally; these fields never create an external API.
+   var labelFields=[
+     ['launcher','Надпись на кнопке открытия'],
+     ['greetingBubble','Текст всплывающего приветствия'],
+     ['headerNote','Подпись под именем помощника (можно оставить пустой)'],
+     ['greetingCloseText','Символ закрытия приветствия'],
+     ['greetingCloseAria','Описание закрытия приветствия для доступности'],
+     ['closeText','Символ закрытия окна чата'],
+     ['closeAria','Описание закрытия чата для доступности'],
+     ['dialogAria','Название окна для голосового чтения'],
+     ['inputAria','Описание поля ввода для доступности'],
+     ['inputPlaceholder','Подсказка внутри поля сообщения'],
+     ['submit','Надпись кнопки отправки'],
+     ['privacy','Строка под полем сообщения (пусто — скрыть)']
+   ];
+   var labelsBlock=document.createElement('details');labelsBlock.className='landing-card';
+   var labelsSummary=document.createElement('summary');
+   labelsSummary.textContent='Все надписи и подписи окна чата';labelsBlock.appendChild(labelsSummary);
+   labelFields.forEach(function(pair){
+     field(labelsBlock,pair[1],assistant.labels[pair[0]],function(v){assistant.labels[pair[0]]=v;},
+       pair[0]==='greetingBubble');
+   });
+   parent.appendChild(labelsBlock);
+   heading(parent,'Быстрые темы внизу чата',
+     'Количество от 0 до 12, порядок настраивается. Надпись кнопки видна посетителю, а запрос отправляется помощнику после нажатия. Можно выбрать готовую музыкальную тему или вписать свой текст.');
+   assistant.quickTopics.forEach(function(topic,index){
+     var card=document.createElement('section');card.className='landing-card';
+     heading(card,'Быстрая кнопка '+(index+1));
+     field(card,'Надпись кнопки №'+(index+1),topic.label,function(v){topic.label=v;});
+     field(card,'Запрос кнопки №'+(index+1),topic.query,function(v){topic.query=v;});
+     var available=(data.genres.topics&&data.genres.topics.entries||[]).filter(function(t){
+       return t.visible===true;
+     });
+     if(available.length){
+       var themeLabel=document.createElement('label');themeLabel.className='landing-field';
+       var caption=document.createElement('span');caption.textContent='Подставить опубликованную тему';themeLabel.appendChild(caption);
+       var choice=document.createElement('select');choice.className='landing-artist-select';
+       var placeholder=document.createElement('option');placeholder.value='';
+       placeholder.textContent='Выбрать тему…';choice.appendChild(placeholder);
+       available.forEach(function(t,j){
+         var option=document.createElement('option');option.value=String(j);
+         option.textContent=t.label;choice.appendChild(option);
+       });
+       choice.onchange=function(){
+         if(this.value==='')return;
+         var chosen=available[Number(this.value)];
+         if(!chosen)return;
+         topic.label=chosen.label;topic.query=chosen.label;
+         render();
+       };
+       themeLabel.appendChild(choice);card.appendChild(themeLabel);
+     }
+     var actions=document.createElement('div');actions.className='landing-item-actions';
+     actions.appendChild(button('↑ Выше',function(){
+       if(index===0)return;
+       var current=assistant.quickTopics.splice(index,1)[0];
+       assistant.quickTopics.splice(index-1,0,current);render();
+     }));
+     actions.appendChild(button('↓ Ниже',function(){
+       if(index===assistant.quickTopics.length-1)return;
+       var current=assistant.quickTopics.splice(index,1)[0];
+       assistant.quickTopics.splice(index+1,0,current);render();
+     }));
+     actions.appendChild(button('Удалить кнопку',function(){
+       if(!window.confirm('Удалить быструю кнопку из черновика?'))return;
+       assistant.quickTopics.splice(index,1);render();
+     },'landing-danger'));
+     card.appendChild(actions);parent.appendChild(card);
+   });
+   parent.appendChild(button('+ Добавить быструю тему',function(){
+     if(assistant.quickTopics.length>=12){info('Можно добавить не более 12 быстрых тем.');return;}
+     assistant.quickTopics.push({label:'Новая тема',query:'тема'});render();
+   },'landing-add'));
+   // RUN-080: portrait mappings are data, never hard-coded to one response.
+   var avatars=assistant.avatars;
+   var portraitNames=[
+     ['neutral','Спокойный портрет'],['wave','Приветствие'],['morning','Доброе утро'],
+     ['night','Спокойной ночи'],['thanks','Благодарность'],['heart','Сердечко / любовь'],
+     ['okay','OK'],['peace','Победа'],['off','Выключение'],['celebrate','Праздник']
+   ];
+   function portraitOptions(){
+     var values=portraitNames.slice();
+     avatars.customImages.forEach(function(img,i){
+       values.push(['custom'+(i+1),img.name+(img.dataUrl?' (мой JPEG)':' (не загружен)')]);
+     });
+     return values;
+   }
+   function previewPortrait(node,value){
+     var index=value==='custom1'?0:value==='custom2'?1:-1;
+     var image=index>=0&&avatars.customImages[index].dataUrl||'';
+     node.style.backgroundImage=image?'url("'+image+'")':
+       'url("../assets/dj-velar-expressions.jpg")';
+     node.style.backgroundSize=image?'cover':'1000% 100%';
+     node.style.backgroundPosition=image?'center':
+       ((Math.max(0,portraitNames.map(function(x){return x[0];}).indexOf(value))*100/9)+'% 50%');
+   }
+   function portraitSelect(parent,label,value,change,allowAuto){
+     var wrap=document.createElement('label');wrap.className='landing-field';
+     var title=document.createElement('span');title.textContent=label;wrap.appendChild(title);
+     var picker=document.createElement('select');picker.className='landing-artist-select';
+     if(allowAuto){
+       var automatic=document.createElement('option');automatic.value='auto';
+       automatic.textContent='Автоматически по времени суток';picker.appendChild(automatic);
+     }
+     portraitOptions().forEach(function(pair){
+       var opt=document.createElement('option');opt.value=pair[0];opt.textContent=pair[1];
+       picker.appendChild(opt);
+     });
+     picker.value=value;
+     var preview=document.createElement('span');preview.className='landing-avatar-preview';
+     preview.style.display='inline-block';preview.style.width='48px';preview.style.height='48px';
+     preview.style.borderRadius='50%';preview.style.backgroundRepeat='no-repeat';
+     preview.style.border='1px solid #d6b379';
+     previewPortrait(preview,value==='auto'?'wave':value);
+     picker.onchange=function(){
+       change(this.value);
+       previewPortrait(preview,this.value==='auto'?'wave':this.value);
+       updateButtons();
+     };
+     wrap.appendChild(picker);wrap.appendChild(preview);parent.appendChild(wrap);
+   }
+   heading(parent,'Аватарки DJ Velar',
+     'Для каждого состояния выбери любую из десяти работающих картинок. Приветствие может автоматически зависеть от времени суток. Изменения появятся на сайте только после публикации.');
+   portraitSelect(parent,'Аватар кнопки открытия чата',avatars.launcher,function(v){avatars.launcher=v;});
+   portraitSelect(parent,'Аватар в шапке чата',avatars.header,function(v){avatars.header=v;});
+   portraitSelect(parent,'Аватар при первом приветствии',avatars.greeting,
+     function(v){avatars.greeting=v;},true);
+   var reactions=[
+     ['neutral','Обычный ответ, без эмоции'],['wave','Привет / здравствуйте'],
+     ['morning','Доброе утро'],['night','Спокойной ночи'],
+     ['thanks','Спасибо / благодарю'],['heart','Любовь / сердечко'],
+     ['okay','ОК / согласие'],['peace','Молодец / победа'],
+     ['off','Выключи / отключи'],['celebrate','Праздник / ура']
+   ];
+   var reactionsBlock=document.createElement('details');reactionsBlock.className='landing-card';
+   var reactionsTitle=document.createElement('summary');
+   reactionsTitle.textContent='Какая аватарка соответствует каждой эмоции';
+   reactionsBlock.appendChild(reactionsTitle);
+   reactions.forEach(function(pair){
+     portraitSelect(reactionsBlock,pair[1],avatars.reactions[pair[0]],function(v){
+       avatars.reactions[pair[0]]=v;
+     });
+   });
+   parent.appendChild(reactionsBlock);
+   heading(parent,'Особые реакции на слова',
+     'Можно установить до 20 правил в заданном порядке. В каждом правиле выбери, искать слова в вопросе, в ответе помощника или в обоих. Первое подходящее правило определит аватар.');
+   avatars.keywordRules.forEach(function(rule,index){
+     var ruleCard=document.createElement('section');ruleCard.className='landing-card';
+     heading(ruleCard,'Правило аватара '+(index+1));
+     field(ruleCard,'Ключевые слова аватара №'+(index+1),rule.keywords,
+       function(v){rule.keywords=v;},true);
+     var srcLabel=document.createElement('label');srcLabel.className='landing-field';
+     var srcTitle=document.createElement('span');srcTitle.textContent='Где искать слова';srcLabel.appendChild(srcTitle);
+     var srcSelect=document.createElement('select');srcSelect.className='landing-artist-select';
+     [['question','В вопросе посетителя'],['answer','В ответе помощника'],['both','В вопросе и ответе']].forEach(function(pair){
+       var opt=document.createElement('option');opt.value=pair[0];opt.textContent=pair[1];
+       srcSelect.appendChild(opt);
+     });
+     srcSelect.value=rule.source||'question';
+     srcSelect.onchange=function(){rule.source=this.value;updateButtons();};
+     srcLabel.appendChild(srcSelect);ruleCard.appendChild(srcLabel);
+     portraitSelect(ruleCard,'Показывать аватар',rule.expression,function(v){rule.expression=v;});
+     var actions=document.createElement('div');actions.className='landing-item-actions';
+     actions.appendChild(button('↑ Выше',function(){
+       if(index===0)return;
+       var r=avatars.keywordRules.splice(index,1)[0];avatars.keywordRules.splice(index-1,0,r);render();
+     }));
+     actions.appendChild(button('↓ Ниже',function(){
+       if(index>=avatars.keywordRules.length-1)return;
+       var r=avatars.keywordRules.splice(index,1)[0];avatars.keywordRules.splice(index+1,0,r);render();
+     }));
+     actions.appendChild(button('Удалить правило',function(){
+       if(!window.confirm('Удалить только из черновика?'))return;
+       avatars.keywordRules.splice(index,1);render();
+     },'landing-danger'));
+     ruleCard.appendChild(actions);parent.appendChild(ruleCard);
+   });
+   parent.appendChild(button('+ Правило для аватарки',function(){
+     if(avatars.keywordRules.length>=20){info('Максимум 20 правил аватаров.');return;}
+     avatars.keywordRules.push({keywords:'любовь,люблю',source:'question',expression:'heart'});render();
+   },'landing-add'));
+   var uploadBlock=document.createElement('details');uploadBlock.className='landing-card';
+   var uploadTitle=document.createElement('summary');
+   uploadTitle.textContent='Загрузить собственные аватарки (2 места)';
+   uploadBlock.appendChild(uploadTitle);
+   var uploadInfo=document.createElement('p');uploadInfo.className='sync-note';
+   uploadInfo.textContent='JPEG/PNG/WebP до 3 МБ. Сайт сам уменьшит картинку до 96×96 и JPEG примерно до 18 КБ. Оригинальные десять аватаров не удаляются.';
+   uploadBlock.appendChild(uploadInfo);
+   avatars.customImages.forEach(function(slot,index){
+     var slotCard=document.createElement('section');slotCard.className='landing-card';
+     heading(slotCard,'Дополнительный портрет '+(index+1));
+     field(slotCard,'Название своего портрета №'+(index+1),slot.name,
+       function(v){slot.name=v;});
+     var picker=document.createElement('input');picker.type='file';
+     picker.setAttribute('aria-label','Загрузить аватар '+(index+1));
+     picker.accept='image/jpeg,image/png,image/webp';
+     picker.onchange=function(){
+       var file=this.files&&this.files[0];
+       if(!file)return;
+       if(!/^image\/(jpeg|png|webp)$/.test(file.type)||file.size>3000000){
+         info('Выбери JPEG, PNG или WebP размером до 3 МБ.');return;
+       }
+       var reader=new FileReader();
+       reader.onerror=function(){info('Не удалось прочитать картинку.');};
+       reader.onload=function(){
+         var image=new Image();
+         image.onerror=function(){info('Этот формат изображения не удалось открыть.');};
+         image.onload=function(){
+           try{
+             var canvas=document.createElement('canvas');canvas.width=96;canvas.height=96;
+             var ctx=canvas.getContext('2d');
+             if(!ctx)throw new Error('Canvas недоступен');
+             var edge=Math.min(image.width,image.height);
+             var left=(image.width-edge)/2,top=(image.height-edge)/2;
+             ctx.fillStyle='#fff';ctx.fillRect(0,0,96,96);
+             ctx.drawImage(image,left,top,edge,edge,0,0,96,96);
+             var result='';
+             [0.75,0.6,0.45,0.3].some(function(quality){
+               result=canvas.toDataURL('image/jpeg',quality);
+               return result.length<=24000;
+             });
+             if(result.length>24000)throw new Error('JPEG не удалось уменьшить до 18 КБ');
+             var before=slot.dataUrl;slot.dataUrl=result;
+             try{API.normalize(data);}
+             catch(err){slot.dataUrl=before;throw err;}
+             render();info('Свой аватар '+(index+1)+' подготовлен. Сохрани черновик и опубликуй.');
+           }catch(err){info('Ошибка аватарки: '+err.message);}
+         };
+         image.src=reader.result;
+       };
+       reader.readAsDataURL(file);
+     };
+     slotCard.appendChild(picker);
+     if(slot.dataUrl){
+       portraitSelect(slotCard,'Предпросмотр своего аватара',
+         'custom'+(index+1),function(){});
+       slotCard.appendChild(button('Убрать загруженный аватар',function(){
+         if(!window.confirm('Удалить свой портрет только из черновика?'))return;
+         slot.dataUrl='';render();
+       },'landing-danger'));
+     }
+     uploadBlock.appendChild(slotCard);
+   });
+   parent.appendChild(uploadBlock);
+   var replyFields=[
+     ['emptyInput','Если пользователь не ввёл запрос'],
+     ['contactEnabled','Сотрудничество: почта настроена'],
+     ['contactDisabled','Сотрудничество: почта не настроена'],
+     ['contactEnabledButton','Кнопка: написать автору'],
+     ['contactDisabledButton','Кнопка: официальные страницы'],
+     ['moodWithTracks','Тема с песнями: текст ответа'],
+     ['moodWithoutTracks','Тема без песен: текст ответа'],
+     ['moodButton','Кнопка: открыть музыкальную тему'],
+     ['hello','Ответ на приветствие'],
+     ['radio','Ответ про радио'],
+     ['radioButton','Кнопка: плейлисты'],
+     ['languages','Ответ про языки'],
+     ['languagesButton','Кнопка: языки'],
+     ['releases','Ответ про релизы'],
+     ['releasesButton','Кнопка: релизы'],
+     ['artists','Ответ про артистов'],
+     ['artistsButton','Кнопка: артисты'],
+     ['fallbackEnabled','Неизвестный запрос: почта настроена'],
+     ['fallbackDisabled','Неизвестный запрос: почта не настроена'],
+     ['fallbackButton','Кнопка: исследовать темы']
+   ];
+   var repliesBlock=document.createElement('details');repliesBlock.className='landing-card';
+   var repliesSummary=document.createElement('summary');
+   repliesSummary.textContent='Встроенные ответы помощника и их кнопки';
+   repliesBlock.appendChild(repliesSummary);
+   var note=document.createElement('p');note.className='sync-note';
+   note.textContent='В ответах о музыкальных темах {topic} — название темы, {count} — число песен. Пустая надпись кнопки действия скрывает кнопку.';
+   repliesBlock.appendChild(note);
+   replyFields.forEach(function(pair){
+     field(repliesBlock,pair[1],assistant.replies[pair[0]],function(v){assistant.replies[pair[0]]=v;},
+       pair[0].indexOf('Button')===-1);
+   });
+   parent.appendChild(repliesBlock);
    heading(parent,'Связь с автором',
      'Необходим публичный рабочий email. Адрес будет виден посетителям и в опубликованных данных. Пока поле пустое, бот предложит официальные страницы артистов. Письмо открывается как черновик в почте посетителя; автоматическая отправка, Telegram/WhatsApp и хранение обращений пока не включены.');
    field(parent,'Публичный email для предложений (необязательно)',assistant.contactEmail||'',function(v){

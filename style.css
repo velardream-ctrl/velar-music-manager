@@ -1022,3 +1022,36 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .velar-chat-line.is-assistant .velar-chat-avatar{grid-column:1;grid-row:1}
 .velar-chat-line.is-assistant p{grid-column:2;grid-row:1;min-width:0;overflow-wrap:break-word;word-break:normal}
 .velar-chat-line.is-assistant .velar-chat-action{grid-column:2;grid-row:2;box-sizing:border-box;width:100%;margin-top:0}
+
+/* RUN-079 — denser mobile assistant while retaining iPhone safe-area. */
+@media(max-width:590px){
+ .velar-assistant-launch[aria-expanded="true"]{display:none}
+ .velar-assistant-dialog{max-height:min(390px,50vh)}
+ .velar-assistant-header{flex-wrap:nowrap;gap:5px;padding:5px 8px}
+ .velar-assistant-header-avatar{width:29px;height:29px;flex:0 0 29px}
+ .velar-assistant-title{font-size:.86rem;line-height:1.15;min-width:0;max-width:none;
+   flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .velar-assistant-header-note{display:none}
+ .velar-assistant-close{flex:0 0 32px;min-height:32px;min-width:32px;
+   align-self:center;margin-left:0}
+ .velar-assistant-log{min-height:96px;max-height:235px;gap:5px;padding:6px 7px}
+ .velar-chat-line{padding:6px 7px;font-size:.80rem;line-height:1.34}
+ .velar-chat-line.is-assistant{grid-template-columns:28px minmax(0,1fr);gap:5px}
+ .velar-chat-avatar{width:28px;height:28px;flex:0 0 28px}
+ .velar-assistant-suggestions{gap:3px;padding:3px 7px}
+ .velar-assistant-suggestion{min-height:28px;padding:2px 7px;
+   font-size:.69rem;line-height:1.13}
+ .velar-assistant-form{gap:5px;padding:3px 7px 2px}
+ .velar-assistant-input{height:36px;padding:6px 8px;font-size:16px}
+ .velar-assistant-submit{min-height:36px;padding:4px 8px;font-size:.78rem}
+ .velar-assistant-privacy{padding:1px 7px 3px;margin:0;
+   font-size:.63rem;line-height:1.1;white-space:nowrap;
+   overflow:hidden;text-overflow:ellipsis}
+}
+
+/* RUN-080: selected number of quick tags never crowds out the messages.
+   Zero tags means no extra row; twelve tags scroll within the strip. */
+.velar-assistant-suggestions:empty{display:none}
+@media(max-width:590px){
+ .velar-assistant-suggestions{max-height:74px;overflow-y:auto;overscroll-behavior:contain}
+}

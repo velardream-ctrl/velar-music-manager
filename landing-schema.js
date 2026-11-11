@@ -95,7 +95,57 @@
           entries:defaultTopics()},
         assistant:{enabled:true,greetingEnabled:true,title:'VELAR · помощник',
           welcome:'Добро пожаловать во вселенную VELARDREAM! Какое настроение у вас сегодня?',
-          contactEmail:'',rules:[]}
+          contactEmail:'',rules:[],
+          labels:{
+            launcher:'Помощник VELAR',
+            headerNote:'Локальный бот · без платного ИИ',
+            greetingBubble:'Добро пожаловать во вселенную VELARDREAM! Какое настроение у вас сегодня?',
+            greetingCloseText:'×',greetingCloseAria:'Скрыть приветствие',
+            closeText:'×',closeAria:'Закрыть помощника',
+            dialogAria:'VELAR — музыкальный помощник',
+            inputAria:'Напиши вопрос помощнику',
+            inputPlaceholder:'Например: нужна грустная песня…',
+            submit:'Спросить',
+            privacy:'Не сохраняем и не отправляем автору'
+          },
+          quickTopics:[
+            {label:'Мне грустно',query:'грустно'},
+            {label:'Свадебная музыка',query:'свадьба'},
+            {label:'Космос',query:'космос'},
+            {label:'Сотрудничество',query:'сотрудничество'}
+          ],
+          // RUN-080: all ten already-deployed portraits are reusable.
+          // Two optional small custom slots have strict size and MIME limits.
+          avatars:{
+            launcher:'neutral',header:'neutral',greeting:'auto',
+            reactions:{neutral:'neutral',wave:'wave',morning:'morning',night:'night',
+              thanks:'thanks',heart:'heart',okay:'okay',peace:'peace',off:'off',celebrate:'celebrate'},
+            keywordRules:[],
+            customImages:[{name:'Мой портрет 1',dataUrl:''},{name:'Мой портрет 2',dataUrl:''}]
+          },
+          replies:{
+            emptyInput:'Расскажи, что тебе интересно: музыка, настроение, артисты или сотрудничество.',
+            contactEnabled:'Я цифровой помощник, не живой оператор. Могу помочь составить письмо о сотрудничестве. Отправка состоится только из твоей почтовой программы после подтверждения.',
+            contactDisabled:'Я цифровой помощник, не живой оператор. Автоматическая отправка сообщений пока отключена. Контактная почта ещё не настроена; можно найти официальные страницы артистов в разделе подписок.',
+            contactEnabledButton:'Написать автору',
+            contactDisabledButton:'Перейти к официальным страницам',
+            moodWithTracks:'Для настроения «{topic}» найдены песни: {count}. Открой подборку и выбери композицию — воспроизведение начнётся только после твоего нажатия.',
+            moodWithoutTracks:'Тема «{topic}» уже есть во вселенной VELARDREAM, но её песни пока готовятся к публикации. Можешь посмотреть и другие тематические миры.',
+            moodButton:'Открыть «{topic}»',
+            hello:'Привет! Рад встрече во вселенной VELARDREAM. Какую музыку хочется услышать: грустную, свадебную, романтическую или весёлую?',
+            radio:'VELAR RADIO — официальный музыкальный плейлист. Он запускается только по твоему выбору. Можно также открыть другие плейлисты.',
+            radioButton:'Посмотреть плейлисты',
+            languages:'В нашей вселенной есть миры настоящих и придуманных языков. Выбери язык и открой его подборку.',
+            languagesButton:'Выбрать язык',
+            releases:'В разделе релизов представлены синглы, альбомы и видеоклипы. Можно отфильтровать нужный формат.',
+            releasesButton:'Открыть релизы',
+            artists:'Здесь есть отдельные миры артистов. Выбери исполнителя, чтобы узнать больше и услышать его музыку.',
+            artistsButton:'Открыть артистов',
+            fallbackEnabled:'Я пока не умею уверенно отвечать на этот вопрос. Могу открыть музыкальную вселенную или помочь написать автору.',
+            fallbackDisabled:'Я ещё учусь отвечать на вопросы. Попробуй написать «свадьба», «грустно», «радио», «артисты» или «сотрудничество».',
+            fallbackButton:'Исследовать темы'
+          }
+        }
       },
       about:{
         heading:'VELARDREAM RECORDS',
@@ -362,11 +412,92 @@
         throw new Error('Ключевые слова правила: разделите слова запятыми.');
       return {keywords:words,answer:plain(rule.answer||'','Ответ правила '+(i+1),500,true)};
     });
+    // RUN-080. Preserve all older published documents: missing keys use safe
+    // defaults. No arbitrary HTML, links or executable scripts are accepted.
+    var labelData=item.labels&&typeof item.labels==='object'&&!Array.isArray(item.labels)?item.labels:{};
+    var limits={launcher:60,headerNote:100,greetingBubble:250,greetingCloseText:12,
+      greetingCloseAria:100,closeText:12,closeAria:100,dialogAria:100,inputAria:100,
+      inputPlaceholder:150,submit:40,privacy:180};
+    var optionalLabels={headerNote:true,privacy:true};
+    var labels={};
+    Object.keys(def.labels).forEach(function(key){
+      var original=key==='greetingBubble'&&typeof item.welcome==='string'?
+        item.welcome:def.labels[key];
+      var rawValue=typeof labelData[key]==='undefined'?original:labelData[key];
+      labels[key]=plain(rawValue,'Надпись помощника: '+key,limits[key],!optionalLabels[key]);
+    });
+    var quick=typeof item.quickTopics==='undefined'?def.quickTopics:item.quickTopics;
+    if(!Array.isArray(quick)||quick.length>12)
+      throw new Error('Помощник: максимум 12 быстрых тем.');
+    var quickTopics=quick.map(function(topic,i){
+      if(!topic||typeof topic!=='object'||Array.isArray(topic))
+        throw new Error('Быстрая тема '+(i+1)+': неверный формат.');
+      return {label:plain(topic.label,'Кнопка темы '+(i+1),55,true),
+        query:plain(topic.query,'Запрос темы '+(i+1),160,true)};
+    });
+    // Available portraits: local JPEG sprite + strictly bounded custom JPEGs.
+    var available=['neutral','wave','morning','night','thanks','heart','okay','peace','off','celebrate','custom1','custom2'];
+    var avatarRaw=item.avatars&&typeof item.avatars==='object'&&!Array.isArray(item.avatars)?
+      item.avatars:{};
+    function pictureChoice(value,label,defValue,allowAuto){
+      var chosen=typeof value==='undefined'?defValue:value;
+      if(typeof chosen!=='string'||(available.indexOf(chosen)===-1&&
+         !(allowAuto&&chosen==='auto')))
+        throw new Error('Аватар '+label+': выбери вариант из списка.');
+      return chosen;
+    }
+    var imagesInput=typeof avatarRaw.customImages==='undefined'?def.avatars.customImages:avatarRaw.customImages;
+    if(!Array.isArray(imagesInput)||imagesInput.length!==2)
+      throw new Error('Помощник: доступны два дополнительных портрета.');
+    var customImages=imagesInput.map(function(img,i){
+      if(!img||typeof img!=='object'||Array.isArray(img))
+        throw new Error('Дополнительный портрет '+(i+1)+': неверный формат.');
+      var name=plain(img.name||'','Название портрета '+(i+1),45,true);
+      var uri=img.dataUrl||'';
+      if(typeof uri!=='string'||uri.length>24000||
+        (uri&&!/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(uri)))
+        throw new Error('Дополнительный портрет '+(i+1)+': нужен JPEG до 18 КБ.');
+      return {name:name,dataUrl:uri};
+    });
+    var reactionsInput=avatarRaw.reactions&&typeof avatarRaw.reactions==='object'&&
+      !Array.isArray(avatarRaw.reactions)?avatarRaw.reactions:{};
+    var reactions={};
+    Object.keys(def.avatars.reactions).forEach(function(key){
+      reactions[key]=pictureChoice(reactionsInput[key],'для '+key,
+        def.avatars.reactions[key],false);
+    });
+    var rawKeywordRules=typeof avatarRaw.keywordRules==='undefined'?[]:avatarRaw.keywordRules;
+    if(!Array.isArray(rawKeywordRules)||rawKeywordRules.length>20)
+      throw new Error('Аватары: максимум 20 правил по ключевым словам.');
+    var keywordRules=rawKeywordRules.map(function(rule,i){
+      if(!rule||typeof rule!=='object'||Array.isArray(rule))
+        throw new Error('Правило аватара '+(i+1)+': неверный формат.');
+      var words=plain(rule.keywords||'','Слова аватара '+(i+1),140,true);
+      if(!words.split(',').some(function(w){return w.trim().length>=2;}))
+        throw new Error('Аватар: укажи ключевые слова через запятую.');
+      var source=typeof rule.source==='undefined'?'question':rule.source;
+      if(['question','answer','both'].indexOf(source)===-1)
+        throw new Error('Аватар: выбери, где искать ключевые слова.');
+      return {keywords:words,source:source,
+        expression:pictureChoice(rule.expression,'правила '+(i+1),'neutral',false)};
+    });
+    var avatars={
+      launcher:pictureChoice(avatarRaw.launcher,'кнопки',def.avatars.launcher,false),
+      header:pictureChoice(avatarRaw.header,'шапки',def.avatars.header,false),
+      greeting:pictureChoice(avatarRaw.greeting,'приветствия',def.avatars.greeting,true),
+      reactions:reactions,keywordRules:keywordRules,customImages:customImages};
+    var replyData=item.replies&&typeof item.replies==='object'&&!Array.isArray(item.replies)?item.replies:{};
+    var replies={};
+    Object.keys(def.replies).forEach(function(key){
+      var val=typeof replyData[key]==='undefined'?def.replies[key]:replyData[key];
+      replies[key]=plain(val,'Ответ помощника: '+key,
+        key.indexOf('Button')!==-1?90:500,key.indexOf('Button')===-1);
+    });
     return {enabled:item.enabled!==false,greetingEnabled:item.greetingEnabled!==false,
       title:plain(typeof item.title==='string'?item.title:def.title,'Название помощника',55,true),
       welcome:plain(typeof item.welcome==='string'?item.welcome:def.welcome,
         'Приветствие помощника',250,true),
-      contactEmail:mail,rules:cleaned};
+      contactEmail:mail,rules:cleaned,labels:labels,quickTopics:quickTopics,replies:replies,avatars:avatars};
   }
   function card(x,type,index){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Карточка '+index+': неверный формат.');

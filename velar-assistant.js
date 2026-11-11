@@ -19,8 +19,43 @@
  function avatarFace(cls,expression){
    var face=el('span',cls+' velar-expression','V');
    face.setAttribute('aria-hidden','true');
-   face.setAttribute('data-expression',expression||'neutral');
+   setAvatar(face,expression||'neutral');
    return face;
+ }
+ function setAvatar(face,expression){
+   if(!face)return;
+   var chosen=String(expression||'neutral'),images=config&&config.avatars&&config.avatars.customImages;
+   var customIndex=chosen==='custom1'?0:chosen==='custom2'?1:-1;
+   var photo=customIndex>=0&&images&&images[customIndex]&&images[customIndex].dataUrl||'';
+   face.className=face.className.replace(/\svelar-expression--custom/g,'');
+   if(photo&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(photo)&&photo.length<=24000){
+     face.className+=' velar-expression--custom';
+     face.style.backgroundImage='url("'+photo+'")';
+     face.setAttribute('data-expression','neutral');
+   }else{
+     face.style.backgroundImage='';
+     face.setAttribute('data-expression',customIndex>=0?'neutral':chosen);
+   }
+ }
+ function greetingChoice(){
+   var selected=config&&config.avatars&&config.avatars.greeting;
+   return selected&&selected!=='auto'?selected:greetingFace();
+ }
+ function reactionChoice(raw,reply){
+   var avatars=config&&config.avatars;
+   if(avatars){
+     var rules=avatars.keywordRules||[];
+     for(var i=0;i<rules.length;i++){
+       var r=rules[i],source=r.source||'question';
+       if((source==='question'||source==='both')&&contains(norm(raw),r.keywords))
+         return r.expression;
+       if((source==='answer'||source==='both')&&contains(norm(reply),r.keywords))
+         return r.expression;
+     }
+     var type=expressionFor(raw);
+     return avatars.reactions&&avatars.reactions[type]||type;
+   }
+   return expressionFor(raw);
  }
  function expressionFor(raw){
    var q=norm(raw);
@@ -82,15 +117,26 @@
    }
    return found;
  }
+ // All visible automatic replies come from the owner's published settings.
+ // The schema supplies backwards-compatible defaults for older publications.
+ function replyText(settings,key){
+   var r=settings&&settings.replies;
+   if(r&&typeof r[key]==='string')return r[key];
+   var schema=window.VMM_LANDING_SCHEMA;
+   if(schema&&schema.defaults)return schema.defaults().genres.assistant.replies[key]||'';
+   return '';
+ }
+ function fillTopic(text,topic){
+   return String(text||'').split('{topic}').join(topic.label)
+     .split('{count}').join(String(topic.tracks&&topic.tracks.length||0));
+ }
  function answer(raw,data,settings){
    var q=norm(raw);
-   if(!q)return {text:'Расскажи, что тебе интересно: музыка, настроение, артисты или сотрудничество.'};
+   if(!q)return {text:replyText(settings,'emptyInput')};
    if(contains(q,'оператор,свяжи с автором,человек,сотрудничество,сотрудничать,певец,певица,артист для песни,выступление,выступить,концерт,предложение,коллаборация,контакт,почта,написать автору')){
-     return {text:settings.contactEmail?
-       'Я цифровой помощник, не живой оператор. Могу помочь составить письмо о сотрудничестве. Отправка состоится только из твоей почтовой программы после подтверждения.':
-       'Я цифровой помощник, не живой оператор. Автоматическая отправка сообщений пока отключена. Контактная почта ещё не настроена; можно найти официальные страницы артистов в разделе подписок.',
+     return {text:replyText(settings,settings.contactEmail?'contactEnabled':'contactDisabled'),
        action:settings.contactEmail?'email':'link',target:settings.contactEmail?'':'#playlists',
-       label:settings.contactEmail?'Написать автору':'Перейти к официальным страницам'};
+       label:replyText(settings,settings.contactEmail?'contactEnabledButton':'contactDisabledButton')};
    }
    var rules=settings.rules||[];
    for(var i=0;i<rules.length;i++){
@@ -98,34 +144,25 @@
    }
    var mood=topicFor(q,data);
    if(mood){
-     return {text:mood.tracks&&mood.tracks.length?
-       'Для настроения «'+mood.label+'» найдены песни: '+mood.tracks.length+'. Открой подборку и выбери композицию — воспроизведение начнётся только после твоего нажатия.':
-       'Тема «'+mood.label+'» уже есть во вселенной VELARDREAM, но её песни пока готовятся к публикации. Можешь посмотреть и другие тематические миры.',
-       action:'topic',target:mood.slug,label:'Открыть «'+mood.label+'»'};
+     return {text:fillTopic(replyText(settings,mood.tracks&&mood.tracks.length?'moodWithTracks':'moodWithoutTracks'),mood),
+       action:'topic',target:mood.slug,label:fillTopic(replyText(settings,'moodButton'),mood)};
    }
-   if(contains(q,'привет,здравствуй,здравствуйте,добрый день,hello,hi')){
-     return {text:'Привет! Рад встрече во вселенной VELARDREAM. Какую музыку хочется услышать: грустную, свадебную, романтическую или весёлую?'};
-   }
-   if(contains(q,'радио,radio,плейлист,музыку подряд')){
-     return {text:'VELAR RADIO — официальный музыкальный плейлист. Он запускается только по твоему выбору. Можно также открыть другие плейлисты.',
-       action:'link',target:'#playlists',label:'Посмотреть плейлисты'};
-   }
-   if(contains(q,'язык,финский,финском,немецкий,немецком,испанский,испанском,русский,русском,английский,английском,на каком языке')){
-     return {text:'В нашей вселенной есть миры настоящих и придуманных языков. Выбери язык и открой его подборку.',
-       action:'link',target:'#languages',label:'Выбрать язык'};
-   }
-   if(contains(q,'клип,клипы,видео,релиз,альбом,новая песня')){
-     return {text:'В разделе релизов представлены синглы, альбомы и видеоклипы. Можно отфильтровать нужный формат.',
-       action:'link',target:'#releases',label:'Открыть релизы'};
-   }
-   if(contains(q,'артист,исполнитель,кто поет,певцы,певица')){
-     return {text:'Здесь есть отдельные миры артистов. Выбери исполнителя, чтобы узнать больше и услышать его музыку.',
-       action:'link',target:'#artists',label:'Открыть артистов'};
-   }
-   return {text:settings.contactEmail?
-     'Я пока не умею уверенно отвечать на этот вопрос. Могу открыть музыкальную вселенную или помочь написать автору.':
-     'Я ещё учусь отвечать на вопросы. Попробуй написать «свадьба», «грустно», «радио», «артисты» или «сотрудничество».',
-     action:'link',target:'#topics',label:'Исследовать темы'};
+   if(contains(q,'привет,здравствуй,здравствуйте,добрый день,hello,hi'))
+     return {text:replyText(settings,'hello')};
+   if(contains(q,'радио,radio,плейлист,музыку подряд'))
+     return {text:replyText(settings,'radio'),action:'link',target:'#playlists',
+       label:replyText(settings,'radioButton')};
+   if(contains(q,'язык,финский,финском,немецкий,немецком,испанский,испанском,русский,русском,английский,английском,на каком языке'))
+     return {text:replyText(settings,'languages'),action:'link',target:'#languages',
+       label:replyText(settings,'languagesButton')};
+   if(contains(q,'клип,клипы,видео,релиз,альбом,новая песня'))
+     return {text:replyText(settings,'releases'),action:'link',target:'#releases',
+       label:replyText(settings,'releasesButton')};
+   if(contains(q,'артист,исполнитель,кто поет,певцы,певица'))
+     return {text:replyText(settings,'artists'),action:'link',target:'#artists',
+       label:replyText(settings,'artistsButton')};
+   return {text:replyText(settings,settings.contactEmail?'fallbackEnabled':'fallbackDisabled'),
+     action:'link',target:'#topics',label:replyText(settings,'fallbackButton')};
  }
  function itemMessage(role,text,action,expression){
    if(!log)return;
@@ -134,7 +171,7 @@
      row.appendChild(avatarFace('velar-chat-avatar',expression));
    }
    row.appendChild(el('p','',text));
-   if(action){
+   if(action&&action.label){
      var a=el('button','velar-chat-action',action.label);
      a.type='button';
      a.onclick=function(){
@@ -172,7 +209,7 @@
    if(!t)return;
    itemMessage('visitor',t);
    var result=answer(t,published,config);
-   itemMessage('assistant',result.text,result.action?result:null,expressionFor(t));
+   itemMessage('assistant',result.text,result.action?result:null,reactionChoice(t,result.text));
    if(input)input.value='';
  }
  function paint(){
@@ -182,11 +219,11 @@
    var launcher=el('button','velar-assistant-launch');
    launcher.type='button';launcher.setAttribute('aria-controls','velar-assistant-dialog');
    launcher.setAttribute('aria-expanded','false');
-   var symbol=avatarFace('velar-assistant-symbol','neutral');
-   launcher.appendChild(symbol);launcher.appendChild(el('span','', 'Помощник VELAR'));
+   var symbol=avatarFace('velar-assistant-symbol',config&&config.avatars&&config.avatars.launcher||'neutral');
+   launcher.appendChild(symbol);launcher.appendChild(el('span','velar-assistant-launch-label','Помощник VELAR'));
    root.appendChild(launcher);
    prompt=el('div','velar-assistant-greeting hidden');
-   var helloSticker=avatarFace('velar-assistant-greeting-avatar',greetingFace());
+   var helloSticker=avatarFace('velar-assistant-greeting-avatar',greetingChoice());
    prompt.appendChild(helloSticker);
    prompt.appendChild(el('span','velar-assistant-wave','')); // CSS waving hand; no emoji
    prompt.appendChild(el('span','velar-assistant-greeting-text','Добро пожаловать! Подобрать музыку?'));
@@ -198,9 +235,9 @@
    dialog.setAttribute('role','region');dialog.setAttribute('aria-label','VELAR — музыкальный помощник');
    header=el('div','velar-assistant-header');
    var headerTitle=el('strong','velar-assistant-title');
-   var face=avatarFace('velar-assistant-header-avatar','neutral');
+   var face=avatarFace('velar-assistant-header-avatar',config&&config.avatars&&config.avatars.header||'neutral');
    header.appendChild(face);header.appendChild(headerTitle);
-   header.appendChild(el('span','velar-assistant-header-note','Самостоятельный бот · без платного ИИ'));
+   header.appendChild(el('span','velar-assistant-header-note','Локальный бот · без платного ИИ'));
    var close=el('button','velar-assistant-close','×');close.type='button';
    close.setAttribute('aria-label','Закрыть помощника');header.appendChild(close);
    dialog.appendChild(header);
@@ -208,11 +245,6 @@
    log.setAttribute('aria-live','polite');log.setAttribute('aria-relevant','additions');
    dialog.appendChild(log);
    buttons=el('div','velar-assistant-suggestions');
-   [['Мне грустно','грустно'],['Свадебная музыка','свадьба'],['Космос','космос'],
-     ['Сотрудничество','сотрудничество']].forEach(function(pair){
-       var button=el('button','velar-assistant-suggestion',pair[0]);button.type='button';
-       button.onclick=function(){say(pair[1]);};buttons.appendChild(button);
-     });
    dialog.appendChild(buttons);
    var form=el('form','velar-assistant-form');
    input=el('input','velar-assistant-input');
@@ -228,7 +260,7 @@
    };
    dialog.appendChild(form);
    dialog.appendChild(el('p','velar-assistant-privacy',
-     'Ответы формируются на устройстве. Сообщения не сохраняются и не отправляются автору.'));
+     'Не сохраняем и не отправляем автору'));
    root.appendChild(dialog);
    function toggle(open){
      opened=!!open;
@@ -236,7 +268,7 @@
      launcher.setAttribute('aria-expanded',opened?'true':'false');
      prompt.className='velar-assistant-greeting hidden';markGreeting();
      if(opened){
-       if(!log.children.length)itemMessage('assistant',config.welcome,null,greetingFace());
+       if(!log.children.length)itemMessage('assistant',config.welcome,null,greetingChoice());
        if(input&&input.focus&&(!window.matchMedia||!window.matchMedia('(max-width:590px)').matches))input.focus();
      }else if(launcher.focus)launcher.focus();
    }
@@ -246,6 +278,67 @@
      if(e&&e.key==='Escape')toggle(false);
    };
  }
+ function configLabel(key,fallback){
+   var labels=config&&config.labels;
+   return labels&&typeof labels[key]==='string'?labels[key]:fallback;
+ }
+ function renderQuickTopics(){
+   if(!buttons)return;
+   clear(buttons);
+   var entries=config&&Array.isArray(config.quickTopics)?config.quickTopics:[
+     {label:'Мне грустно',query:'грустно'},
+     {label:'Свадебная музыка',query:'свадьба'},
+     {label:'Космос',query:'космос'},
+     {label:'Сотрудничество',query:'сотрудничество'}
+   ];
+   entries.forEach(function(topic){
+     var button=el('button','velar-assistant-suggestion',topic.label);
+     button.type='button';
+     button.onclick=function(){say(topic.query);};
+     buttons.appendChild(button);
+   });
+ }
+ function applyConfigText(){
+   if(!root||!config)return;
+   function setText(selector,text){
+     var el=root.querySelector&&root.querySelector(selector);
+     if(el)el.textContent=text;
+     return el;
+   }
+   var avatars=config&&config.avatars||{};
+   setAvatar(root.querySelector&&root.querySelector('.velar-assistant-symbol'),
+     avatars.launcher||'neutral');
+   setAvatar(root.querySelector&&root.querySelector('.velar-assistant-header-avatar'),
+     avatars.header||'neutral');
+   setAvatar(root.querySelector&&root.querySelector('.velar-assistant-greeting-avatar'),
+     greetingChoice());
+   setText('.velar-assistant-launch-label',configLabel('launcher','Помощник VELAR'));
+   setText('.velar-assistant-header-note',configLabel('headerNote','Локальный бот · без платного ИИ'));
+   setText('.velar-assistant-greeting-text',configLabel('greetingBubble',config.welcome));
+   setText('.velar-assistant-greeting-close',configLabel('greetingCloseText','×'));
+   setText('.velar-assistant-close',configLabel('closeText','×'));
+   setText('.velar-assistant-submit',configLabel('submit','Спросить'));
+   var privacy=setText('.velar-assistant-privacy',
+     configLabel('privacy','Не сохраняем и не отправляем автору'));
+   if(privacy){
+     privacy.title=privacy.textContent;
+     privacy.style.display=privacy.textContent?'':'none';
+   }
+   var note=root.querySelector&&root.querySelector('.velar-assistant-header-note');
+   if(note)note.style.display=note.textContent?'':'none';
+   var dismiss=root.querySelector&&root.querySelector('.velar-assistant-greeting-close');
+   if(dismiss)dismiss.setAttribute('aria-label',
+     configLabel('greetingCloseAria','Скрыть приветствие'));
+   var close=root.querySelector&&root.querySelector('.velar-assistant-close');
+   if(close)close.setAttribute('aria-label',configLabel('closeAria','Закрыть помощника'));
+   if(dialog)dialog.setAttribute('aria-label',
+     configLabel('dialogAria','VELAR — музыкальный помощник'));
+   if(input){
+     input.setAttribute('aria-label',configLabel('inputAria','Напиши вопрос помощнику'));
+     input.placeholder=configLabel('inputPlaceholder','Например: нужна грустная песня…');
+   }
+   renderQuickTopics();
+ }
  function render(data){
    published=data||published;
    var settings=published&&published.genres&&published.genres.assistant;
@@ -254,10 +347,13 @@
    if(!settings)return;
    config=settings;
    paint();
+   applyConfigText();
    if(!root)return;
    if(!config.enabled){
      root.className='velar-assistant hidden';
      if(dialog)dialog.className='velar-assistant-dialog hidden';
+     var trigger=root.querySelector&&root.querySelector('.velar-assistant-launch');
+     if(trigger)trigger.setAttribute('aria-expanded','false');
      opened=false;return;
    }
    root.className='velar-assistant';
@@ -268,7 +364,7 @@
    if(prompt&&config.greetingEnabled&&!greetingSeen()&&!opened){
      prompt.className='velar-assistant-greeting';
      var span=prompt.querySelector&&prompt.querySelector('.velar-assistant-greeting-text');
-     if(span)span.textContent=config.welcome;
+     if(span)span.textContent=configLabel('greetingBubble',config.welcome);
    }
  }
  // Do not guess public visibility from schema defaults before the verified
