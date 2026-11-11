@@ -58,11 +58,11 @@ assert.equal(desktop.pins.length,1);
 assert.equal(desktop.pins[0].fileId,'file_abc0001');
 await api.update(db,uid,{fileId:'file_xyz0002',catalogId:'songB',title:'Журавли',size:23800000},true);
 const phoneAgain=await api.read(db,uid,phone);
-assert.deepEqual(phoneAgain.pins.map(p=>p.fileId).sort(),['file_abc0001','file_xyz0002']);
+assert.equal(JSON.stringify(phoneAgain.pins.map(p=>p.fileId).sort()),JSON.stringify(['file_abc0001','file_xyz0002']));
 // The choice is per-user, and removing a pin propagates to every device.
 await api.update(db,uid,phone[0],false);
 const after=await api.read(db,uid,[]);
-assert.deepEqual(after.pins.map(p=>p.fileId),['file_xyz0002']);
+assert.equal(JSON.stringify(after.pins.map(p=>p.fileId)),JSON.stringify(['file_xyz0002']));
 const other=await api.read(db,'someone_else',[]);
 assert.equal(other.pins.length,0);
 assert.notEqual(api.path(uid),api.path('someone_else'));
