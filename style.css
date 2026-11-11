@@ -477,14 +477,14 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .crystal-journey-beam--left{transform:rotate(155deg)}
 .crystal-journey-beam--right{transform:rotate(25deg)}
 .crystal-journey-crystal{
- position:absolute;left:50%;top:36%;width:clamp(160px,24vw,330px);
+ position:absolute;left:50%;top:36%;width:clamp(105px,15vw,156px);
  transform:translate3d(-50%,-50%,0);pointer-events:none;
 }
 .crystal-journey-crystal::before{
  content:"";position:absolute;inset:-35%;z-index:-1;pointer-events:none;
  background:radial-gradient(ellipse,rgba(234,197,133,.23) 0,rgba(107,147,199,.12) 36%,transparent 71%);
 }
-.crystal-journey-crystal img{display:block;width:100%;height:auto;object-fit:contain}
+.crystal-journey-crystal img{display:block;width:100%;height:auto;object-fit:contain;filter:drop-shadow(0 0 15px rgba(242,208,151,.39))}
 .crystal-journey-copy{
  position:absolute;z-index:1;left:22px;right:22px;top:64%;text-align:center;
  max-width:850px;margin:auto;
@@ -557,7 +557,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .crystal-journey-stage{min-height:670px}
  .crystal-journey-ring--outer{width:min(570px,90vw);height:min(570px,90vw)}
  .crystal-journey-ring--inner{width:min(365px,62vw);height:min(365px,62vw)}
- .crystal-journey-crystal{width:clamp(155px,29vw,240px);top:34%}
+ .crystal-journey-crystal{width:clamp(105px,17vw,140px);top:34%}
  .crystal-journey-ring{top:34%}
  .crystal-journey-beam{top:34%}
  .crystal-journey-copy{top:58%;left:14px;right:14px}
@@ -567,7 +567,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 @media(max-width:610px){
  .crystal-journey{padding:25px 10px 32px}
  .crystal-journey-stage{min-height:650px}
- .crystal-journey-crystal{width:clamp(158px,45vw,215px);top:30%}
+ .crystal-journey-crystal{width:clamp(100px,27vw,128px);top:30%}
  .crystal-journey-ring{top:30%}
  .crystal-journey-ring--outer{width:min(400px,94vw);height:min(400px,94vw)}
  .crystal-journey-ring--inner{width:min(275px,70vw);height:min(275px,70vw)}
