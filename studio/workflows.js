@@ -71,7 +71,8 @@
   function navActive(key){
     var buttons=document.querySelectorAll('#workspace [data-panel]');
     for(var i=0;i<buttons.length;i++)buttons[i].className=buttons[i].getAttribute('data-panel')===key?'nav-active':'';
-    show(id('panel-lyrics'),false);show(id('panel-future'),false);show(id('panel-data'),false);show(pane,true);
+    show(id('panel-lyrics'),false);show(id('panel-landing'),false);
+    show(id('panel-future'),false);show(id('panel-data'),false);show(pane,true);
   }
   function loading(title) {pane.innerHTML='<h2>'+esc(title)+'</h2><p id="vmm-w-status" class="sync-note">Читаем записи из защищённой базы…</p>';}
   function row(s){var x=parseInt(s,10);return isFinite(x)&&x>=2?x:0;}
