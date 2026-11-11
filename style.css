@@ -265,9 +265,11 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .cms-release-card{min-width:0;overflow:hidden;border-radius:16px;border:1px solid rgba(231,199,151,.42);
  background:linear-gradient(155deg,#243652,#111d36);box-shadow:0 9px 24px #0003}
 .cms-release-art{position:relative;overflow:hidden;background:#1d2e4b;aspect-ratio:1/1}
+.cms-release-art::before{content:"";display:block;padding-top:100%}
 .cms-release-art--video{aspect-ratio:16/9}
-.cms-release-cover{width:100%;height:100%;display:block;object-fit:contain}
-.cms-release-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+.cms-release-art--video::before{padding-top:56.25%}
+.cms-release-cover{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:contain}
+.cms-release-placeholder{position:absolute;inset:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;
  background:radial-gradient(circle at 55% 35%,#5c5277 0%,#233653 50%,#142036 100%)}
 .cms-release-disc{width:48%;aspect-ratio:1/1;border:2px solid #e9c994a6;border-radius:50%;
  background:repeating-radial-gradient(circle at center,#27354f 0px,#27354f 7px,#69748a 8px,#283952 9px)}
@@ -398,10 +400,13 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 @media(max-width:950px){.universe-panel{grid-template-columns:1fr}.universe-stage{min-height:340px}}
 @media(max-width:610px){
  .universe-section{padding:47px 0 53px}
- .universe-stage{min-height:332px}
- .universe-node{min-width:87px;max-width:118px;padding:7px 9px;font-size:.67rem;gap:4px}
- .universe-node-mark{font-size:.76rem}
- .universe-core{width:70px;height:70px}
+ .universe-stage{min-height:332px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+   align-content:center;column-gap:9px;row-gap:19px;padding:15px 12px}
+ .universe-node{position:relative;left:auto!important;top:auto!important;transform:none!important;
+   min-width:0;max-width:none;width:100%;padding:9px 10px;font-size:.76rem;gap:6px}
+ .universe-node-mark{font-size:.8rem}
+ .universe-core{width:70px;height:70px;opacity:.2;z-index:0}
+ .universe-connectors{display:none}
  .universe-details{padding:17px}
 }
 @media(prefers-reduced-motion:reduce){
