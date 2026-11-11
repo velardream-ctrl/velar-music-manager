@@ -9,7 +9,7 @@ const def=api.normalize(api.defaults());
 assert.equal(def.artists.cards.length,0);
 assert.equal(def.releases.cards.length,0);
 assert.equal(def.genres.tags.length,7);
-assert.equal(def.genres.universe.nodes.length,7);
+assert.equal(def.genres.universe.nodes.length,8);
 assert.equal(def.genres.languages.entries.length,13);
 assert.ok(def.genres.languages.entries.some(x=>x.code==='beaver'&&x.fictional));
 assert.ok(def.genres.languages.entries.some(x=>x.code==='alien'&&x.fictional));
