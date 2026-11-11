@@ -68,4 +68,76 @@ assert.match(css,/\.velar-assistant-input\{height:36px;padding:6px 8px;font-size
 assert.match(sw,/CACHE_PREFIX \+ 'v22'/);
 assert.match(html,/style\.css\?v=20/);
 assert.ok(code.includes("querySelector('.velar-assistant-launch')"));
+
+const customLabels={...settings,labels:{...settings.labels,
+ launcher:'Мой VELAR',privacy:'',submit:'Отправить',
+ inputPlaceholder:'Выбери музыку'}};
+const customReplies={...settings,replies:{...settings.replies,
+ hello:'Привет от владельца',radio:'Мой плейлист',radioButton:'Слушать',
+ contactEnabledButton:''}};
+assert.equal(answer('привет',customReplies).text,'Привет от владельца');
+assert.equal(answer('радио',customReplies).label,'Слушать');
+assert.equal(answer('контакт',{...customReplies,contactEmail:'owner@example.com'}).label,'');
+assert.match(css,/\.velar-assistant-suggestions:empty\{display:none\}/);
+const avatarValues=w.VMM_LANDING_SCHEMA.defaults().genres.assistant.avatars;
+assert.deepEqual(Array.from(Object.keys(avatarValues.reactions)),
+ ['neutral','wave','morning','night','thanks','heart','okay','peace','off','celebrate']);
+assert.match(code,/function reactionChoice\(raw,reply\)/);
+assert.match(code,/r\.source\|\|'question'/);
+assert.match(code,/function setAvatar\(face,expression\)/);
+assert.match(code,/velar-expression--custom/);
+assert.match(code,/face\.style\.backgroundImage=/);
+assert.match(code,/greetingChoice\(\)/);
+assert.match(code,/applyConfigText\(\)/);
+assert.match(code,/renderQuickTopics\(\)/);
+// Simulate browser DOM: owner edits should rerender without page reload.
+function node(tag){
+ return {tagName:tag,textContent:'',className:'',value:'',children:[],
+   attributes:{},style:{},scrollHeight:0,scrollTop:0,
+   appendChild(el){this.children.push(el);return el;},
+   removeChild(el){this.children.splice(this.children.indexOf(el),1);},
+   setAttribute(k,v){this.attributes[k]=v;},
+   getAttribute(k){return this.attributes[k];},
+   get firstChild(){return this.children[0]||null;},
+   focus(){},
+   querySelector(selector){
+     let name=selector.slice(1);
+     for(const child of this.children){
+       if((child.className||'').split(/\s+/).includes(name))return child;
+       if(child.querySelector){const found=child.querySelector(selector);if(found)return found;}
+     }
+     return null;
+   }
+ };
+}
+const host=node('div'),deviceDoc={readyState:'loading',createElement:node,
+ addEventListener(){},getElementById:id=>id==='velar-assistant'?host:null};
+const deviceWindow={};
+vm.runInNewContext(schema,{window:deviceWindow,Array,String,Math,Number,Object,JSON,Error},{timeout:1000});
+vm.runInNewContext(code,{window:deviceWindow,document:deviceDoc,
+ Array,String,Number,Math,Object,JSON,Error,Date},{timeout:1000});
+const config=deviceWindow.VMM_LANDING_SCHEMA.defaults();
+config.genres.assistant={...config.genres.assistant,...customLabels,
+ quickTopics:[{label:'Любовь',query:'любовь'}],
+ avatars:{...config.genres.assistant.avatars,
+  launcher:'heart',header:'night',greeting:'morning',
+  reactions:{...config.genres.assistant.avatars.reactions,heart:'thanks'},
+  keywordRules:[{keywords:'любовь',source:'question',expression:'okay'}]}};
+deviceWindow.VELAR_ASSISTANT.render(config);
+assert.equal(host.querySelector('.velar-assistant-launch-label').textContent,'Мой VELAR');
+assert.equal(host.querySelector('.velar-assistant-submit').textContent,'Отправить');
+assert.equal(host.querySelector('.velar-assistant-input').placeholder,'Выбери музыку');
+assert.equal(host.querySelector('.velar-assistant-privacy').style.display,'none');
+assert.equal(host.querySelector('.velar-assistant-symbol').attributes['data-expression'],'heart');
+assert.equal(host.querySelector('.velar-assistant-header-avatar').attributes['data-expression'],'night');
+assert.equal(host.querySelector('.velar-assistant-greeting-avatar').attributes['data-expression'],'morning');
+const tags=host.querySelector('.velar-assistant-suggestions');
+assert.equal(tags.children.length,1);assert.equal(tags.children[0].textContent,'Любовь');
+config.genres.assistant.quickTopics=[];
+deviceWindow.VELAR_ASSISTANT.render(config);
+assert.equal(tags.children.length,0,'Zero quick tags must be supported');
+config.genres.assistant.quickTopics=Array(12).fill(0).map((_,i)=>({label:'Тема '+i,query:'привет'}));
+deviceWindow.VELAR_ASSISTANT.render(config);
+assert.equal(tags.children.length,12);
+
 console.log('PASS: RUN-079 compact mobile assistant and one-line privacy');

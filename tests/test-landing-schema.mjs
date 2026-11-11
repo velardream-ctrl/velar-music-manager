@@ -49,4 +49,51 @@ assert.match(rules,/studioAdmin\(\)\s*\|\|/,'Owner can read landing document bef
 assert.match(rules,/resource != null/,'Unauthenticated read must require an existing published resource');
 assert.match(rules,/allow list, delete: if false;/);
 assert.match(rules,/allow read, write: if false;/);
+
+const assistant=def.genres.assistant;
+assert.equal(assistant.quickTopics.length,4);
+assert.equal(assistant.labels.launcher,'Помощник VELAR');
+assert.equal(assistant.labels.privacy,'Не сохраняем и не отправляем автору');
+assert.equal(assistant.avatars.reactions.heart,'heart');
+assert.equal(assistant.avatars.keywordRules.length,0);
+assert.equal(assistant.avatars.customImages.length,2);
+const legacy={...def,genres:{...def.genres,assistant:{enabled:true,greetingEnabled:true,
+ title:'Старый бот',welcome:'Привет из старой версии!',contactEmail:'',rules:[]}}};
+const migrated=api.normalize(legacy).genres.assistant;
+assert.equal(migrated.labels.greetingBubble,'Привет из старой версии!');
+assert.equal(migrated.quickTopics.length,4);
+assert.equal(migrated.avatars.greeting,'auto');
+const ownerConfig={...assistant,
+ labels:{...assistant.labels,privacy:'',submit:'Отправить'},
+ quickTopics:[{label:'Север',query:'природа'}],
+ avatars:{...assistant.avatars,greeting:'night',reactions:{...assistant.avatars.reactions,
+  heart:'wave'},keywordRules:[{keywords:'счастье,тепло',source:'answer',expression:'heart'}]}};
+const normalized=api.normalize({...def,genres:{...def.genres,assistant:ownerConfig}}).genres.assistant;
+assert.equal(normalized.labels.privacy,'');
+assert.equal(normalized.labels.submit,'Отправить');
+assert.equal(normalized.quickTopics[0].query,'природа');
+assert.equal(normalized.avatars.greeting,'night');
+assert.equal(normalized.avatars.reactions.heart,'wave');
+assert.equal(normalized.avatars.keywordRules[0].source,'answer');
+function invalidAssistant(patch){
+ return api.normalize({...def,genres:{...def.genres,assistant:{...assistant,...patch}}});
+}
+assert.throws(()=>invalidAssistant({quickTopics:Array(13).fill({label:'Тема',query:'музыка'})}),/12/);
+assert.throws(()=>invalidAssistant({quickTopics:[{label:' ',query:'музыка'}]}),/обязательно/);
+assert.throws(()=>invalidAssistant({labels:{...assistant.labels,submit:'x'.repeat(41)}}),/40/);
+assert.throws(()=>invalidAssistant({replies:{...assistant.replies,hello:'x'.repeat(501)}}),/500/);
+assert.throws(()=>invalidAssistant({avatars:{...assistant.avatars,launcher:'remote-url'}}),/Аватар/);
+assert.throws(()=>invalidAssistant({avatars:{...assistant.avatars,keywordRules:Array(21).fill({keywords:'любовь',source:'question',expression:'heart'})}}),/20/);
+assert.throws(()=>invalidAssistant({avatars:{...assistant.avatars,keywordRules:[{keywords:'любовь',source:'invalid',expression:'heart'}]}}),/где искать/);
+assert.throws(()=>invalidAssistant({avatars:{...assistant.avatars,customImages:[
+ {name:'Небезопасный',dataUrl:'data:image/svg+xml,<svg onload=alert(1)>'},
+ {name:'Второй',dataUrl:''}]}}),/JPEG/);
+assert.throws(()=>invalidAssistant({avatars:{...assistant.avatars,customImages:[
+ {name:'Слишком большой',dataUrl:'data:image/jpeg;base64,'+'A'.repeat(25000)},
+ {name:'Второй',dataUrl:''}]}}),/JPEG/);
+const validJPEG='data:image/jpeg;base64,'+'A'.repeat(300);
+assert.equal(api.normalize({...def,genres:{...def.genres,assistant:{...assistant,
+ avatars:{...assistant.avatars,customImages:[
+ {name:'Новая аватарка',dataUrl:validJPEG},{name:'Вторая',dataUrl:''}]}}}}).genres.assistant.avatars.customImages[0].dataUrl,validJPEG);
+
 console.log('PASS: curated landing schema, private field stripping, only HTTPS public links, precise public read and admin-only draft rules');
