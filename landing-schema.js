@@ -49,6 +49,18 @@
       throw new Error(label+': приватные ссылки Google Drive и Storage публиковать нельзя.');
     return s;
   }
+  function imageUrl(value,label){
+    var s=plain(value,label,400,false);
+    if(!s)return '';
+    // Only the dedicated PUBLIC portrait path in this exact Firebase bucket.
+    // Never allow private Google Drive links or arbitrary Cloud Storage URLs.
+    if(/^https:\/\/firebasestorage\.googleapis\.com\//i.test(s)){
+      if(!/^https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/velardream-records-studio\.firebasestorage\.app\/o\/public%2fartist-avatars%2f[a-z0-9-]{1,80}%2f[0-9]{13}-[a-f0-9]{16}\.(?:webp|jpg)\?alt=media&token=[a-z0-9_-]+$/i.test(s))
+        throw new Error(label+': разрешён только опубликованный портрет VELARDREAM.');
+      return s;
+    }
+    return url(s,label);
+  }
   function card(x,type,index){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Карточка '+index+': неверный формат.');
     var title=plain(x.title,'Название карточки '+index,110,!!x.visible);
@@ -57,7 +69,7 @@
       subtitle:plain(x.subtitle||'','Подзаголовок '+index,110,false),
       description:plain(x.description||'','Описание '+index,360,false),
       url:url(x.url||'','Ссылка '+index),
-      imageUrl:url(x.imageUrl||'','Изображение '+index),
+      imageUrl:imageUrl(x.imageUrl||'','Изображение '+index),
       visible:x.visible===true
     };
     // A stable identifier is safe for the public page and permits future
@@ -67,6 +79,7 @@
       if(artistId&&!/^[a-z0-9-]+$/.test(artistId))
         throw new Error('Ключ артиста: недопустимый формат.');
       result.artistId=artistId;
+      result.imageShape=x.imageShape==='circle'?'circle':'square';
     }
     return result;
   }
