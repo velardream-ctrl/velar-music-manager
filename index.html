@@ -28,6 +28,7 @@
   <script src="landing-public.js?v=7" defer></script>
   <script src="universe.js?v=3" defer></script>
   <script src="languages-public.js?v=1" defer></script>
+  <script src="topics-public.js?v=1" defer></script>
   <script src="living-art.js?v=1" defer></script>
   <script src="main.js" defer></script>
 </head>
@@ -43,6 +44,7 @@
       <a href="#playlists">Плейлисты</a>
       <a href="#genres">Жанры</a>
       <a href="#languages">Языки</a>
+      <a href="#topics">Темы песен</a>
       <a href="#about">О проекте</a>
     </nav>
   </header>
@@ -197,6 +199,28 @@
         </div>
         <div id="public-language-detail" class="language-detail" aria-live="polite">
           <p>Выберите язык — здесь откроется подборка его песен.</p>
+        </div>
+      </section>
+
+      <!-- RUN-073: curated topic planets with the existing crystal, no hidden media.
+           Search indexing deliberately remains disabled while the site is built. -->
+      <section id="topics" class="topics-section" aria-labelledby="topics-title">
+        <p class="universe-overline">VELARDREAM / CONSTELLATIONS OF FEELINGS</p>
+        <h2 id="topics-title">Созвездия чувств и историй</h2>
+        <p class="topics-intro" id="topics-intro">Откройте музыку по теме: любовь, свадьба, космос, юмор и другие музыкальные истории.</p>
+        <div class="topics-cosmos">
+          <div class="topics-cosmos-core" aria-hidden="true">
+            <span class="topics-cosmos-glow"></span>
+            <img src="assets/velardream-symbol.svg" width="100" height="180" alt="" loading="lazy" decoding="async">
+          </div>
+          <div id="public-topic-orbit" class="topics-orbit" role="group" aria-label="Тематические планеты песен"></div>
+        </div>
+        <h3 class="topics-cloud-title">Облако музыкальных тем</h3>
+        <div id="public-topic-cloud" class="topics-cloud" role="group" aria-label="Все темы и настроения">
+          <span>Любовь</span><span>Свадьба</span><span>Верность</span><span>Ревность</span><span>Вера и религия</span><span>Космос</span><span>Грусть</span><span>Юмор</span>
+        </div>
+        <div id="public-topic-detail" class="topic-detail" aria-live="polite">
+          <p>Выберите тему, чтобы открыть её песни.</p>
         </div>
       </section>
 
