@@ -53,14 +53,14 @@
      });
      stage.appendChild(svg);
    }
-   // The universe is built around the *actual* VELARDREAM crystal mark,
-   // reused from the hero asset already cached by the public shell.
+   // The universe is built around the exact VELARDREAM logo crystal,
+   // reused from the standalone vector emblem already cached by the public shell.
    // Never synthesize a planet/orb in place of the logo.
    var center=el('button','universe-core');center.type='button';
    center.setAttribute('aria-label','Кристалл VELARDREAM — показать мир артистов');
    center.onclick=function(){select('artists');};
    var light=el('span','universe-core-light');center.appendChild(light);
-   var crystal=el('img','universe-core-crystal');crystal.src='assets/velardream-crystal.png';
+   var crystal=el('img','universe-core-crystal');crystal.src='assets/velardream-symbol.svg';
    crystal.alt='';crystal.loading='lazy';crystal.decoding='async';
    center.appendChild(crystal);stage.appendChild(center);
    nodes.forEach(function(n,i){
