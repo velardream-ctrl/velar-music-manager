@@ -385,7 +385,7 @@ body.vmm-print-open{overflow:hidden}
  max-width:100%;object-fit:cover;border-radius:10px;border:2px solid #b59b71;
 }
 #panel-landing .landing-photo-image.is-circle{border-radius:50%}
-#panel-landing .landing-photo-input{display:none}
+#panel-landing .landing-photo-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;clip-path:inset(50%)}
 #panel-landing .landing-photo-buttons{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}
 #panel-landing .landing-photo-buttons button{min-height:44px}
 #panel-landing .landing-photo-shape{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:10px 0;color:#d9c9ad}
