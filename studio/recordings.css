@@ -75,3 +75,24 @@
 .vmm-r-archive summary{cursor:pointer;color:#f0ce9a;font-weight:650;min-height:44px;align-content:center}
 .vmm-r-archive .vmm-r-track{background:#2b2631}
 .vmm-r-archive button{min-height:44px;padding:10px 14px;border-radius:8px;border:1px solid #cab586;background:#e6c891;color:#18233c;font:inherit}
+
+/* RUN-051: offline set stays visible above song search; texts are collapsed
+   until a deliberate play or text disclosure. */
+.vmm-r-offline-list{margin:12px 0 18px}
+.vmm-r-offline-list h3{margin:0 0 8px;color:#f0d59d;font-size:1.1rem}
+.vmm-r-offline-list .sync-note{margin:5px 0 10px}
+#vmm-repertoire .vmm-r-pinned{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ width:100%;min-height:50px;padding:11px 14px;margin:6px 0;
+ color:#f7e6c3;background:#1b3049;border:1px solid #c9a875;border-radius:10px;
+ text-align:left;font:inherit;flex-wrap:wrap;
+}
+.vmm-r-pinned small{color:#c5d5e8;font-size:.82rem}
+#vmm-repertoire .vmm-r-player-title{
+ display:block;width:100%;min-height:45px;text-align:left;
+ color:#f2e4ce;background:transparent;border:0;padding:0 0 8px;
+ font-size:1.1rem;font-weight:700;
+}
+#vmm-repertoire .vmm-r-player-title:focus-visible,#vmm-repertoire .vmm-r-pinned:focus-visible{
+ outline:2px solid #e9cc94;outline-offset:2px;
+}

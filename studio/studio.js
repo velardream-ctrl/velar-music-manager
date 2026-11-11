@@ -6,7 +6,7 @@
   var cfg=window.VELAR_FIREBASE_CONFIG;
   var gate=document.getElementById('gate'),workspace=document.getElementById('workspace');
   var gateStatus=document.getElementById('gate-status'),signIn=document.getElementById('sign-in');
-  var db=null,auth=null,user=null,authorized=false,saveBusy=false;
+  var db=null,auth=null,user=null,authorized=false,authorizedUid='',saveBusy=false;
   var lyrics=[],catalog=[],songs=[],songKey='',selectedRecord=null,selectedDraft=null,baseline='';
   var sections={lyrics:'Тексты песен',catalog:'Каталог релизов',recordings:'Фонограммы',platforms:'Площадки и ссылки',contacts:'Контакты',outreach:'Рассылки',audit:'Журнал'};
   function el(n){return document.getElementById(n);}
@@ -170,20 +170,54 @@
       text(el('sync-status'),'Не удалось загрузить данные: '+e.message);throw e;
     });
   }
+  // Hash-based tab state: only a fixed, nonsensitive panel name appears in
+  // the URL. No localStorage/sessionStorage, tokens, titles or lyrics.
+  function validPanel(p){return ['overview','lyrics','catalog','recordings','platforms','contacts','outreach','extras','audit'].indexOf(p)>=0;}
+  function rememberPanel(p){
+    if(!validPanel(p))return;
+    try{
+      var here=window.location;
+      if(here&&window.history&&window.history.replaceState){
+        window.history.replaceState(null,'',here.pathname+here.search+'#vmm-'+p);
+      }
+    }catch(ignore){}
+  }
+  function rememberedPanel(){
+    try{
+      var hash=window.location&&window.location.hash||'',match=/^#vmm-([a-z]+)$/.exec(hash);
+      return match&&validPanel(match[1])?match[1]:'overview';
+    }catch(ignore){return 'overview';}
+  }
   function selectPanel(id){
-    var keys=document.querySelectorAll('[data-panel]');
+    rememberPanel(id);
+    var keys=document.querySelectorAll('#workspace [data-panel]');
     for(var i=0;i<keys.length;i++)keys[i].className=keys[i].getAttribute('data-panel')===id?'nav-active':'';
     show(el('panel-lyrics'),id==='lyrics');show(el('panel-future'),id!=='lyrics');
     if(id!=='recordings'&&window.VMM_RECORDINGS)window.VMM_RECORDINGS.hide();
     if(id!=='lyrics'){text(el('future-title'),sections[id]||'Раздел');text(el('future-message'),'Раздел работает в защищённой Firestore.');}
   }
   function showWorkspace(){
-    authorized=true;show(gate,false);show(workspace,true);
+    // Firebase can fire a second auth callback after Google Drive reauthentication.
+    // Keep the current music, tab and scroll position intact on subsequent callbacks.
+    if(authorized&&authorizedUid===user.uid){
+      text(el('account-label'),user.email||'Google');text(el('net-state'),navigator.onLine?'В сети':'Без сети');
+      return;
+    }
+    if(authorized&&authorizedUid!==user.uid){
+      lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
+      if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
+    }
+    authorized=true;authorizedUid=user.uid;show(gate,false);show(workspace,true);
     text(el('account-label'),user.email||'Google');text(el('net-state'),navigator.onLine?'В сети':'Без сети');
-    selectPanel('lyrics');text(el('sync-status'),'Читаем личную базу…');updateLoaded().catch(function(){});
+    text(el('sync-status'),'Читаем личную базу…');
+    var section=rememberedPanel();
+    if(section==='recordings'&&window.VMM_RECORDINGS)window.VMM_RECORDINGS.open();
+    else if(section!=='lyrics'&&window.VMM_WORKFLOWS)window.VMM_WORKFLOWS.open(section);
+    else selectPanel('lyrics');
+    updateLoaded().catch(function(){});
   }
   function unauthorized(note){
-    authorized=false;saveBusy=false;lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
+    authorized=false;authorizedUid='';saveBusy=false;lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
     if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
     show(workspace,false);show(gate,true);message(note);if(auth)signIn.disabled=false;
   }
@@ -258,7 +292,7 @@
   };
   el('sign-out').onclick=function(){
     if(!confirmDiscard())return;
-    if(auth)auth.signOut().then(function(){unauthorized('Вы вышли из рабочего кабинета.');}).catch(function(err){message(err.message);});
+    if(auth)auth.signOut().then(function(){try{var here=window.location;window.history.replaceState(null,'',here.pathname+here.search);}catch(ignore){}unauthorized('Вы вышли из рабочего кабинета.');}).catch(function(err){message(err.message);});
   };
   el('lyric-song-select').onchange=function(){
     var previous=songKey;if(!chooseSong(this.value)){this.value=previous;}
@@ -290,6 +324,8 @@
   window.addEventListener('online',function(){text(el('net-state'),'В сети');});
   window.addEventListener('offline',function(){text(el('net-state'),'Без сети');});
   window.VMM_STUDIO={
+    rememberPanel:rememberPanel,
+    rememberedPanel:rememberedPanel,
     getLyricsMeta:function(){return metadata();},
     isLyricsDirty:isDirty,
     openForTrack:function(t){

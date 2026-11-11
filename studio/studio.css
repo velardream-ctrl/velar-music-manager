@@ -225,3 +225,18 @@ body.vmm-print-open{overflow:hidden}
  #print-page .vmm-print-words h2{font:bold 1.04em Arial,sans-serif;margin:4px 0;break-after:avoid}
  #print-page .vmm-print-words .stanza{margin:0 0 9px;break-inside:avoid;white-space:normal;overflow-wrap:break-word}
 }
+
+/* RUN-051: full-width bottom dock anchored to the actual bottom edge.
+   A fixed 9px gap + inset previously made the iPhone menu appear to float. */
+@media(max-width:800px){
+ #workspace .sidebar{
+   position:fixed;left:0;right:0;top:auto;bottom:0;width:100%;
+   margin:0;max-width:none;border-left:0;border-right:0;border-bottom:0;
+   border-radius:17px 17px 0 0;
+   padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));
+   background:#0a1836fa;box-shadow:0 -8px 25px #0007;
+   z-index:90;
+ }
+ #workspace.workspace{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px));}
+ #workspace .workspace-content{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px));}
+}
