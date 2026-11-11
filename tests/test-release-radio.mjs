@@ -66,8 +66,9 @@ const roots=Object.values(map);
 const walk=(n,cb)=>{cb(n);for(const child of n.children)walk(child,cb);};
 const doc={readyState:'complete',getElementById:id=>map[id]||null,createElement:el,
   querySelectorAll(selector){
+    const classes=selector.split(',').map(x=>x.trim().split('.')[1]).filter(Boolean);
     const list=[];for(const root of roots)walk(root,node=>{
-      if(node.tagName==='iframe'&&/iframe\./.test(selector))list.push(node);
+      if(node.tagName==='iframe'&&classes.some(c=>(' '+node.className+' ').includes(' '+c+' ')))list.push(node);
     });return [...new Set(list)];
   }};
 window.matchMedia=()=>({matches:false});
