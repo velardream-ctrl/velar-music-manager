@@ -119,7 +119,7 @@ const toggle=map['velar-universe-toggle'];assert.equal(map['velar-universe-stage
 toggle.onclick();
 assert.equal(toggle.attributes['aria-expanded'],'true');
 const constellation=map['velar-universe-stage'];
-assert.equal(constellation.children.length,7,'Six accessible constellation buttons, one light core');
+assert.equal(constellation.children.length,8,'Seven editable constellations and the official crystal core');
 const crystalCore=constellation.children[0];
 assert.equal(crystalCore.tagName,'button');
 assert.equal(crystalCore.children[1].src,'assets/velardream-symbol.svg',
