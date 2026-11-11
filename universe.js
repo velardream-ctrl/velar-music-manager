@@ -41,12 +41,12 @@
  }
  function choose(id){
    var nodes=visibleNodes(),item=null;
-   nodes.forEach(function(n,i){
-     if(n.id===id)item=n;
-     if(buttons[i])buttons[i].setAttribute('aria-pressed',n.id===id?'true':'false');
-   });
+   nodes.forEach(function(n){if(n.id===id)item=n;});
    if(!item){item=nodes[0]||null;if(item)id=item.id;}
    selected=item?item.id:'';
+   nodes.forEach(function(n,i){
+     if(buttons[i])buttons[i].setAttribute('aria-pressed',n.id===selected?'true':'false');
+   });
    beams.forEach(function(p,i){p.setAttribute('class',nodes[i]&&nodes[i].id===selected?
      'universe-beam is-active':'universe-beam');});
    if(!details)return;
@@ -128,7 +128,8 @@
    };
    function rotate(direction){
      if(!opened)return;
-     orbitStep=(orbitStep+direction+120)%120;
+     var total=visibleNodes().length;
+     orbitStep=total?(orbitStep+direction+total)%total:0;
      draw();
    }
    var left=document.getElementById('universe-orbit-left');
