@@ -416,19 +416,38 @@
     var trash=id('vmm-r-trash-current');
     if(trash)show(trash,!!(selected.id&&selected.id.indexOf('offline:')!==0));
   }
+  function renderCloudStatus(){
+    var el=id('vmm-r-sync-status');if(!el)return;
+    if(cloudStatus){el.textContent=cloudStatus;return;}
+    var pending=cloudPins.filter(function(p){return !stored(p.fileId);});
+    el.textContent=pending.length?
+      ('В облачной подборке ещё '+pending.length+' '+(pending.length===1?'запись':'записей')+
+       '. '+(driveToken?'Загрузка начнётся автоматически при наличии сети.':
+             'Нажми «Подключить Google Drive», чтобы скачать их на это устройство.')) :
+      cloudPinsLoaded?'Офлайн-подборка синхронизирована с твоим аккаунтом.':'';
+  }
   function renderOfflineList(){
     var target=id('vmm-r-offline-list');if(!target)return;
-    if(!saved.length){
-      target.innerHTML='<p class="sync-note">Офлайн-подборка пуста. Отметь галочкой нужные фонограммы — здесь они останутся доступными после возвращения на сайт.</p>';
-      return;
+    var pending=cloudPins.filter(function(p){return !stored(p.fileId);});
+    var count=saved.length+pending.length;
+    if(!count){
+      target.innerHTML='<p class="sync-note">Офлайн-подборка пуста. Сохрани фонограммы на любом своём устройстве — выбор синхронизируется через аккаунт.</p>';
+      renderCloudStatus();return;
     }
     var rows=saved.slice().sort(function(a,b){return clean(a.title).localeCompare(clean(b.title),'ru');});
-    target.innerHTML='<h3>Офлайн-подборка · '+rows.length+'</h3>'+
-      '<p class="sync-note">Выбранные фонограммы хранятся на этом устройстве. Тексты раскрываются только при прослушивании.</p>'+
+    var pendingRows=pending.slice().sort(function(a,b){return clean(a.title).localeCompare(clean(b.title),'ru');});
+    target.innerHTML='<h3>Офлайн-подборка · '+count+'</h3>'+
+      '<p class="sync-note">Файлы остаются на каждом устройстве после закрытия сайта. Недостающие записи загружаются из личного Google Drive после разрешения доступа.</p>'+
       rows.map(function(s){
         return '<button type="button" class="vmm-r-pinned" data-r-action="offline-play" data-r-id="'+esc(s.fileId)+'">'+
           '<span>▶ '+esc(s.title||'Без названия')+'</span><small>'+esc(s.variant||'Фонограмма')+' · '+mb(s.size)+' · офлайн ✓</small></button>';
+      }).join('')+
+      pendingRows.map(function(s){
+        return '<div class="vmm-r-pinned vmm-r-awaiting" role="status">'+
+          '<span>☁ '+esc(s.title||'Без названия')+'</span><small>'+esc(s.variant||'Фонограмма')+
+          ' · '+mb(s.size)+' · ожидает загрузки на это устройство</small></div>';
       }).join('');
+    renderCloudStatus();
   }
   function renderRecords(){
     var box=id('vmm-r-records'),t=song();if(!box||!t)return;
