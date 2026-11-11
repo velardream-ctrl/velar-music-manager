@@ -165,8 +165,15 @@
    if(contains(q,'артист,исполнитель,кто поет,певцы,певица'))
      return {text:replyText(settings,'artists'),action:'link',target:'#artists',
        label:replyText(settings,'artistsButton')};
+   // Unknown question: use the owner's configured quick topics to clarify.
+   var suggestions=(settings.quickTopics||[]).slice(0,2).map(function(t){
+     return {action:'ask',target:t.query,label:t.label};
+   });
+   suggestions.push({action:'link',target:'#topics',
+     label:replyText(settings,'fallbackButton')});
    return {text:replyText(settings,settings.contactEmail?'fallbackEnabled':'fallbackDisabled'),
-     action:'link',target:'#topics',label:replyText(settings,'fallbackButton')};
+     actions:suggestions.filter(function(x){return !!x.label;})};
+
  }
  // RUN-082: one cancellable timer, no cloud traffic or stored chat history.
  function finishTyping(){
