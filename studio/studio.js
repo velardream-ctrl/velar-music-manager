@@ -8,7 +8,7 @@
   var gateStatus=document.getElementById('gate-status'),signIn=document.getElementById('sign-in');
   var db=null,auth=null,user=null,authorized=false,authorizedUid='',saveBusy=false;
   var lyrics=[],catalog=[],songs=[],songKey='',selectedRecord=null,selectedDraft=null,baseline='';
-  var sections={lyrics:'Тексты песен',catalog:'Каталог релизов',recordings:'Фонограммы',platforms:'Площадки и ссылки',contacts:'Контакты',outreach:'Рассылки',audit:'Журнал'};
+  var sections={lyrics:'Тексты песен',catalog:'Каталог релизов',recordings:'Фонограммы',platforms:'Площадки и ссылки',contacts:'Контакты',outreach:'Рассылки',audit:'Журнал',data:'Данные'};
   function el(n){return document.getElementById(n);}
   function text(n,v){if(n)n.textContent=v==null?'':String(v);}
   function show(n,yes){if(n)n.className=n.className.replace(/\s*hidden\b/g,'')+(yes?'':' hidden');}
@@ -172,7 +172,7 @@
   }
   // Hash-based tab state: only a fixed, nonsensitive panel name appears in
   // the URL. No localStorage/sessionStorage, tokens, titles or lyrics.
-  function validPanel(p){return ['overview','lyrics','catalog','recordings','platforms','contacts','outreach','extras','audit'].indexOf(p)>=0;}
+  function validPanel(p){return ['overview','lyrics','catalog','recordings','platforms','contacts','outreach','extras','audit','data'].indexOf(p)>=0;}
   function rememberPanel(p){
     if(!validPanel(p))return;
     try{
@@ -192,7 +192,8 @@
     rememberPanel(id);
     var keys=document.querySelectorAll('#workspace [data-panel]');
     for(var i=0;i<keys.length;i++)keys[i].className=keys[i].getAttribute('data-panel')===id?'nav-active':'';
-    show(el('panel-lyrics'),id==='lyrics');show(el('panel-future'),id!=='lyrics');
+    show(el('panel-lyrics'),id==='lyrics');show(el('panel-future'),id!=='lyrics'&&id!=='data');show(el('panel-data'),id==='data');
+    if(id==='data')show(el('vmm-workflows'),false);
     if(id!=='recordings'&&window.VMM_RECORDINGS)window.VMM_RECORDINGS.hide();
     if(id!=='lyrics'){text(el('future-title'),sections[id]||'Раздел');text(el('future-message'),'Раздел работает в защищённой Firestore.');}
   }
@@ -326,6 +327,7 @@
   window.VMM_STUDIO={
     rememberPanel:rememberPanel,
     rememberedPanel:rememberedPanel,
+    openData:function(){selectPanel('data');},
     getLyricsMeta:function(){return metadata();},
     isLyricsDirty:isDirty,
     openForTrack:function(t){
