@@ -327,6 +327,21 @@
    if(!config.enabled||!window.VMM_LANDING_SCHEMA.playlistUrl(config.url,config.provider)){
      host.className='velar-radio hidden';return;
    }
+   var radioHidden=false;
+   try{radioHidden=!!(window.localStorage&&window.localStorage.getItem('velar-radio-hidden')==='1');}
+   catch(ignore){}
+   if(radioHidden){
+     host.className='velar-radio velar-radio--minimized';
+     var restore=create('button','velar-radio-restore','VELAR RADIO · показать');
+     restore.type='button';
+     restore.onclick=function(){
+       try{if(window.localStorage)window.localStorage.removeItem('velar-radio-hidden');}
+       catch(ignore){}
+       renderRadio(config);
+     };
+     host.appendChild(restore);
+     return;
+   }
    host.className='velar-radio';
    var toggle=create('button','velar-radio-toggle','');
    toggle.type='button';toggle.setAttribute('aria-expanded','false');
@@ -354,6 +369,15 @@
      link.href=config.url;link.target='_blank';link.rel='noopener noreferrer';player.appendChild(link);
    };
    panel.appendChild(open);panel.appendChild(player);
+   var hide=create('button','velar-radio-hide','Скрыть радио на этом устройстве');
+   hide.type='button';
+   hide.onclick=function(){
+     empty(player);
+     try{if(window.localStorage)window.localStorage.setItem('velar-radio-hidden','1');}
+     catch(ignore){}
+     renderRadio(config);
+   };
+   panel.appendChild(hide);
    host.appendChild(panel);
    toggle.onclick=function(){
      var shown=panel.className.indexOf(' hidden')!==-1;
@@ -389,6 +413,8 @@
      window.VELAR_LANGUAGES.render(value.genres.languages);
    if(window.VELAR_TOPICS&&window.VELAR_TOPICS.render)
      window.VELAR_TOPICS.render(value.genres.topics);
+   if(window.VELAR_ASSISTANT&&window.VELAR_ASSISTANT.render)
+     window.VELAR_ASSISTANT.render(value);
    return true;
  }
  function start(){
