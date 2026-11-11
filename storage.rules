@@ -13,11 +13,11 @@ service firebase.storage {
     }
     match /public/artist-avatars/{artistId}/{fileName} {
       allow get: if artistId.matches('^[a-z0-9-]{1,80}$')
-        && fileName.matches('^[0-9]{13}-[0-9a-f]{16}\.(webp|jpg)$');
+        && fileName.matches('^[0-9]{13}-[0-9a-f]{16}[.](webp|jpg)$');
       allow list: if false;
       allow create: if studioAdmin()
         && artistId.matches('^[a-z0-9-]{1,80}$')
-        && fileName.matches('^[0-9]{13}-[0-9a-f]{16}\.(webp|jpg)$')
+        && fileName.matches('^[0-9]{13}-[0-9a-f]{16}[.](webp|jpg)$')
         && request.resource.size > 0
         && request.resource.size <= 320 * 1024
         && request.resource.contentType.matches('image/(webp|jpeg)');
