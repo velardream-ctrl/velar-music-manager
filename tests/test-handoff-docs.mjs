@@ -5,6 +5,8 @@ const files=[
  'docs/WORK_ACTIVITY_LOG_RU.md',
  'docs/PROJECT_HANDOFF_RU.md',
  'docs/REUSABLE_SITE_TEMPLATE_RU.md',
+ 'docs/MASTER_PROJECT_MAP_AND_HANDOFF_RU.md',
+ 'docs/INSTALLATION_AND_MIGRATION_RU.md',
  'docs/RUN_TEMPLATE_RU.md',
  '.github/PULL_REQUEST_TEMPLATE.md'
 ];
@@ -26,12 +28,20 @@ assert.match(handoff,/точка входа/);
 assert.match(handoff,/github\.com\/velardream-ctrl\/velar-music-manager/);
 assert.match(template,/GitHub Template/);
 assert.match(template,/без утечки данных/);
+const master=read('docs/MASTER_PROJECT_MAP_AND_HANDOFF_RU.md');
+const install=read('docs/INSTALLATION_AND_MIGRATION_RU.md');
+assert.match(master,/Продолжай разработку/);
+assert.match(master,/НАЧАЛ/);
+assert.match(master,/vmm_public_pages\/landing/);
+assert.match(master,/Sanastoyhteisö/);
+assert.match(install,/git clone/);
+assert.match(install,/отдельный проект/);
 for(const readme of ['README.md','README_RU.md']){
  const text=read(readme);
- for(const f of files.slice(0,3)){
+ for(const f of files.slice(0,5)){
    assert.ok(text.includes(f),readme+' must link to '+f);
  }
 }
 const pkg=JSON.parse(read('package.json'));
 assert.ok(pkg.scripts.test.includes('test-handoff-docs.mjs'));
-console.log('PASS: durable work journal, new-chat handoff, clean-copy template roadmap, PR checklist and README entrypoints');
+console.log('PASS: durable work journal, master inventory, safe reinstallation, handoff and README entrypoints');
