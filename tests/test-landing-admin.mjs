@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const schema=read('landing-schema.js'),choicesSrc=read('studio/artist-choices.js'),linksSrc=read('studio/artist-track-links.js'),source=read('studio/landing-editor.js'),studio=read('studio/studio.js');
-const nodes={},tabNames=['hero','artists','releases','playlists','genres','about','publish'];
+const nodes={},tabNames=['hero','artists','releases','playlists','universe','languages','genres','about','publish'];
 function elem(tag='div'){
  const el={tagName:tag,type:'',value:'',textContent:'',className:'',disabled:false,checked:false,
    children:[],events:{},style:{},attributes:{},
@@ -191,6 +191,47 @@ get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.title,'VELAR RADIO TEST');
 assert.equal(records.get('vmm_public_pages/landing').content.releases.playlists.length,1);
 assert.equal(records.get('vmm_public_pages/landing').content.releases.subscriptions.length,1);
+// RUN-072: owner can curate the orbit without modifying private music.
+nav[4].onclick();await flush();
+assert.equal(findInput('Заголовок вселенной').value,'Вселенная, которую можно услышать');
+findInput('Заголовок вселенной').input('Вселенная VELARDREAM — новая история');
+const addWorld=traverse(get('landing-fields'),n=>n.textContent==='+ Добавить созвездие');
+assert.ok(addWorld);addWorld.onclick();
+assert.equal(api.isDirty(),true);
+get('landing-save').onclick();await flush();
+const newWorlds=records.get('vmm_public_drafts/landing').content.genres.universe.nodes;
+assert.equal(newWorlds.length,8);
+assert.equal(newWorlds[7].visible,false,'A new constellation must be hidden until curator approval');
+assert.equal(records.get('vmm_public_pages/landing').content.genres.universe.nodes.length,7);
+get('landing-publish').onclick();await flush();
+assert.equal(records.get('vmm_public_pages/landing').content.genres.universe.nodes.length,8);
+// Language-specific songs are manually selected from the owner-only catalog.
+nav[5].onclick();await flush();
+const english=traverse(get('landing-fields'),n=>n.tagName==='button'&&
+ n.textContent.indexOf('Английский · ')===0);
+assert.ok(english,'English language can be edited');
+english.onclick();
+assert.equal(findInput('Название языка').value,'Английский');
+const addSong=traverse(get('landing-fields'),n=>n.tagName==='button'&&n.textContent==='+ spotify');
+assert.ok(addSong,'Approved official Spotify track from private catalog is selectable');
+addSong.onclick();
+assert.equal(api.isDirty(),true);
+get('landing-save').onclick();await flush();
+let languageDraft=records.get('vmm_public_drafts/landing').content.genres.languages.entries;
+assert.equal(languageDraft.find(x=>x.code==='en').tracks.length,1);
+assert.equal(languageDraft.find(x=>x.code==='en').tracks[0].url,
+ 'https://open.spotify.com/track/0123456789ABCDEFGHIJKL');
+assert.equal(records.get('vmm_public_pages/landing').content.genres.languages.entries.find(x=>x.code==='en').tracks.length,0,
+ 'A language song must not become public at draft save');
+get('landing-publish').onclick();await flush();
+assert.equal(records.get('vmm_public_pages/landing').content.genres.languages.entries.find(x=>x.code==='en').tracks.length,1);
+const addLanguage=traverse(get('landing-fields'),n=>n.tagName==='button'&&n.textContent==='+ Добавить язык');
+assert.ok(addLanguage);addLanguage.onclick();
+get('landing-save').onclick();await flush();
+languageDraft=records.get('vmm_public_drafts/landing').content.genres.languages.entries;
+assert.equal(languageDraft.length,14);
+assert.equal(languageDraft[13].visible,false);
+assert.equal(records.get('vmm_public_pages/landing').content.genres.languages.entries.length,13);
 // Remote write must never be overwritten by stale admin tab.
 nav[0].onclick();
 findInput('Подзаголовок').input('Несохранённый локальный текст');

@@ -2,6 +2,32 @@
    No private catalog, lyrics, audio or credentials can enter this structure. */
 (function(){
   'use strict';
+  // RUN-072 — Navigation and language entries live inside genres to preserve
+  // Firestore rules/schemaVersion and avoid extra public database requests.
+  function defaultUniverseNodes(){
+    return [
+      {id:'artists',label:'Артисты',description:'Голоса и истории исполнителей',target:'artists',visible:true},
+      {id:'releases',label:'Релизы',description:'Синглы и альбомы музыкальной вселенной',target:'releases',visible:true},
+      {id:'videos',label:'Клипы',description:'Видеопремьеры и музыкальные истории',target:'releases',visible:true},
+      {id:'playlists',label:'Плейлисты',description:'Авторские музыкальные подборки',target:'playlists',visible:true},
+      {id:'genres',label:'Жанры',description:'От оперы и этно до современного звука',target:'genres',visible:true},
+      {id:'radio',label:'VELAR RADIO',description:'Официальный плейлист по выбору слушателя',target:'playlists',visible:true},
+      {id:'languages',label:'Миры языков',description:'Реальные и вымышленные языки моих песен',target:'languages',visible:true}
+    ];
+  }
+  function defaultLanguages(){
+    // Confirmed language *families*, not guessed track-language assignments.
+    // Songs remain empty until the owner links official published recordings.
+    return [
+      ['ru','Русский',false],['en','Английский',false],
+      ['it','Итальянский',false],['fr','Французский',false],
+      ['de','Немецкий',false],['fi','Финский',false],
+      ['es','Испанский',false],['hu','Венгерский',false],
+      ['nl','Нидерландский',false],['tr','Турецкий',false],
+      ['ur','Урду',false],['beaver','Бобриный язык',true],
+      ['alien','Инопланетный язык',true]
+    ].map(function(item){return {code:item[0],label:item[1],fictional:item[2],visible:true,tracks:[]};});
+  }
   function defaults(){
     return {
       hero:{
@@ -26,7 +52,13 @@
       genres:{
         heading:'От оперы до новых звуков',
         intro:'Ищите музыку по настроению, жанру, артисту или тематической подборке. Жанры и плейлисты будут дополнять друг друга, а не смешивать песни в один список.',
-        tags:['Опера','Поп','Рок','Этно','Кроссовер','Юмор','Авторские подборки']
+        tags:['Опера','Поп','Рок','Этно','Кроссовер','Юмор','Авторские подборки'],
+        universe:{heading:'Вселенная, которую можно услышать',
+          intro:'Исследуйте созвездия артистов, клипов и релизов. Каждое движение открывает новый маршрут к музыке.',
+          nodes:defaultUniverseNodes()},
+        languages:{heading:'Музыка на языках Вселенной',
+          intro:'От знакомых голосов мира до придуманных языков. Выберите язык, чтобы увидеть подтверждённые песни на нём.',
+          entries:defaultLanguages()}
       },
       about:{
         heading:'VELARDREAM RECORDS',
@@ -177,6 +209,69 @@
     if(!Array.isArray(list)||list.length>max)throw new Error(label+': не более '+max+' записей.');
     return list.map(mapper);
   }
+
+  function universeConfig(raw,def){
+    var item=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+    var nodes=typeof item.nodes==='undefined'?def.nodes:item.nodes;
+    if(!Array.isArray(nodes)||nodes.length>12)throw new Error('Созвездия: максимум 12 меню.');
+    var used={},allowed={artists:true,releases:true,playlists:true,genres:true,
+      languages:true,about:true,radio:true};
+    var cleaned=nodes.map(function(n,i){
+      if(!n||typeof n!=='object'||Array.isArray(n))throw new Error('Созвездие '+(i+1)+': неверный объект.');
+      var ident=plain(n.id||'','Код созвездия '+(i+1),30,true).toLowerCase();
+      if(!/^[a-z0-9-]{2,30}$/.test(ident)||used[ident])
+        throw new Error('Созвездие: код должен быть уникальным (латинские буквы, цифры, дефис).');
+      used[ident]=true;
+      var target=plain(n.target||'','Цель созвездия '+(i+1),25,true);
+      if(!allowed[target])throw new Error('Созвездие: можно ссылаться только на раздел сайта.');
+      return {id:ident,label:plain(n.label||'','Название созвездия '+(i+1),65,n.visible===true),
+        description:plain(n.description||'','Описание созвездия '+(i+1),170,false),
+        target:target,visible:n.visible===true};
+    });
+    return {heading:plain(typeof item.heading==='string'?item.heading:def.heading,
+      'Название вселенной',160,true),
+      intro:plain(typeof item.intro==='string'?item.intro:def.intro,
+      'Описание вселенной',450,true),
+      nodes:cleaned};
+  }
+  function languageTrack(raw,i){
+    if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Песня языка '+i+': неверная запись.');
+    var provider=plain(raw.provider||'','Площадка языковой песни '+i,20,true);
+    if(provider!=='spotify'&&provider!=='youtube')
+      throw new Error('Языковая песня: только Spotify и YouTube.');
+    var link=songUrl(raw.url,provider);
+    if(!link)throw new Error('Языковая песня: требуется прямая ссылка Spotify/YouTube на трек.');
+    return {title:plain(raw.title||'','Название песни '+i,110,true),
+      artist:plain(raw.artist||'','Исполнитель '+i,100,false),
+      provider:provider,url:link};
+  }
+  function languagesConfig(raw,def){
+    var item=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+    var entries=typeof item.entries==='undefined'?def.entries:item.entries;
+    if(!Array.isArray(entries)||entries.length>20)throw new Error('Языковые миры: максимум 20 языков.');
+    var codes={};
+    var results=entries.map(function(lang,i){
+      if(!lang||typeof lang!=='object'||Array.isArray(lang))throw new Error('Язык '+(i+1)+': неверный объект.');
+      var code=plain(lang.code||'','Код языка '+(i+1),28,true).toLowerCase();
+      if(!/^[a-z0-9-]{2,28}$/.test(code)||codes[code])
+        throw new Error('Языковые миры: коды должны быть уникальными (латиница, цифры, дефис).');
+      codes[code]=true;
+      var tracks=typeof lang.tracks==='undefined'?[]:lang.tracks;
+      if(!Array.isArray(tracks)||tracks.length>300)throw new Error('Язык '+code+': не более 300 публичных песен.');
+      var seen={};
+      var cleaned=tracks.map(function(track,j){
+        var t=languageTrack(track,j+1);
+        if(seen[t.url])throw new Error('Язык '+code+': повтор одной песни.');
+        seen[t.url]=true;return t;
+      });
+      return {code:code,label:plain(lang.label||'','Название языка '+(i+1),64,lang.visible===true),
+        fictional:lang.fictional===true,visible:lang.visible===true,tracks:cleaned};
+    });
+    return {heading:plain(typeof item.heading==='string'?item.heading:def.heading,
+      'Языковые миры — заголовок',160,true),
+      intro:plain(typeof item.intro==='string'?item.intro:def.intro,
+      'Языковые миры — описание',450,true),entries:results};
+  }
   function card(x,type,index){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Карточка '+index+': неверный формат.');
     var title=plain(x.title,'Название карточки '+index,110,!!x.visible);
@@ -260,6 +355,8 @@
     var tags=typeof genres.tags==='undefined'?d.genres.tags:genres.tags;
     if(!Array.isArray(tags)||tags.length>20)throw new Error('Жанры: максимум 20 меток.');
     result.genres.tags=tags.map(function(tag,i){return plain(tag,'Жанр '+(i+1),35,true);});
+    result.genres.universe=universeConfig(genres.universe,d.genres.universe);
+    result.genres.languages=languagesConfig(genres.languages,d.genres.languages);
     result.about.notice=plain(typeof about.notice==='string'?about.notice:d.about.notice,'О проекте — объявление',600,false);
     if(JSON.stringify(result).length>780000)throw new Error('Изображений слишком много: уменьшай фотографии или используй меньше карточек (ограничение размера страницы).');
     return result;
@@ -268,5 +365,7 @@
   window.VMM_LANDING_SCHEMA={defaults:defaults,normalize:normalize,blankCard:blankCard,
     songUrl:songUrl,featuredTrack:featuredTrack,featuredTracks:featuredTracks,
     releaseMediaUrl:releaseMediaUrl,playlistUrl:playlistUrl,radioConfig:radioConfig,
-    subscriptionUrl:subscriptionUrl,playlistCard:playlistCard,subscriptionCard:subscriptionCard};
+    subscriptionUrl:subscriptionUrl,playlistCard:playlistCard,subscriptionCard:subscriptionCard,
+    universeConfig:universeConfig,languagesConfig:languagesConfig,
+    defaultUniverseNodes:defaultUniverseNodes,defaultLanguages:defaultLanguages};
 }());

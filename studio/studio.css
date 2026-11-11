@@ -477,3 +477,36 @@ body.vmm-print-open{overflow:hidden}
  display:block;margin:10px 0;border:1px solid #d7bf8f;border-radius:10px;
 }
 #panel-landing .landing-release-cover-input{display:none}
+
+
+/* RUN-072 — low-DOM admin language and constellation controls. */
+#panel-landing .landing-language-menu{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));
+ gap:10px;margin:14px 0 18px;
+}
+#panel-landing .landing-language-menu-item{
+ display:flex;flex-direction:column;gap:8px;padding:10px 12px;
+ border:1px solid rgba(223,191,144,.35);border-radius:11px;background:#132541;
+ min-width:0;
+}
+#panel-landing .landing-language-menu-item>.landing-small{
+ display:block;min-height:44px;text-align:left;white-space:normal;overflow-wrap:anywhere;
+}
+#panel-landing .landing-language-menu-item .is-active{
+ background:#e6c58b;color:#192842;font-weight:700;
+}
+#panel-landing .landing-language-song-row{
+ display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+ gap:7px;min-height:48px;padding:7px 10px;margin:5px 0;
+ border:1px solid rgba(181,188,201,.32);border-radius:9px;background:#172c4a;
+}
+#panel-landing .landing-language-song-row span{
+ flex:1;min-width:165px;overflow-wrap:anywhere;font-size:.86rem;line-height:1.35;
+}
+#panel-landing .landing-language-editor .landing-language-catalog-search,
+#panel-landing .landing-language-editor .landing-release-search{
+ display:block;width:100%;min-width:0;min-height:44px;padding:10px 13px;
+ margin:10px 0;border:1px solid #a39c8e;border-radius:9px;
+ background:#11203a;color:#f4e3c8;font-size:16px;
+}
+#panel-landing .landing-language-editor{margin-top:18px}

@@ -413,3 +413,364 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .universe-stage,.universe-node,.universe-connectors{transition:none!important;animation:none!important}
  .universe-stage{transform:none!important}
 }
+
+
+/* RUN-071 — VELARDREAM: living digital art driven by scroll, not autoplay.
+   Same 960x825 crystal asset as hero; rings/stars are CSS-only. Zero new APIs. */
+@supports (overflow:clip){.public-site{overflow-x:clip}}
+.crystal-journey{
+ position:relative;isolation:isolate;overflow:visible;
+ padding:72px 24px 76px;
+ background:
+  radial-gradient(ellipse 55% 38% at 50% 32%,rgba(68,91,138,.23),transparent 80%),
+  linear-gradient(180deg,#0a1023 0%,#0f1c3a 48%,#0b142c 80%,#0a1023 100%);
+ border-block:1px solid rgba(217,189,143,.2);
+}
+.crystal-journey-stage{
+ position:relative;max-width:1300px;min-height:670px;margin:0 auto;
+ overflow:hidden;isolation:isolate;
+}
+.crystal-journey-sky{
+ position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+}
+.crystal-journey-stars{position:absolute;inset:-15%;display:block;pointer-events:none}
+.crystal-journey-stars--far{
+ opacity:.55;
+ background-image:
+  radial-gradient(circle at 12% 24%,#ebd3a5 0 1px,transparent 2px),
+  radial-gradient(circle at 81% 16%,#ccd7ee 0 1px,transparent 2px),
+  radial-gradient(circle at 34% 76%,#f1d09c 0 1px,transparent 2px),
+  radial-gradient(circle at 66% 57%,#e0ecfa 0 1px,transparent 2px);
+ background-size:320px 290px,470px 330px,370px 410px,500px 460px;
+}
+.crystal-journey-stars--near{
+ opacity:.3;
+ background-image:
+  radial-gradient(circle at 19% 34%,rgba(245,209,153,.9) 0 2px,transparent 3px),
+  radial-gradient(circle at 85% 73%,rgba(183,207,255,.9) 0 2px,transparent 3px),
+  radial-gradient(circle at 57% 14%,rgba(244,222,183,.8) 0 1px,transparent 3px);
+ background-size:610px 470px,580px 590px,760px 560px;
+}
+.crystal-journey-ring{
+ position:absolute;left:50%;top:36%;display:block;border-radius:50%;
+ pointer-events:none;transform:translate3d(-50%,-50%,0);
+}
+.crystal-journey-ring--outer{
+ width:min(670px,91vw);height:min(670px,91vw);
+ border:1px solid rgba(229,193,139,.33);
+ box-shadow:0 0 35px rgba(212,176,121,.1),inset 0 0 40px rgba(175,180,238,.07);
+}
+.crystal-journey-ring--outer::before,.crystal-journey-ring--inner::after{
+ content:"";position:absolute;inset:8%;border-radius:50%;
+ border:1px dashed rgba(222,196,151,.19);
+}
+.crystal-journey-ring--inner{
+ width:min(465px,68vw);height:min(465px,68vw);
+ border:1px solid rgba(196,215,242,.28);
+ box-shadow:0 0 48px rgba(178,206,243,.12);
+}
+.crystal-journey-beam{
+ position:absolute;top:36%;left:50%;display:block;width:min(42vw,450px);height:1px;
+ background:linear-gradient(90deg,rgba(245,213,157,.55),transparent);
+ transform-origin:left center;opacity:.5;
+}
+.crystal-journey-beam--left{transform:rotate(155deg)}
+.crystal-journey-beam--right{transform:rotate(25deg)}
+.crystal-journey-crystal{
+ position:absolute;left:50%;top:36%;width:clamp(105px,15vw,156px);
+ transform:translate3d(-50%,-50%,0);pointer-events:none;
+}
+.crystal-journey-crystal::before{
+ content:"";position:absolute;inset:-35%;z-index:-1;pointer-events:none;
+ background:radial-gradient(ellipse,rgba(234,197,133,.23) 0,rgba(107,147,199,.12) 36%,transparent 71%);
+}
+.crystal-journey-crystal img{display:block;width:100%;height:auto;object-fit:contain;filter:drop-shadow(0 0 15px rgba(242,208,151,.39))}
+.crystal-journey-copy{
+ position:absolute;z-index:1;left:22px;right:22px;top:64%;text-align:center;
+ max-width:850px;margin:auto;
+}
+.crystal-journey-kicker{
+ font-size:.67rem;letter-spacing:.24em;color:#d5b783;margin:0 0 9px;
+}
+.crystal-journey-copy h2{
+ font:400 clamp(1.7rem,4vw,3.05rem)/1.16 Georgia,"Times New Roman",serif;
+ color:#fff0d8;text-shadow:0 2px 25px rgba(12,20,38,.4);
+ margin:0 0 12px;
+}
+.crystal-journey-description{max-width:670px;margin:0 auto 13px;
+ color:#bccde4;font-size:clamp(.85rem,1.4vw,.97rem);line-height:1.55}
+.crystal-journey-stanzas{
+ display:flex;flex-wrap:wrap;justify-content:center;align-items:center;
+ gap:7px;margin:13px auto 17px;
+}
+.crystal-journey-stanza{
+ display:inline-block;padding:6px 10px;border:1px solid rgba(218,190,147,.3);
+ border-radius:100px;color:#94a7c5;font-size:.72rem;letter-spacing:.055em;
+ transition:color .3s,border-color .3s,background .3s;
+}
+.crystal-journey-stanza.is-current{
+ color:#ffdfa7;background:rgba(195,145,84,.15);border-color:#d9b77f;
+}
+.crystal-journey-link{
+ display:inline-flex;align-items:center;justify-content:center;gap:8px;
+ min-height:44px;padding:11px 18px;border:1px solid rgba(242,209,155,.65);
+ border-radius:50px;color:#edd4a5;background:rgba(12,23,46,.78);
+ font-size:.86rem;text-decoration:none;
+}
+.crystal-journey-link:hover,.crystal-journey-link:focus-visible{
+ background:rgba(228,191,137,.2);color:#ffe8bf;
+}
+/* Progressive enhancement only when IntersectionObserver, rAF, viewport and
+   reduced-motion/data-saver checks all allow it. Static art is the fallback. */
+.has-living-art .crystal-journey{height:190vh;min-height:1100px;padding:0}
+.has-living-art .crystal-journey-stage{
+ position:sticky;top:0;height:100vh;max-width:none;min-height:560px;
+}
+.has-living-art .art-reveal{
+ opacity:0;transform:translate3d(0,20px,0);
+ transition:transform .65s cubic-bezier(.2,.7,.3,1),opacity .65s ease;
+}
+.has-living-art .art-reveal.is-revealed{opacity:1;transform:translate3d(0,0,0)}
+/* The center of the six constellation beams is the genuine branded crystal,
+   not the previous spherical/planet-style placeholder. */
+.universe-core{
+ width:clamp(135px,19vw,190px);height:clamp(115px,17vw,164px);
+ border:0;border-radius:0;box-shadow:none;background:none;
+ display:flex;align-items:center;justify-content:center;isolation:isolate;
+}
+.universe-core-light{
+ position:absolute;inset:-12%;z-index:-1;border-radius:50%;
+ background:radial-gradient(ellipse,rgba(236,198,136,.26),rgba(117,157,206,.11) 45%,transparent 75%);
+}
+.universe-core-crystal{width:100%;height:100%;display:block;object-fit:contain}
+.universe-beam{stroke:rgba(218,186,134,.28)!important;stroke-width:1.6;fill:none;stroke-dasharray:5 10;transition:stroke .2s,opacity .2s}
+.universe-beam.is-active{stroke:#f8d8a3!important;stroke-width:2.4;stroke-dasharray:none;opacity:1}
+.cms-card,.cms-release-card,.cms-playlist-card{transition:border-color .25s,box-shadow .25s,transform .3s}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+ .cms-card:hover,.cms-release-card:hover,.cms-playlist-card:hover{
+   transform:translate3d(0,-4px,0);
+   border-color:rgba(241,206,148,.72);box-shadow:0 13px 30px rgba(0,0,0,.27);
+ }
+}
+@media(max-width:850px){
+ .crystal-journey{padding:44px 12px 50px}
+ .crystal-journey-stage{min-height:670px}
+ .crystal-journey-ring--outer{width:min(570px,90vw);height:min(570px,90vw)}
+ .crystal-journey-ring--inner{width:min(365px,62vw);height:min(365px,62vw)}
+ .crystal-journey-crystal{width:clamp(105px,17vw,140px);top:34%}
+ .crystal-journey-ring{top:34%}
+ .crystal-journey-beam{top:34%}
+ .crystal-journey-copy{top:58%;left:14px;right:14px}
+ .has-living-art .crystal-journey{height:160vh;min-height:900px}
+ .has-living-art .crystal-journey-stage{min-height:520px}
+}
+@media(max-width:610px){
+ .crystal-journey{padding:25px 10px 32px}
+ .crystal-journey-stage{min-height:650px}
+ .crystal-journey-crystal{width:clamp(100px,27vw,128px);top:30%}
+ .crystal-journey-ring{top:30%}
+ .crystal-journey-ring--outer{width:min(400px,94vw);height:min(400px,94vw)}
+ .crystal-journey-ring--inner{width:min(275px,70vw);height:min(275px,70vw)}
+ .crystal-journey-beam{top:30%}
+ .crystal-journey-copy{top:54%;left:9px;right:9px}
+ .crystal-journey-copy h2{font-size:clamp(1.48rem,6.1vw,2.1rem)}
+ .crystal-journey-description{font-size:.84rem}
+ .crystal-journey-kicker{font-size:.58rem;letter-spacing:.13em}
+ .crystal-journey-stanzas{gap:4px;margin:9px auto 13px}
+ .crystal-journey-stanza{font-size:.64rem;padding:5px 8px}
+ .has-living-art .crystal-journey{height:158vh;min-height:825px}
+ .has-living-art .crystal-journey-stage{min-height:500px}
+ .universe-core{
+   position:relative;left:auto;top:auto;transform:none;
+   grid-column:1 / -1;justify-self:center;align-self:center;
+   width:158px;height:137px;margin:0 auto 0;opacity:1;z-index:1;
+ }
+ .universe-stage{align-content:center;row-gap:10px;padding:17px 12px;min-height:395px}
+ .universe-node{z-index:2}
+}
+@media(prefers-reduced-motion:reduce){
+ .crystal-journey-stars,.crystal-journey-crystal,.crystal-journey-ring,
+ .crystal-journey-beam{transform:none;animation:none!important}
+ .crystal-journey-ring,.crystal-journey-crystal{transform:translate3d(-50%,-50%,0)}
+ .art-reveal{opacity:1!important;transform:none!important}
+ .universe-beam{transition:none}
+}
+
+
+/* The hero artwork itself is the door to the digital universe, not a new logo. */
+.hero-crystal-link{display:block;position:relative;border-radius:20px;outline-offset:5px}
+.hero-crystal-link .hero-mark{transition:transform .4s ease-out}
+.hero-crystal-link:focus-visible{outline:2px solid #f1d6a1}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+ .hero-crystal-link:hover .hero-mark{transform:translate3d(0,-4px,0) scale(1.035)}
+ .universe-core:hover .universe-core-crystal{transform:scale(1.06)}
+}
+.universe-core{padding:0;cursor:pointer;font:inherit}
+.universe-core:focus-visible{outline:2px solid #f3d49b;outline-offset:4px;border-radius:15px}
+.universe-core-crystal{transition:transform .28s ease-out}
+@media(prefers-reduced-motion:reduce){
+ .hero-crystal-link .hero-mark,.universe-core-crystal{transition:none!important;transform:none!important}
+}
+
+
+/* RUN-072 — language constellations and visitor-controlled (not idle) orbit. */
+.universe-orbit-controls{
+ position:absolute;left:12px;top:11px;right:12px;z-index:5;
+ display:flex;justify-content:space-between;align-items:center;gap:10px;
+ color:#d8bd8c;font-size:.59rem;letter-spacing:.11em;pointer-events:none;
+}
+.universe-orbit-controls button{
+ pointer-events:auto;width:40px;height:40px;min-width:40px;border-radius:50%;
+ border:1px solid rgba(233,201,147,.65);background:#152744;color:#efd49f;
+ font:600 1.1rem Arial,sans-serif;cursor:pointer;
+}
+.universe-orbit-controls button:hover{background:#e5c48d;color:#152641}
+.universe-orbit-controls button:focus-visible{outline:2px solid #fbe1ac;outline-offset:3px}
+.universe-stage.is-dense{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:12px;padding:70px 20px 26px;align-content:center;min-height:440px;
+}
+.universe-stage.is-dense .universe-core{
+ position:relative;left:auto;top:auto;transform:none;grid-column:1 / -1;
+ justify-self:center;align-self:center;width:135px;height:116px;z-index:2;
+}
+.universe-stage.is-dense .universe-node{
+ position:relative;left:auto!important;top:auto!important;
+ transform:none!important;min-width:0;max-width:none;width:100%;
+ justify-content:center;text-align:center;
+}
+.universe-stage.is-dense .universe-connectors{display:none}
+.universe-node-name{overflow-wrap:anywhere}
+.languages-section{
+ padding:68px 0 78px;text-align:center;
+ border-bottom:1px solid rgba(230,210,174,.18);
+ scroll-margin-top:25px;
+}
+.languages-section h2{
+ font:400 clamp(1.8rem,3.8vw,2.7rem)/1.18 Georgia,serif;
+ color:#f8e6c8;margin:12px auto 12px;
+}
+.languages-intro{
+ color:#bdcce0;font-size:.97rem;line-height:1.6;
+ max-width:735px;margin:0 auto 21px;
+}
+.language-cosmos{
+ position:relative;isolation:isolate;min-height:590px;width:100%;
+ border-radius:19px;overflow:hidden;
+ border:1px solid rgba(222,186,135,.48);
+ background:
+   radial-gradient(ellipse at 50% 49%,rgba(67,94,150,.27) 0%,transparent 55%),
+   radial-gradient(1px 1px at 13% 19%,#e3c995 0,transparent 100%),
+   radial-gradient(1px 1px at 84% 77%,#d1dbf1 0,transparent 100%),
+   radial-gradient(2px 2px at 29% 75%,#e8ca97 0,transparent 100%),
+   #0c1932;
+ box-shadow:inset 0 0 80px rgba(0,0,0,.3);
+}
+.language-cosmos-core{
+ position:absolute;left:50%;top:50%;width:125px;height:218px;
+ transform:translate(-50%,-50%);
+ pointer-events:none;z-index:1;display:flex;align-items:center;justify-content:center;
+}
+.language-cosmos-core img{
+ display:block;width:100%;height:100%;object-fit:contain;
+ filter:drop-shadow(0 0 15px rgba(240,205,151,.43));
+}
+.language-cosmos-glow{
+ position:absolute;inset:-30%;z-index:-1;border-radius:50%;
+ background:radial-gradient(ellipse,rgba(238,204,158,.23),rgba(110,139,191,.11) 48%,transparent 74%);
+}
+.language-orbit{position:absolute;inset:0;min-height:0}
+.language-orbit-node{
+ position:absolute;z-index:2;transform:translate(-50%,-50%);
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ min-height:55px;width:126px;padding:7px 10px;
+ background:rgba(21,38,69,.96);color:#e9d4ae;
+ border:1px solid rgba(215,186,137,.66);border-radius:14px;
+ font:600 .77rem -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+ box-shadow:0 8px 17px rgba(0,0,0,.23);cursor:pointer;
+}
+.language-orbit-node:hover,.language-orbit-node:focus-visible{
+ border-color:#ffdf9f;outline:2px solid #ebc98c;outline-offset:2px;
+}
+.language-orbit-node[aria-pressed=true]{
+ border-color:#ffdfaa;color:#182745;background:#efd2a0;
+ box-shadow:0 0 23px rgba(232,199,140,.37);
+}
+.language-orbit-label{overflow-wrap:anywhere;line-height:1.2}
+.language-orbit-node small{font-size:.64rem;font-weight:400;opacity:.76;margin-top:3px}
+.language-orbit.is-dense{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;
+ position:relative;align-content:center;padding:225px 20px 25px;
+}
+.language-orbit.is-dense .language-orbit-node{
+ position:relative;left:auto!important;top:auto!important;
+ transform:none!important;width:auto;
+}
+.language-detail{
+ background:linear-gradient(160deg,#1b2b48,#10203d);
+ border:1px solid rgba(216,187,142,.58);
+ border-radius:16px;margin:22px auto 0;padding:22px 23px;text-align:left;
+}
+.language-detail-heading h3{
+ font:400 clamp(1.4rem,2.7vw,2rem) Georgia,serif;
+ color:#ffe7bc;margin:8px 0;
+}
+.language-empty,.language-total{color:#bfd0e6;line-height:1.6;font-size:.9rem}
+.language-song-list{display:flex;flex-direction:column;gap:8px;margin:13px 0}
+.language-song{
+ display:flex;align-items:center;gap:14px;min-height:57px;width:100%;
+ padding:9px 15px;border:1px solid rgba(220,187,132,.5);
+ border-radius:11px;background:#22375a;color:#f5e3c5;text-align:left;cursor:pointer;
+}
+.language-song:hover,.language-song[aria-pressed=true]{
+ background:#324a6b;border-color:#f4d6a1;
+}
+.language-song:focus-visible,.language-more:focus-visible{
+ outline:2px solid #f3d196;outline-offset:3px;
+}
+.language-song-num{font:400 1.1rem Georgia,serif;color:#d4b680}
+.language-song-copy{flex:1;min-width:0;display:flex;flex-direction:column}
+.language-song-copy strong{font-size:.9rem;overflow-wrap:anywhere}
+.language-song-copy small{font-size:.72rem;color:#c3cfdf}
+.language-song-play{
+ display:inline-flex;flex:0 0 28px;align-items:center;justify-content:center;
+ width:28px;height:28px;border:1px solid #e4c58e;border-radius:50%;color:#edd29e;
+}
+.language-song-play::before{
+ content:"";width:0;height:0;margin-left:3px;
+ border-top:5px solid transparent;border-bottom:5px solid transparent;
+ border-left:8px solid currentColor;
+}
+.language-player{min-width:0}
+.language-more{align-self:center;min-height:42px;border-radius:10px;padding:8px 16px;
+ background:#233a5b;border:1px solid #d2b17e;color:#f5d9a5;cursor:pointer}
+@media(max-width:950px){
+ .languages-section{padding:48px 0 60px}
+ .language-cosmos{display:flex;flex-direction:column;gap:3px;min-height:0;padding:15px 13px 20px}
+ .language-cosmos-core{
+   position:relative;left:auto;top:auto;transform:none;
+   width:88px;height:158px;margin:5px auto 8px;flex:0 0 158px;
+ }
+ .language-orbit,.language-orbit.is-dense{
+   position:relative;inset:auto;display:grid;
+   grid-template-columns:repeat(3,minmax(0,1fr));
+   padding:0;gap:9px;align-content:initial;
+ }
+ .language-orbit-node,.language-orbit.is-dense .language-orbit-node{
+   position:relative;left:auto!important;top:auto!important;transform:none!important;
+   width:auto;min-height:54px;
+ }
+ .universe-orbit-controls span{font-size:.55rem}
+}
+@media(max-width:560px){
+ .language-orbit,.language-orbit.is-dense{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .language-orbit-node{font-size:.72rem}
+ .language-detail{padding:15px 12px}
+ .universe-stage.is-dense{grid-template-columns:repeat(2,minmax(0,1fr));padding:65px 10px 15px}
+ .universe-stage.is-dense .universe-node{font-size:.72rem}
+}
+@media(prefers-reduced-motion:reduce){
+ .language-orbit-node,.language-song,.universe-orbit-controls button{
+   animation:none!important;transition:none!important;
+ }
+}

@@ -119,11 +119,20 @@ const toggle=map['velar-universe-toggle'];assert.equal(map['velar-universe-stage
 toggle.onclick();
 assert.equal(toggle.attributes['aria-expanded'],'true');
 const constellation=map['velar-universe-stage'];
-assert.equal(constellation.children.length,7,'Six accessible constellation buttons, one light core');
+assert.equal(constellation.children.length,8,'Seven editable constellations and the official crystal core');
+const crystalCore=constellation.children[0];
+assert.equal(crystalCore.tagName,'button');
+assert.equal(crystalCore.children[1].src,'assets/velardream-symbol.svg',
+  'Universe center must be the existing official crystal logo, never a generated planet');
+assert.match(crystalCore.attributes['aria-label'],/Кристалл VELARDREAM/);
 const selected=constellation.children[2];
 selected.onclick();
 assert.equal(selected.attributes['aria-pressed'],'true');
 assert.match(map['velar-universe-details'].children[1].textContent,/Релизы/);
+constellation.children[3].onclick();
+assert.equal(constellation.children[3].attributes['aria-pressed'],'true');
+crystalCore.onclick();
+assert.equal(constellation.children[1].attributes['aria-pressed'],'true','Touching the crystal returns to artists');
 assert.equal(window.VELAR_UNIVERSE.counts(page).videos,1);
 toggle.onclick();
 assert.equal(toggle.attributes['aria-expanded'],'false');
@@ -131,10 +140,10 @@ assert.doesNotMatch(universeJS,/setInterval\(|setTimeout\(|getContext\(['"]webgl
 assert.doesNotMatch(publicJS,/autoplay=1|loop=1|muted=1|setInterval\(/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(css,/.cms-release-art::before/);
-assert.match(html,/universe\.js\?v=1/);
-assert.match(html,/style\.css\?v=14/);
-assert.match(sw,/CACHE_PREFIX \+ 'v14'/);
-assert.match(sw,/STUDIO_PREFIX\+'v19'/);
+assert.match(html,/universe\.js\?v=3/);
+assert.match(html,/style\.css\?v=16/);
+assert.match(sw,/CACHE_PREFIX \+ 'v16'/);
+assert.match(sw,/STUDIO_PREFIX\+'v20'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);
 console.log('PASS: RUN-069/070 safe releases, Spotify playlists, subscribers, opt-in radio, one active iframe and lazy 2.5D universe');
