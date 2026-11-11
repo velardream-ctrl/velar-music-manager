@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const schema=read('landing-schema.js'),choicesSrc=read('studio/artist-choices.js'),linksSrc=read('studio/artist-track-links.js'),source=read('studio/landing-editor.js'),studio=read('studio/studio.js');
-const nodes={},tabNames=['hero','artists','releases','genres','about','publish'];
+const nodes={},tabNames=['hero','artists','releases','playlists','genres','about','publish'];
 function elem(tag='div'){
  const el={tagName:tag,type:'',value:'',textContent:'',className:'',disabled:false,checked:false,
    children:[],events:{},style:{},attributes:{},
@@ -18,7 +18,9 @@ function elem(tag='div'){
 }
 const get=id=>nodes[id]||(nodes[id]=elem());
 const nav=tabNames.map(name=>{const n=elem('button');n.attributes['data-landing-tab']=name;return n;});
-const document={getElementById:get,createElement:elem,querySelectorAll(q){return q==='#landing-tabs [data-landing-tab]'?nav:[];}};
+const document={getElementById:get,createElement:elem,
+ createTextNode(t){const n=elem('#text');n.textContent=t;return n;},
+ querySelectorAll(q){return q==='#landing-tabs [data-landing-tab]'?nav:[];}};
 const records=new Map(),reads=[];
 function snapshot(id){return {exists:records.has(id),data(){return records.get(id);}};}
 const database={
@@ -155,6 +157,40 @@ assert.equal(records.get('vmm_public_pages/landing').content.artists.cards.lengt
  'Private song assignments must not publish the new artist without explicit public publish');
 get('landing-save').onclick();await flush();
 assert.equal(records.get('vmm_public_drafts/landing').content.artists.cards[1].title,'Crazy Bobr');
+// RUN-069: release from verified private song + deliberate publish.
+nav[2].onclick();await flush();
+const releasePicker=traverse(get('landing-fields'),n=>n.className==='landing-release-picker');
+assert.ok(releasePicker,'Private release catalog picker is in the editor');
+const addCatalogRelease=traverse(releasePicker,n=>n.textContent==='+ Выбрать релиз');
+assert.ok(addCatalogRelease);
+addCatalogRelease.onclick();
+const releaseVisibility=traverse(get('landing-fields'),n=>n.type==='checkbox');
+assert.ok(releaseVisibility);
+releaseVisibility.checked=true;releaseVisibility.onchange.call(releaseVisibility);
+get('landing-save').onclick();await flush();
+const releaseDraft=records.get('vmm_public_drafts/landing').content.releases;
+assert.equal(releaseDraft.cards.length,1);
+assert.equal(releaseDraft.cards[0].mediaProvider,'spotify');
+assert.equal(releaseDraft.cards[0].mediaUrl,'https://open.spotify.com/track/0123456789ABCDEFGHIJKL');
+assert.equal(records.get('vmm_public_pages/landing').content.releases.cards.length,0,
+  'Private releases stay draft until manual publication');
+get('landing-publish').onclick();await flush();
+assert.equal(records.get('vmm_public_pages/landing').content.releases.cards.length,1);
+// Radio and playlist settings are editable without triggering media requests.
+nav[3].onclick();await flush();
+assert.ok(traverse(get('landing-fields'),n=>n.textContent==='VELAR RADIO'),
+  'Radio section is accessible in protected tab');
+const radioTitle=findInput('Название радио');
+assert.equal(radioTitle.value,'VELAR RADIO');
+assert.equal(findInput('Публичная ссылка на плейлист радио').value,
+ 'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh');
+radioTitle.input('VELAR RADIO TEST');
+get('landing-save').onclick();await flush();
+assert.equal(records.get('vmm_public_drafts/landing').content.releases.radio.title,'VELAR RADIO TEST');
+get('landing-publish').onclick();await flush();
+assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.title,'VELAR RADIO TEST');
+assert.equal(records.get('vmm_public_pages/landing').content.releases.playlists.length,1);
+assert.equal(records.get('vmm_public_pages/landing').content.releases.subscriptions.length,1);
 // Remote write must never be overwritten by stale admin tab.
 nav[0].onclick();
 findInput('Подзаголовок').input('Несохранённый локальный текст');
