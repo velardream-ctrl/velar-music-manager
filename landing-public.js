@@ -32,7 +32,7 @@
      if(item.imageUrl){
        var img=document.createElement('img');
        img.src=item.imageUrl;img.alt=item.title;img.loading='lazy';img.decoding='async';
-       img.referrerPolicy='no-referrer';img.className='cms-card-art';
+       img.referrerPolicy='no-referrer';img.className='cms-card-art'+(type==='artists'?' cms-card-art--'+(item.imageShape==='circle'?'circle':'square'):'');
        card.appendChild(img);
      }
      var copy=create('div','cms-card-copy');
