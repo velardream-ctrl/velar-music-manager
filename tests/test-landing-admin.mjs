@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const schema=read('landing-schema.js'),choicesSrc=read('studio/artist-choices.js'),linksSrc=read('studio/artist-track-links.js'),source=read('studio/landing-editor.js'),studio=read('studio/studio.js');
-const nodes={},tabNames=['hero','artists','releases','playlists','universe','languages','topics','genres','about','publish'];
+const nodes={},tabNames=['hero','artists','releases','playlists','radio','universe','languages','topics','assistant','genres','about','publish'];
 function elem(tag='div'){
  const el={tagName:tag,type:'',value:'',textContent:'',className:'',disabled:false,checked:false,
    children:[],events:{},style:{},attributes:{},
@@ -176,23 +176,43 @@ assert.equal(records.get('vmm_public_pages/landing').content.releases.cards.leng
   'Private releases stay draft until manual publication');
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.releases.cards.length,1);
-// Radio and playlist settings are editable without triggering media requests.
+// RUN-078: dedicated radio tab is independent from playlists and defaults OFF.
 nav[3].onclick();await flush();
-assert.ok(traverse(get('landing-fields'),n=>n.textContent==='VELAR RADIO'),
-  'Radio section is accessible in protected tab');
+assert.ok(traverse(get('landing-fields'),n=>n.textContent==='Плейлисты'),
+  'Playlist manager remains independent from radio settings');
+const openRadio=traverse(get('landing-fields'),n=>n.textContent==='Настроить VELAR RADIO');
+assert.ok(openRadio);
+openRadio.onclick();await flush();
 const radioTitle=findInput('Название радио');
 assert.equal(radioTitle.value,'VELAR RADIO');
-assert.equal(findInput('Публичная ссылка на плейлист радио').value,
+assert.equal(findInput('Официальная ссылка на публичный плейлист радио').value,
  'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh');
+const radioToggle=traverse(get('landing-fields'),n=>n.type==='checkbox');
+assert.ok(radioToggle);
+assert.equal(radioToggle.checked,false,'No automatic radio opt-in');
 radioTitle.input('VELAR RADIO TEST');
 get('landing-save').onclick();await flush();
 assert.equal(records.get('vmm_public_drafts/landing').content.releases.radio.title,'VELAR RADIO TEST');
+assert.equal(records.get('vmm_public_drafts/landing').content.releases.radio.enabled,false);
+assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.title,'VELAR RADIO',
+  'Unpublished radio changes cannot affect the live site');
+radioToggle.checked=true;radioToggle.onchange.call(radioToggle);
+get('landing-save').onclick();await flush();
+assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.enabled,false,
+ 'Enabling a draft does not start radio for the public');
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.title,'VELAR RADIO TEST');
+assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.enabled,true);
+assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.controlVersion,2);
 assert.equal(records.get('vmm_public_pages/landing').content.releases.playlists.length,1);
 assert.equal(records.get('vmm_public_pages/landing').content.releases.subscriptions.length,1);
+radioToggle.checked=false;radioToggle.onchange.call(radioToggle);
+get('landing-save').onclick();await flush();
+get('landing-publish').onclick();await flush();
+assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.enabled,false,
+ 'Radio is fully disabled again on owner's explicit publication');
 // RUN-072: owner can curate the orbit without modifying private music.
-nav[4].onclick();await flush();
+nav[5].onclick();await flush();
 assert.equal(findInput('Заголовок вселенной').value,'Вселенная, которую можно услышать');
 findInput('Заголовок вселенной').input('Вселенная VELARDREAM — новая история');
 const addWorld=traverse(get('landing-fields'),n=>n.textContent==='+ Добавить созвездие');
@@ -206,7 +226,7 @@ assert.equal(records.get('vmm_public_pages/landing').content.genres.universe.nod
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.genres.universe.nodes.length,9);
 // Language-specific songs are manually selected from the owner-only catalog.
-nav[5].onclick();await flush();
+nav[6].onclick();await flush();
 const english=traverse(get('landing-fields'),n=>n.tagName==='button'&&
  n.textContent.indexOf('Английский · ')===0);
 assert.ok(english,'English language can be edited');
@@ -234,7 +254,7 @@ assert.equal(languageDraft[13].visible,false);
 assert.equal(records.get('vmm_public_pages/landing').content.genres.languages.entries.length,13);
 // RUN-073: attach one song to many topics using the same checkbox concept
 // as artist-track assignments, and verify draft remains private.
-nav[6].onclick();await flush();
+nav[7].onclick();await flush();
 assert.equal(findInput('Название темы').value,'Любовь');
 const firstTopic=traverse(get('landing-fields'),n=>n.className==='landing-topic-catalog-row');
 assert.ok(firstTopic,'Catalog songs appear as selectable checkboxes for the chosen theme');
