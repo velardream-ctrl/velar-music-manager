@@ -96,3 +96,25 @@
 #vmm-repertoire .vmm-r-player-title:focus-visible,#vmm-repertoire .vmm-r-pinned:focus-visible{
  outline:2px solid #e9cc94;outline-offset:2px;
 }
+
+/* RUN-053: deliberate player edit mode. Destructive and offline-changing
+   controls are never exposed while simply listening to a song. */
+.vmm-r-player-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.vmm-r-player-head .vmm-r-player-title{flex:1;min-width:0;margin:0}
+#vmm-repertoire .vmm-r-edit-toggle{
+ display:inline-flex;align-items:center;justify-content:center;flex:0 0 46px;
+ width:46px;min-width:46px;height:46px;padding:0;
+ color:#ecd4a8;background:#233654;border:1px solid #b99e73;border-radius:11px;
+ cursor:pointer;
+}
+#vmm-repertoire .vmm-r-edit-toggle[aria-expanded="true"]{color:#15223b;background:#e8cd97}
+#vmm-repertoire .vmm-r-edit-toggle:disabled{opacity:.55;cursor:not-allowed}
+#vmm-repertoire .vmm-r-edit-toggle:focus-visible,
+#vmm-repertoire .vmm-r-edit-actions button:focus-visible{outline:3px solid #e9c990;outline-offset:3px}
+.vmm-r-editor{padding:14px;margin-top:15px;border:1px solid #a18b79;background:#192640;border-radius:12px}
+.vmm-r-editor strong{display:block;color:#f4dcae;overflow-wrap:anywhere;margin-bottom:6px}
+.vmm-r-editor .sync-note{font-size:.89rem;margin:5px 0 12px}
+.vmm-r-edit-actions{display:flex;flex-wrap:wrap;gap:10px}
+#vmm-repertoire .vmm-r-edit-actions button{min-height:44px;font:inherit;font-weight:600;padding:9px 12px;border-radius:9px;border:1px solid #c5ad84;color:#f4e4be;background:#29364f}
+#vmm-repertoire .vmm-r-edit-actions .vmm-r-trash-btn{color:#f4c9bd;border-color:#c77c75;background:#422632}
+.vmm-r-offline-status{display:inline-flex;align-items:center;white-space:nowrap;padding:8px 10px;color:#d7e0ef;font-size:.91rem;border-radius:8px;background:#24324a;border:1px solid #4c5970}

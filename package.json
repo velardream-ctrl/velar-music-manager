@@ -4,7 +4,7 @@
   "private": true,
   "description": "Safe public foundation for velardream.com",
   "scripts": {
-    "test": "node tests/test-static.mjs && node tests/test-import.mjs && node tests/test-workflows.mjs && node tests/test-vmm-behavior.mjs && node tests/test-lyrics-safety.mjs && node tests/test-lyrics-interaction.mjs && node tests/test-print-export.mjs && node tests/test-recordings.mjs && node tests/test-iphone-lookup.mjs && node tests/test-recording-trash.mjs && node tests/test-repertoire-navigation.mjs && node tests/test-handoff-docs.mjs"
+    "test": "node tests/test-static.mjs && node tests/test-import.mjs && node tests/test-workflows.mjs && node tests/test-vmm-behavior.mjs && node tests/test-lyrics-safety.mjs && node tests/test-lyrics-interaction.mjs && node tests/test-print-export.mjs && node tests/test-recordings.mjs && node tests/test-iphone-lookup.mjs && node tests/test-recording-trash.mjs && node tests/test-repertoire-navigation.mjs && node tests/test-handoff-docs.mjs && node tests/test-player-edit-guard.mjs"
   },
   "engines": {
     "node": ">=18"
