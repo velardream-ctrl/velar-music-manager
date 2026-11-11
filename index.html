@@ -21,6 +21,11 @@
   <style>html{background:#0a1023}body{margin:0;background:#0a1023;color:#f6f2ee;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}.public-site{background:radial-gradient(ellipse at 52% 7%,#1f2f54 0%,#101b38 26%,#0a1023 62%)}.hero{min-height:660px;text-align:center}.art-wrap{width:100%;max-width:315px!important;margin:-8px auto 12px!important}.hero-mark{display:block;width:100%;height:auto}.hero-title{font-family:Georgia,"Times New Roman",serif;font-weight:400;color:#fff5e6}.brand-main,.brand-records{display:block}@media(max-width:740px){.art-wrap{max-width:215px!important;margin:-5px auto 12px!important}}@media(max-width:370px){.art-wrap{max-width:195px!important}}</style>
   <link rel="stylesheet" href="style.css?v=8">
   <title>VELARDREAM RECORDS — артисты, релизы и музыка</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" defer></script>
+  <script src="studio/firebase-config.js" defer></script>
+  <script src="landing-schema.js?v=1" defer></script>
+  <script src="landing-public.js?v=1" defer></script>
   <script src="main.js" defer></script>
 </head>
 <body class="public-site">
@@ -46,8 +51,8 @@
       </div>
       <div class="hero-copy">
         <h1 class="hero-title" id="hero-title"><span class="brand-main">VELARDREAM</span><span class="brand-records">RECORDS</span></h1>
-        <p class="hero-subtitle">Разные голоса. Разные жанры. Одна вселенная музыки.</p>
-        <p class="hero-intro">Здесь рождается пространство для артистов, авторских релизов и музыкальных историй — от оперы и этно до рока, поп-музыки и кроссоверов.</p>
+        <p class="hero-subtitle" id="public-hero-subtitle">Разные голоса. Разные жанры. Одна вселенная музыки.</p>
+        <p class="hero-intro" id="public-hero-intro">Здесь рождается пространство для артистов, авторских релизов и музыкальных историй — от оперы и этно до рока, поп-музыки и кроссоверов.</p>
         <div class="hero-actions">
           <a class="button button-primary" href="#artists">Открыть мир артистов <svg class="button-arrow" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5M8 5h11v11"/></svg></a>
           <a class="button button-secondary" href="#releases">Музыка и релизы</a>
@@ -61,9 +66,9 @@
         <div class="section-heading">
           <span class="section-number">01 / ARTISTS</span>
           <h2 id="artists-title">У каждого голоса — своя история</h2>
-          <p>Отдельные профили артистов с собственным оформлением, записями, клипами и ссылками на музыкальные площадки.</p>
+          <p id="public-artists-intro">Отдельные профили артистов с собственным оформлением, записями, клипами и ссылками на музыкальные площадки.</p>
         </div>
-        <div class="feature feature-artists">
+        <div class="feature feature-artists" id="public-artists-cards">
           <div class="symbol" aria-hidden="true">✧</div>
           <div>
             <span class="feature-label">СКОРО</span>
@@ -77,9 +82,9 @@
         <div class="section-heading">
           <span class="section-number">02 / RELEASES</span>
           <h2 id="releases-title">Музыка, которую можно открыть заново</h2>
-          <p>Синглы, альбомы, клипы и внешние плееры — без загрузки тяжёлых музыкальных файлов на собственный сервер.</p>
+          <p id="public-releases-intro">Синглы, альбомы, клипы и внешние плееры — без загрузки тяжёлых музыкальных файлов на собственный сервер.</p>
         </div>
-        <div class="feature feature-releases">
+        <div class="feature feature-releases" id="public-releases-cards">
           <div class="symbol" aria-hidden="true">♫</div>
           <div>
             <span class="feature-label">СКОРО</span>
@@ -93,9 +98,9 @@
         <div class="section-heading">
           <span class="section-number">03 / MOODS &amp; GENRES</span>
           <h2 id="genres-title">От оперы до новых звуков</h2>
-          <p>Ищите музыку по настроению, жанру, артисту или тематической подборке. Жанры и плейлисты будут дополнять друг друга, а не смешивать песни в один список.</p>
+          <p id="public-genres-intro">Ищите музыку по настроению, жанру, артисту или тематической подборке. Жанры и плейлисты будут дополнять друг друга, а не смешивать песни в один список.</p>
         </div>
-        <div class="genre-tags" aria-label="Планируемые музыкальные направления">
+        <div class="genre-tags" id="public-genres-tags" aria-label="Музыкальные направления">
           <span>Опера</span><span>Поп</span><span>Рок</span><span>Этно</span><span>Кроссовер</span><span>Юмор</span><span>Авторские подборки</span>
         </div>
       </section>
@@ -104,9 +109,9 @@
         <div class="section-heading">
           <span class="section-number">04 / THE LABEL</span>
           <h2 id="about-title">VELARDREAM RECORDS</h2>
-          <p>Музыкальный проект, объединяющий разных исполнителей, жанры и творческие идеи. Сейчас мы создаём его официальный дом в интернете.</p>
+          <p id="public-about-intro">Музыкальный проект, объединяющий разных исполнителей, жанры и творческие идеи. Сейчас мы создаём его официальный дом в интернете.</p>
         </div>
-        <p class="construction">Сайт находится в разработке. Публичные страницы артистов, релизы и плейлисты будут появляться постепенно.</p>
+        <p class="construction" id="public-about-notice">Сайт находится в разработке. Публичные страницы артистов, релизы и плейлисты будут появляться постепенно.</p>
       </section>
     </div>
   </main>
