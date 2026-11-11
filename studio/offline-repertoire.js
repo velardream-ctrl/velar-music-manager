@@ -66,6 +66,52 @@
       tx.onerror=function(){reject(tx.error||new Error('Не удалось прочитать последнюю песню'));};
     });});
   }
+  // Persistent, user-scoped outbox of selection changes made without network.
+  // Stored in the existing preferences store under a separate key so that
+  // rememberSelection() never overwrites it. No IndexedDB schema migration.
+  function pendingKey(uid){return '__offline_pin_ops__'+String(uid);}
+  function queuePinChange(uid,item,enabled){
+    if(!item||!item.fileId)return Promise.reject(new Error('Нет ID фонограммы.'));
+    return open().then(function(db){return new Promise(function(resolve,reject){
+      var tx=db.transaction(META,'readwrite'),store=tx.objectStore(META),k=pendingKey(uid);
+      var request=store.get(k);
+      request.onsuccess=function(){
+        var previous=request.result&&request.result.changes||[];
+        var rows=previous.filter(function(c){return c.fileId!==item.fileId;});
+        rows.push({fileId:String(item.fileId),enabled:!!enabled,
+          item:{fileId:String(item.fileId),catalogId:item.catalogId||'',title:item.title||'',
+            artist:item.artist||'',variant:item.variant||'',filename:item.filename||'',
+            mimeType:item.mimeType||'',size:Number(item.size)||0},
+          nonce:Date.now()+'-'+Math.random().toString(36).slice(2)});
+        store.put({uid:k,changes:rows});
+      };
+      tx.oncomplete=function(){resolve();};
+      tx.onerror=function(){reject(tx.error||new Error('Не удалось сохранить очередь синхронизации'));};
+      tx.onabort=function(){reject(tx.error||new Error('Очередь синхронизации отменена'));};
+    });});
+  }
+  function pendingPinChanges(uid){
+    return open().then(function(db){return new Promise(function(resolve,reject){
+      var tx=db.transaction(META,'readonly'),req=tx.objectStore(META).get(pendingKey(uid));
+      tx.oncomplete=function(){resolve(req.result&&req.result.changes||[]);};
+      tx.onerror=function(){reject(tx.error||new Error('Не удалось прочитать очередь синхронизации'));};
+    });});
+  }
+  function acknowledgePinChange(uid,fileId,nonce){
+    return open().then(function(db){return new Promise(function(resolve,reject){
+      var tx=db.transaction(META,'readwrite'),store=tx.objectStore(META),k=pendingKey(uid);
+      var req=store.get(k);
+      req.onsuccess=function(){
+        var rows=req.result&&req.result.changes||[];
+        // Newer changes for the same track must never be deleted by an old ack.
+        store.put({uid:k,changes:rows.filter(function(x){
+          return !(x.fileId===fileId&&x.nonce===nonce);
+        })});
+      };
+      tx.oncomplete=function(){resolve();};
+      tx.onerror=function(){reject(tx.error||new Error('Не удалось отметить синхронизацию'));};
+    });});
+  }
   function estimate(){
     if(navigator.storage&&navigator.storage.estimate)return navigator.storage.estimate().catch(function(){return null;});
     return Promise.resolve(null);
@@ -74,5 +120,5 @@
     if(navigator.storage&&navigator.storage.persist)return navigator.storage.persist().catch(function(){return false;});
     return Promise.resolve(false);
   }
-  window.VMM_OFFLINE={key:key,put:put,get:get,remove:remove,list:list,rememberSelection:rememberSelection,lastSelection:lastSelection,estimate:estimate,persist:persist};
+  window.VMM_OFFLINE={key:key,put:put,get:get,remove:remove,list:list,rememberSelection:rememberSelection,lastSelection:lastSelection,queuePinChange:queuePinChange,pendingPinChanges:pendingPinChanges,acknowledgePinChange:acknowledgePinChange,estimate:estimate,persist:persist};
 }());
