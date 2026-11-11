@@ -257,7 +257,7 @@
         throw new Error('Языковые миры: коды должны быть уникальными (латиница, цифры, дефис).');
       codes[code]=true;
       var tracks=typeof lang.tracks==='undefined'?[]:lang.tracks;
-      if(!Array.isArray(tracks)||tracks.length>12)throw new Error('Язык '+code+': не более 12 публичных песен.');
+      if(!Array.isArray(tracks)||tracks.length>300)throw new Error('Язык '+code+': не более 300 публичных песен.');
       var seen={};
       var cleaned=tracks.map(function(track,j){
         var t=languageTrack(track,j+1);
