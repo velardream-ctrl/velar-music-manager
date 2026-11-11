@@ -71,7 +71,7 @@
   function navActive(key){
     var buttons=document.querySelectorAll('#workspace [data-panel]');
     for(var i=0;i<buttons.length;i++)buttons[i].className=buttons[i].getAttribute('data-panel')===key?'nav-active':'';
-    show(id('panel-lyrics'),false);show(id('panel-future'),false);show(pane,true);
+    show(id('panel-lyrics'),false);show(id('panel-future'),false);show(id('panel-data'),false);show(pane,true);
   }
   function loading(title) {pane.innerHTML='<h2>'+esc(title)+'</h2><p id="vmm-w-status" class="sync-note">Читаем записи из защищённой базы…</p>';}
   function row(s){var x=parseInt(s,10);return isFinite(x)&&x>=2?x:0;}
@@ -360,6 +360,7 @@
     id('vmm-search').oninput=function(){filter=this.value;auditPage();refocus();};
   }
   function open(type) {
+    if(type==='data'&&window.VMM_STUDIO&&window.VMM_STUDIO.openData){window.VMM_STUDIO.openData();return;}
     if(!labels[type]||type==='lyrics'||type==='recordings')return;
     if(window.VMM_STUDIO&&window.VMM_STUDIO.rememberPanel)window.VMM_STUDIO.rememberPanel(type);
     current=type;filter='';page=0;mode=type==='platforms'?'pending':'all';navActive(type);loading(labels[type]);
@@ -374,7 +375,7 @@
     if(!t||t===pane)return;
     var a=t.getAttribute('data-act');
     if(a==='retry')return open(current);
-    if(a==='open-import'){var details=id('data-import');if(details){details.open=true;details.scrollIntoView();}return;}
+    if(a==='open-import'){if(window.VMM_STUDIO&&window.VMM_STUDIO.openData)window.VMM_STUDIO.openData();var details=id('data-import');if(details){details.open=true;details.scrollIntoView();}return;}
     if(a==='catalog')return open('catalog');
     if(a==='missing-catalog'){current='catalog';filter='';mode='missing';page=0;navActive('catalog');catalogPage();return;}
     if(a==='print-catalog')return printCatalog();
@@ -406,6 +407,7 @@
     nav[i].addEventListener('click',function(e){
       var type=this.getAttribute('data-panel');
       if(type==='lyrics'){show(pane,false);if(window.VMM_RECORDINGS)window.VMM_RECORDINGS.hide();return;}
+      if(type==='data'){if(window.VMM_RECORDINGS)window.VMM_RECORDINGS.hide();show(pane,false);return;}
       if(type==='recordings'&&window.VMM_RECORDINGS){e.preventDefault();e.stopImmediatePropagation();window.VMM_RECORDINGS.open();return;}
       if(labels[type]){if(window.VMM_RECORDINGS)window.VMM_RECORDINGS.hide();e.preventDefault();e.stopImmediatePropagation();open(type);}
     },true);
