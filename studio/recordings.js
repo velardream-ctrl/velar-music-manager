@@ -584,7 +584,7 @@
       }
     },function(err){
       cloudSyncPromise=null;
-      if(syncValid(uid,generation))setCloudStatus('Не удалось синхронизировать подборку: '
+      if(syncValid(uid,generation))setCloudStatus('Не удалось синхронизировать подборку: '+
         err.message+'. Существующие локальные файлы сохранены.');
     });
     return cloudSyncPromise;
