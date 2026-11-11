@@ -29,7 +29,7 @@
    if(contains(q,'доброй ночи,спокойной ночи,good night'))return 'night';
    if(contains(q,'спасибо,благодарю,thank you,thanks'))return 'thanks';
    if(contains(q,'любовь,любви,люблю,сердце,романтика,романтическая'))return 'heart';
-   if(contains(q,'ок,окей,понятно,договорились'))return 'okay';
+   if(contains(q,'ок,окей,понятно,договорились,ok,okay'))return 'okay';
    if(contains(q,'ура,радость,весело,праздник'))return 'celebrate';
    if(contains(q,'молодец,победа,peace'))return 'peace';
    if(contains(q,'привет,здравствуй,здравствуйте,hello,добрый день'))return 'wave';
