@@ -48,8 +48,9 @@ function node(tag){
  Object.defineProperty(el,'innerHTML',{get(){return this.html||'';},set(v){this.html=v;this.children=[];}});
  return el;
 }
-const panel=node('section'),document={
- querySelector:q=>q==='#workspace .workspace-content'?{appendChild(el){el.parentNode=this;}}:null,
+const shell={panel:null,appendChild(el){this.panel=el;el.parentNode=this;}};
+const document={
+ querySelector:q=>q==='#workspace .workspace-content'?shell:null,
  querySelectorAll:()=>[],
  createElement:tag=>node(tag),
  getElementById:id=>(els[id]??=node())
@@ -84,7 +85,7 @@ els['vmm-r-player-section'].className='hidden';
 els['vmm-r-song-section'].className='hidden';
 els['vmm-r-text-wrapper'].className='hidden';
 els['vmm-r-editor'].className='hidden';
-const markup=panel.innerHTML;
+const markup=shell.panel.innerHTML;
 for(const [first,second] of [['id="vmm-r-connect"','id="vmm-r-search"'],
  ['id="vmm-r-search"','id="vmm-r-offline-list"'],
  ['id="vmm-r-offline-list"','id="vmm-r-song-section"'],
