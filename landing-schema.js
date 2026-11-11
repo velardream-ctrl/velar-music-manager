@@ -17,7 +17,11 @@
         heading:'Музыка, которую можно открыть заново',
         intro:'Синглы, альбомы, клипы и внешние плееры — без загрузки тяжёлых музыкальных файлов на собственный сервер.',
         cards:[],
-        radio:{enabled:false,title:'VELAR RADIO',provider:'spotify',url:''}
+        radio:{enabled:true,title:'VELAR RADIO',provider:'spotify',url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh'},
+        playlists:[{title:'Мой лучший плейлист',description:'Музыкальная подборка VELAR',provider:'spotify',
+          url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh',visible:true}],
+        subscriptions:[{title:'DJ Velar в Spotify',provider:'spotify',
+          url:'https://open.spotify.com/artist/1PNzGsDcFVuOMBN7Gw12tw',visible:true}]
       },
       genres:{
         heading:'От оперы до новых звуков',
@@ -128,6 +132,51 @@
     return {enabled:enabled,title:plain(typeof x.title==='string'?x.title:'VELAR RADIO','Название радио',70,true),
       provider:provider,url:link};
   }
+
+  function playlistCard(x,i){
+    if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Плейлист '+i+': неправильная запись.');
+    var provider=x.provider==='youtube'?'youtube':'spotify';
+    if(x.provider&&x.provider!==provider)throw new Error('Плейлист '+i+': только Spotify или YouTube.');
+    var link=playlistUrl(x.url||'',provider);
+    if(x.visible===true&&!link)throw new Error('Плейлист '+i+': нужна публичная ссылка на плейлист.');
+    if(x.url&&!link)throw new Error('Плейлист '+i+': неверная ссылка.');
+    return {title:plain(x.title||'','Название плейлиста '+i,100,x.visible===true),
+      description:plain(x.description||'','Описание плейлиста '+i,240,false),
+      provider:provider,url:link,visible:x.visible===true};
+  }
+  function subscriptionUrl(raw,provider){
+    if(typeof raw!=='string')return '';
+    var s=raw.trim();
+    if(provider==='spotify'){
+      var m=/^https:\/\/open\.spotify\.com\/artist\/([A-Za-z0-9]{22})(?:\?[^#\s]*)?$/i.exec(s);
+      return m?'https://open.spotify.com/artist/'+m[1]:'';
+    }
+    if(provider==='youtube'){
+      var y=/^https:\/\/(?:www\.)?youtube\.com\/(channel\/[A-Za-z0-9_-]{15,}|@[A-Za-z0-9_.-]{3,})(?:\/)?(?:\?[^#\s]*)?$/i.exec(s);
+      return y?'https://www.youtube.com/'+y[1]:'';
+    }
+    if(provider==='telegram'){
+      var t=/^https:\/\/t\.me\/([A-Za-z0-9_]{5,32})(?:\/)?(?:\?[^#\s]*)?$/i.exec(s);
+      return t?'https://t.me/'+t[1]:'';
+    }
+    return '';
+  }
+  function subscriptionCard(x,i){
+    if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Подписка '+i+': неправильная запись.');
+    var provider=x.provider||'spotify';
+    if(['spotify','youtube','telegram'].indexOf(provider)<0)
+      throw new Error('Подписка '+i+': допустимы Spotify, YouTube, Telegram.');
+    var link=subscriptionUrl(x.url||'',provider);
+    if(x.url&&!link)throw new Error('Подписка '+i+': неверная ссылка на профиль.');
+    if(x.visible===true&&!link)throw new Error('Подписка '+i+': нужна публичная ссылка.');
+    return {title:plain(x.title||'','Подписка '+i,90,x.visible===true),provider:provider,
+      url:link,visible:x.visible===true};
+  }
+  function safeList(raw,max,label,mapper,defaultRows){
+    var list=typeof raw==='undefined'?defaultRows:raw;
+    if(!Array.isArray(list)||list.length>max)throw new Error(label+': не более '+max+' записей.');
+    return list.map(mapper);
+  }
   function card(x,type,index){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Карточка '+index+': неверный формат.');
     var title=plain(x.title,'Название карточки '+index,110,!!x.visible);
@@ -205,7 +254,9 @@
     };
     result.artists.cards=cards(artists,'Артисты');
     result.releases.cards=cards(releases,'Релизы');
-    result.releases.radio=radioConfig(releases.radio);
+    result.releases.radio=radioConfig(typeof releases.radio==='undefined'?d.releases.radio:releases.radio);
+    result.releases.playlists=safeList(releases.playlists,8,'Плейлисты',playlistCard,d.releases.playlists);
+    result.releases.subscriptions=safeList(releases.subscriptions,6,'Подписки',subscriptionCard,d.releases.subscriptions);
     var tags=typeof genres.tags==='undefined'?d.genres.tags:genres.tags;
     if(!Array.isArray(tags)||tags.length>20)throw new Error('Жанры: максимум 20 меток.');
     result.genres.tags=tags.map(function(tag,i){return plain(tag,'Жанр '+(i+1),35,true);});
@@ -216,5 +267,6 @@
   function blankCard(){return {title:'',subtitle:'',description:'',url:'',imageUrl:'',visible:false};}
   window.VMM_LANDING_SCHEMA={defaults:defaults,normalize:normalize,blankCard:blankCard,
     songUrl:songUrl,featuredTrack:featuredTrack,featuredTracks:featuredTracks,
-    releaseMediaUrl:releaseMediaUrl,playlistUrl:playlistUrl,radioConfig:radioConfig};
+    releaseMediaUrl:releaseMediaUrl,playlistUrl:playlistUrl,radioConfig:radioConfig,
+    subscriptionUrl:subscriptionUrl,playlistCard:playlistCard,subscriptionCard:subscriptionCard};
 }());
