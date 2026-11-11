@@ -369,3 +369,22 @@ body.vmm-print-open{overflow:hidden}
  #panel-landing .landing-track-toolbar button{flex:1 1 160px}
  #panel-landing .landing-artist-picker-actions button{width:100%}
 }
+
+/* RUN-065 — responsive artist portrait upload and touch crop */
+.artist-photo-editor{margin:16px 0;padding:17px;border:1px solid #d7bc8244;border-radius:14px;background:#0c1530}
+.artist-photo-heading{display:block;color:#f3dbaf;margin:0 0 6px;font-size:1rem}
+.artist-photo-editor .landing-field{margin:12px 0}
+.artist-photo-editor input[type=file],.artist-photo-editor select{max-width:100%;font-size:1rem}
+.artist-photo-editor input[type=file]{display:block;width:100%;padding:11px;color:#e9d6b6;border:1px dashed #e3c58a76;border-radius:10px;background:#121f40}
+.artist-photo-shape{min-height:44px;width:100%;border:1px solid #cbb88a66;border-radius:8px;padding:9px;background:#101a34;color:#f8e7c6}
+.artist-photo-current{display:block;width:104px;height:104px;object-fit:cover;border:1px solid #d4bc8b66;border-radius:12px;margin:10px 0}
+.artist-photo-tools{margin-top:14px}.artist-photo-tools.hidden{display:none}
+.artist-photo-canvas-wrap{position:relative;max-width:300px;width:100%;border-radius:12px;overflow:hidden;background:#121b35;border:1px solid #aab4c666}
+.artist-photo-preview{display:block;width:100%;height:auto;aspect-ratio:1;cursor:grab;touch-action:none}
+.artist-photo-canvas-wrap.is-circle{border-radius:50%}
+.artist-photo-zoom{display:flex;flex-direction:column;max-width:300px;color:#eedab5;margin:14px 0 8px;gap:7px}
+.artist-photo-zoom input{width:100%;min-height:32px;accent-color:#e4be7d}
+.artist-photo-actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.artist-photo-actions button{min-height:44px;max-width:100%;white-space:normal}
+.artist-photo-status{min-height:2em;overflow-wrap:anywhere}
+@media(max-width:480px){.artist-photo-editor{padding:12px}.artist-photo-actions button{width:100%}}
