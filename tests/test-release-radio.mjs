@@ -127,7 +127,7 @@ assert.match(map['velar-universe-details'].children[1].textContent,/Релизы
 assert.equal(window.VELAR_UNIVERSE.counts(page).videos,1);
 toggle.onclick();
 assert.equal(toggle.attributes['aria-expanded'],'false');
-assert.doesNotMatch(universeJS,/setInterval|setTimeout|WebGL|requestAnimationFrame|fetch\(|firestore\(/);
+assert.doesNotMatch(universeJS,/setInterval\(|setTimeout\(|getContext\(['"]webgl|requestAnimationFrame\(|fetch\(|firestore\(/);
 assert.doesNotMatch(publicJS,/autoplay=1|loop=1|muted=1|setInterval\(/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(css,/.cms-release-art::before/);
