@@ -19,7 +19,7 @@
    if(t.provider==='youtube')return 'https://www.youtube-nocookie.com/embed/'+link.split('v=')[1];
    return '';
  }
- function select(slug){
+ function select(slug,requestedUrl){
    var selected=null,list=entries(),area=byId('public-topic-detail');
    list.forEach(function(t){if(t.slug===slug)selected=t;});
    if(!selected)selected=list[0]||null;
@@ -39,7 +39,11 @@
    }
    area.appendChild(el('p','topic-count','Песен по теме: '+selected.tracks.length));
    var songs=el('div','topic-song-list'),player=el('div','topic-player');
-   var limit=12,playing=-1;
+   var requestedIndex=-1;
+   if(requestedUrl&&selected.slug===slug)selected.tracks.forEach(function(t,i){
+     if(t.url===requestedUrl&&approvedLink(t)===requestedUrl)requestedIndex=i;
+   });
+   var limit=Math.max(12,requestedIndex+1),playing=-1;
    function paint(){
      clear(songs);
      selected.tracks.slice(0,limit).forEach(function(t,i){
@@ -79,7 +83,14 @@
      }
    }
    area.appendChild(songs);area.appendChild(player);paint();
+   if(requestedIndex>=0&&songs.children[requestedIndex]){
+     // This is called ONLY from the visitor's explicit click on a chat song.
+     songs.children[requestedIndex].onclick();return true;
+   }
+   return false;
  }
+ function openFromChat(slug,url){return select(slug,url);}
+
  function render(value){
    var cloud=byId('public-topic-cloud'),orbit=byId('public-topic-orbit');
    if(!cloud||!orbit)return;
@@ -110,5 +121,5 @@
    });
    select(active);
  }
- window.VELAR_TOPICS={render:render,entries:entries,select:select};
+ window.VELAR_TOPICS={render:render,entries:entries,select:select,openFromChat:openFromChat};
 }());

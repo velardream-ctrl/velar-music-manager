@@ -11,6 +11,7 @@
  var trackEditorArtist='',trackChecked={},trackSearch='',trackSaving=false;
  var languageEditorCode='',languageCatalogSearch='',languageTrackFilter='';
  var topicEditorSlug='',topicCatalogSearch='',topicTrackFilter='';
+ var faqSearch='',faqGroup='',faqPage=0;
  var tabs={hero:'Первый экран',artists:'Артисты',releases:'Музыка и релизы',playlists:'Плейлисты и подписки',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',about:'О проекте',publish:'Публикация'};
  function id(k){return document.getElementById(k);}
  function clear(el){while(el.firstChild)el.removeChild(el.firstChild);}
@@ -1053,6 +1054,125 @@
    parent.appendChild(card);
  }
 
+ // RUN-083: paginated knowledge base to keep old iPhones responsive.
+ function faqEditor(parent,assistant){
+   var outer=document.createElement('details');outer.className='landing-card';
+   var summary=document.createElement('summary');
+   summary.textContent='База знаний VELAR — '+assistant.faq.length+' вопросов и ответов';
+   outer.appendChild(summary);
+   var explanation=document.createElement('p');explanation.className='sync-note';
+   explanation.textContent='Эти примеры — редакционные сценарии, не записи бесед пользователей. Приоритет у ваших личных правил ниже. Поиск, категории и страницы позволяют редактировать базу без сотни открытых форм. Ссылки на песни выбираются только из опубликованных подборок.';
+   outer.appendChild(explanation);
+   var search=document.createElement('input');search.type='search';
+   search.className='landing-artist-select';
+   search.setAttribute('aria-label','Найти вопрос в базе знаний');
+   search.placeholder='Поиск по словам, вопросам и ответам';
+   search.value=faqSearch;outer.appendChild(search);
+   var category=document.createElement('select');category.className='landing-artist-select';
+   category.setAttribute('aria-label','Категория вопросов VELAR');
+   var categories=[''].concat(assistant.faq.map(function(q){return q.group;})
+     .filter(function(g,i,a){return a.indexOf(g)===i;}));
+   categories.forEach(function(g){
+     var o=document.createElement('option');o.value=g;
+     o.textContent=g||'Все категории';category.appendChild(o);
+   });
+   category.value=faqGroup;outer.appendChild(category);
+   var listing=document.createElement('div');outer.appendChild(listing);
+   function routeSelect(row){
+     var wrap=document.createElement('label');wrap.className='landing-field';
+     var title=document.createElement('span');title.textContent='Что предложить после ответа';
+     wrap.appendChild(title);
+     var select=document.createElement('select');select.className='landing-artist-select';
+     var options=[
+       ['none','Только ответ'],['clarify','Уточняющие кнопки'],['contact','Написать автору'],
+       ['section:artists','Раздел «Артисты»'],['section:releases','Раздел «Релизы»'],
+       ['section:playlists','Раздел «Плейлисты»'],['section:topics','Раздел «Темы»'],
+       ['section:languages','Раздел «Языки»'],['section:genres','Раздел «Жанры»'],
+       ['section:about','Раздел «О проекте»']
+     ];
+     (data.genres.topics.entries||[]).forEach(function(t){
+       options.push(['topic:'+t.slug,'Музыкальная тема: '+t.label]);
+     });
+     (data.genres.languages.entries||[]).forEach(function(l){
+       options.push(['language:'+l.code,'Язык песен: '+l.label]);
+     });
+     if(!options.some(function(x){return x[0]===row.route;}))
+       options.push([row.route,'Сохранённая тема: '+row.route]);
+     options.forEach(function(pair){
+       var o=document.createElement('option');o.value=pair[0];
+       o.textContent=pair[1];select.appendChild(o);
+     });
+     select.value=row.route;
+     select.onchange=function(){row.route=this.value;updateButtons();};
+     wrap.appendChild(select);return wrap;
+   }
+   function draw(){
+     clear(listing);
+     var q=faqSearch.toLocaleLowerCase('ru').replace(/ё/g,'е').trim();
+     var found=assistant.faq.filter(function(item){
+       if(faqGroup&&item.group!==faqGroup)return false;
+       var text=(item.id+' '+item.group+' '+item.keywords+' '+item.answer)
+         .toLocaleLowerCase('ru').replace(/ё/g,'е');
+       return !q||text.indexOf(q)!==-1;
+     });
+     var pages=Math.max(1,Math.ceil(found.length/8));
+     if(faqPage>=pages)faqPage=pages-1;
+     var status=document.createElement('p');status.className='sync-note';
+     status.textContent='Найдено: '+found.length+' · Страница '+(faqPage+1)+' из '+pages;
+     listing.appendChild(status);
+     found.slice(faqPage*8,faqPage*8+8).forEach(function(item){
+       var card=document.createElement('section');card.className='landing-card';
+       heading(card,item.group+' · '+item.id);
+       var active=document.createElement('label');active.className='landing-checkbox';
+       var check=document.createElement('input');check.type='checkbox';
+       check.checked=item.enabled!==false;
+       check.onchange=function(){item.enabled=this.checked;updateButtons();};
+       active.appendChild(check);
+       var caption=document.createElement('span');caption.textContent='Этот ответ включён';
+       active.appendChild(caption);card.appendChild(active);
+       field(card,'Код FAQ',item.id,function(v){item.id=v.trim().toLowerCase();});
+       field(card,'Категория FAQ',item.group,function(v){item.group=v;});
+       field(card,'Вопросы и ключевые фразы через запятую',item.keywords,function(v){item.keywords=v;},true);
+       field(card,'Ответ VELAR',item.answer,function(v){item.answer=v;},true);
+       card.appendChild(routeSelect(item));
+       field(card,'Уточнения (до 3 кнопок через запятую)',item.followups,
+         function(v){item.followups=v;},true);
+       card.appendChild(button('Удалить сценарий',function(){
+         if(!window.confirm('Удалить этот ответ из черновика?'))return;
+         var ix=assistant.faq.indexOf(item);
+         if(ix>=0)assistant.faq.splice(ix,1);
+         summary.textContent='База знаний VELAR — '+assistant.faq.length+' вопросов и ответов';
+         draw();updateButtons();
+       },'landing-danger'));
+       listing.appendChild(card);
+     });
+     var navigation=document.createElement('div');navigation.className='landing-item-actions';
+     var previous=button('← Предыдущие',function(){if(faqPage>0){faqPage--;draw();}});
+     previous.disabled=faqPage===0;
+     var next=button('Следующие →',function(){if(faqPage+1<pages){faqPage++;draw();}});
+     next.disabled=faqPage+1>=pages;
+     navigation.appendChild(previous);navigation.appendChild(next);listing.appendChild(navigation);
+   }
+   search.oninput=function(){faqSearch=this.value;faqPage=0;draw();};
+   category.onchange=function(){faqGroup=this.value;faqPage=0;draw();};
+   outer.appendChild(button('+ Добавить вопрос и ответ',function(){
+     if(assistant.faq.length>=150){info('База знаний: максимум 150 сценариев.');return;}
+     var n=1,id;
+     do{id='custom-'+n++;}while(assistant.faq.some(function(x){return x.id===id;}));
+     assistant.faq.push({id:id,group:'Мои ответы',keywords:'новый вопрос',
+       answer:'Здесь будет ответ VELAR.',route:'none',followups:'',enabled:true});
+     faqGroup='Мои ответы';faqSearch='';search.value='';
+     if(!Array.prototype.some.call(category.children,function(o){return o.value==='Мои ответы';})){
+       var option=document.createElement('option');option.value='Мои ответы';
+       option.textContent='Мои ответы';category.appendChild(option);
+     }
+     category.value=faqGroup;faqPage=Math.max(0,Math.ceil(
+       assistant.faq.filter(function(x){return x.group===faqGroup;}).length/8)-1);
+     outer.open=true;summary.textContent='База знаний VELAR — '+assistant.faq.length+' вопросов и ответов';
+     draw();updateButtons();
+   },'landing-add'));
+   draw();parent.appendChild(outer);
+ }
  function assistantEditor(parent){
    var assistant=data.genres.assistant;
    heading(parent,'VELAR Assistant — бесплатный музыкальный секретарь',
@@ -1384,6 +1504,7 @@
    field(parent,'Публичный email для предложений (необязательно)',assistant.contactEmail||'',function(v){
      assistant.contactEmail=v.trim();
    });
+   faqEditor(parent,assistant);
    heading(parent,'Ответы по ключевым словам',
      'Правила проверяются перед общими подсказками по музыке. Ключевые слова перечисляются через запятую; ответ виден посетителям. Не вводи сюда личные данные или секретные ключи. До 25 правил.');
    assistant.rules.forEach(function(rule,index){

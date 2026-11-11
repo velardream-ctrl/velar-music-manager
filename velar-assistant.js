@@ -133,14 +133,18 @@
  function answer(raw,data,settings){
    var q=norm(raw);
    if(!q)return {text:replyText(settings,'emptyInput')};
-   if(contains(q,'оператор,свяжи с автором,человек,сотрудничество,сотрудничать,певец,певица,артист для песни,выступление,выступить,концерт,предложение,коллаборация,контакт,почта,написать автору')){
-     return {text:replyText(settings,settings.contactEmail?'contactEnabled':'contactDisabled'),
-       action:settings.contactEmail?'email':'link',target:settings.contactEmail?'':'#playlists',
-       label:replyText(settings,settings.contactEmail?'contactEnabledButton':'contactDisabledButton')};
-   }
+   settings=settings||{};
+   // Custom answers written by the owner have priority over the FAQ library.
    var rules=settings.rules||[];
    for(var i=0;i<rules.length;i++){
      if(contains(q,rules[i].keywords))return {text:rules[i].answer};
+   }
+   var suggested=window.VELAR_FAQ&&window.VELAR_FAQ.answer(q,data,settings);
+   if(suggested)return suggested;
+   if(contains(q,'оператор,поговорить с оператором,свяжи с автором,человек,сотрудничество,сотрудничать,певец,певица,артист для песни,выступление,выступить,концерт,предложение,коллаборация,контакт,почта,написать автору')){
+     return {text:replyText(settings,settings.contactEmail?'contactEnabled':'contactDisabled'),
+       action:settings.contactEmail?'email':'link',target:settings.contactEmail?'':'#playlists',
+       label:replyText(settings,settings.contactEmail?'contactEnabledButton':'contactDisabledButton')};
    }
    var mood=topicFor(q,data);
    if(mood){
@@ -161,8 +165,15 @@
    if(contains(q,'артист,исполнитель,кто поет,певцы,певица'))
      return {text:replyText(settings,'artists'),action:'link',target:'#artists',
        label:replyText(settings,'artistsButton')};
+   // Unknown question: use the owner's configured quick topics to clarify.
+   var suggestions=(settings.quickTopics||[]).slice(0,2).map(function(t){
+     return {action:'ask',target:t.query,label:t.label};
+   });
+   suggestions.push({action:'link',target:'#topics',
+     label:replyText(settings,'fallbackButton')});
    return {text:replyText(settings,settings.contactEmail?'fallbackEnabled':'fallbackDisabled'),
-     action:'link',target:'#topics',label:replyText(settings,'fallbackButton')};
+     actions:suggestions.filter(function(x){return !!x.label;})};
+
  }
  // RUN-082: one cancellable timer, no cloud traffic or stored chat history.
  function finishTyping(){
@@ -226,27 +237,46 @@
    var paragraph=el('p','',shouldType?'':text);
    row.appendChild(paragraph);
    function addAction(){
-    if(!action||!action.label)return;
-    var a=el('button','velar-chat-action',action.label);
-     a.type='button';
-     a.onclick=function(){
-       if(action.action==='email'){
-         var email=config&&config.contactEmail;
-         if(!email)return;
-         var subject='VELARDREAM — предложение о сотрудничестве';
-         var body='Здравствуйте!%0A%0AЯ хочу обсудить сотрудничество с VELARDREAM.%0A';
-         // The browser opens a *draft* in the visitor's mail application.
-         // No sender data is transmitted by this website.
-         window.location.href='mailto:'+email+'?subject='+encodeURIComponent(subject)+'&body='+body;
-       }else if(action.action==='topic'){
-         if(window.VELAR_TOPICS&&window.VELAR_TOPICS.select)
-           window.VELAR_TOPICS.select(action.target);
-         window.location.hash='topics';
-       }else if(action.action==='link'){
-         window.location.hash=action.target.slice(1);
-       }
-     };
-     row.appendChild(a);
+     var list=action&&action.actions?action.actions:(action&&action.label?[action]:[]);
+     if(!list.length)return;
+     var group=list.length>1?el('div','velar-chat-actions'):row;
+     list.slice(0,3).forEach(function(choice){
+       if(!choice||!choice.label)return;
+       var a=el('button','velar-chat-action',choice.label);
+       a.type='button';
+       a.onclick=function(){
+         if(choice.action==='email'){
+           var email=config&&config.contactEmail;
+           if(!email)return;
+           var subject='VELARDREAM — предложение о сотрудничестве';
+           var body='Здравствуйте!%0A%0AЯ хочу обсудить сотрудничество с VELARDREAM.%0A';
+           window.location.href='mailto:'+email+'?subject='+encodeURIComponent(subject)+'&body='+body;
+         }else if(choice.action==='topic'){
+           if(window.VELAR_TOPICS&&window.VELAR_TOPICS.select)
+             window.VELAR_TOPICS.select(choice.target);
+           window.location.hash='topics';
+         }else if(choice.action==='song'){
+           var openedSong=false;
+           if(choice.kind==='topic'&&window.VELAR_TOPICS&&window.VELAR_TOPICS.openFromChat)
+             openedSong=window.VELAR_TOPICS.openFromChat(choice.target,choice.url);
+           if(choice.kind==='language'&&window.VELAR_LANGUAGES&&window.VELAR_LANGUAGES.openFromChat)
+             openedSong=window.VELAR_LANGUAGES.openFromChat(choice.target,choice.url);
+           window.location.hash=choice.kind==='language'?'languages':'topics';
+           if(!openedSong&&choice.kind==='topic'&&window.VELAR_TOPICS&&window.VELAR_TOPICS.select)
+             window.VELAR_TOPICS.select(choice.target);
+         }else if(choice.action==='language'){
+           if(window.VELAR_LANGUAGES&&window.VELAR_LANGUAGES.show)
+             window.VELAR_LANGUAGES.show(choice.target);
+           window.location.hash='languages';
+         }else if(choice.action==='ask'){
+           say(choice.target);
+         }else if(choice.action==='link'&&choice.target&&choice.target.charAt(0)==='#'){
+           window.location.hash=choice.target.slice(1);
+         }
+       };
+       group.appendChild(a);
+     });
+     if(group!==row&&group.children.length)row.appendChild(group);
    }
    log.appendChild(row);
    if(shouldType)typeMessage(paragraph,text,addAction);
@@ -267,7 +297,7 @@
    finishTyping(); // complete prior reply before showing another visitor question
    itemMessage('visitor',t);
    var result=answer(t,published,config);
-   itemMessage('assistant',result.text,result.action?result:null,reactionChoice(t,result.text),true);
+   itemMessage('assistant',result.text,(result.actions&&result.actions.length)||result.action?result:null,reactionChoice(t,result.text),true);
    if(input)input.value='';
  }
  function paint(){

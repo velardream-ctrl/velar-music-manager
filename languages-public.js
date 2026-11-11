@@ -20,7 +20,7 @@
    if(track.provider==='youtube')return 'https://www.youtube-nocookie.com/embed/'+link.split('v=')[1];
    return '';
  }
- function show(code){
+ function show(code,requestedUrl){
    var lang=null,detail=id('public-language-detail');
    entries().forEach(function(item){if(item.code===code)lang=item;});
    if(!lang)lang=entries()[0]||null;
@@ -40,7 +40,12 @@
    }
    detail.appendChild(el('p','language-total','Композиции: '+count+'. Выберите песню, чтобы открыть официальный плеер.'));
    var list=el('div','language-song-list'),player=el('div','language-player');
-   var limit=moreCount,selected=-1;
+   var requestedIndex=-1;
+   if(requestedUrl&&lang.code===code)lang.tracks.forEach(function(t,i){
+     var approved='';try{approved=window.VMM_LANDING_SCHEMA.songUrl(t.url,t.provider);}catch(ignore){}
+     if(t.url===requestedUrl&&approved===requestedUrl)requestedIndex=i;
+   });
+   var limit=Math.max(moreCount,requestedIndex+1),selected=-1;
    function draw(){
      clear(list);
      lang.tracks.slice(0,limit).forEach(function(track,index){
@@ -86,7 +91,14 @@
      }
    }
    detail.appendChild(list);detail.appendChild(player);draw();
+   if(requestedIndex>=0&&list.children[requestedIndex]){
+     // Only a direct click on a chat recommendation calls this playback route.
+     list.children[requestedIndex].onclick();return true;
+   }
+   return false;
  }
+ function openFromChat(code,url){return show(code,url);}
+
  function render(config){
    var orbit=id('public-language-orbit'),detail=id('public-language-detail');
    if(!orbit||!detail)return;
@@ -117,5 +129,5 @@
    });
    show(current);
  }
- window.VELAR_LANGUAGES={render:render,entries:entries};
+ window.VELAR_LANGUAGES={render:render,entries:entries,show:show,openFromChat:openFromChat};
 }());
