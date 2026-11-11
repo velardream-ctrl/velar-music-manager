@@ -123,3 +123,12 @@ CI (run ID и результат):
 Изображения временно включены в уже существующий Firestore документ landing, поэтому никаких новых правил или Firebase Storage (потребовал бы Blaze) в RUN-065 нет. Применение реальных Firestore Rules RUN-062 ранее не подтверждено, поэтому публикация остаётся зависимой от ручной настройки Firebase.
 
 Проверенные ссылки DJ Velar из Google Sheets: Spotify https://open.spotify.com/artist/1PNzGsDcFVuOMBN7Gw12tw ; Apple https://music.apple.com/fi/artist/velar/1287552004 ; YouTube https://youtube.com/@djvelar ; Yandex https://music.yandex.ru/artist/7373905 ; VK https://vk.ru/artist/6919024079560818233 ; Telegram https://t.me/djvelar_channel. Spotify проставляется только при создании новой карточки DJ Velar. Для Ильи Дмитриева подтверждены отдельные треки Spotify, artist-profile URL не установлен (выдача по имени содержит тёзок). Подробнее: docs/RUN065_ARTIST_PHOTOS_AND_LINKS_RU.md. Автотест: tests/test-artist-photo.mjs.
+
+
+### 2026-11-11 — RUN-077 — после восстановления зависшего чата
+Восстановлены 10 исходных аватаров владельца из файлов предыдущего чата и собран компактный JPEG-спрайт `assets/dj-velar-expressions.jpg` (960×96, 18 КБ). Индексы: 0 neutral, 1 wave/day, 2 morning, 3 night, 4 thanks, 5 heart, 6 okay, 7 peace, 8 off, 9 celebrate. Рабочая ветка `fix/run077-dj-velar-avatar-webp` переоснована fast-forward с main, изменения ассистента, CSS, PWA и тесты зафиксированы. Проверить статус PR/CI и устройство после деплоя; **не** считать реальную мобильную проверку выполненной. RUN-078 с админ-управлением радио уже слит в main, радио выключено клиентской нормализацией старой публикации, новый запуск — только через админское сохранение и отдельную публикацию. Ни Firebase Rules, ни Drive, ни исходные тексты не менялись.
+
+## RUN-077 — новая диагностика iPhone, 19:57 11.11.2026
+- Продолжать PR #33 в ветке fix/run077-dj-velar-avatar-webp; десять оригинальных аватаров находятся в assets/dj-velar-expressions.jpg (JPEG-спрайт, 18 KB). Это всё ещё не опубликовано до merge.
+- Скриншоты: нижний край диалога должен прилегать к низу экрана без +63/+66px; текст ассистента с кнопкой не должен сжиматься вертикально. Поправлено bottom:0, safe-area padding и grid, а в JS обновляется настоящий title вместо avatar-firstChild.
+- Коммит e436247a0c76ef420ff45d824a5e7b29f4431084. Следующее действие — проверка CI PR #33, затем merge, Pages SUCCESS и реальная iPhone-проверка. Не объявлять live fix до завершения.
