@@ -5,7 +5,7 @@
  var stage=null,details=null,opened=false,buttons=[],beams=[],data=null;
  var selected='',initialized=false,orbitStep=0;
  var allowed={artists:'#artists',releases:'#releases',playlists:'#playlists',
-   genres:'#genres',languages:'#languages',about:'#about',radio:'#playlists'};
+   genres:'#genres',languages:'#languages',topics:'#topics',about:'#about',radio:'#playlists'};
  function el(tag,cls,t){
    var n=document.createElement(tag);if(cls)n.className=cls;
    if(typeof t==='string')n.textContent=t;
@@ -31,6 +31,7 @@
      playlists:(r.playlists||[]).filter(function(x){return x.visible;}).length,
      genres:(g.tags||[]).length,
      languages:((g.languages||{}).entries||[]).filter(function(x){return x.visible;}).length,
+     topics:((g.topics||{}).entries||[]).filter(function(x){return x.visible;}).length,
      radio:r.radio&&r.radio.enabled?1:0,
      about:1
    };
@@ -64,7 +65,7 @@
        (count?String(count)+' в открытом каталоге':'Здесь готовится музыка');
      details.appendChild(el('span','universe-info-count',info));
    }
-   var go=el('a','universe-go',item.target==='languages'?'Выбрать язык':'Открыть раздел');
+   var go=el('a','universe-go',item.target==='languages'?'Выбрать язык':item.target==='topics'?'Выбрать тему':'Открыть раздел');
    go.href=allowed[item.target]||'#universe';
    details.appendChild(go);
  }
