@@ -474,6 +474,119 @@
     if(driveFolderId&&/^[\w-]+$/.test(driveFolderId))target.innerHTML='<a target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/'+esc(driveFolderId)+'">Папка Google Drive</a>';
     else target.textContent='Google Drive пока не подключён';
   }
+  function syncValid(uid,generation){return !!(user&&user.uid===uid&&cloudGeneration===generation);}
+  function inSeries(items,fn){
+    var p=Promise.resolve();
+    items.forEach(function(x){p=p.then(function(){return fn(x);});});
+    return p;
+  }
+  function setCloudStatus(text){cloudStatus=String(text||'');renderCloudStatus();}
+  function queueOfflinePinChange(r,enabled){
+    if(!user||!window.VMM_OFFLINE||!window.VMM_CLOUD_PINS)return Promise.resolve();
+    var pin=window.VMM_CLOUD_PINS.pin(r);
+    if(!pin)return Promise.reject(new Error('У фонограммы нет корректного ID.'));
+    var uid=user.uid;
+    return window.VMM_OFFLINE.queuePinChange(uid,pin,enabled).then(function(){
+      cloudPins=cloudPins.filter(function(p){return p.fileId!==pin.fileId;});
+      if(enabled)cloudPins.push(pin);
+      renderOfflineList();
+      if(navigator.onLine)refreshCloudPins();
+      else setCloudStatus('Выбор сохранён локально. Он синхронизируется при следующем подключении к интернету.');
+    });
+  }
+  function downloadCloudPins(){
+    if(cloudDownloadPromise)return cloudDownloadPromise;
+    if(!active||!user||!driveToken||!navigator.onLine){renderCloudStatus();return Promise.resolve();}
+    var uid=user.uid,generation=cloudGeneration;
+    var missing=cloudPins.filter(function(p){return !stored(p.fileId);});
+    if(!missing.length){setCloudStatus('Подборка синхронизирована. Фонограммы доступны офлайн.');return Promise.resolve();}
+    var total=missing.length,done=0,errors=[];
+    var work=inSeries(missing,function(p){
+      if(!syncValid(uid,generation)||!driveToken||!navigator.onLine||stored(p.fileId))return;
+      var r=record(p.fileId);
+      if(!r||r.archived||r.catalogId!==p.catalogId){errors.push(p.title+': запись отсутствует в каталоге');return;}
+      setCloudStatus('Загружаем офлайн: '+(done+1)+' из '+total+' — '+p.title+'…');
+      return window.VMM_OFFLINE.estimate().then(function(v){
+        var size=Number(p.size)||Number(r.size)||0;
+        if(v&&v.quota&&v.usage&&v.quota-v.usage<size+5*1024*1024)
+          throw new Error('Недостаточно памяти на устройстве.');
+        return audioBlob(r);
+      }).then(function(blob){
+        if(!syncValid(uid,generation))return;
+        if(blob.size>MAX)throw new Error('Файл больше 50 МБ.');
+        var t=catalog.filter(function(x){return x.id===r.catalogId;})[0];
+        var l=t&&matchingLyrics(t)[0];
+        return window.VMM_OFFLINE.put(uid,{
+          fileId:r.driveFileId,catalogId:r.catalogId,title:r.title,artist:r.artist,
+          variant:r.variant,filename:r.filename,mimeType:r.mimeType,
+          blob:blob,lyrics:l?l.text:''
+        }).then(function(){return window.VMM_OFFLINE.persist();})
+          .then(function(){return readCache().then(function(){done++;renderOfflineList();renderPlayerEditor();});});
+      }).catch(function(err){errors.push(p.title+': '+err.message);});
+    });
+    cloudDownloadPromise=work.then(function(){
+      cloudDownloadPromise=null;
+      if(!syncValid(uid,generation))return;
+      if(errors.length)setCloudStatus('Скачано '+done+' из '+total+'. Ошибки: '+errors.join('; ')+
+        '. Повтори подключение Google Drive и проверь память.');
+      else setCloudStatus('Синхронизация завершена: '+cloudPins.length+' фонограмм доступны офлайн.');
+      renderOfflineList();
+    },function(err){cloudDownloadPromise=null;setCloudStatus('Ошибка синхронизации: '+err.message);});
+    return cloudDownloadPromise;
+  }
+  function refreshCloudPins(){
+    if(cloudSyncPromise)return cloudSyncPromise;
+    if(!user||!db||!window.VMM_CLOUD_PINS||!window.VMM_OFFLINE||!navigator.onLine){
+      renderCloudStatus();return Promise.resolve();
+    }
+    var uid=user.uid,generation=cloudGeneration;
+    var api=window.VMM_CLOUD_PINS,store=window.VMM_OFFLINE;
+    setCloudStatus('Сверяем офлайн-подборку между устройствами…');
+    var job=api.read(db,uid,saved).then(function(state){
+      if(!syncValid(uid,generation)||!state.authoritative)return null;
+      return Promise.all([store.wasCloudReady(uid),store.pendingPinChanges(uid)]).then(function(data){
+        var migrated=data[0],pending=data[1],removed={};
+        pending.forEach(function(x){if(!x.enabled)removed[x.fileId]=true;});
+        var old=migrated?[]:saved.filter(function(s){return !removed[s.fileId];});
+        return inSeries(old,function(s){
+          if(syncValid(uid,generation))return api.update(db,uid,s,true);
+        }).then(function(){
+          return inSeries(pending,function(op){
+            if(!syncValid(uid,generation))return;
+            return api.update(db,uid,op.item,op.enabled).then(function(){
+              return store.acknowledgePinChange(uid,op.fileId,op.nonce);
+            });
+          });
+        }).then(function(){if(syncValid(uid,generation))return store.markCloudReady(uid);});
+      }).then(function(){
+        if(!syncValid(uid,generation))return null;
+        return api.read(db,uid,[]).then(function(result){
+          if(!result.authoritative||!syncValid(uid,generation))return null;
+          cloudPins=result.pins;cloudPinsLoaded=true;
+          var desired={};cloudPins.forEach(function(p){desired[p.fileId]=true;});
+          var unpinned=saved.filter(function(s){return !desired[s.fileId];});
+          return inSeries(unpinned,function(s){
+            if(syncValid(uid,generation))return store.remove(uid,s.fileId);
+          }).then(function(){
+            if(syncValid(uid,generation))return readCache().then(function(){
+              renderOfflineList();renderPlayerEditor();
+            });
+          });
+        });
+      });
+    });
+    cloudSyncPromise=job.then(function(){
+      cloudSyncPromise=null;
+      if(syncValid(uid,generation)){
+        cloudStatus='';renderOfflineList();return downloadCloudPins();
+      }
+    },function(err){
+      cloudSyncPromise=null;
+      if(syncValid(uid,generation))setCloudStatus('Не удалось синхронизировать подборку: '+
+        err.message+'. Существующие локальные файлы сохранены.');
+    });
+    return cloudSyncPromise;
+  }
   function readCache(){
     if(!user||!window.VMM_OFFLINE)return Promise.resolve();
     return window.VMM_OFFLINE.list(user.uid).then(function(rows){
