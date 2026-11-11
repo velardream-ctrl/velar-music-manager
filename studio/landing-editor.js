@@ -285,7 +285,11 @@
      field(card,key==='artists'?'Роль / стиль':'Исполнитель',item.subtitle,function(v){item.subtitle=v;});
      field(card,'Краткое публичное описание',item.description,function(v){item.description=v;},true);
      field(card,'Публичная HTTPS-ссылка (профиль, Spotify, YouTube…) — необязательно',item.url,function(v){item.url=v;});
-     field(card,'HTTPS-ссылка на публичную обложку — необязательно',item.imageUrl,function(v){item.imageUrl=v;});
+     if(key==='artists'&&window.VMM_ARTIST_PHOTO){
+       window.VMM_ARTIST_PHOTO.attach(card,item,{authorized:authorized,changed:updateButtons,info:info});
+     }else{
+       field(card,'HTTPS-ссылка на публичную обложку — необязательно',item.imageUrl,function(v){item.imageUrl=v;});
+     }
      var check=document.createElement('label');check.className='landing-checkbox';
      var checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=item.visible===true;
      checkbox.onchange=function(){item.visible=this.checked;updateButtons();};
