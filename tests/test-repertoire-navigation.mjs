@@ -38,7 +38,7 @@ assert.match(rec,/function toggleText\(yes\)/);
 assert.match(rec,/textVisible=false/);
 assert.match(rec,/data-r-action="offline-play"/);
 assert.match(rec,/window\.VMM_OFFLINE\.rememberSelection\(user\.uid,t\.id\)/);
-assert.match(rec,/saved\.length\?saved\[0\]\.catalogId/);
+assert.match(rec,/renderOfflineList\(\);renderSongs\(\);setSong\(''\)/,'On refresh only the offline list opens; playback requires a click');
 assert.match(rec,/toggleText\(true\)/);
 assert.match(rec,/id\('vmm-r-toggle-text'\)\.onclick/);
 assert.match(rec,/function connect\(force\)/);
