@@ -210,7 +210,7 @@ radioToggle.checked=false;radioToggle.onchange.call(radioToggle);
 get('landing-save').onclick();await flush();
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.enabled,false,
- 'Radio is fully disabled again on owner's explicit publication');
+ 'Radio stays off after explicit owner publication');
 // RUN-072: owner can curate the orbit without modifying private music.
 nav[5].onclick();await flush();
 assert.equal(findInput('Заголовок вселенной').value,'Вселенная, которую можно услышать');
