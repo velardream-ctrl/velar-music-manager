@@ -75,9 +75,10 @@
     id('vmm-r-connect').onclick=function(){connect(true).then(ensureFolder).then(function(){msg('Google Drive подключён. Можно загружать и воспроизводить записи.');renderFolder();}).catch(function(e){msg('Google Drive: '+e.message);});};
     id('vmm-r-search').oninput=function(){suggestOpen=true;renderSongs();};
     id('vmm-r-search').onkeydown=function(e){if(e.key==='Enter'){var q=norm(this.value),matches=catalog.filter(function(t){return norm(clean(t.title)+' '+clean(t.artist||'')).indexOf(q)>=0;});if(q&&matches.length){e.preventDefault();chooseSearchResult(matches[0]);}}};
-    id('vmm-r-song').onchange=function(){setSong(this.value);};
+    id('vmm-r-song').onchange=function(){setSong(this.value,false);};
     id('vmm-r-file').onchange=function(){var file=this.files&&this.files[0];if(file)upload(file);this.value='';};
     id('vmm-r-toggle-text').onclick=function(){toggleText(!textVisible);};
+    id('vmm-r-download').onclick=function(){var r=record(audioFileId);if(editOpen&&r&&!r.archived&&r.catalogId===songId)download(r);};
     id('vmm-r-edit').onclick=function(){
       var r=record(audioFileId);
       if(!r||r.archived||r.catalogId!==songId){msg('Сначала выбери нужную запись кнопкой «Слушать».');return;}
@@ -111,7 +112,7 @@
   function renderSongs(){
     var sel=id('vmm-r-song'),input=id('vmm-r-search'),suggestions=id('vmm-r-results');
     if(!sel||!input)return;
-    var q=norm(input.value),previous=String(songId||''),results=[];
+    var q=norm(input.value),previous=String(formSongId||''),results=[];
     sel.innerHTML='<option value="">Выбери песню…</option>';
     catalog.forEach(function(t){
       var label=clean(t.title)+(t.artist?' — '+clean(t.artist):'');
@@ -150,12 +151,22 @@
       }
     }
   }
-  function setSong(key){
-    if(songId!==key){clearAudio();audioFileId='';textVisible=false;editOpen=false;playRequestId++;}
-    songId=String(key||'');renderSongs();
+  // Upload selection and stage playback are intentionally distinct.
+  // Choosing a catalog song opens only the upload form; an explicit selection
+  // from an offline card or cloud recording opens the player.
+  function setSong(key,forPlayback){
+    var next=String(key||''),playback=!!forPlayback;
+    if(songId!==next){clearAudio();textVisible=false;editOpen=false;playRequestId++;}
+    songId=next;formSongId=playback?'':next;playerVisible=!!next&&playback;
+    if(playback){
+      suggestOpen=false;
+      var search=id('vmm-r-search');if(search)search.value='';
+    }
+    renderSongs();
     var t=song();
-    show(id('vmm-r-song-section'),!!t);
-    if(!t)return;
+    show(id('vmm-r-song-section'),!!t&&!playback);
+    show(id('vmm-r-player-section'),!!t&&playback);
+    if(!t){renderPlayerEditor();return;}
     id('vmm-r-song-title').textContent=t.title;
     renderFolder();renderRecords();renderLyrics();toggleText(textVisible);
     if(user&&window.VMM_OFFLINE&&window.VMM_OFFLINE.rememberSelection&&saved.some(function(s){return s.catalogId===t.id;})){
@@ -202,7 +213,8 @@
     textVisible=!!yes;
     show(id('vmm-r-text-wrapper'),textVisible);
     var btn=id('vmm-r-toggle-text');
-    if(btn){btn.textContent=textVisible?'Прослушивание · скрыть текст':'Прослушивание · показать текст';btn.setAttribute('aria-expanded',textVisible?'true':'false');}
+    if(btn)btn.setAttribute('aria-expanded',textVisible?'true':'false');
+    var caption=id('vmm-r-toggle-text-label');if(caption)caption.textContent=textVisible?'Скрыть текст':'Показать текст';
   }
   function setMode(which){
     mode=which;
