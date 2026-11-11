@@ -200,7 +200,7 @@
    var headerTitle=el('strong','velar-assistant-title');
    var face=avatarFace('velar-assistant-header-avatar','neutral');
    header.appendChild(face);header.appendChild(headerTitle);
-   header.appendChild(el('span','velar-assistant-header-note','Самостоятельный бот · без платного ИИ'));
+   header.appendChild(el('span','velar-assistant-header-note','Локальный бот · без платного ИИ'));
    var close=el('button','velar-assistant-close','×');close.type='button';
    close.setAttribute('aria-label','Закрыть помощника');header.appendChild(close);
    dialog.appendChild(header);
@@ -228,7 +228,7 @@
    };
    dialog.appendChild(form);
    dialog.appendChild(el('p','velar-assistant-privacy',
-     'Ответы формируются на устройстве. Сообщения не сохраняются и не отправляются автору.'));
+     'Не сохраняем и не отправляем автору'));
    root.appendChild(dialog);
    function toggle(open){
      opened=!!open;
@@ -258,6 +258,8 @@
    if(!config.enabled){
      root.className='velar-assistant hidden';
      if(dialog)dialog.className='velar-assistant-dialog hidden';
+     var trigger=root.querySelector&&root.querySelector('.velar-assistant-launch');
+     if(trigger)trigger.setAttribute('aria-expanded','false');
      opened=false;return;
    }
    root.className='velar-assistant';
