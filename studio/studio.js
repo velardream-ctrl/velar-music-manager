@@ -6,7 +6,7 @@
   var cfg=window.VELAR_FIREBASE_CONFIG;
   var gate=document.getElementById('gate'),workspace=document.getElementById('workspace');
   var gateStatus=document.getElementById('gate-status'),signIn=document.getElementById('sign-in');
-  var db=null,auth=null,user=null,authorized=false,saveBusy=false;
+  var db=null,auth=null,user=null,authorized=false,authorizedUid='',saveBusy=false;
   var lyrics=[],catalog=[],songs=[],songKey='',selectedRecord=null,selectedDraft=null,baseline='';
   var sections={lyrics:'Тексты песен',catalog:'Каталог релизов',recordings:'Фонограммы',platforms:'Площадки и ссылки',contacts:'Контакты',outreach:'Рассылки',audit:'Журнал'};
   function el(n){return document.getElementById(n);}
@@ -191,11 +191,15 @@
   function showWorkspace(){
     // Firebase can fire a second auth callback after Google Drive reauthentication.
     // Keep the current music, tab and scroll position intact on subsequent callbacks.
-    if(authorized){
+    if(authorized&&authorizedUid===user.uid){
       text(el('account-label'),user.email||'Google');text(el('net-state'),navigator.onLine?'В сети':'Без сети');
       return;
     }
-    authorized=true;show(gate,false);show(workspace,true);
+    if(authorized&&authorizedUid!==user.uid){
+      lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
+      if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
+    }
+    authorized=true;authorizedUid=user.uid;show(gate,false);show(workspace,true);
     text(el('account-label'),user.email||'Google');text(el('net-state'),navigator.onLine?'В сети':'Без сети');
     text(el('sync-status'),'Читаем личную базу…');
     var section=rememberedPanel();
@@ -205,7 +209,7 @@
     updateLoaded().catch(function(){});
   }
   function unauthorized(note){
-    authorized=false;saveBusy=false;lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
+    authorized=false;authorizedUid='';saveBusy=false;lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
     if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
     show(workspace,false);show(gate,true);message(note);if(auth)signIn.disabled=false;
   }
