@@ -608,17 +608,17 @@
     });
   }
   function clearAudio(){
-    audioFileId='';editOpen=false;playRequestId++;
+    audioFileId='';editOpen=false;playRequestId++;playerPending=false;playerScrub=false;
     var a=id('vmm-r-audio');
     if(a){a.pause();a.removeAttribute('src');a.load();}
     if(audioURL){URL.revokeObjectURL(audioURL);audioURL='';}
-    renderPlayerEditor();
+    renderPlayerEditor();syncStagePlayer();
   }
   function play(r){
     var a=id('vmm-r-audio');if(!a)return;
-    editOpen=false;
+    editOpen=false;playerPending=true;playerScrub=false;
     var expectedRequest=++playRequestId;
-    renderPlayerEditor();
+    renderPlayerEditor();syncStagePlayer();
     msg('Подготавливаем '+(r.variant||'фонограмму')+'…');
     var task=stored(r.driveFileId)?audioBlob(r):connect().then(function(){return audioBlob(r);});
     task.then(function(blob){
@@ -626,11 +626,26 @@
       toggleText(true);
       clearAudio();audioURL=URL.createObjectURL(blob);audioFileId=r.driveFileId;
       renderPlayerEditor();
-      a.src=audioURL;a.load();
+      a.src=audioURL;a.load();syncStagePlayer();
       id('vmm-r-now').textContent=clean(r.title)+' · '+clean(r.variant)+' · '+mb(blob.size);
-      return a.play().then(function(){msg('Воспроизведение: '+r.title);})
-        .catch(function(){msg('Файл готов. Нажми ▶ на плеере iPhone для запуска.');});
-    }).catch(function(e){msg('Не получилось открыть аудио: '+e.message);});
+      // iOS may reject asynchronous play() without a fresh user gesture.
+      // The custom, large play button remains available for the next tap,
+      // with the original native controller behind "Системные функции".
+      try{
+        var attempt=a.play();
+        if(attempt&&typeof attempt.then==='function'){
+          return attempt.then(function(){msg('Воспроизведение: '+r.title);syncStagePlayer();})
+            .catch(function(){msg('Файл готов. Нажми большую кнопку ▶, чтобы начать воспроизведение.');syncStagePlayer();});
+        }
+        syncStagePlayer();msg('Файл готов к прослушиванию.');
+      }catch(err){
+        syncStagePlayer();msg('Файл готов. Нажми большую кнопку ▶, чтобы начать воспроизведение.');
+      }
+    }).catch(function(e){
+      if(expectedRequest!==playRequestId)return;
+      playerPending=false;syncStagePlayer();
+      msg('Не получилось открыть аудио: '+e.message);
+    });
   }
   function shareDownload(blob,r){
     var name=clean(r.filename)||'audio.mp3',file;
