@@ -219,3 +219,9 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
   .cms-music-track{min-height:61px}
   .cms-music-iframe--video{min-height:155px}
 }
+
+/* Preserve Spotify's documented 280px minimum wherever a phone allows it. */
+@media(max-width:390px){
+  .main-panels{padding-left:10px;padding-right:10px}
+  .cms-music-panel{padding:8px}
+}
