@@ -62,8 +62,55 @@
       return songForLyric(x)===song.track;
     });
   }
+  // Same live search as the recordings catalog, using only private songs
+  // already loaded in this session; no search terms are written to Firestore.
+  function lyricSearchMatches(query){
+    var q=titleKey(query);
+    if(!q)return[];
+    return songs.filter(function(s){
+      return titleKey(s.title+' '+s.artist).indexOf(q)>=0;
+    });
+  }
+  function pickLyricSearchResult(key){
+    if(!songByKey(key))return false;
+    // Clicking the already-open song must NEVER discard unsaved changes or
+    // replace a selected language version.
+    if(key!==songKey&&!chooseSong(key))return false;
+    el('lyrics-filter').value='';
+    renderSongChoices();
+    return true;
+  }
+  function renderLyricSearchResults(matches,query){
+    var root=el('lyric-search-results');
+    if(!root)return;
+    while(root.firstChild)root.removeChild(root.firstChild);
+    show(root,!!query);
+    if(!query)return;
+    var summary=document.createElement('p');
+    summary.className='sync-note lyrics-search-summary';
+    summary.setAttribute('role','status');
+    summary.textContent=matches.length?
+      'Найдено: '+matches.length+'. Нажми на название песни.' :
+      'По запросу «'+el('lyrics-filter').value+'» песен не найдено.';
+    root.appendChild(summary);
+    matches.slice(0,25).forEach(function(s){
+      var button=document.createElement('button');
+      button.type='button';
+      button.className='lyrics-search-hit';
+      button.textContent=s.title+(s.artist?' — '+s.artist:'');
+      button.onclick=function(){pickLyricSearchResult(s.key);};
+      root.appendChild(button);
+    });
+    if(matches.length>25){
+      var foot=document.createElement('p');
+      foot.className='sync-note lyrics-search-summary';
+      foot.textContent='Показаны первые 25 результатов. Уточни название или исполнителя.';
+      root.appendChild(foot);
+    }
+  }
   function renderSongChoices(){
     var query=titleKey(el('lyrics-filter').value),list=[{value:'',label:'Выбери песню…'}],seenSelected=false;
+    var matches=lyricSearchMatches(query);
     songs.forEach(function(s){
       var label=s.title+(s.artist?' — '+s.artist:'');
       if(query&&titleKey(label).indexOf(query)<0&&s.key!==songKey)return;
@@ -72,6 +119,7 @@
     });
     options(el('lyric-song-select'),list);
     el('lyric-song-select').value=seenSelected?songKey:'';
+    renderLyricSearchResults(matches,query);
   }
   function formattedWhen(value){
     if(!value)return '';
@@ -347,7 +395,10 @@
     if(auth)auth.signOut().then(function(){try{var here=window.location;window.history.replaceState(null,'',here.pathname+here.search);}catch(ignore){}unauthorized('Вы вышли из рабочего кабинета.');}).catch(function(err){message(err.message);});
   };
   el('lyric-song-select').onchange=function(){
-    var previous=songKey;if(!chooseSong(this.value)){this.value=previous;}
+    var previous=songKey;
+    if(!chooseSong(this.value)){this.value=previous;return;}
+    el('lyrics-filter').value='';
+    renderSongChoices();
   };
   el('lyric-version-select').onchange=function(){
     var previous=selectedRecord?selectedRecord.id:selectedDraft?'__draft':'';
@@ -355,6 +406,21 @@
     chooseVersion(this.value);
   };
   el('lyrics-filter').oninput=renderSongChoices;
+  el('lyrics-filter').onkeydown=function(e){
+    if(e.key==='Escape'){
+      this.value='';
+      renderSongChoices();
+      e.preventDefault();
+      return;
+    }
+    if(e.key==='Enter'){
+      var found=lyricSearchMatches(this.value);
+      if(found.length){
+        e.preventDefault();
+        pickLyricSearchResult(found[0].key);
+      }
+    }
+  };
   el('new-lyric').onclick=newVersion;
   el('lyric-view-editor').onclick=function(){focusSheet(false);};
   el('lyric-view-paper').onclick=function(){focusSheet(true);};

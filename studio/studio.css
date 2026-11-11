@@ -240,3 +240,26 @@ body.vmm-print-open{overflow:hidden}
  #workspace.workspace{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px));}
  #workspace .workspace-content{padding-bottom:calc(60px + env(safe-area-inset-bottom,0px));}
 }
+
+
+/* RUN-060: matches as you type, same palette and tap targets as recordings. */
+#panel-lyrics .lyrics-search-results{
+ display:flex;flex-direction:column;gap:6px;margin:9px 0 13px;
+ max-width:980px;
+}
+#panel-lyrics .lyrics-search-summary{
+ margin:5px 2px 6px;color:#e7cf9e;line-height:1.45;
+ overflow-wrap:anywhere;
+}
+#panel-lyrics .lyrics-search-hit{
+ display:block;min-height:48px;width:100%;box-sizing:border-box;
+ text-align:left;white-space:normal;overflow-wrap:anywhere;
+ border:1px solid #65789a;border-radius:10px;padding:11px 14px;
+ background:#243756;color:#fff8e8;font:inherit;font-size:16px;
+ cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+#panel-lyrics .lyrics-search-hit:hover,
+#panel-lyrics .lyrics-search-hit:focus-visible,
+#panel-lyrics .lyrics-search-hit:active{
+ background:#e8cc94;color:#14203b;outline:2px solid #e8cc94;
+}

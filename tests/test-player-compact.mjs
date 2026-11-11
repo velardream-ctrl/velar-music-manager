@@ -27,7 +27,7 @@ assert.match(css,/::-webkit-slider-thumb\{\s*[\s\S]*?height:21px;width:21px/);
 assert.match(css,/\.vmm-r-system:not\(\[open\]\)\{display:none\}/);
 assert.ok(html.includes('recordings.js?v=11'));
 assert.ok(html.includes('recordings.css?v=11'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v12'"));
+assert.ok(sw.includes("STUDIO_PREFIX+'v13'"));
 
 let panel;const nodes={};
 function el(tag){
