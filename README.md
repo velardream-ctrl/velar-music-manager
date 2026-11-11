@@ -1,3 +1,5 @@
+> **Project continuity (2026-11-11):** [Russian engineering log](docs/WORK_ACTIVITY_LOG_RU.md) · [handoff runbook](docs/PROJECT_HANDOFF_RU.md) · [reusable-site template blueprint](docs/REUSABLE_SITE_TEMPLATE_RU.md). Earlier setup prose below is historical, not current operational status. See open PRs and CI before working on the private Studio.
+
 # VELARDREAM RECORDS — velardream.com
 
 Independent music label website and planned private VMM workspace. GitHub Pages deploys the public landing page from `main`.
