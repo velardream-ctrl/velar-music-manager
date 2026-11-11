@@ -2,15 +2,16 @@
    Binaries and private lyrics stay on this device, never in public caches. */
 (function(){
   'use strict';
-  var NAME='velar-audio-repertoire-v1',STORE='tracks',dbPromise=null;
+  var NAME='velar-audio-repertoire-v1',STORE='tracks',META='preferences',dbPromise=null;
   function open(){
     if(dbPromise)return dbPromise;
     dbPromise=new Promise(function(resolve,reject){
       if(!window.indexedDB){reject(new Error('Офлайн-хранилище недоступно в этом браузере.'));return;}
-      var req=window.indexedDB.open(NAME,1);
+      var req=window.indexedDB.open(NAME,2);
       req.onupgradeneeded=function(){
         var db=req.result;
         if(!db.objectStoreNames.contains(STORE))db.createObjectStore(STORE,{keyPath:'key'});
+        if(!db.objectStoreNames.contains(META))db.createObjectStore(META,{keyPath:'uid'});
       };
       req.onsuccess=function(){resolve(req.result);};
       req.onerror=function(){reject(req.error||new Error('Ошибка IndexedDB'));};
@@ -48,6 +49,23 @@
       tx.onerror=function(){reject(tx.error||new Error('Ошибка чтения списка'));};
     });});
   }
+  // Only the song identifier is remembered. Lyrics and OAuth tokens are never
+  // stored as preferences; offline audio remains in the user-scoped tracks store.
+  function rememberSelection(uid,catalogId){
+    return open().then(function(db){return new Promise(function(resolve,reject){
+      var tx=db.transaction(META,'readwrite');
+      tx.objectStore(META).put({uid:String(uid),catalogId:String(catalogId||''),updatedAt:Date.now()});
+      tx.oncomplete=function(){resolve();};
+      tx.onerror=function(){reject(tx.error||new Error('Не удалось запомнить песню'));};
+    });});
+  }
+  function lastSelection(uid){
+    return open().then(function(db){return new Promise(function(resolve,reject){
+      var tx=db.transaction(META,'readonly'),req=tx.objectStore(META).get(String(uid));
+      tx.oncomplete=function(){resolve(req.result&&req.result.catalogId||'');};
+      tx.onerror=function(){reject(tx.error||new Error('Не удалось прочитать последнюю песню'));};
+    });});
+  }
   function estimate(){
     if(navigator.storage&&navigator.storage.estimate)return navigator.storage.estimate().catch(function(){return null;});
     return Promise.resolve(null);
@@ -56,5 +74,5 @@
     if(navigator.storage&&navigator.storage.persist)return navigator.storage.persist().catch(function(){return false;});
     return Promise.resolve(false);
   }
-  window.VMM_OFFLINE={key:key,put:put,get:get,remove:remove,list:list,estimate:estimate,persist:persist};
+  window.VMM_OFFLINE={key:key,put:put,get:get,remove:remove,list:list,rememberSelection:rememberSelection,lastSelection:lastSelection,estimate:estimate,persist:persist};
 }());
