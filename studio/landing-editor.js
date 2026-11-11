@@ -5,7 +5,7 @@
  var API=window.VMM_LANDING_SCHEMA,root=document.getElementById('panel-landing');
  if(!root||!API)return;
  var tab='hero',data=API.defaults(),baseline='',published=null;
- var uid='',db=null,loaded=false,busy=false,draftRev=0,publishedRev=0;
+ var uid='',db=null,loaded=false,busy=false,draftRev=0,publishedRev=0,loadGeneration=0;
  var tabs={hero:'Первый экран',artists:'Артисты',releases:'Музыка и релизы',genres:'Жанры',about:'О проекте',publish:'Публикация'};
  function id(k){return document.getElementById(k);}
  function clear(el){while(el.firstChild)el.removeChild(el.firstChild);}
@@ -163,10 +163,13 @@
    if(busy)return Promise.resolve();
    if(loaded&&!force){render();return Promise.resolve();}
    if(force&&dirty()&&!window.confirm('Несохранённый черновик будет потерян. Обновить из облака?'))return Promise.resolve();
+   var currentLoad=++loadGeneration;
    busy=true;updateButtons();info('Проверяем права и загружаем черновик…');
    return authorized().then(function(auth){
+     if(currentLoad!==loadGeneration)return null;
      uid=auth.user.uid;db=auth.db;var r=refs();
      return Promise.all([r.draft.get({source:'server'}),r.live.get({source:'server'})]).then(function(list){
+       if(currentLoad!==loadGeneration)return;
        var draft=list[0].exists?list[0].data():null,live=list[1].exists?list[1].data():null;
        published=live&&live.status==='published'?API.normalize(live.content):null;
        publishedRev=live?Number(live.revision)||0:0;
@@ -177,7 +180,10 @@
           (published?'Загружена последняя публикация. Сохрани черновик, прежде чем публиковать изменения.':
           'Публикаций пока нет. Подготовь разделы и сохрани первый черновик.'));
      });
-   }).catch(function(err){busy=false;loaded=false;updateButtons();info('Не удалось открыть редактор: '+safeStatus(err));});
+   }).catch(function(err){
+     if(currentLoad!==loadGeneration)return;
+     busy=false;loaded=false;updateButtons();info('Не удалось открыть редактор: '+safeStatus(err));
+   });
  }
  function save(){
    if(!loaded||busy)return;
@@ -244,6 +250,7 @@
  }
  function hide(){show(root,false);}
  function reset(){
+   loadGeneration++;
    uid='';db=null;loaded=false;busy=false;draftRev=0;publishedRev=0;
    data=API.defaults();baseline='';published=null;tab='hero';hide();updateButtons();
  }
