@@ -44,9 +44,9 @@ function environment(opts={}){
  const chapter=node('crystal-journey');
  chapter.offsetHeight=1520;chapter.querySelector=q=>parts[q]||null;
  chapter.querySelectorAll=q=>q==='.crystal-journey-beam'?beams:q==='.crystal-journey-stanza'?stanzas:[];
- const headings=Array.from({length:6},()=>node('section-heading'));
+ const headings=Array.from({length:7},()=>node('section-heading'));
  const names2=['#artists .section-heading','#releases .section-heading','#playlists .section-heading',
-  '#universe .universe-overline','#genres .section-heading','#about .section-heading'];
+  '#universe .universe-overline','#languages .universe-overline','#genres .section-heading','#about .section-heading'];
  const map=Object.fromEntries(names2.map((key,i)=>[key,headings[i]]));
  const doc={readyState:'complete',hidden:false,documentElement:{className:''},
   getElementById:id=>id==='crystal-journey'?chapter:null,querySelector:q=>map[q]||null,
@@ -77,7 +77,7 @@ assert.equal(r.api.phaseFor(.9),2);
 assert.match(r.doc.documentElement.className,/has-living-art/);
 assert.equal(r.observers.length,2,'Only two IntersectionObservers, no timers');
 assert.equal(r.observers[0].targets[0],r.chapter);
-assert.equal(r.observers[1].targets.length,6);
+assert.equal(r.observers[1].targets.length,7);
 assert.equal(r.queued.length,0,'Nothing animates while offscreen');
 r.observers[0].fn([{target:r.chapter,isIntersecting:true}]);
 assert.equal(typeof r.events.scroll,'function');
