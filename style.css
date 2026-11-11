@@ -137,3 +137,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .cms-card-grid{grid-template-columns:1fr}
  .cms-card-art{height:185px}
 }
+
+/* RUN-065: same optimized square image can be displayed as a square or circle. */
+.cms-card-art.cms-card-art--square{width:100%;height:auto;aspect-ratio:1;object-fit:cover}
+.cms-card-art.cms-card-art--circle{width:min(174px,calc(100% - 44px));height:auto;aspect-ratio:1;border-radius:50%;object-fit:cover;margin:24px auto 10px;border:2px solid #e5c89155;box-shadow:0 8px 28px #0005}
