@@ -20,12 +20,17 @@ assert.equal(api.releaseMediaUrl('https://open.spotify.com/album/0123456789ABCDE
 assert.equal(api.releaseMediaUrl('javascript:alert(1)','spotify'),'');
 assert.throws(()=>api.radioConfig({enabled:true,url:'https://example.com/playlist/invalid'}),/официальную ссылку/);
 const d=api.defaults();
-assert.equal(d.releases.radio.enabled,true);
+assert.equal(d.releases.radio.enabled,false,'RADIO is disabled by default');
+assert.equal(d.releases.radio.controlVersion,2);
+const legacy={...d.releases.radio,enabled:true};delete legacy.controlVersion;
+assert.equal(api.radioConfig(legacy).enabled,false,'Legacy published enabled:true does NOT reactivate radio');
+assert.equal(api.radioConfig({...legacy,controlVersion:2}).enabled,true,'Owner can re-enable radio explicitly');
 assert.equal(d.releases.playlists[0].url,link);
 assert.equal(d.releases.subscriptions[0].url,profile);
 const release=(x)=>({...api.blankCard(),title:'Белая берёза',subtitle:'DJ Velar',visible:true,
  mediaProvider:'spotify',mediaUrl:'https://open.spotify.com/track/0123456789ABCDEFGHIJKL',kind:'single',...x});
-const page=api.normalize({...d,releases:{...d.releases,cards:[
+const page=api.normalize({...d,releases:{...d.releases,
+ radio:{...d.releases.radio,enabled:true,controlVersion:2},cards:[
  release({spotlight:'music'}),release({title:'Журавли',kind:'video',mediaProvider:'youtube',
    mediaUrl:'https://youtu.be/ABCDEFGHIjk',spotlight:'video'}),
  release({title:'Северный олень',kind:'album',mediaUrl:'https://open.spotify.com/album/ABCDEFGHIJKLMNOPQRSTUV'})
@@ -136,14 +141,18 @@ assert.equal(constellation.children[1].attributes['aria-pressed'],'true','Touchi
 assert.equal(window.VELAR_UNIVERSE.counts(page).videos,1);
 toggle.onclick();
 assert.equal(toggle.attributes['aria-expanded'],'false');
+const disabledPage={...page,releases:{...page.releases,radio:{...page.releases.radio,enabled:false}}};
+observer({exists:true,data:()=>({status:'published',schemaVersion:1,content:disabledPage})});
+assert.equal(map['velar-radio'].className,'velar-radio hidden');
+assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0,'Disabling always unloads the official external player');
 assert.doesNotMatch(universeJS,/setInterval\(|setTimeout\(|getContext\(['"]webgl|requestAnimationFrame\(|fetch\(|firestore\(/);
 assert.doesNotMatch(publicJS,/autoplay=1|loop=1|muted=1|setInterval\(/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(css,/.cms-release-art::before/);
-assert.match(html,/universe\.js\?v=4/);
+assert.match(html,/universe\.js\?v=5/);
 assert.match(html,/style\.css\?v=18/);
-assert.match(sw,/CACHE_PREFIX \+ 'v18'/);
-assert.match(sw,/STUDIO_PREFIX\+'v23'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v19'/);
+assert.match(sw,/STUDIO_PREFIX\+'v24'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);
 console.log('PASS: RUN-069/070 safe releases, Spotify playlists, subscribers, opt-in radio, one active iframe and lazy 2.5D universe');

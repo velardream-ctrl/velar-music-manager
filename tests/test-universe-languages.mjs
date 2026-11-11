@@ -103,9 +103,10 @@ assert.equal(elements['universe-title'].textContent,page.genres.universe.heading
 assert.equal(typeof elements['velar-universe-toggle'].onclick,'function');
 elements['velar-universe-toggle'].onclick();
 const stage=elements['velar-universe-stage'];
-assert.equal(stage.children.length,9,'Eight visible navigation buttons plus official crystal core');
+assert.equal(stage.children.length,8,'Seven visible navigation buttons; radio is hidden while disabled; plus official crystal');
 assert.equal(stage.children[0].children[1].src,'assets/velardream-symbol.svg');
-const languageNode=stage.children[7];
+const languageNode=stage.children.filter(function(n){return n.attributes&&n.attributes['aria-label']==='Выбрать созвездие: Миры языков';})[0];
+assert.ok(languageNode,'Language constellation remains accessible without disabled radio node');
 languageNode.onclick();
 assert.equal(elements['velar-universe-details'].children.at(-1).href,'#languages');
 assert.match(languageNode.attributes['aria-pressed'],/true/);

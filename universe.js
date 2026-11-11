@@ -18,7 +18,13 @@
    return {heading:'Вселенная, которую можно услышать',intro:'Откройте мир музыки',nodes:[]};
  }
  function visibleNodes(){
-   return config().nodes.filter(function(n){return n.visible===true;});
+   return config().nodes.filter(function(n){
+     if(n.visible!==true)return false;
+     // The default VELAR RADIO constellation must not advertise a disabled widget.
+     if(n.id==='radio'&&data&&data.releases&&data.releases.radio&&
+        data.releases.radio.enabled!==true)return false;
+     return true;
+   });
  }
  function counts(d){
    d=d||{};
