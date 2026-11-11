@@ -461,3 +461,19 @@ body.vmm-print-open{overflow:hidden}
  width:15px;height:15px;flex:0 0 15px;
  background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e9c990' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 19 19 5M8 5h11v11'/%3E%3C/svg%3E") center/contain no-repeat;
 }
+
+/* RUN-069 — compact selection controls and compression preview in Studio. */
+#panel-landing .landing-release-select,#panel-landing .landing-release-search{
+ display:block;width:100%;min-width:0;min-height:44px;margin:9px 0 14px;
+ padding:10px 12px;border-radius:10px;border:1px solid #8fa2bd;
+ background:#101e37;color:#f6e2ba;font:inherit;font-size:16px;
+}
+#panel-landing .landing-release-picker,#panel-landing .landing-release-cover{
+ border:1px solid #6c7790;border-radius:12px;padding:14px;margin:14px 0;
+ background:#132442;min-width:0;
+}
+#panel-landing .landing-release-cover-preview{
+ width:min(220px,100%);height:auto;aspect-ratio:1;object-fit:contain;
+ display:block;margin:10px 0;border:1px solid #d7bf8f;border-radius:10px;
+}
+#panel-landing .landing-release-cover-input{display:none}
