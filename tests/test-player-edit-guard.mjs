@@ -13,9 +13,9 @@ assert.match(source,/if\(!editOpen\|\|!r\|\|r\.archived\|\|r\.catalogId!==songId
 assert.doesNotMatch(source,/data-r-offline=/,'Do not expose live offline checkbox');
 assert.doesNotMatch(source,/data-r-action="trash"/,'Do not expose per-track trash in playback list');
 assert.match(source,/duplicate&&!window\.confirm/,'Duplicate variant upload must require confirmation');
-assert.ok(html.includes('src="recordings.js?v=6"'));
-assert.ok(html.includes('href="recordings.css?v=6"'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v7'"));
+assert.ok(html.includes('src="recordings.js?v=7"'));
+assert.ok(html.includes('href="recordings.css?v=7"'));
+assert.ok(sw.includes("STUDIO_PREFIX+'v8'"));
 assert.match(css,/\.vmm-r-edit-toggle/);
 
 const nodes={}, clicks=[],confirmed=[];

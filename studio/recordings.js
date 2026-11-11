@@ -9,7 +9,7 @@
   panel.className='panel hidden';
   shell.appendChild(panel);
   var db=null,user=null,driveToken='',driveFolderId='',busy=false,active=false,listenersAttached=false,suggestOpen=false;
-  var catalog=[],lyrics=[],recordings=[],saved=[],songId='',audioFileId='',audioURL='',mode='a4',textVisible=false,uploadMessage='',editOpen=false,playRequestId=0,formSongId='',playerVisible=false;
+  var catalog=[],lyrics=[],recordings=[],saved=[],songId='',audioFileId='',audioURL='',mode='a4',textVisible=false,uploadMessage='',editOpen=false,playRequestId=0,formSongId='',playerVisible=false,playerScrub=false,playerPending=false;
   var MAX=50*1024*1024,DRIVE_SCOPE='https://www.googleapis.com/auth/drive.file',FOLDER='VELARDREAM RECORDS - Фонограммы';
   function id(s){return document.getElementById(s);}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','&quot;':'&quot;',"'":'&#39;'}[c];});}
@@ -42,6 +42,94 @@
     list.forEach(function(x){var v=key(x);if(!v||seen[v])return;seen[v]=true;items.push(x);});
     return items;
   }
+  function stageTime(seconds){
+    var n=Number(seconds);
+    if(!isFinite(n)||n<0)return '0:00';
+    var count=Math.floor(n),minutes=Math.floor(count/60),secs=count%60;
+    return minutes+':'+(secs<10?'0':'')+secs;
+  }
+  function stageDuration(a){
+    var d=a?Number(a.duration):0;
+    return isFinite(d)&&d>0?d:0;
+  }
+  function stagePaint(position){
+    var s=id('vmm-r-seek');if(!s)return;
+    var p=Math.max(0,Math.min(100,Number(position)||0));
+    s.style.background='linear-gradient(to right,#dfc28b 0%,#dfc28b '+p+'%,#465573 '+p+'%,#465573 100%)';
+  }
+  function syncStagePlayer(){
+    var a=id('vmm-r-audio'),button=id('vmm-r-play'),slider=id('vmm-r-seek');
+    if(!a||!button||!slider)return;
+    var loaded=!!audioFileId&&!playerPending,
+      duration=stageDuration(a),time=Number(a.currentTime);
+    if(!loaded){duration=0;time=0;}
+    var hasDuration=loaded&&duration>0;
+    if(!isFinite(time)||time<0)time=0;
+    if(duration)time=Math.min(time,duration);
+    var playing=loaded&&a.paused===false&&!a.ended;
+    button.disabled=!loaded;
+    button.setAttribute('aria-pressed',playing?'true':'false');
+    button.setAttribute('aria-label',playing?'Пауза':'Воспроизвести');
+    slider.disabled=!loaded||!hasDuration;
+    var back=id('vmm-r-back'),next=id('vmm-r-next');
+    if(back)back.disabled=!loaded||!hasDuration;
+    if(next)next.disabled=!loaded||!hasDuration;
+    if(!playerScrub){
+      slider.value=String(duration?Math.round(time/duration*1000):0);
+      stagePaint(duration?time/duration*100:0);
+      var elapsed=id('vmm-r-elapsed'),remain=id('vmm-r-remaining');
+      if(elapsed)elapsed.textContent=stageTime(time);
+      if(remain)remain.textContent=duration?'-'+stageTime(Math.max(0,duration-time)):'—:—';
+      slider.setAttribute('aria-valuetext',stageTime(time)+' из '+(duration?stageTime(duration):'неизвестно'));
+    }
+  }
+  function stageSeekTo(seconds){
+    var a=id('vmm-r-audio'),d=stageDuration(a);
+    if(!a||!audioFileId||!d)return;
+    var value=Math.max(0,Math.min(d,Number(seconds)||0));
+    try{a.currentTime=value;}catch(err){msg('Перемотка недоступна: '+err.message);}
+    syncStagePlayer();
+  }
+  function stageToggle(){
+    var a=id('vmm-r-audio');
+    if(!a||!audioFileId||playerPending)return;
+    if(a.paused!==false||a.ended){
+      if(a.ended)stageSeekTo(0);
+      try{
+        var p=a.play();
+        if(p&&typeof p.catch==='function')p.catch(function(err){
+          msg('Не удалось начать воспроизведение: '+err.message+'. Открой «Системные функции плеера» и запусти файл там.');
+          syncStagePlayer();
+        });
+      }catch(err){msg('Не удалось включить плеер: '+err.message);}
+    }else a.pause();
+    syncStagePlayer();
+  }
+  function bindStagePlayer(){
+    var audio=id('vmm-r-audio'),slider=id('vmm-r-seek');
+    id('vmm-r-play').onclick=stageToggle;
+    id('vmm-r-back').onclick=function(){var a=id('vmm-r-audio');if(a)stageSeekTo(Number(a.currentTime)-10);};
+    id('vmm-r-next').onclick=function(){var a=id('vmm-r-audio');if(a)stageSeekTo(Number(a.currentTime)+10);};
+    slider.oninput=function(){
+      var d=stageDuration(audio);if(!audioFileId||!d)return;
+      playerScrub=true;
+      var secs=d*Math.max(0,Math.min(1000,Number(slider.value)||0))/1000;
+      var elapsed=id('vmm-r-elapsed'),remaining=id('vmm-r-remaining');
+      if(elapsed)elapsed.textContent=stageTime(secs);
+      if(remaining)remaining.textContent='-'+stageTime(Math.max(0,d-secs));
+      slider.setAttribute('aria-valuetext',stageTime(secs)+' из '+stageTime(d));
+      stagePaint(secs/d*100);
+    };
+    slider.onchange=function(){
+      var d=stageDuration(audio),desired=d*Math.max(0,Math.min(1000,Number(slider.value)||0))/1000;
+      playerScrub=false;
+      stageSeekTo(desired);
+    };
+    ['loadedmetadata','durationchange','timeupdate','play','pause','ended','seeking','seeked','canplay','waiting','emptied','error'].forEach(function(name){
+      audio.addEventListener(name,syncStagePlayer);
+    });
+    syncStagePlayer();
+  }
   function header(){
     panel.innerHTML=
       '<div class="vmm-r-heading"><div><p class="eyebrow">VELARDREAM · REPERTOIRE</p><h2>Фонограммы и тексты песен</h2><p class="sync-note">Каталог · плеер · A4 · крупный текст · офлайн</p></div>'+
@@ -62,7 +150,18 @@
       '<span id="vmm-r-player-sync" class="vmm-r-player-sync" role="status" aria-label="Фонограмма не выбрана" title="Фонограмма не выбрана"><span aria-hidden="true">☁</span><span id="vmm-r-sync-mark" aria-hidden="true">—</span></span>'+
       '<button type="button" id="vmm-r-edit" class="vmm-r-edit-toggle" aria-label="Редактировать выбранную фонограмму" title="Редактировать выбранную фонограмму" aria-controls="vmm-r-editor" aria-expanded="false">'+
       '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4 10.5-10.5z"/></svg></button></div>'+
-      '<audio id="vmm-r-audio" controls preload="none"></audio><p id="vmm-r-now" class="sync-note">Выбери запись, чтобы включить её.</p>'+
+      '<div class="vmm-r-stage" role="group" aria-label="Фирменный аудиоплеер VELARDREAM">'+
+      '<button type="button" id="vmm-r-play" class="vmm-r-play-button" aria-label="Воспроизвести" aria-pressed="false" disabled>'+
+      '<svg class="vmm-r-play-icon" viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M7 4.8c0-.7.8-1.1 1.4-.7l12 7.2c.6.3.6 1.1 0 1.5l-12 7.1c-.6.4-1.4 0-1.4-.7z"/></svg>'+
+      '<svg class="vmm-r-pause-icon" viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1.3"/><rect x="14" y="4" width="5" height="16" rx="1.3"/></svg></button>'+
+      '<div class="vmm-r-timeline"><input id="vmm-r-seek" type="range" min="0" max="1000" step="1" value="0" disabled aria-label="Позиция воспроизведения" aria-valuetext="0:00 из 0:00">'+
+      '<div class="vmm-r-clock"><output id="vmm-r-elapsed" for="vmm-r-seek">0:00</output><output id="vmm-r-remaining" for="vmm-r-seek">—:—</output></div></div>'+
+      '<button type="button" id="vmm-r-back" class="vmm-r-jump" aria-label="Назад на 10 секунд" disabled><span aria-hidden="true">↶</span><small>10</small></button>'+
+      '<button type="button" id="vmm-r-next" class="vmm-r-jump" aria-label="Вперёд на 10 секунд" disabled><span aria-hidden="true">↷</span><small>10</small></button></div>'+
+      '<details id="vmm-r-system" class="vmm-r-system"><summary>Системные функции плеера</summary>'+
+      '<p class="sync-note">AirPlay, системное меню и громкость устройства доступны в стандартном плеере iPhone.</p>'+
+      '<audio id="vmm-r-audio" controls preload="none" x-webkit-airplay="allow"></audio></details>'+
+      '<p id="vmm-r-now" class="sync-note">Выбери запись, чтобы включить её.</p>'+
       '<div id="vmm-r-editor" class="vmm-r-editor hidden" role="group" aria-label="Управление фонограммой">'+
       '<strong id="vmm-r-edit-target"></strong><p id="vmm-r-edit-meta" class="sync-note"></p><p class="sync-note">Изменения относятся только к этой фонограмме. Текст и каталог не затрагиваются.</p>'+
       '<div class="vmm-r-edit-actions"><button type="button" id="vmm-r-download">↓ Скачать</button><button type="button" id="vmm-r-offline-toggle"></button><button type="button" id="vmm-r-trash-current" class="vmm-r-trash-btn">В корзину Google Drive</button></div></div></div>'+ 
@@ -78,6 +177,7 @@
     id('vmm-r-song').onchange=function(){setSong(this.value,false);};
     id('vmm-r-file').onchange=function(){var file=this.files&&this.files[0];if(file)upload(file);this.value='';};
     id('vmm-r-toggle-text').onclick=function(){toggleText(!textVisible);};
+    bindStagePlayer();
     id('vmm-r-download').onclick=function(){var r=record(audioFileId);if(editOpen&&r&&!r.archived&&r.catalogId===songId)download(r);};
     id('vmm-r-edit').onclick=function(){
       var r=record(audioFileId);
@@ -510,17 +610,17 @@
     });
   }
   function clearAudio(){
-    audioFileId='';editOpen=false;playRequestId++;
+    audioFileId='';editOpen=false;playRequestId++;playerPending=false;playerScrub=false;
     var a=id('vmm-r-audio');
     if(a){a.pause();a.removeAttribute('src');a.load();}
     if(audioURL){URL.revokeObjectURL(audioURL);audioURL='';}
-    renderPlayerEditor();
+    renderPlayerEditor();syncStagePlayer();
   }
   function play(r){
     var a=id('vmm-r-audio');if(!a)return;
-    editOpen=false;
+    editOpen=false;playerPending=true;playerScrub=false;
     var expectedRequest=++playRequestId;
-    renderPlayerEditor();
+    renderPlayerEditor();syncStagePlayer();
     msg('Подготавливаем '+(r.variant||'фонограмму')+'…');
     var task=stored(r.driveFileId)?audioBlob(r):connect().then(function(){return audioBlob(r);});
     task.then(function(blob){
@@ -528,11 +628,26 @@
       toggleText(true);
       clearAudio();audioURL=URL.createObjectURL(blob);audioFileId=r.driveFileId;
       renderPlayerEditor();
-      a.src=audioURL;a.load();
+      a.src=audioURL;a.load();syncStagePlayer();
       id('vmm-r-now').textContent=clean(r.title)+' · '+clean(r.variant)+' · '+mb(blob.size);
-      return a.play().then(function(){msg('Воспроизведение: '+r.title);})
-        .catch(function(){msg('Файл готов. Нажми ▶ на плеере iPhone для запуска.');});
-    }).catch(function(e){msg('Не получилось открыть аудио: '+e.message);});
+      // iOS may reject asynchronous play() without a fresh user gesture.
+      // The custom, large play button remains available for the next tap,
+      // with the original native controller behind "Системные функции".
+      try{
+        var attempt=a.play();
+        if(attempt&&typeof attempt.then==='function'){
+          return attempt.then(function(){msg('Воспроизведение: '+r.title);syncStagePlayer();})
+            .catch(function(){msg('Файл готов. Нажми большую кнопку ▶, чтобы начать воспроизведение.');syncStagePlayer();});
+        }
+        syncStagePlayer();msg('Файл готов к прослушиванию.');
+      }catch(err){
+        syncStagePlayer();msg('Файл готов. Нажми большую кнопку ▶, чтобы начать воспроизведение.');
+      }
+    }).catch(function(e){
+      if(expectedRequest!==playRequestId)return;
+      playerPending=false;syncStagePlayer();
+      msg('Не получилось открыть аудио: '+e.message);
+    });
   }
   function shareDownload(blob,r){
     var name=clean(r.filename)||'audio.mp3',file;
