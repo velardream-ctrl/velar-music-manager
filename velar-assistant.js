@@ -106,6 +106,10 @@
  function itemMessage(role,text,action){
    if(!log)return;
    var row=el('div','velar-chat-line '+(role==='visitor'?'is-visitor':'is-assistant'));
+   if(role==='assistant'){
+     var face=el('img','velar-chat-avatar');face.src='assets/dj-velar-assistant.webp';
+     face.alt='';face.loading='lazy';row.appendChild(face);
+   }
    row.appendChild(el('p','',text));
    if(action){
      var a=el('button','velar-chat-action',action.label);
@@ -156,11 +160,14 @@
    launcher.type='button';launcher.setAttribute('aria-controls','velar-assistant-dialog');
    launcher.setAttribute('aria-expanded','false');
    var symbol=el('img','velar-assistant-symbol');
-   symbol.src='assets/velardream-symbol.svg';symbol.alt='';symbol.loading='lazy';
+   symbol.src='assets/dj-velar-assistant.webp';symbol.alt='';symbol.loading='lazy';
    launcher.appendChild(symbol);launcher.appendChild(el('span','', 'Помощник VELAR'));
    root.appendChild(launcher);
    prompt=el('div','velar-assistant-greeting hidden');
-   prompt.appendChild(el('span','velar-assistant-wave','')); // SVG/CSS waves, no platform emoji
+   var helloSticker=el('img','velar-assistant-greeting-avatar');
+   helloSticker.src='assets/dj-velar-assistant.webp';helloSticker.alt='';
+   helloSticker.loading='lazy';prompt.appendChild(helloSticker);
+   prompt.appendChild(el('span','velar-assistant-wave','')); // CSS waving hand; no emoji
    prompt.appendChild(el('span','velar-assistant-greeting-text','Добро пожаловать! Подобрать музыку?'));
    var dismiss=el('button','velar-assistant-greeting-close','×');
    dismiss.type='button';dismiss.setAttribute('aria-label','Скрыть приветствие');
@@ -170,7 +177,9 @@
    dialog.setAttribute('role','region');dialog.setAttribute('aria-label','VELAR — музыкальный помощник');
    header=el('div','velar-assistant-header');
    var headerTitle=el('strong','velar-assistant-title');
-   header.appendChild(headerTitle);
+   var face=el('img','velar-assistant-header-avatar');
+   face.src='assets/dj-velar-assistant.webp';face.alt='';face.loading='lazy';
+   header.appendChild(face);header.appendChild(headerTitle);
    header.appendChild(el('span','velar-assistant-header-note','Самостоятельный бот · без платного ИИ'));
    var close=el('button','velar-assistant-close','×');close.type='button';
    close.setAttribute('aria-label','Закрыть помощника');header.appendChild(close);
