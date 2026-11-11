@@ -38,10 +38,10 @@ assert.match(install,/git clone/);
 assert.match(install,/отдельный проект/);
 for(const readme of ['README.md','README_RU.md']){
  const text=read(readme);
- for(const f of files.slice(0,3)){
+ for(const f of files.slice(0,5)){
    assert.ok(text.includes(f),readme+' must link to '+f);
  }
 }
 const pkg=JSON.parse(read('package.json'));
 assert.ok(pkg.scripts.test.includes('test-handoff-docs.mjs'));
-console.log('PASS: durable work journal, new-chat handoff, clean-copy template roadmap, PR checklist and README entrypoints');
+console.log('PASS: durable work journal, master inventory, safe reinstallation, handoff and README entrypoints');
