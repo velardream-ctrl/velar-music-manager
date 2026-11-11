@@ -37,6 +37,7 @@
     <nav class="site-nav" aria-label="Разделы сайта">
       <a href="#artists">Артисты</a>
       <a href="#releases">Релизы</a>
+      <a href="#playlists">Плейлисты</a>
       <a href="#genres">Жанры</a>
       <a href="#about">О проекте</a>
     </nav>
@@ -94,9 +95,34 @@
         </div>
       </section>
 
+      <section id="playlists" class="showcase cms-playlists-section" aria-labelledby="playlists-title">
+        <div class="section-heading">
+          <span class="section-number">03 / PLAYLISTS &amp; FOLLOW</span>
+          <h2 id="playlists-title">Плейлисты и подписки</h2>
+          <p>Музыкальные подборки VELARDREAM — слушайте на официальных площадках и подписывайтесь на артистов.</p>
+        </div>
+        <div id="public-playlists-cards" class="cms-playlists-grid">
+          <article class="cms-playlist-card cms-playlist-card--featured">
+            <div class="cms-playlist-art"><span class="cms-playlist-vinyl" aria-hidden="true"></span></div>
+            <div class="cms-playlist-copy">
+              <span class="cms-release-type">ВЫБОР VELAR</span>
+              <h3>Мой лучший плейлист</h3>
+              <p>Слушайте музыкальную подборку VELAR в официальном Spotify.</p>
+              <a class="cms-card-link" href="https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh" target="_blank" rel="noopener noreferrer">Открыть в Spotify</a>
+            </div>
+          </article>
+        </div>
+        <div class="cms-subscriptions">
+          <h3>Следите за новыми релизами</h3>
+          <div id="public-subscriptions" class="cms-subscription-links">
+            <a class="cms-subscription-link" href="https://open.spotify.com/artist/1PNzGsDcFVuOMBN7Gw12tw" target="_blank" rel="noopener noreferrer">DJ Velar в Spotify</a>
+          </div>
+        </div>
+      </section>
+
       <section id="genres" class="showcase genres-section" aria-labelledby="genres-title">
         <div class="section-heading">
-          <span class="section-number">03 / MOODS &amp; GENRES</span>
+          <span class="section-number">04 / MOODS &amp; GENRES</span>
           <h2 id="genres-title">От оперы до новых звуков</h2>
           <p id="public-genres-intro">Ищите музыку по настроению, жанру, артисту или тематической подборке. Жанры и плейлисты будут дополнять друг друга, а не смешивать песни в один список.</p>
         </div>
@@ -107,7 +133,7 @@
 
       <section id="about" class="showcase about-section" aria-labelledby="about-title">
         <div class="section-heading">
-          <span class="section-number">04 / THE LABEL</span>
+          <span class="section-number">05 / THE LABEL</span>
           <h2 id="about-title">VELARDREAM RECORDS</h2>
           <p id="public-about-intro">Музыкальный проект, объединяющий разных исполнителей, жанры и творческие идеи. Сейчас мы создаём его официальный дом в интернете.</p>
         </div>
@@ -116,6 +142,7 @@
     </div>
   </main>
 
+  <aside id="velar-radio" class="velar-radio hidden" aria-label="VELAR RADIO"></aside>
   <footer class="site-footer">
     <div class="footer-brand"><img class="brand-emblem brand-emblem-footer" src="assets/velardream-symbol.svg" width="16" height="28" alt="" aria-hidden="true"><span>VELARDREAM RECORDS</span></div>
     <p>Независимая музыкальная вселенная · © <span id="currentYear">2026</span></p>
