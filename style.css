@@ -1055,3 +1055,18 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 @media(max-width:590px){
  .velar-assistant-suggestions{max-height:74px;overflow-y:auto;overscroll-behavior:contain}
 }
+
+/* RUN-082 — small, local typewriter caret; real characters are added by JS. */
+.velar-chat-line.is-assistant p.velar-chat-typing::after{
+ content:"";display:inline-block;width:2px;height:.95em;
+ margin-left:3px;vertical-align:-.12em;background:#f5d5a4;
+ animation:velar-typing-caret .75s steps(1,end) infinite;
+}
+@keyframes velar-typing-caret{50%{opacity:0}}
+.velar-assistant-announcement{
+ position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+ overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+@media(prefers-reduced-motion:reduce){
+ .velar-chat-line.is-assistant p.velar-chat-typing::after{animation:none}
+}

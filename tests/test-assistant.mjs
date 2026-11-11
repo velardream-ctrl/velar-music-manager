@@ -31,7 +31,7 @@ assert.equal(answer('песня на немецком').target,'#languages');
 const custom={...settings,rules:[{keywords:'эксклюзив',answer:'У нас есть особая подборка.'}]};
 assert.equal(answer('эксклюзив',custom).text,'У нас есть особая подборка.');
 assert.match(html,/id="velar-assistant"/);
-assert.match(html,/velar-assistant\.js\?v=4/);
+assert.match(html,/velar-assistant\.js\?v=5/);
 assert.match(html,/name="robots" content="noindex,nofollow,noarchive"/);
 assert.match(css,/\.velar-assistant-launch/);
 assert.match(css,/\.velar-assistant-wave/);
@@ -47,10 +47,12 @@ assert.equal(w.VELAR_ASSISTANT.expressionFor('OK'),'okay');
 assert.ok(css.includes("max-height:min(390px,50vh)"));
 assert.ok(!code.includes("dj-velar-assistant.webp"));
 assert.match(code,/sessionStorage/);
-assert.match(sw,/'\.\/velar-assistant\.js\?v=4'/);
+assert.match(sw,/'\.\/velar-assistant\.js\?v=5'/);
 assert.match(publicCode,/velar-radio-hidden/);
 assert.match(publicCode,/VELAR_ASSISTANT\.render\(value\)/);
-assert.doesNotMatch(code,/fetch\(|firebase|XMLHttpRequest|setInterval\(|setTimeout\(|WebSocket|autoplay=|\.play\(/);
+assert.doesNotMatch(code,/fetch\(|firebase|XMLHttpRequest|setInterval\(|WebSocket|autoplay=|\.play\(/);
+assert.match(code,/window\.setTimeout\(step,/,'typing uses one cancellable local timer');
+assert.match(code,/window\.clearTimeout\(session\.timer\)/,'typing must cancel on close');
 assert.match(css,/\.velar-assistant\{[\s\S]*?bottom:0;/);
 assert.match(css,/\.velar-assistant-dialog\{[\s\S]*?margin-bottom:0;/);
 assert.doesNotMatch(css,/bottom:calc\(max\(16px,env\(safe-area-inset-bottom,0px\)\) \+ 6[36]px\)/);
@@ -65,8 +67,8 @@ assert.match(css,/\.velar-assistant-suggestion\{min-height:28px;padding:2px 7px/
 assert.match(css,/\.velar-assistant-privacy\{padding:1px 7px 3px/);
 assert.match(css,/\.velar-assistant-header-note\{display:none\}/);
 assert.match(css,/\.velar-assistant-input\{height:36px;padding:6px 8px;font-size:16px\}/);
-assert.match(sw,/CACHE_PREFIX \+ 'v22'/);
-assert.match(html,/style\.css\?v=20/);
+assert.match(sw,/CACHE_PREFIX \+ 'v23'/);
+assert.match(html,/style\.css\?v=21/);
 assert.ok(code.includes("querySelector('.velar-assistant-launch')"));
 
 const customLabels={...settings,labels:{...settings.labels,
@@ -140,4 +142,87 @@ config.genres.assistant.quickTopics=Array(12).fill(0).map((_,i)=>({label:'Тем
 deviceWindow.VELAR_ASSISTANT.render(config);
 assert.equal(tags.children.length,12);
 
-console.log('PASS: RUN-079 compact mobile assistant and one-line privacy');
+
+// RUN-082: precise character-by-character reveal with controllable fake timers.
+let typeReduced=false,typeId=0;
+const scheduled=new Map();
+deviceWindow.setTimeout=(fn,ms)=>{const id=++typeId;scheduled.set(id,{fn,ms});return id;};
+deviceWindow.clearTimeout=id=>scheduled.delete(id);
+deviceWindow.matchMedia=()=>({matches:typeReduced});
+function tickOne(){
+ const item=scheduled.entries().next().value;
+ assert.ok(item,'No pending typing timer');
+ scheduled.delete(item[0]);item[1].fn();return item[1].ms;
+}
+function tickAll(){
+ let n=0;while(scheduled.size){assert.ok(n++<650,'Typing is not bounded');tickOne();}
+}
+config.genres.assistant.quickTopics=[{label:'Любовь',query:'любовь'}];
+deviceWindow.VELAR_ASSISTANT.render(config);
+const control=host.querySelector('.velar-assistant-launch');
+control.onclick();
+const conversation=host.querySelector('.velar-assistant-log');
+assert.equal(conversation.children.length,1);
+const greetingRow=conversation.children[0];
+const greetingP=greetingRow.children[1];
+assert.equal(greetingP.textContent,'','Greeting starts empty and types letter by letter');
+assert.equal(scheduled.size,1);
+tickOne();
+assert.equal(greetingP.textContent.length,1);
+assert.match(greetingP.className,/velar-chat-typing/);
+tickAll();
+assert.equal(greetingP.textContent,config.genres.assistant.welcome);
+assert.doesNotMatch(greetingP.className,/velar-chat-typing/);
+assert.equal(host.querySelector('.velar-assistant-announcement').textContent,config.genres.assistant.welcome);
+tags.children[0].onclick(); // 'Любовь' with a music-topic button
+const firstAnswer=conversation.children[conversation.children.length-1];
+const firstParagraph=firstAnswer.children[1];
+assert.equal(firstParagraph.textContent,'','A configured music reply is typed');
+assert.equal(firstAnswer.children.length,2,'Action button is hidden until reply finishes');
+const firstActionText=deviceWindow.VELAR_ASSISTANT.answer('любовь',config,config.genres.assistant).label;
+tickOne();
+assert.equal(firstParagraph.textContent.length,1);
+tickAll();
+assert.ok(firstParagraph.textContent.length>15);
+if(firstActionText)assert.equal(firstAnswer.children[2].textContent,firstActionText);
+// A second question while typing must finish the first reply with no ghost timers.
+tags.children[0].onclick();
+const pendingParagraph=conversation.children[conversation.children.length-1].children[1];
+tickOne();
+assert.equal(pendingParagraph.textContent.length,1);
+tags.children[0].onclick();
+assert.ok(pendingParagraph.textContent.length>5,'Previous answer completes before new user row');
+assert.equal(scheduled.size,1,'Only one typing timer can be active');
+const close=host.querySelector('.velar-assistant-close');
+close.onclick();
+assert.equal(scheduled.size,0,'Closing chat cancels animation');
+assert.equal(pendingParagraph.className.includes('velar-chat-typing'),false);
+// Option to disable animation, including legacy/reduced-motion users.
+config.genres.assistant.typing.enabled=false;
+deviceWindow.VELAR_ASSISTANT.render(config);
+control.onclick();
+tags.children[0].onclick();
+assert.ok(conversation.children[conversation.children.length-1].children[1].textContent.length>5);
+assert.equal(scheduled.size,0);
+config.genres.assistant.typing.enabled=true;typeReduced=true;
+deviceWindow.VELAR_ASSISTANT.render(config);
+tags.children[0].onclick();
+assert.ok(conversation.children[conversation.children.length-1].children[1].textContent.length>5);
+assert.equal(scheduled.size,0,'prefers-reduced-motion never starts timers');
+typeReduced=false;
+// Unicode surrogate pairs should appear as one character, not a broken half.
+config.genres.assistant.rules=[{keywords:'тест эмодзи',answer:'🐣Привет'}];
+deviceWindow.VELAR_ASSISTANT.render(config);
+const question=host.querySelector('.velar-assistant-input');
+const form=host.querySelector('.velar-assistant-form');
+question.value='тест эмодзи';form.onsubmit({preventDefault(){}});
+const emojiAnswer=conversation.children[conversation.children.length-1].children[1];
+tickOne();
+assert.equal(emojiAnswer.textContent,'🐣');
+tickAll();
+assert.equal(emojiAnswer.textContent,'🐣Привет');
+assert.equal(scheduled.size,0);
+assert.match(css,/velar-typing-caret/);
+assert.match(css,/prefers-reduced-motion:reduce/);
+
+console.log('PASS: RUN-082 local typewriter, Unicode, rapid messages and reduced motion');
