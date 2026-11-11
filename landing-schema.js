@@ -49,6 +49,46 @@
       throw new Error(label+': приватные ссылки Google Drive и Storage публиковать нельзя.');
     return s;
   }
+  // RUN-067. Only verified direct song URLs, never artist/album/playlist,
+  // Drive, private audio, or arbitrary iframe code. Public whitelist is strict.
+  function songUrl(raw,provider){
+    if(typeof raw!=='string')return '';
+    var s=raw.trim(),m;
+    if(provider==='spotify'){
+      m=/^https:\/\/open\.spotify\.com\/track\/([A-Za-z0-9]{22})(?:\?[^#\s]*)?$/i.exec(s);
+      return m?'https://open.spotify.com/track/'+m[1]:'';
+    }
+    if(provider==='youtube'){
+      m=/^https:\/\/(?:www\.)?youtu\.be\/([A-Za-z0-9_-]{11})(?:[?#][^\s]*)?$/i.exec(s);
+      if(!m&&/^https:\/\/(?:(?:www|music)\.)?youtube\.com\/watch\?[^#\s]+$/i.test(s))
+        m=/(?:[?&])v=([A-Za-z0-9_-]{11})(?:&|#|$)/.exec(s);
+      return m?'https://www.youtube.com/watch?v='+m[1]:'';
+    }
+    return '';
+  }
+  function featuredTrack(x,index){
+    if(!x||typeof x!=='object'||Array.isArray(x))
+      throw new Error('Лучшая песня '+index+': неверная запись.');
+    var provider=plain(x.provider||'','Площадка песни '+index,20,true);
+    if(provider!=='spotify'&&provider!=='youtube')
+      throw new Error('Лучшая песня '+index+': можно использовать только Spotify или YouTube.');
+    var track={title:plain(x.title||'','Название песни '+index,110,true),
+      provider:provider,url:songUrl(x.url,provider)};
+    if(!track.url)throw new Error('Для песни '+index+' нужна прямая ссылка на трек '+provider+'.');
+    return track;
+  }
+  function featuredTracks(value){
+    var rows=typeof value==='undefined'?[]:value;
+    if(!Array.isArray(rows)||rows.length>3)
+      throw new Error('Для артиста можно выбрать не более трёх лучших песен.');
+    var seen={};
+    return rows.map(function(row,i){
+      var selected=featuredTrack(row,i+1);
+      if(seen[selected.url])throw new Error('В подборке не должно быть повторов одной ссылки.');
+      seen[selected.url]=true;
+      return selected;
+    });
+  }
   function card(x,type,index){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Карточка '+index+': неверный формат.');
     var title=plain(x.title,'Название карточки '+index,110,!!x.visible);
@@ -75,6 +115,7 @@
         (picture&&!/^data:image\/(webp|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(picture)))
         throw new Error('Недопустимая фотография. Нужно сжатое WebP/JPEG до 90 КБ.');
       result.imageData=picture;
+      result.featuredTracks=featuredTracks(x.featuredTracks);
     }
     return result;
   }
@@ -113,5 +154,6 @@
     return result;
   }
   function blankCard(){return {title:'',subtitle:'',description:'',url:'',imageUrl:'',visible:false};}
-  window.VMM_LANDING_SCHEMA={defaults:defaults,normalize:normalize,blankCard:blankCard};
+  window.VMM_LANDING_SCHEMA={defaults:defaults,normalize:normalize,blankCard:blankCard,
+    songUrl:songUrl,featuredTrack:featuredTrack,featuredTracks:featuredTracks};
 }());
