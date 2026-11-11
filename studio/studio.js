@@ -7,6 +7,7 @@
   var gate=document.getElementById('gate'),workspace=document.getElementById('workspace');
   var gateStatus=document.getElementById('gate-status'),signIn=document.getElementById('sign-in');
   var db=null,auth=null,user=null,authorized=false,authorizedUid='',saveBusy=false;
+  var signInAttempt=0,signInWatchdog=null;
   var lyrics=[],catalog=[],songs=[],songKey='',selectedRecord=null,selectedDraft=null,baseline='';
   var sections={lyrics:'Тексты песен',catalog:'Каталог релизов',recordings:'Фонограммы',platforms:'Площадки и ссылки',contacts:'Контакты',outreach:'Рассылки',audit:'Журнал',data:'Данные'};
   function el(n){return document.getElementById(n);}
@@ -208,7 +209,7 @@
       lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
       if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
     }
-    authorized=true;authorizedUid=user.uid;show(gate,false);show(workspace,true);
+    authorized=true;authorizedUid=user.uid;clearSignInWatchdog();signIn.disabled=false;signIn.textContent='Войти через Google';show(gate,false);show(workspace,true);
     text(el('account-label'),user.email||'Google');text(el('net-state'),navigator.onLine?'В сети':'Без сети');
     text(el('sync-status'),'Читаем личную базу…');
     var section=rememberedPanel();
@@ -220,7 +221,7 @@
   function unauthorized(note){
     authorized=false;authorizedUid='';saveBusy=false;lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
     if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
-    show(workspace,false);show(gate,true);message(note);if(auth)signIn.disabled=false;
+    show(workspace,false);show(gate,true);message(note);if(auth)signinReady();
   }
   function save(e){
     e.preventDefault();
@@ -262,7 +263,16 @@
   }
   function loadScript(src,done){var s=document.createElement('script');s.src=src;s.onload=function(){done(null);};s.onerror=function(){done(new Error('Не загрузилась библиотека авторизации'));};document.head.appendChild(s);}
   function configReady(c){return !!(c&&typeof c.apiKey==='string'&&c.apiKey&&typeof c.authDomain==='string'&&c.authDomain&&typeof c.projectId==='string'&&c.projectId&&typeof c.appId==='string'&&c.appId);}
-  function disabled(reason){message(reason);signIn.disabled=true;}
+  function clearSignInWatchdog(){
+    if(signInWatchdog!==null&&typeof window.clearTimeout==='function')window.clearTimeout(signInWatchdog);
+    signInWatchdog=null;
+  }
+  function signinReady(){
+    clearSignInWatchdog();
+    signIn.disabled=false;
+    signIn.textContent='Войти через Google';
+  }
+  function disabled(reason){clearSignInWatchdog();message(reason);signIn.disabled=true;}
   function loadSdk(){var base='https://www.gstatic.com/firebasejs/8.10.1/';loadScript(base+'firebase-app.js',function(e){if(e)return disabled(e.message);loadScript(base+'firebase-auth.js',function(e){if(e)return disabled(e.message);loadScript(base+'firebase-firestore.js',function(e){if(e)return disabled(e.message);initialize();});});});}
   function initialize(){
     try{
@@ -271,6 +281,7 @@
       signIn.disabled=false;message('Войди через Google, чтобы подтвердить доступ владельца.');
       auth.onAuthStateChanged(function(next){
         user=next;
+        if(user){clearSignInWatchdog();message('Google подтвердил вход. Проверяем права администратора…');}
         if(!user){unauthorized('Вход через Google необходим для доступа к личным материалам.');return;}
         if(!user.emailVerified){unauthorized('Google не подтвердил электронную почту аккаунта.');return;}
         // Offline access only if this exact verified admin doc was previously cached by Firestore.
@@ -287,9 +298,49 @@
     }catch(err){disabled('Ошибка авторизации: '+err.message);}
   }
   signIn.onclick=function(){
-    if(!auth)return;signIn.disabled=true;message('Открываем вход Google…');
-    var provider=new firebase.auth.GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});
-    auth.signInWithPopup(provider).catch(function(err){message('Не удалось войти: '+err.message);signIn.disabled=false;});
+    if(!auth)return;
+    var attempt=++signInAttempt;
+    signIn.disabled=true;
+    signIn.textContent='Открываем Google…';
+    message('Открываем вход Google… Если Safari блокирует всплывающие окна, разреши их для velardream.com.');
+    var provider=new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({prompt:'select_account'});
+    // Keep popup initiation directly inside a real click: Safari's transient
+    // user activation must not be consumed by another async call.
+    var promise;
+    try{promise=auth.signInWithPopup(provider);}
+    catch(err){
+      signinReady();
+      message('Вход Google не открылся: '+err.message+'. Проверь разрешение всплывающих окон Safari и повтори.');
+      return;
+    }
+    if(typeof window.setTimeout==='function'){
+      signInWatchdog=window.setTimeout(function(){
+        if(attempt!==signInAttempt||authorized)return;
+        signInWatchdog=null;
+        signIn.disabled=false;
+        signIn.textContent='Повторить вход через Google';
+        message('Google пока не подтвердил вход. Если окно не появилось, разреши всплывающие окна для velardream.com в Safari и нажми «Повторить вход». Если окно открыто, заверши вход там.');
+      },18000);
+    }
+    Promise.resolve(promise).then(function(){
+      if(attempt!==signInAttempt)return;
+      clearSignInWatchdog();
+      // User verification is still performed ONLY by the auth observer and
+      // server-side vmm_admins check; popup completion does not grant access.
+      if(!authorized)message('Вход Google выполнен. Проверяем права администратора…');
+    }).catch(function(err){
+      if(attempt!==signInAttempt||authorized)return;
+      signinReady();
+      var code=err&&err.code||'';
+      if(code==='auth/popup-blocked'||code==='auth/operation-not-supported-in-this-environment'){
+        message('Safari заблокировал окно входа Google. Открой Safari → Настройки → Веб-сайты → Всплывающие окна, разреши velardream.com и попробуй ещё раз. ('+code+')');
+      }else if(code==='auth/popup-closed-by-user'){
+        message('Окно Google закрыто без входа. Нажми «Войти через Google», чтобы повторить.');
+      }else{
+        message('Не удалось войти: '+(err&&err.message||code||'Неизвестная ошибка')+'. Попробуй ещё раз.');
+      }
+    });
   };
   el('sign-out').onclick=function(){
     if(!confirmDiscard())return;
