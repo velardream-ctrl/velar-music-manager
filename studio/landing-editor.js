@@ -11,7 +11,7 @@
  var trackEditorArtist='',trackChecked={},trackSearch='',trackSaving=false;
  var languageEditorCode='',languageCatalogSearch='',languageTrackFilter='';
  var topicEditorSlug='',topicCatalogSearch='',topicTrackFilter='';
- var tabs={hero:'Первый экран',artists:'Артисты',releases:'Музыка и релизы',playlists:'Плейлисты и подписки',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',about:'О проекте',publish:'Публикация'};
+ var tabs={hero:'Первый экран',artists:'Артисты',releases:'Музыка и релизы',playlists:'Плейлисты и подписки',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',about:'О проекте',publish:'Публикация'};
  function id(k){return document.getElementById(k);}
  function clear(el){while(el.firstChild)el.removeChild(el.firstChild);}
  function text(el,t){if(el)el.textContent=String(t==null?'':t);}
@@ -552,18 +552,68 @@
    },'landing-add'));
    parent.appendChild(wrap);
  }
- function playAndFollowEditor(parent){
+ function radioEditor(parent){
    var radio=data.releases.radio;
-   if(!radio){radio={enabled:false,title:'VELAR RADIO',provider:'spotify',url:''};data.releases.radio=radio;}
-   heading(parent,'VELAR RADIO','Только официальный плейлист Spotify или YouTube. Без автостарта, фонового цикла или накрутки прослушиваний.');
-   var enabled=document.createElement('label');enabled.className='landing-checkbox';
-   var check=document.createElement('input');check.type='checkbox';check.checked=radio.enabled===true;
-   check.onchange=function(){radio.enabled=this.checked;updateButtons();};
-   var label=document.createElement('span');label.textContent='Показывать кнопку радио';enabled.appendChild(check);enabled.appendChild(label);parent.appendChild(enabled);
+   if(!radio){
+     radio={enabled:false,controlVersion:2,title:'VELAR RADIO',provider:'spotify',url:''};
+     data.releases.radio=radio;
+   }
+   heading(parent,'Настройки VELAR RADIO',
+     'Управляй плавающим радио на главной странице. Сейчас оно выключено по умолчанию. Для включения или смены плейлиста сохрани черновик и отдельно опубликуй.');
+   var row=document.createElement('label');row.className='landing-checkbox';
+   var check=document.createElement('input');check.type='checkbox';
+   check.checked=radio.enabled===true;
+   check.onchange=function(){radio.enabled=this.checked;radio.controlVersion=2;updateButtons();};
+   row.appendChild(check);
+   var label=document.createElement('span');
+   label.textContent='Показывать VELAR RADIO посетителям';
+   row.appendChild(label);parent.appendChild(row);
+   var note=document.createElement('p');note.className='sync-note';
+   note.textContent='Отключение скрывает плавающее радио. Раздел обычных плейлистов и подписок остаётся доступным. Автозапуска музыки нет.';
+   parent.appendChild(note);
    field(parent,'Название радио',radio.title||'VELAR RADIO',function(v){radio.title=v;});
+   var list=data.releases.playlists||[],options=[['manual','Указать плейлист вручную']];
+   list.forEach(function(p,i){
+     if(API.playlistUrl(p.url,p.provider)){
+       options.push(['preset-'+i,(p.title||'Плейлист '+(i+1))+' · '+(p.provider==='youtube'?'YouTube':'Spotify')]);
+     }
+   });
+   var matched='manual';
+   list.forEach(function(p,i){
+     if(p.url===radio.url&&p.provider===radio.provider&&API.playlistUrl(p.url,p.provider))
+       matched='preset-'+i;
+   });
+   selectField(parent,'Выбрать один из своих плейлистов',options,matched,function(value){
+     if(value==='manual')return;
+     var item=list[Number(value.slice(7))];if(!item)return;
+     var verified=API.playlistUrl(item.url,item.provider);if(!verified)return;
+     radio.provider=item.provider;radio.url=verified;radio.controlVersion=2;
+     render();
+   });
    selectField(parent,'Площадка радио',[['spotify','Spotify'],['youtube','YouTube']],
-     radio.provider||'spotify',function(v){radio.provider=v;radio.url='';render();});
-   field(parent,'Публичная ссылка на плейлист радио',radio.url||'',function(v){radio.url=v;});
+     radio.provider||'spotify',function(v){
+       if(v!==radio.provider){radio.provider=v;radio.url='';}
+       radio.controlVersion=2;render();
+     });
+   field(parent,'Официальная ссылка на публичный плейлист радио',radio.url||'',function(v){
+     radio.url=v;radio.controlVersion=2;
+   });
+   var help=document.createElement('p');help.className='sync-note';
+   help.textContent='Разрешены только официальные публичные плейлисты Spotify и YouTube. Плеер появляется по нажатию слушателя, без автоматических прослушиваний.';
+   parent.appendChild(help);
+   var url=API.playlistUrl(radio.url||'',radio.provider);
+   if(url){
+     var preview=document.createElement('a');preview.className='landing-small';
+     preview.href=url;preview.target='_blank';preview.rel='noopener noreferrer';
+     preview.textContent='Открыть выбранный плейлист';
+     parent.appendChild(preview);
+   }
+ }
+ function playAndFollowEditor(parent){
+   heading(parent,'Плейлисты и подписки','Редактируй музыкальные подборки и ссылки независимо от плавающего радио.');
+   parent.appendChild(button('Настроить VELAR RADIO',function(){
+     tab='radio';render();
+   },'landing-small'));
    heading(parent,'Плейлисты','Плейлисты показываются отдельно от альбомов и синглов.');
    if(!data.releases.playlists)data.releases.playlists=[];
    data.releases.playlists.forEach(function(item,index){
@@ -1109,6 +1159,7 @@
      ['Первый экран',data.hero.subtitle,data.hero.intro],
      ['Артисты',data.artists.heading,data.artists.intro],
      ['Музыка и релизы',data.releases.heading,data.releases.intro],
+     ['VELAR RADIO',data.releases.radio.title,data.releases.radio.enabled?'Радио включено · '+data.releases.radio.provider:'Радио выключено'],
      ['Жанры',data.genres.heading,data.genres.intro],
      ['Созвездия',data.genres.universe.heading,
        data.genres.universe.nodes.filter(function(n){return n.visible;}).map(function(n){return n.label;}).join(' · ')],
@@ -1154,6 +1205,8 @@
      cardFields(panel,tab);
    }else if(tab==='playlists'){
      playAndFollowEditor(panel);
+   }else if(tab==='radio'){
+     radioEditor(panel);
    }else if(tab==='universe'){
      universeEditor(panel);
    }else if(tab==='languages'){
