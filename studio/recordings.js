@@ -344,11 +344,9 @@
       recordings=unique(result[2].filter(function(x){return x.driveFileId&&x.catalogId;}).concat(recordings),function(x){return x.driveFileId;});
       catalog.sort(function(a,b){return clean(a.title).localeCompare(clean(b.title),'ru');});
       lastPinned=result[4]||'';
-      if(!current||!catalog.some(function(t){return t.id===current;})){
-        var pinned=saved.filter(function(s){return s.catalogId===lastPinned;});
-        current=pinned.length?lastPinned:(saved.length?saved[0].catalogId:'');
-      }
-      renderOfflineList();renderSongs();setSong(current);
+      // Offline choices remain visible; neither the upload form nor the stage
+      // player opens automatically after a refresh.
+      renderSongs();renderOfflineList();setSong('');
       msg(uploadMessage||('Композиции: '+catalog.length+' · фонограммы: '+recordings.length+' · сохранено офлайн: '+saved.length+
          (navigator.onLine?' · в сети':' · без интернета')+
          (errors.length?' · Не удалось прочитать '+errors.join('; '):'')+
@@ -361,13 +359,13 @@
   }
   function open(){
     if(active){show(panel,true);return;}
-    suggestOpen=false;textVisible=false;
+    suggestOpen=false;textVisible=false;playerVisible=false;formSongId='';
     active=true;header();
     if(window.VMM_STUDIO&&window.VMM_STUDIO.rememberPanel)window.VMM_STUDIO.rememberPanel('recordings');
     if(uploadMessage)msg(uploadMessage);
     var tabs=document.querySelectorAll('#workspace [data-panel]');
     for(var i=0;i<tabs.length;i++)tabs[i].className=tabs[i].getAttribute('data-panel')==='recordings'?'nav-active':'';
-    show(id('panel-lyrics'),false);show(id('panel-future'),false);show(id('vmm-workflows'),false);show(panel,true);
+    show(id('panel-lyrics'),false);show(id('panel-future'),false);show(id('panel-data'),false);show(id('vmm-workflows'),false);show(panel,true);
     load();
   }
   function hide(){active=false;editOpen=false;renderPlayerEditor();show(panel,false);}
@@ -492,8 +490,13 @@
       return batch.commit().then(function(){
         entry.id=ref.id;recordings.push(entry);busy=false;
         uploadMessage='Загружено: '+name+'. Можно слушать, скачать или отметить для офлайн.';
-        if(songId===t.id){renderRecords();msg(uploadMessage);}
-        else msg(uploadMessage+' Запись прикреплена к '+t.title+' — выбери её в каталоге.');
+        if(formSongId===t.id){
+          // Only a confirmed Firestore commit resets the selection and closes
+          // all upload controls. Errors leave the current song selected.
+          var search=id('vmm-r-search');if(search)search.value='';
+          suggestOpen=false;setSong('',false);
+          msg(uploadMessage+' Выбор песни сброшен. Для прослушивания открой её в офлайн-подборке или найди в каталоге.');
+        }else msg(uploadMessage+' Запись прикреплена к '+t.title+' — выбери её в каталоге.');
       }).catch(function(err){throw new Error('Файл уже в Google Drive, но запись в каталоге не создалась: '+name+'. '+err.message);});
     }).catch(function(e){busy=false;uploadMessage='Ошибка загрузки: '+e.message;msg(uploadMessage);});
   }
@@ -672,11 +675,13 @@
     if(!target||target===panel)return;
     var action=target.getAttribute('data-r-action'),r=record(target.getAttribute('data-r-id'));
     if(!r)return;
-    if(action==='offline-play'){setSong(r.catalogId);if(songId===r.catalogId)play(r);return;}
-    if(action==='play')play(r);
-    if(action==='download')download(r);
+    if(action==='offline-play'||action==='open-track'){
+      setSong(r.catalogId,true);
+      if(songId===r.catalogId)play(r);
+      return;
+    }
     if(action==='restore')moveRecording(r,false);
   }
-  function reset(){hide();clearAudio();editOpen=false;driveToken='';driveFolderId='';db=null;user=null;catalog=[];lyrics=[];recordings=[];saved=[];songId='';audioFileId='';busy=false;textVisible=false;uploadMessage='';}
+  function reset(){hide();clearAudio();editOpen=false;driveToken='';driveFolderId='';db=null;user=null;catalog=[];lyrics=[];recordings=[];saved=[];songId='';formSongId='';playerVisible=false;audioFileId='';busy=false;textVisible=false;uploadMessage='';}
   window.VMM_RECORDINGS={open:open,hide:hide,reset:reset,translit:translit,filename:filename};
 }());
