@@ -67,6 +67,14 @@
       if(artistId&&!/^[a-z0-9-]+$/.test(artistId))
         throw new Error('Ключ артиста: недопустимый формат.');
       result.artistId=artistId;
+      var shape=x.imageShape||'square';
+      if(shape!=='square'&&shape!=='circle')throw new Error('Форма фотографии: квадрат или круг.');
+      result.imageShape=shape;
+      var picture=x.imageData||'';
+      if(typeof picture!=='string'||picture.length>126000||
+        (picture&&!/^data:image\/(webp|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(picture)))
+        throw new Error('Недопустимая фотография. Нужно сжатое WebP/JPEG до 90 КБ.');
+      result.imageData=picture;
     }
     return result;
   }
@@ -101,7 +109,7 @@
     if(!Array.isArray(tags)||tags.length>20)throw new Error('Жанры: максимум 20 меток.');
     result.genres.tags=tags.map(function(tag,i){return plain(tag,'Жанр '+(i+1),35,true);});
     result.about.notice=plain(typeof about.notice==='string'?about.notice:d.about.notice,'О проекте — объявление',600,false);
-    if(JSON.stringify(result).length>60000)throw new Error('Публикация слишком велика.');
+    if(JSON.stringify(result).length>780000)throw new Error('Изображений слишком много: уменьшай фотографии или используй меньше карточек (ограничение размера страницы).');
     return result;
   }
   function blankCard(){return {title:'',subtitle:'',description:'',url:'',imageUrl:'',visible:false};}

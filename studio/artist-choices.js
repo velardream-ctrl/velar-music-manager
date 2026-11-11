@@ -63,7 +63,7 @@
  }
  function newCard(candidate){
    if(!candidate||!candidate.id)throw new Error('Выбери артиста из списка.');
-   return {title:candidate.label,subtitle:'',description:'',url:'',imageUrl:'',visible:false,artistId:candidate.id};
+   return {title:candidate.label,subtitle:'',description:'',url:candidate.id==='velar'?'https://open.spotify.com/artist/1PNzGsDcFVuOMBN7Gw12tw':'',imageUrl:'',visible:false,artistId:candidate.id};
  }
  window.VMM_ARTIST_CHOICES={choices:choices,byId:byId,newCard:newCard,inferredId:inferredId};
 }());

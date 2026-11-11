@@ -29,10 +29,11 @@
    empty(target);target.className='cms-card-grid';
    shown.forEach(function(item){
      var card=create('article','cms-card');
-     if(item.imageUrl){
+     if(item.imageData||item.imageUrl){
        var img=document.createElement('img');
-       img.src=item.imageUrl;img.alt=item.title;img.loading='lazy';img.decoding='async';
-       img.referrerPolicy='no-referrer';img.className='cms-card-art';
+       img.src=item.imageData||item.imageUrl;img.alt=item.title;img.loading='lazy';img.decoding='async';
+       img.referrerPolicy='no-referrer';
+       img.className='cms-card-art'+(type==='artists'&&item.imageShape==='circle'?' is-circle':'');
        card.appendChild(img);
      }
      var copy=create('div','cms-card-copy');

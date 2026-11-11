@@ -255,6 +255,61 @@
    search.oninput=function(){trackSearch=this.value;drawRows();};
    drawRows();parent.appendChild(box);
  }
+ function artistPhotoControls(card,item){
+   var panel=document.createElement('div');panel.className='landing-photo-section';
+   var title=document.createElement('p');title.className='landing-photo-label';
+   title.textContent='Фотография артиста · загрузка с устройства';panel.appendChild(title);
+   var preview=document.createElement('div');preview.className='landing-photo-preview';
+   if(item.imageData||item.imageUrl){
+     var image=document.createElement('img');image.src=item.imageData||item.imageUrl;
+     image.alt='Предпросмотр фотографии '+(item.title||'артиста');
+     image.className='landing-photo-image'+(item.imageShape==='circle'?' is-circle':'');
+     preview.appendChild(image);
+   }else{
+     var empty=document.createElement('p');empty.className='sync-note';
+     empty.textContent='Пока без фотографии';preview.appendChild(empty);
+   }
+   panel.appendChild(preview);
+   var input=document.createElement('input');input.type='file';
+   input.accept='image/jpeg,image/png,image/webp,image/heic,image/heif';
+   input.className='landing-photo-input';
+   input.setAttribute('aria-label','Выбрать изображение артиста');
+   input.onchange=function(){
+     var file=this.files&&this.files[0];this.value='';
+     if(!file)return;
+     if(!window.VMM_ARTIST_IMAGE){info('Редактор фотографий не загружен. Обнови страницу.');return;}
+     window.VMM_ARTIST_IMAGE.open(file,function(imageData){
+       var previousData=item.imageData,previousUrl=item.imageUrl;
+       item.imageData=imageData;item.imageUrl='';
+       try{API.normalize(data);}catch(err){item.imageData=previousData;item.imageUrl=previousUrl;info('Фото не добавлено: '+err.message);return;}
+       render();info('Фотография обрезана и сжата до '+Math.round(imageData.length*0.75/1024)+' КБ. Сохрани черновик, затем опубликуй.');
+     },function(message){info(message);});
+   };
+   panel.appendChild(input);
+   var actions=document.createElement('div');actions.className='landing-photo-buttons';
+   actions.appendChild(button(item.imageData||item.imageUrl?'Заменить фотографию':'Загрузить фотографию',function(){
+     input.click();
+   },'landing-add'));
+   if(item.imageData||item.imageUrl){
+     actions.appendChild(button('Убрать фото',function(){
+       if(!window.confirm('Убрать фотографию из черновика? Публичная страница изменится только после публикации.'))return;
+       item.imageData='';item.imageUrl='';render();
+     },'landing-small'));
+   }
+   panel.appendChild(actions);
+   var shape=document.createElement('label');shape.className='landing-photo-shape';
+   var name=document.createElement('span');name.textContent='Форма фотографии на сайте';shape.appendChild(name);
+   var select=document.createElement('select');select.setAttribute('aria-label','Форма фотографии');
+   [['square','Квадрат'],['circle','Круг']].forEach(function(pair){
+     var option=document.createElement('option');option.value=pair[0];option.textContent=pair[1];select.appendChild(option);
+   });
+   select.value=item.imageShape==='circle'?'circle':'square';
+   select.onchange=function(){item.imageShape=this.value;render();};
+   shape.appendChild(select);panel.appendChild(shape);
+   var note=document.createElement('p');note.className='sync-note';
+   note.textContent='Кадрирование и сжатие выполняются прямо на устройстве. Исходный тяжёлый файл не отправляется. Суммарный размер изображений ограничен.';
+   panel.appendChild(note);card.appendChild(panel);
+ }
  function cardFields(parent,key){
    var list=data[key].cards,wrap=document.createElement('div');wrap.className='landing-cards';parent.appendChild(wrap);
    list.forEach(function(item,index){
@@ -285,7 +340,8 @@
      field(card,key==='artists'?'Роль / стиль':'Исполнитель',item.subtitle,function(v){item.subtitle=v;});
      field(card,'Краткое публичное описание',item.description,function(v){item.description=v;},true);
      field(card,'Публичная HTTPS-ссылка (профиль, Spotify, YouTube…) — необязательно',item.url,function(v){item.url=v;});
-     field(card,'HTTPS-ссылка на публичную обложку — необязательно',item.imageUrl,function(v){item.imageUrl=v;});
+     if(key==='artists')artistPhotoControls(card,item);
+     else field(card,'HTTPS-ссылка на публичную обложку — необязательно',item.imageUrl,function(v){item.imageUrl=v;});
      var check=document.createElement('label');check.className='landing-checkbox';
      var checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=item.visible===true;
      checkbox.onchange=function(){item.visible=this.checked;updateButtons();};
