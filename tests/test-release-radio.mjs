@@ -140,9 +140,9 @@ assert.doesNotMatch(universeJS,/setInterval\(|setTimeout\(|getContext\(['"]webgl
 assert.doesNotMatch(publicJS,/autoplay=1|loop=1|muted=1|setInterval\(/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(css,/.cms-release-art::before/);
-assert.match(html,/universe\.js\?v=1/);
-assert.match(html,/style\.css\?v=14/);
-assert.match(sw,/CACHE_PREFIX \+ 'v14'/);
+assert.match(html,/universe\.js\?v=2/);
+assert.match(html,/style\.css\?v=15/);
+assert.match(sw,/CACHE_PREFIX \+ 'v15'/);
 assert.match(sw,/STUDIO_PREFIX\+'v19'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);
