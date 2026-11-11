@@ -28,9 +28,9 @@ assert.match(source,/function bindStagePlayer\(\)/);
 assert.match(css,/\.vmm-r-play-button/);
 assert.match(css,/\.vmm-r-timeline input\[type="range"\]::-webkit-slider-thumb/);
 assert.match(css,/\.vmm-r-system audio/);
-assert.ok(html.includes('src="recordings.js?v=7"'));
-assert.ok(html.includes('href="recordings.css?v=7"'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v8'"));
+assert.ok(html.includes('src="recordings.js?v=8"'));
+assert.ok(html.includes('href="recordings.css?v=8"'));
+assert.ok(sw.includes("STUDIO_PREFIX+'v9'"));
 assert.ok(!/drive\.googleapis\.com|audio\/flac|audio\/mpeg/.test(sw),'Private audio must not be cached in the public PWA shell');
 
 const elements={};
