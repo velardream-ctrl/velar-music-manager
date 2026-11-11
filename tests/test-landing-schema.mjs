@@ -26,9 +26,9 @@ assert.equal(safe.releases.cards[0].visible,true);
 const privateObject={...def,secretToken:'abc123',lyrics:[{text:'не публиковать'}]};
 const clean=JSON.stringify(api.normalize(privateObject));
 assert.doesNotMatch(clean,/secretToken|не публиковать/);
-assert.match(html,/landing-public\.js\?v=5/);
-assert.match(html,/landing-schema\.js\?v=4/);
-assert.match(studio,/landing-editor\.js\?v=4/);
+assert.match(html,/landing-public\.js\?v=6/);
+assert.match(html,/landing-schema\.js\?v=5/);
+assert.match(studio,/landing-editor\.js\?v=5/);
 assert.match(studio,/data-panel="landing"/);
 for(const tab of ['hero','artists','releases','genres','about','publish'])
  assert.match(studio,new RegExp('data-landing-tab="'+tab+'"'));

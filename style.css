@@ -254,3 +254,162 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 }
 .discover .public-ui-arrow{color:#d9bd90}
 .footer-links .public-ui-arrow{color:#e8cd99;margin-left:5px}
+
+
+/* RUN-069. Releases, videos, playlists and voluntary VELAR RADIO. */
+#releases.showcase,#playlists.showcase{display:block;padding-top:64px;padding-bottom:76px}
+#releases>.section-heading,#playlists>.section-heading{max-width:790px;margin-bottom:24px}
+.cms-release-showcase{display:flex;flex-direction:column;gap:22px}
+.cms-release-features{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.cms-release-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}
+.cms-release-card{min-width:0;overflow:hidden;border-radius:16px;border:1px solid rgba(231,199,151,.42);
+ background:linear-gradient(155deg,#243652,#111d36);box-shadow:0 9px 24px #0003}
+.cms-release-art{position:relative;overflow:hidden;background:#1d2e4b;aspect-ratio:1/1}
+.cms-release-art::before{content:"";display:block;padding-top:100%}
+.cms-release-art--video{aspect-ratio:16/9}
+.cms-release-art--video::before{padding-top:56.25%}
+.cms-release-cover{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:contain}
+.cms-release-placeholder{position:absolute;inset:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+ background:radial-gradient(circle at 55% 35%,#5c5277 0%,#233653 50%,#142036 100%)}
+.cms-release-disc{width:48%;aspect-ratio:1/1;border:2px solid #e9c994a6;border-radius:50%;
+ background:repeating-radial-gradient(circle at center,#27354f 0px,#27354f 7px,#69748a 8px,#283952 9px)}
+.cms-release-ribbon{position:absolute;left:12px;top:12px;padding:7px 10px;border-radius:8px;
+ background:#182641db;color:#f5d5a0;border:1px solid #d0ad78;font-size:.64rem;letter-spacing:.12em}
+.cms-release-copy{padding:19px}
+.cms-release-type{display:block;color:#dbbe8b;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase}
+.cms-release-copy h3,.cms-playlist-copy h3{font:400 clamp(1.2rem,2vw,1.65rem)/1.25 Georgia,serif;color:#fff0d6;margin:7px 0}
+.cms-release-artist{color:#d4bd91;font-size:.84rem;margin:2px 0 8px}
+.cms-release-description,.cms-playlist-copy p{font-size:.88rem;color:#bac7d9;line-height:1.55;margin:8px 0 13px}
+.cms-release-actions,.cms-playlist-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.cms-release-listen,.cms-playlist-actions button{
+ display:inline-flex;align-items:center;gap:9px;min-height:44px;background:#e7c890;color:#182641;
+ font:700 .84rem -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+ border:1px solid #f6d8a3;padding:10px 13px;border-radius:10px;cursor:pointer;
+}
+.cms-release-listen:focus-visible,.cms-release-filter:focus-visible,.cms-release-more:focus-visible,
+.velar-radio button:focus-visible,.cms-playlist-card button:focus-visible{outline:3px solid #ffe3ac;outline-offset:3px}
+.cms-release-play{display:inline-block;width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:10px solid #21304a}
+.cms-release-player,.cms-playlist-player{padding:0 15px 15px}
+.cms-release-iframe{display:block;width:100%;min-width:0;height:352px;border:0;border-radius:12px;background:#121e35}
+.cms-release-iframe--video{height:auto;aspect-ratio:16/9;min-height:170px}
+.cms-release-close{display:inline-block;margin-top:9px;background:#243c5c;color:#edd6aa;border:1px solid #c6a979;
+ border-radius:10px;min-height:42px;padding:8px 13px;cursor:pointer}
+.cms-release-filters{display:flex;flex-wrap:wrap;gap:9px}
+.cms-release-filter,.cms-release-more{min-height:42px;border-radius:10px;padding:8px 16px;
+ background:#263854;border:1px solid #a58e6b;color:#e9d4ae;cursor:pointer;font:inherit}
+.cms-release-filter[aria-pressed=true]{background:#e4c58d;color:#172540;font-weight:700}
+.cms-release-more{align-self:center}
+.cms-release-empty{color:#bdcadd;font-size:.9rem}
+.cms-playlists-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:18px}
+.cms-playlist-card{display:grid;grid-template-columns:minmax(0,.65fr) minmax(0,1fr);gap:20px;
+ border:1px solid #dfc08b8c;background:linear-gradient(140deg,#203455,#111e37);
+ border-radius:16px;overflow:hidden;min-width:0;align-items:center}
+.cms-playlist-art{display:flex;align-items:center;justify-content:center;min-height:195px;
+ background:radial-gradient(circle,#705978 0%,#304468 47%,#101e39 100%);height:100%}
+.cms-playlist-vinyl{width:125px;height:125px;display:block;border-radius:50%;
+ border:3px solid #e5c68ba6;background:repeating-radial-gradient(circle,#1c2b47 0px,#1c2b47 8px,#8790a4 9px,#253954 11px)}
+.cms-playlist-copy{padding:17px 18px 17px 0;min-width:0}
+.cms-subscriptions{margin-top:26px;padding:20px;background:#182843;border:1px solid #d7b9876b;border-radius:15px}
+.cms-subscriptions h3{margin:0 0 15px;color:#fff0d6;font:400 1.4rem Georgia,serif}
+.cms-subscription-links{display:flex;flex-wrap:wrap;gap:11px}
+.cms-subscription-link{display:inline-flex;align-items:center;gap:9px;min-height:44px;
+ padding:10px 15px;border-radius:10px;border:1px solid #dbbd84;color:#f2d8ad;text-decoration:none;
+ background:#273c5f}
+.cms-subscription-icon{display:inline-block;width:8px;height:8px;background:#eec88d;border-radius:50%}
+.velar-radio{position:fixed;bottom:max(16px,env(safe-area-inset-bottom,0px));
+ right:clamp(12px,2.5vw,34px);z-index:75;width:min(365px,calc(100vw - 24px));
+ color:#f5e3c7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.velar-radio.hidden{display:none}
+.velar-radio-toggle{display:flex;align-items:center;gap:10px;min-height:50px;width:100%;
+ border:1px solid #e9c58b;border-radius:13px;padding:10px 17px;color:#ffe1a8;background:#162945;
+ font:700 .89rem -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;box-shadow:0 12px 27px #0009;
+ cursor:pointer;letter-spacing:.07em}
+.velar-radio-dot{width:10px;height:10px;flex:0 0 10px;border:2px solid #efd29b;border-radius:50%;background:#957c4a}
+.velar-radio-chevron{width:8px;height:8px;margin-left:auto;border-right:2px solid #e3c186;border-bottom:2px solid #e3c186;transform:rotate(45deg)}
+.velar-radio-toggle[aria-expanded=true] .velar-radio-chevron{transform:rotate(225deg)}
+.velar-radio-panel{padding:15px;border:1px solid #b79c72;border-radius:13px 13px 0 0;
+ background:#142541;box-shadow:0 15px 45px #000a;max-height:70vh;overflow-y:auto}
+.velar-radio-panel.hidden{display:none}
+.velar-radio-panel strong{display:block;color:#f4d9ad;margin-bottom:8px}
+.velar-radio-note{color:#b7c7df;font-size:.81rem;line-height:1.5}
+.velar-radio-start{display:block;width:100%;min-height:45px;padding:10px;border:1px solid #edcd91;
+ background:#e6c58b;color:#172641;border-radius:10px;cursor:pointer;font:700 .85rem inherit}
+.velar-radio-player{margin-top:12px;min-width:0}
+.velar-radio-iframe{display:block;width:100%;height:352px;border:0;border-radius:11px;background:#101d35}
+.velar-radio-iframe--video{height:auto;aspect-ratio:16/9;min-height:170px}
+.velar-radio-external{display:inline-block;margin:10px 0;color:#e9c895}
+@media(max-width:800px){
+ #releases.showcase,#playlists.showcase{padding-top:43px;padding-bottom:54px}
+ .cms-release-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .cms-release-features{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:560px){
+ .cms-release-grid{grid-template-columns:minmax(0,1fr)}
+ .cms-playlist-card{display:block}
+ .cms-playlist-art{min-height:170px}
+ .cms-playlist-copy{padding:18px}
+ .cms-release-iframe,.velar-radio-iframe{min-height:352px}
+ .cms-subscriptions{padding:14px}
+}
+
+
+/* RUN-070 — futuristic 2.5D music universe, entirely local and opt-in. */
+.universe-section{padding:70px 0 76px;border-bottom:1px solid rgba(224,194,142,.18);text-align:center}
+.universe-overline,.universe-info-kicker{display:block;color:#d9bc87;font-size:.68rem;letter-spacing:.21em}
+.universe-section h2{font:400 clamp(1.8rem,4.3vw,3rem)/1.13 Georgia,serif;color:#fff1d8;margin:10px auto 12px}
+.universe-intro{max-width:690px;color:#c4cfe0;margin:0 auto 22px;line-height:1.6}
+.universe-toggle{min-height:48px;padding:12px 25px;background:#e5c488;color:#17243f;border:1px solid #f8dbaa;
+ border-radius:999px;cursor:pointer;font:700 .91rem -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.universe-toggle:focus-visible,.universe-node:focus-visible,.universe-go:focus-visible{outline:3px solid #ffe2a4;outline-offset:4px}
+.universe-panel{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(240px,.85fr);
+ gap:18px;align-items:stretch;margin:25px auto 0;text-align:left}
+.universe-panel.hidden{display:none}
+.universe-scene{position:relative;min-width:0;overflow:hidden;border-radius:19px;border:1px solid #d3b88382;
+ background:radial-gradient(circle at 50% 49%,#51618048 0 4%,transparent 41%),
+ radial-gradient(1px 1px at 14% 18%,#e9d09e 0,transparent 100%),
+ radial-gradient(1px 1px at 82% 22%,#fff4de 0,transparent 100%),
+ radial-gradient(2px 2px at 37% 84%,#ebc78a 0,transparent 100%),
+ radial-gradient(1px 1px at 71% 71%,#f3d4aa 0,transparent 100%),#0b1832;
+ box-shadow:inset 0 0 75px #0008,0 10px 28px #0004}
+.universe-stage{position:relative;min-height:410px;transform-style:preserve-3d;
+ transition:transform .22s ease-out;will-change:auto}
+.universe-connectors{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.universe-connectors path{stroke:#e2c18c66;stroke-width:1.7;fill:none;stroke-dasharray:5 10}
+.universe-core{position:absolute;left:50%;top:50%;width:96px;height:96px;
+ transform:translate(-50%,-50%);border:1px solid #e5cc97a8;border-radius:50%;
+ box-shadow:0 0 18px #f0bc7d3d,0 0 65px #e9a47330,inset 0 0 24px #e9c99728;
+ background:radial-gradient(circle,#d8b780 0%,#56466e 19%,#1b2d52 45%,#101b35 100%);pointer-events:none}
+.universe-node{position:absolute;transform:translate(-50%,-50%);
+ display:flex;align-items:center;gap:7px;text-align:left;min-width:118px;max-width:160px;
+ padding:9px 12px;background:#1b2f4bed;border:1px solid #a89370;
+ border-radius:12px;box-shadow:0 7px 22px #0008;color:#e8d8ba;cursor:pointer;
+ font:600 .76rem -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+ transition:background .2s,box-shadow .2s,border-color .2s}
+.universe-node[aria-pressed=true]{background:#e8ca93;color:#15243e;border-color:#ffe8be;
+ box-shadow:0 0 25px #eabf7d60,0 5px 15px #0007;z-index:2}
+.universe-node-mark{font:400 .9rem Georgia,serif;opacity:.76}
+.universe-node-name{line-height:1.2}
+.universe-details{border:1px solid #d0b38469;border-radius:17px;padding:28px 23px;
+ background:linear-gradient(155deg,#233654,#12203b);display:flex;flex-direction:column;justify-content:center;min-width:0}
+.universe-details h3{color:#ffebc9;font:400 clamp(1.4rem,2.4vw,1.8rem) Georgia,serif;margin:9px 0}
+.universe-details p{color:#c0cbdf;font-size:.95rem;line-height:1.6;margin:6px 0}
+.universe-info-count{display:block;color:#e4c28d;font-size:.82rem;margin:13px 0}
+.universe-go{display:inline-flex;align-self:flex-start;padding:12px 16px;border:1px solid #e0c38b;
+ border-radius:10px;color:#ffddb0;text-decoration:none;font-size:.86rem}
+.universe-go:hover{background:#e5c891;color:#1b2a45}
+@media(max-width:950px){.universe-panel{grid-template-columns:1fr}.universe-stage{min-height:340px}}
+@media(max-width:610px){
+ .universe-section{padding:47px 0 53px}
+ .universe-stage{min-height:332px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+   align-content:center;column-gap:9px;row-gap:19px;padding:15px 12px}
+ .universe-node{position:relative;left:auto!important;top:auto!important;transform:none!important;
+   min-width:0;max-width:none;width:100%;padding:9px 10px;font-size:.76rem;gap:6px}
+ .universe-node-mark{font-size:.8rem}
+ .universe-core{width:70px;height:70px;opacity:.2;z-index:0}
+ .universe-connectors{display:none}
+ .universe-details{padding:17px}
+}
+@media(prefers-reduced-motion:reduce){
+ .universe-stage,.universe-node,.universe-connectors{transition:none!important;animation:none!important}
+ .universe-stage{transform:none!important}
+}

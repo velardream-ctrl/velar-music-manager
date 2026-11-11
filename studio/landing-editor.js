@@ -9,7 +9,7 @@
  var catalogArtists=[],catalogLoaded=false,catalogLoading=false,catalogError='';
  var trackLinks={revision:0,overrides:{}},trackLinksLoaded=false;
  var trackEditorArtist='',trackChecked={},trackSearch='',trackSaving=false;
- var tabs={hero:'Первый экран',artists:'Артисты',releases:'Музыка и релизы',genres:'Жанры',about:'О проекте',publish:'Публикация'};
+ var tabs={hero:'Первый экран',artists:'Артисты',releases:'Музыка и релизы',playlists:'Плейлисты и подписки',genres:'Жанры',about:'О проекте',publish:'Публикация'};
  function id(k){return document.getElementById(k);}
  function clear(el){while(el.firstChild)el.removeChild(el.firstChild);}
  function text(el,t){if(el)el.textContent=String(t==null?'':t);}
@@ -94,11 +94,11 @@
      if(rows.length>=1200)throw new Error('Каталог достиг лимита 1200 записей. Для безопасного назначения требуется загрузить полный каталог.');
      catalogArtists=rows;trackLinks=result[1];trackLinksLoaded=true;
      catalogLoaded=true;catalogLoading=false;
-     if(tab==='artists')render();
+     if(tab==='artists'||tab==='releases')render();
    }).catch(function(err){
      if(generation!==loadGeneration||account!==uid)return;
      catalogLoading=false;catalogError=err&&err.message||'Каталог или связи песен временно недоступны.';
-     if(tab==='artists')render();
+     if(tab==='artists'||tab==='releases')render();
    });
  }
  function artistPicker(parent){
@@ -437,6 +437,177 @@
    note.textContent='Посетитель нажимает на песню и открывает официальный встроенный плеер. Никакого автозапуска. Короткое превью Spotify может не засчитываться как полноценное прослушивание.';
    wrap.appendChild(note);card.appendChild(wrap);
  }
+
+ function selectField(parent,label,options,chosen,onChange){
+   var wrap=document.createElement('label');wrap.className='landing-field';
+   var cap=document.createElement('span');cap.textContent=label;wrap.appendChild(cap);
+   var select=document.createElement('select');select.className='landing-release-select';
+   options.forEach(function(row){
+     var o=document.createElement('option');o.value=row[0];o.textContent=row[1];select.appendChild(o);
+   });
+   select.value=chosen;select.onchange=function(){onChange(this.value);updateButtons();};
+   wrap.appendChild(select);parent.appendChild(wrap);return select;
+ }
+ function releaseCover(parent,item){
+   var section=document.createElement('div');section.className='landing-release-cover';
+   heading(section,'Обложка релиза','Кадрирование и сжатие до 90 КБ выполняются на устройстве.');
+   if(item.imageData||item.imageUrl){
+     var img=document.createElement('img');img.className='landing-release-cover-preview';
+     img.src=item.imageData||item.imageUrl;img.alt='Обложка: '+(item.title||'релиз');section.appendChild(img);
+   }
+   var file=document.createElement('input');file.type='file';file.className='landing-release-cover-input';
+   file.accept='image/jpeg,image/png,image/webp,image/heic,image/heif';
+   file.setAttribute('aria-label','Выбрать обложку релиза');section.appendChild(file);
+   file.onchange=function(){
+     var f=this.files&&this.files[0];this.value='';
+     if(!f)return;
+     if(!window.VMM_ARTIST_IMAGE){info('Редактор картинок пока недоступен. Обнови страницу.');return;}
+     window.VMM_ARTIST_IMAGE.open(f,function(img){
+       var old=item.imageData,oldURL=item.imageUrl;
+       item.imageData=img;item.imageUrl='';
+       try{API.normalize(data);}
+       catch(err){item.imageData=old;item.imageUrl=oldURL;info('Ошибка обложки: '+err.message);return;}
+       render();info('Обложка сжата. Сохрани черновик, затем опубликуй.');
+     },function(error){info(error);});
+   };
+   section.appendChild(button('Загрузить обложку',function(){file.click();},'landing-add'));
+   if(item.imageData||item.imageUrl){
+     section.appendChild(button('Убрать обложку',function(){
+       if(!window.confirm('Убрать обложку из черновика?'))return;
+       item.imageData='';item.imageUrl='';render();
+     }));
+   }
+   parent.appendChild(section);
+ }
+ function releaseExtras(parent,item){
+   selectField(parent,'Тип релиза',[['single','Сингл'],['album','Альбом'],['video','Видеоклип']],
+     item.kind||'single',function(v){item.kind=v;});
+   selectField(parent,'Главная витрина',[['none','В общем каталоге'],['music','Крупный музыкальный релиз'],
+     ['video','Крупная видеопремьера']],item.spotlight||'none',function(v){item.spotlight=v;});
+   selectField(parent,'Официальный плеер',[['','Без встроенного плеера'],['spotify','Spotify'],
+     ['youtube','YouTube']],item.mediaProvider||'',function(v){item.mediaProvider=v;item.mediaUrl='';render();});
+   field(parent,'Прямая ссылка на трек/альбом Spotify или видео YouTube',item.mediaUrl||'',function(v){item.mediaUrl=v;});
+   releaseCover(parent,item);
+ }
+ function releaseCatalogPicker(parent){
+   var wrap=document.createElement('section');wrap.className='landing-release-picker';
+   heading(wrap,'Добавить из каталога','В черновик попадут только название, исполнитель и выбранная официальная ссылка. Не публикуем исходный защищённый каталог.');
+   if(!catalogLoaded){
+     var msg=document.createElement('p');msg.className='sync-note';
+     msg.textContent=catalogLoading?'Читаем каталог…':catalogError?catalogError:'Подключи защищённый каталог.';
+     wrap.appendChild(msg);
+     wrap.appendChild(button('Загрузить каталог',function(){catalogLoaded=false;loadCatalogArtists(true);}));
+     parent.appendChild(wrap);return;
+   }
+   var search=document.createElement('input');search.type='search';search.className='landing-release-search';
+   search.placeholder='Название или артист';search.setAttribute('aria-label','Найти песню в каталоге');wrap.appendChild(search);
+   var choices=document.createElement('select');choices.className='landing-release-select';
+   choices.setAttribute('aria-label','Песня для добавления');wrap.appendChild(choices);
+   var sources=document.createElement('select');sources.className='landing-release-select';
+   sources.setAttribute('aria-label','Музыкальная площадка');wrap.appendChild(sources);
+   var songs=[];
+   catalogArtists.forEach(function(song){
+     var urls=song.links||{},spotify=API.releaseMediaUrl(urls.spotify||'','spotify'),
+       youtube=API.releaseMediaUrl(urls.youtube||'','youtube');
+     if(spotify||youtube)songs.push({title:String(song.title||''),artist:String(song.artist||''),
+       spotify:spotify,youtube:youtube});
+   });
+   function updateSources(){
+     clear(sources);var row=songs[Number(choices.value)];
+     if(!row)return;
+     if(row.spotify){var sp=document.createElement('option');sp.value='spotify';sp.textContent='Spotify';sources.appendChild(sp);}
+     if(row.youtube){var yt=document.createElement('option');yt.value='youtube';yt.textContent='YouTube';sources.appendChild(yt);}
+   }
+   function searchSongs(){
+     clear(choices);
+     var q=String(search.value||'').toLocaleLowerCase('ru').replace(/ё/g,'е').trim();
+     var count=0;
+     songs.forEach(function(song,i){
+       if(q&&(song.title+' '+song.artist).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)<0)return;
+       if(count++>=60)return;
+       var option=document.createElement('option');option.value=String(i);
+       option.textContent=song.title+' · '+song.artist;choices.appendChild(option);
+     });
+     if(choices.children.length)choices.value=choices.children[0].value;
+     updateSources();
+   }
+   search.oninput=searchSongs;choices.onchange=updateSources;searchSongs();
+   wrap.appendChild(button('+ Выбрать релиз',function(){
+     var row=songs[Number(choices.value)],provider=sources.value||(sources.children[0]&&sources.children[0].value)||'';
+     if(!row){info('Нет подходящей песни с прямой ссылкой.');return;}
+     if(data.releases.cards.length>=12){info('На главной максимум 12 релизов.');return;}
+     var url=provider==='spotify'?row.spotify:row.youtube;
+     if(!url){info('У песни нет ссылки на эту площадку.');return;}
+     if(data.releases.cards.some(function(x){return x.mediaUrl===url&&!!url;})){
+       info('Этот релиз уже есть в списке.');return;
+     }
+     var item=API.blankCard();
+     item.title=row.title;item.subtitle=row.artist;item.kind=provider==='youtube'?'video':'single';
+     item.mediaProvider=provider;item.mediaUrl=url;item.url=url;item.spotlight='none';
+     item.visible=false;
+     data.releases.cards.push(item);render();
+     info('Релиз добавлен в черновик (пока скрыт). Проверь тип, обложку и отметь «Показывать».');
+   },'landing-add'));
+   parent.appendChild(wrap);
+ }
+ function playAndFollowEditor(parent){
+   var radio=data.releases.radio;
+   if(!radio){radio={enabled:false,title:'VELAR RADIO',provider:'spotify',url:''};data.releases.radio=radio;}
+   heading(parent,'VELAR RADIO','Только официальный плейлист Spotify или YouTube. Без автостарта, фонового цикла или накрутки прослушиваний.');
+   var enabled=document.createElement('label');enabled.className='landing-checkbox';
+   var check=document.createElement('input');check.type='checkbox';check.checked=radio.enabled===true;
+   check.onchange=function(){radio.enabled=this.checked;updateButtons();};
+   var label=document.createElement('span');label.textContent='Показывать кнопку радио';enabled.appendChild(check);enabled.appendChild(label);parent.appendChild(enabled);
+   field(parent,'Название радио',radio.title||'VELAR RADIO',function(v){radio.title=v;});
+   selectField(parent,'Площадка радио',[['spotify','Spotify'],['youtube','YouTube']],
+     radio.provider||'spotify',function(v){radio.provider=v;radio.url='';render();});
+   field(parent,'Публичная ссылка на плейлист радио',radio.url||'',function(v){radio.url=v;});
+   heading(parent,'Плейлисты','Плейлисты показываются отдельно от альбомов и синглов.');
+   if(!data.releases.playlists)data.releases.playlists=[];
+   data.releases.playlists.forEach(function(item,index){
+     var box=document.createElement('section');box.className='landing-card';
+     heading(box,'Плейлист '+(index+1));
+     field(box,'Название',item.title,function(v){item.title=v;});
+     field(box,'Короткое описание',item.description||'',function(v){item.description=v;});
+     selectField(box,'Площадка',[['spotify','Spotify'],['youtube','YouTube']],
+       item.provider||'spotify',function(v){item.provider=v;item.url='';render();});
+     field(box,'Официальная ссылка на плейлист',item.url||'',function(v){item.url=v;});
+     var row=document.createElement('label');row.className='landing-checkbox';
+     var tick=document.createElement('input');tick.type='checkbox';tick.checked=item.visible===true;
+     tick.onchange=function(){item.visible=this.checked;updateButtons();};
+     row.appendChild(tick);row.appendChild(document.createTextNode(' Показывать плейлист'));box.appendChild(row);
+     box.appendChild(button('Удалить плейлист',function(){
+       if(!window.confirm('Убрать плейлист из черновика?'))return;
+       data.releases.playlists.splice(index,1);render();
+     }));parent.appendChild(box);
+   });
+   parent.appendChild(button('+ Добавить плейлист',function(){
+     if(data.releases.playlists.length>=8){info('Максимум 8 плейлистов.');return;}
+     data.releases.playlists.push({title:'',description:'',url:'',provider:'spotify',visible:false});render();
+   },'landing-add'));
+   heading(parent,'Подписки','Только прямые официальные страницы артистов и каналов.');
+   if(!data.releases.subscriptions)data.releases.subscriptions=[];
+   data.releases.subscriptions.forEach(function(item,index){
+     var box=document.createElement('section');box.className='landing-card';
+     heading(box,'Подписка '+(index+1));
+     field(box,'Название',item.title,function(v){item.title=v;});
+     selectField(box,'Площадка',[['spotify','Spotify'],['youtube','YouTube'],['telegram','Telegram']],
+       item.provider||'spotify',function(v){item.provider=v;item.url='';render();});
+     field(box,'Ссылка на артиста / канал',item.url||'',function(v){item.url=v;});
+     var row=document.createElement('label');row.className='landing-checkbox';
+     var tick=document.createElement('input');tick.type='checkbox';tick.checked=item.visible===true;
+     tick.onchange=function(){item.visible=this.checked;updateButtons();};
+     row.appendChild(tick);row.appendChild(document.createTextNode(' Показывать подписку'));box.appendChild(row);
+     box.appendChild(button('Удалить подписку',function(){
+       if(!window.confirm('Убрать ссылку из черновика?'))return;
+       data.releases.subscriptions.splice(index,1);render();
+     }));parent.appendChild(box);
+   });
+   parent.appendChild(button('+ Добавить подписку',function(){
+     if(data.releases.subscriptions.length>=6){info('Максимум 6 подписок.');return;}
+     data.releases.subscriptions.push({title:'',provider:'spotify',url:'',visible:false});render();
+   },'landing-add'));
+ }
  function cardFields(parent,key){
    var list=data[key].cards,wrap=document.createElement('div');wrap.className='landing-cards';parent.appendChild(wrap);
    list.forEach(function(item,index){
@@ -468,7 +639,7 @@
      field(card,'Краткое публичное описание',item.description,function(v){item.description=v;},true);
      field(card,'Публичная HTTPS-ссылка (профиль, Spotify, YouTube…) — необязательно',item.url,function(v){item.url=v;});
      if(key==='artists')artistPhotoControls(card,item);
-     else field(card,'HTTPS-ссылка на публичную обложку — необязательно',item.imageUrl,function(v){item.imageUrl=v;});
+     else {field(card,'HTTPS-ссылка на публичную обложку — необязательно',item.imageUrl,function(v){item.imageUrl=v;});releaseExtras(card,item);}
      var check=document.createElement('label');check.className='landing-checkbox';
      var checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=item.visible===true;
      checkbox.onchange=function(){item.visible=this.checked;updateButtons();};
@@ -486,6 +657,7 @@
      wrap.appendChild(card);
    });
    if(key==='releases'){
+     releaseCatalogPicker(parent);
      var add=button('+ Добавить релиз',function(){
        if(list.length>=12){info('В одном разделе допускается максимум 12 карточек.');return;}
        list.push(API.blankCard());render();
@@ -536,6 +708,8 @@
      sectionFields(panel,tab);
      if(tab==='artists')artistPicker(panel);
      cardFields(panel,tab);
+   }else if(tab==='playlists'){
+     playAndFollowEditor(panel);
    }else if(tab==='genres'){
      heading(panel,'Жанры и подборки','Публичные названия музыкальных направлений.');
      sectionFields(panel,tab);
@@ -564,7 +738,7 @@
  }
  function load(force){
    if(busy)return Promise.resolve();
-   if(loaded&&!force){render();if(tab==='artists')loadCatalogArtists();return Promise.resolve();}
+   if(loaded&&!force){render();if(tab==='artists'||tab==='releases')loadCatalogArtists();return Promise.resolve();}
    if(force&&dirty()&&!window.confirm('Несохранённые изменения карточек или привязок будут потеряны. Обновить из облака?'))return Promise.resolve();
    if(force){trackEditorArtist='';trackChecked={};trackSearch='';catalogLoaded=false;trackLinksLoaded=false;}
    var currentLoad=++loadGeneration;
@@ -580,7 +754,7 @@
        draftRev=draft?Number(draft.revision)||0:0;
        data=API.normalize(draft&&draft.content?draft.content:published||API.defaults());
        baseline=JSON.stringify(data);loaded=true;busy=false;render();
-       if(tab==='artists')loadCatalogArtists();
+       if(tab==='artists'||tab==='releases')loadCatalogArtists();
        info(draft?'Черновик загружен. Изменения пока не опубликованы.':
           (published?'Загружена последняя публикация. Сохрани черновик, прежде чем публиковать изменения.':
           'Публикаций пока нет. Подготовь разделы и сохрани первый черновик.'));
@@ -664,7 +838,7 @@
  var nav=document.querySelectorAll('#landing-tabs [data-landing-tab]');
  for(var i=0;i<nav.length;i++)nav[i].onclick=function(){
    tab=this.getAttribute('data-landing-tab');render();
-   if(tab==='artists')loadCatalogArtists();
+   if(tab==='artists'||tab==='releases')loadCatalogArtists();
  };
  id('landing-save').onclick=save;
  id('landing-publish').onclick=publish;
