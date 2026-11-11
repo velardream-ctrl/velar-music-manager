@@ -60,8 +60,10 @@
   function syncStagePlayer(){
     var a=id('vmm-r-audio'),button=id('vmm-r-play'),slider=id('vmm-r-seek');
     if(!a||!button||!slider)return;
-    var loaded=!!audioFileId&&!playerPending,hasDuration=stageDuration(a)>0,
+    var loaded=!!audioFileId&&!playerPending,
       duration=stageDuration(a),time=Number(a.currentTime);
+    if(!loaded){duration=0;time=0;}
+    var hasDuration=loaded&&duration>0;
     if(!isFinite(time)||time<0)time=0;
     if(duration)time=Math.min(time,duration);
     var playing=loaded&&a.paused===false&&!a.ended;
