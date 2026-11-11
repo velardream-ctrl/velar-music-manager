@@ -387,6 +387,8 @@
    if(window.VELAR_UNIVERSE&&window.VELAR_UNIVERSE.render)window.VELAR_UNIVERSE.render(value);
    if(window.VELAR_LANGUAGES&&window.VELAR_LANGUAGES.render)
      window.VELAR_LANGUAGES.render(value.genres.languages);
+   if(window.VELAR_TOPICS&&window.VELAR_TOPICS.render)
+     window.VELAR_TOPICS.render(value.genres.topics);
    return true;
  }
  function start(){
