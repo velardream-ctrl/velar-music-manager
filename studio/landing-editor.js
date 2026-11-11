@@ -198,8 +198,8 @@
        });
      });
    }).then(function(v){
-     draftRev=v;data=clone(cleanData);baseline=JSON.stringify(data);busy=false;render();
-     info('Черновик сохранён (версия '+v+'). Главная страница ещё не изменилась.');
+     draftRev=v;baseline=JSON.stringify(cleanData);busy=false;render();
+     info('Черновик сохранён (версия '+v+'). '+(dirty()?'Есть более поздние несохранённые правки.':'Главная страница ещё не изменилась.'));
    }).catch(function(e){busy=false;updateButtons();info('Черновик не сохранён: '+safeStatus(e));});
  }
  function publish(){
@@ -259,5 +259,5 @@
    data=clone(published);tab='publish';render();
    info('Последняя опубликованная версия возвращена в редактор. Сохрани как черновик, если нужно продолжить работу.');
  };
- window.VMM_LANDING={open:open,hide:hide,reset:reset,canLeave:canLeave};
+ window.VMM_LANDING={open:open,hide:hide,reset:reset,canLeave:canLeave,isDirty:dirty};
 }());
