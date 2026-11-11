@@ -13,9 +13,9 @@ assert.match(source,/if\(!editOpen\|\|!r\|\|r\.archived\|\|r\.catalogId!==songId
 assert.doesNotMatch(source,/data-r-offline=/,'Do not expose live offline checkbox');
 assert.doesNotMatch(source,/data-r-action="trash"/,'Do not expose per-track trash in playback list');
 assert.match(source,/duplicate&&!window\.confirm/,'Duplicate variant upload must require confirmation');
-assert.ok(html.includes('src="recordings.js?v=5"'));
-assert.ok(html.includes('href="recordings.css?v=5"'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v6'"));
+assert.ok(html.includes('src="recordings.js?v=6"'));
+assert.ok(html.includes('href="recordings.css?v=6"'));
+assert.ok(sw.includes("STUDIO_PREFIX+'v7'"));
 assert.match(css,/\.vmm-r-edit-toggle/);
 
 const nodes={}, clicks=[],confirmed=[];
@@ -43,7 +43,7 @@ const window={confirm(s){confirmed.push(s);return false;},VMM_OFFLINE:{
 }};
 const code=source.replace(
  'window.VMM_RECORDINGS={open:open,hide:hide,reset:reset,translit:translit,filename:filename};',
- 'window.VMM_RECORDINGS={_test:{header:header,renderRecords:renderRecords,renderPlayerEditor:renderPlayerEditor,setSong:setSong,hide:hide,selectAudio:function(id){audioFileId=id;},setup:function(){user={uid:"owner"};catalog=[{id:"song1",title:"Дикая вишня"},{id:"song2",title:"Журавли"}];recordings=[window.__record];saved=[window.__stored];songId="song1";active=true;db={collection:function(){return {doc:function(){return {};}};}};}}};'
+ 'window.VMM_RECORDINGS={_test:{header:header,renderRecords:renderRecords,renderPlayerEditor:renderPlayerEditor,setSong:setSong,hide:hide,selectAudio:function(id){audioFileId=id;playerVisible=true;},setup:function(){user={uid:"owner"};catalog=[{id:"song1",title:"Дикая вишня"},{id:"song2",title:"Журавли"}];recordings=[window.__record];saved=[window.__stored];songId="song1";active=true;db={collection:function(){return {doc:function(){return {};}};}};}}};'
 );
 assert.notEqual(code,source,'Cannot inject test exports');
 window.__record=record;window.__stored=fakeStored;
