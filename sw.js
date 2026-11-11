@@ -1,13 +1,13 @@
 /* VELAR public shell only. NEVER cache authenticated API responses or personal lyrics here. ES5 compatible. */
 'use strict';
 var CACHE_PREFIX = 'velar-public-shell-';
-var CACHE_NAME = CACHE_PREFIX + 'v23';
+var CACHE_NAME = CACHE_PREFIX + 'v24';
 /* Only private studio SOURCE FILES are cached. Never cache Firestore, Drive files,
    authenticated responses, user lyrics or audio through this Service Worker. */
 var STUDIO_PREFIX='velar-studio-shell-';
-var STUDIO_CACHE=STUDIO_PREFIX+'v26';
+var STUDIO_CACHE=STUDIO_PREFIX+'v27';
 var STUDIO_ASSETS=[
-  './studio/','./studio/index.html','./studio/studio.css?v=17','./studio/artist-choices.js?v=1','./studio/artist-track-links.js?v=1','./studio/artist-image-editor.js?v=1','./studio/title-language.js?v=1', './studio/landing-editor.js?v=12',
+  './studio/','./studio/index.html','./studio/studio.css?v=17','./studio/artist-choices.js?v=1','./studio/artist-track-links.js?v=1','./studio/artist-image-editor.js?v=1','./studio/title-language.js?v=1', './studio/landing-editor.js?v=13',
   './studio/recordings.css?v=12','./studio/studio.js?v=10',
   './studio/import.js?v=1','./studio/workflows.js?v=7',
   './studio/lyrics-tools.js?v=4','./studio/print-export.js?v=1',
@@ -31,7 +31,7 @@ function studioNavigation(url){
 }
 var ASSETS = [
   './', './index.html', './app/', './app/index.html',
-  './style.css', './style.css?v=21', './main.js', './landing-schema.js?v=11', './landing-public.js?v=9', './universe.js?v=5', './languages-public.js?v=1', './topics-public.js?v=1', './velar-assistant.js?v=5', './living-art.js?v=1', './manifest.webmanifest',
+  './style.css', './style.css?v=22', './main.js', './landing-schema.js?v=12', './landing-public.js?v=9', './universe.js?v=5', './languages-public.js?v=2', './topics-public.js?v=2', './velar-faq-engine.js?v=1', './velar-assistant.js?v=6', './living-art.js?v=1', './manifest.webmanifest',
   './favicon.svg', './favicon.svg?v=2', './assets/velardream-crystal.png', './assets/velardream-symbol.svg', './assets/velardream-app-icon-192.png', './assets/velardream-app-icon-512.png','./assets/dj-velar-expressions.jpg'
 ];
 function isPublicAsset(url) {
