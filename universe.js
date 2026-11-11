@@ -2,7 +2,7 @@
    ES5/Safari12: no WebGL, timers, idle animation or private catalog reads. */
 (function(){
  'use strict';
- var stage=null,details=null,opened=false,buttons=[],data=null,active='artists',initialized=false;
+ var stage=null,details=null,opened=false,buttons=[],beams=[],data=null,active='artists',initialized=false;
  var nodes=[
   ['artists','Артисты','#artists',19,29,'Голоса и истории исполнителей'],
   ['releases','Релизы','#releases',50,17,'Синглы и альбомы'],
@@ -27,6 +27,7 @@
    nodes.forEach(function(n,i){if(n[0]===id)node=n;
      if(buttons[i])buttons[i].setAttribute('aria-pressed',n[0]===id?'true':'false');});
    if(!node||!details)return;
+   beams.forEach(function(line,i){line.setAttribute('class',nodes[i][0]===id?'universe-beam is-active':'universe-beam');});
    clear(details);
    details.appendChild(el('span','universe-info-kicker','ВЫБРАННОЕ СОЗВЕЗДИЕ'));
    details.appendChild(el('h3','',node[1]));details.appendChild(el('p','',node[5]));
@@ -38,7 +39,7 @@
    details.appendChild(link);
  }
  function draw(){
-   if(!stage)return;clear(stage);buttons=[];
+   if(!stage)return;clear(stage);buttons=[];beams=[];
    // Decorative star lines: SVG markup is local, not a fetched image.
    if(document.createElementNS){
      var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -48,11 +49,18 @@
      nodes.forEach(function(n){
        var p=document.createElementNS('http://www.w3.org/2000/svg','path');
        p.setAttribute('d','M480 280 L'+Math.round(n[3]*9.6)+' '+Math.round(n[4]*5.6));
-       svg.appendChild(p);
+       p.setAttribute('class','universe-beam');beams.push(p);svg.appendChild(p);
      });
      stage.appendChild(svg);
    }
-   var center=el('div','universe-core');center.setAttribute('aria-hidden','true');stage.appendChild(center);
+   // The universe is built around the *actual* VELARDREAM crystal mark,
+   // reused from the hero asset already cached by the public shell.
+   // Never synthesize a planet/orb in place of the logo.
+   var center=el('div','universe-core');center.setAttribute('aria-hidden','true');
+   var light=el('span','universe-core-light');center.appendChild(light);
+   var crystal=el('img','universe-core-crystal');crystal.src='assets/velardream-crystal.png';
+   crystal.alt='';crystal.loading='lazy';crystal.decoding='async';
+   center.appendChild(crystal);stage.appendChild(center);
    nodes.forEach(function(n,i){
      var btn=el('button','universe-node universe-node--'+n[0]);btn.type='button';
      btn.setAttribute('aria-label','Выбрать: '+n[1]);btn.setAttribute('aria-pressed','false');
