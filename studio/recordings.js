@@ -439,6 +439,15 @@
     if(!file.size||file.size>MAX)return msg('Файл должен быть не пустым и не больше 50 МБ.');
     if(!navigator.onLine)return msg('Загрузка в Google Drive требует подключения к интернету.');
     var variant=clean(id('vmm-r-variant').value)||'Минусовка';
+    // Avoid an accidental second recording of the same song and variant.
+    // Another take is allowed, but requires an explicit confirmation.
+    var duplicate=recordings.some(function(r){
+      return !r.archived&&r.catalogId===t.id&&norm(r.variant||'Минусовка')===norm(variant);
+    });
+    if(duplicate&&!window.confirm('У песни «'+t.title+'» уже есть вариант «'+variant+'».\n\nЗагрузить ещё одну фонограмму с этим названием?')){
+      msg('Загрузка отменена. Существующая фонограмма сохранена без изменений.');
+      return;
+    }
     var name=filename(t,variant,ext),mime=ext==='flac'?'audio/flac':'audio/mpeg';
     busy=true;uploadMessage='';msg('Запрашиваем доступ к Google Drive…');
     connect().then(ensureFolder).then(function(folder){
@@ -639,7 +648,6 @@
     if(action==='offline-play'){setSong(r.catalogId);if(songId===r.catalogId)play(r);return;}
     if(action==='play')play(r);
     if(action==='download')download(r);
-    if(action==='trash')moveRecording(r,true);
     if(action==='restore')moveRecording(r,false);
   }
   function reset(){hide();clearAudio();editOpen=false;driveToken='';driveFolderId='';db=null;user=null;catalog=[];lyrics=[];recordings=[];saved=[];songId='';audioFileId='';busy=false;textVisible=false;uploadMessage='';}
