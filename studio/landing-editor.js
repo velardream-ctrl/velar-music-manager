@@ -11,7 +11,7 @@
  var trackEditorArtist='',trackChecked={},trackSearch='',trackSaving=false;
  var languageEditorCode='',languageCatalogSearch='',languageTrackFilter='';
  var topicEditorSlug='',topicCatalogSearch='',topicTrackFilter='';
- var tabs={hero:'Первый экран',artists:'Артисты',releases:'Музыка и релизы',playlists:'Плейлисты и подписки',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',genres:'Жанры',about:'О проекте',publish:'Публикация'};
+ var tabs={hero:'Первый экран',artists:'Артисты',releases:'Музыка и релизы',playlists:'Плейлисты и подписки',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',about:'О проекте',publish:'Публикация'};
  function id(k){return document.getElementById(k);}
  function clear(el){while(el.firstChild)el.removeChild(el.firstChild);}
  function text(el,t){if(el)el.textContent=String(t==null?'':t);}
@@ -994,6 +994,50 @@
    }
    parent.appendChild(card);
  }
+
+ function assistantEditor(parent){
+   var assistant=data.genres.assistant;
+   heading(parent,'VELAR Assistant — бесплатный музыкальный секретарь',
+     'Работает прямо в браузере посетителя. Никакой платной нейросети, дополнительных запросов к Firestore, скрытой отправки сообщений или автозапуска музыки.');
+   var check=document.createElement('label');check.className='landing-checkbox';
+   var enabled=document.createElement('input');enabled.type='checkbox';enabled.checked=assistant.enabled===true;
+   enabled.onchange=function(){assistant.enabled=this.checked;updateButtons();};
+   check.appendChild(enabled);
+   var label=document.createElement('span');label.textContent='Показывать помощника на сайте';
+   check.appendChild(label);parent.appendChild(check);
+   var greet=document.createElement('label');greet.className='landing-checkbox';
+   var greeting=document.createElement('input');greeting.type='checkbox';
+   greeting.checked=assistant.greetingEnabled===true;
+   greeting.onchange=function(){assistant.greetingEnabled=this.checked;updateButtons();};
+   greet.appendChild(greeting);
+   var gt=document.createElement('span');gt.textContent='Приветствовать нового посетителя (не более одного раза за сеанс)';
+   greet.appendChild(gt);parent.appendChild(greet);
+   field(parent,'Имя помощника',assistant.title,function(v){assistant.title=v;});
+   field(parent,'Текст приветствия',assistant.welcome,function(v){assistant.welcome=v;},true);
+   heading(parent,'Связь с автором',
+     'Необходим публичный рабочий email. Адрес будет виден посетителям и в опубликованных данных. Пока поле пустое, бот предложит официальные страницы артистов. Письмо открывается как черновик в почте посетителя; автоматическая отправка, Telegram/WhatsApp и хранение обращений пока не включены.');
+   field(parent,'Публичный email для предложений (необязательно)',assistant.contactEmail||'',function(v){
+     assistant.contactEmail=v.trim();
+   });
+   heading(parent,'Ответы по ключевым словам',
+     'Правила проверяются перед общими подсказками по музыке. Ключевые слова перечисляются через запятую; ответ виден посетителям. Не вводи сюда личные данные или секретные ключи. До 25 правил.');
+   assistant.rules.forEach(function(rule,index){
+     var card=document.createElement('section');card.className='landing-card';
+     heading(card,'Ответ '+(index+1));
+     field(card,'Ключевые слова через запятую',rule.keywords||'',function(v){rule.keywords=v;},true);
+     field(card,'Что ответит помощник',rule.answer||'',function(v){rule.answer=v;},true);
+     card.appendChild(button('Удалить правило',function(){
+       if(!window.confirm('Убрать правило только из черновика?'))return;
+       assistant.rules.splice(index,1);render();
+     },'landing-danger'));
+     parent.appendChild(card);
+   });
+   parent.appendChild(button('+ Добавить ответ',function(){
+     if(assistant.rules.length>=25){info('Максимум 25 правил.');return;}
+     assistant.rules.push({keywords:'ключевое слово',answer:'Напишите подходящий ответ.'});
+     render();
+   },'landing-add'));
+ }
  function cardFields(parent,key){
    var list=data[key].cards,wrap=document.createElement('div');wrap.className='landing-cards';parent.appendChild(wrap);
    list.forEach(function(item,index){
@@ -1108,6 +1152,8 @@
      languageEditor(panel);
    }else if(tab==='topics'){
      topicEditor(panel);
+   }else if(tab==='assistant'){
+     assistantEditor(panel);
    }else if(tab==='genres'){
      heading(panel,'Жанры и подборки','Публичные названия музыкальных направлений.');
      sectionFields(panel,tab);
