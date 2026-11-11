@@ -239,9 +239,7 @@
      if(span)span.textContent=config.welcome;
    }
  }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){
-   if(window.VMM_LANDING_SCHEMA)render(window.VMM_LANDING_SCHEMA.defaults());
- });
- else if(window.VMM_LANDING_SCHEMA)render(window.VMM_LANDING_SCHEMA.defaults());
+ // Do not guess public visibility from schema defaults before the verified
+ // published landing snapshot arrives. Respect owner opt-out without flicker.
  window.VELAR_ASSISTANT={render:render,answer:answer,norm:norm,topicFor:topicFor};
 }());
