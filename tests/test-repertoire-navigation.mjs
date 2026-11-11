@@ -13,14 +13,15 @@ const sw=read('sw.js');
 
 // A new browser session should land on overview, while an authenticated page
 // refresh keeps the same section, without writing private lyrics to storage.
-assert.match(studio,/return validPanel\(p\)\?p:'overview'/);
-assert.match(studio,/window\.sessionStorage\.getItem\(panelMemoryKey\)/);
-assert.match(studio,/window\.sessionStorage\.setItem\(panelMemoryKey,p\)/);
+assert.match(studio,/return match&&validPanel\(match\[1\]\)\?match\[1\]:'overview'/);
+assert.match(studio,/window\.location&&window\.location\.hash/);
+assert.match(studio,/window\.history\.replaceState\(null,'',here\.pathname\+here\.search\+'#vmm-'\+p\)/);
 assert.match(studio,/section==='recordings'&&window\.VMM_RECORDINGS/);
 assert.match(studio,/window\.VMM_WORKFLOWS\.open\(section\)/);
 assert.match(studio,/if\(authorized&&authorizedUid===user\.uid\)/);
 assert.match(studio,/authorizedUid!==user\.uid/);
-assert.match(studio,/window\.sessionStorage\.removeItem\(panelMemoryKey\)/);
+assert.ok(!/localStorage\\.setItem|sessionStorage\\.setItem/.test(studio));
+assert.match(studio,/window\.history\.replaceState\(null,'',here\.pathname\+here\.search\)/);
 assert.match(workflows,/window\.VMM_WORKFLOWS=\{open:open\}/);
 assert.match(workflows,/window\.VMM_STUDIO\.rememberPanel\(type\)/);
 assert.match(rec,/window\.VMM_STUDIO\.rememberPanel\('recordings'\)/);
