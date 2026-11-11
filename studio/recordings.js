@@ -863,9 +863,13 @@
   function offlineOn(r,checked){
     if(!window.VMM_OFFLINE)return msg('Локальное хранилище не поддерживается.');
     if(!checked){
-      window.VMM_OFFLINE.remove(user.uid,r.driveFileId).then(function(){
+      // Persist the global unpin before deleting the local copy.
+      queueOfflinePinChange(r,false).then(function(){
+        return window.VMM_OFFLINE.remove(user.uid,r.driveFileId);
+      }).then(function(){
         saved=saved.filter(function(s){return s.fileId!==r.driveFileId;});
-        renderRecords();renderOfflineList();renderPlayerEditor();msg('Убрано из офлайн-подборки. В Google Drive файл сохранён.');
+        renderRecords();renderOfflineList();renderPlayerEditor();
+        msg('Убрано из офлайна. Изменение будет синхронизировано на других устройствах. Google Drive не затронут.');
       }).catch(function(e){renderRecords();msg('Не удалось убрать офлайн: '+e.message);});
       return;
     }
@@ -884,7 +888,9 @@
       return readCache().then(function(){
         renderRecords();renderOfflineList();renderPlayerEditor();
         if(window.VMM_OFFLINE.rememberSelection)window.VMM_OFFLINE.rememberSelection(user.uid,r.catalogId).catch(function(){});
-        msg('Готово: '+r.title+' сохранена офлайн на этом устройстве. Перед концертом проверь без интернета.');
+        return queueOfflinePinChange(r,true).then(function(){
+          msg('Готово: '+r.title+' сохранена офлайн. Подборка будет синхронизирована на других устройствах после подключения Google Drive.');
+        });
       });
     }).catch(function(e){renderRecords();msg('Не удалось сохранить офлайн: '+e.message);});
   }
