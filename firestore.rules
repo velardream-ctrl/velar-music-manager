@@ -66,9 +66,13 @@ service cloud.firestore {
     match /vmm_public_pages/{pageId} {
       // Anonymous visitors can retrieve ONLY the one approved landing doc.
       // No listing / private docs are exposed.
+      // An admin must be able to read the document even before the first
+      // publication, when resource does not exist yet.
       allow get: if pageId == 'landing'
-        && resource.data.status == 'published'
-        && resource.data.schemaVersion == 1;
+        && (studioAdmin()
+          || (resource != null
+            && resource.data.status == 'published'
+            && resource.data.schemaVersion == 1));
       allow list, delete: if false;
       allow create, update: if pageId == 'landing' && validLandingWrite('published');
     }

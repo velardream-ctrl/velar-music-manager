@@ -36,6 +36,8 @@ assert.match(rules,/match \/vmm_public_drafts\/\{pageId\}/);
 assert.match(rules,/match \/vmm_public_pages\/\{pageId\}/);
 assert.match(rules,/allow get: if pageId == 'landing'/);
 assert.match(rules,/resource\.data\.status == 'published'/);
+assert.match(rules,/studioAdmin\(\)\s*\|\|/,'Owner can read landing document before initial publication');
+assert.match(rules,/resource != null/,'Unauthenticated read must require an existing published resource');
 assert.match(rules,/allow list, delete: if false;/);
 assert.match(rules,/allow read, write: if false;/);
 console.log('PASS: curated landing schema, private field stripping, only HTTPS public links, precise public read and admin-only draft rules');
