@@ -104,7 +104,7 @@
    });
    var selectors=['#artists .section-heading','#releases .section-heading',
      '#playlists .section-heading','#universe .universe-overline',
-     '#genres .section-heading','#about .section-heading'];
+     '#languages .universe-overline','#genres .section-heading','#about .section-heading'];
    var sections=[];
    selectors.forEach(function(query){
      var element=document.querySelector(query);
