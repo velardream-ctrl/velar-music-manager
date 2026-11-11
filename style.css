@@ -985,3 +985,32 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .velar-chat-avatar{width:34px;height:34px;flex:0 0 34px;
  border-radius:50%;object-fit:cover;background:#f7f4ed}
 .velar-chat-line.is-assistant p{flex:1;min-width:0}
+
+/* RUN-077: ten original DJ Velar emotions, 18KB JPEG for iOS12/Samsung.
+   Image is decorative; base V stays visible without a broken <img> icon. */
+.velar-expression{position:relative;display:inline-flex;align-items:center;justify-content:center;
+ flex-shrink:0;overflow:hidden;border-radius:50%;background:#1c3250;color:#efd29b;
+ font:700 18px Georgia,serif;line-height:1;vertical-align:middle}
+.velar-expression::before{content:"";position:absolute;inset:0;border-radius:inherit;
+ background-image:url('assets/dj-velar-expressions.jpg');background-repeat:no-repeat;
+ background-size:1000% 100%;background-position:0% 50%}
+.velar-expression[data-expression="wave"]::before{background-position:11.1111% 50%}
+.velar-expression[data-expression="morning"]::before{background-position:22.2222% 50%}
+.velar-expression[data-expression="night"]::before{background-position:33.3333% 50%}
+.velar-expression[data-expression="thanks"]::before{background-position:44.4444% 50%}
+.velar-expression[data-expression="heart"]::before{background-position:55.5556% 50%}
+.velar-expression[data-expression="okay"]::before{background-position:66.6667% 50%}
+.velar-expression[data-expression="peace"]::before{background-position:77.7778% 50%}
+.velar-expression[data-expression="off"]::before{background-position:88.8889% 50%}
+.velar-expression[data-expression="celebrate"]::before{background-position:100% 50%}
+@media(max-width:590px){
+ .velar-assistant{width:min(306px,calc(100vw - 24px));right:12px}
+ .velar-assistant-dialog{max-height:min(390px,50vh)}
+ .velar-assistant-greeting{padding:8px;gap:6px}
+ .velar-assistant-suggestions{padding:5px 7px}
+ .velar-assistant-log{padding:9px;max-height:170px}
+}
+@media(max-height:610px) and (max-width:590px){
+ .velar-assistant-dialog{max-height:46vh}
+ .velar-assistant-header-note{display:none}
+}
