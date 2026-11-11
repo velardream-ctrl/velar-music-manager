@@ -9,7 +9,7 @@
   panel.className='panel hidden';
   shell.appendChild(panel);
   var db=null,user=null,driveToken='',driveFolderId='',busy=false,active=false,listenersAttached=false,suggestOpen=false;
-  var catalog=[],lyrics=[],recordings=[],saved=[],songId='',audioFileId='',audioURL='',mode='a4',textVisible=false,uploadMessage='',editOpen=false,playRequestId=0,formSongId='',playerVisible=false,playerScrub=false,playerPending=false;
+  var catalog=[],lyrics=[],recordings=[],saved=[],songId='',audioFileId='',audioURL='',mode='a4',textVisible=false,uploadMessage='',editOpen=false,playRequestId=0,formSongId='',playerVisible=false,playerScrub=false,playerPending=false,compactListenerAttached=false;
   var MAX=50*1024*1024,DRIVE_SCOPE='https://www.googleapis.com/auth/drive.file',FOLDER='VELARDREAM RECORDS - Фонограммы';
   function id(s){return document.getElementById(s);}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','&quot;':'&quot;',"'":'&#39;'}[c];});}
@@ -73,9 +73,6 @@
     button.setAttribute('aria-pressed',playing?'true':'false');
     button.setAttribute('aria-label',playing?'Пауза':'Воспроизвести');
     slider.disabled=!loaded||!hasDuration;
-    var back=id('vmm-r-back'),next=id('vmm-r-next');
-    if(back)back.disabled=!loaded||!hasDuration;
-    if(next)next.disabled=!loaded||!hasDuration;
     var route=id('vmm-r-route'),more=id('vmm-r-more');
     if(route)route.disabled=!loaded;
     if(more)more.disabled=!loaded;
@@ -115,10 +112,26 @@
     if(!pane||!button)return;
     button.setAttribute('aria-expanded',pane.open?'true':'false');
     button.setAttribute('aria-label',pane.open?'Закрыть системное меню плеера':'Открыть системное меню плеера');
+    updateMiniPlayer();
   }
   function showNativePlayer(){
     var pane=id('vmm-r-system');if(!pane)return;
     pane.open=true;syncSystemMenu();
+  }
+  // The sentinel is outside the sticky player, so compacting never moves it.
+  function updateMiniPlayer(){
+    var card=id('vmm-r-player-card'),sentinel=id('vmm-r-player-sentinel');
+    if(!card||!sentinel)return;
+    var system=id('vmm-r-system');
+    var past=!!(sentinel.getBoundingClientRect&&sentinel.getBoundingClientRect().bottom<0);
+    var minimize=!!(active&&playerVisible&&textVisible&&past&&!editOpen&&!(system&&system.open));
+    card.className=card.className.replace(/\s*\bis-minimized\b/g,'')+(minimize?' is-minimized':'');
+  }
+  function installMiniPlayerListener(){
+    if(compactListenerAttached||!window.addEventListener)return;
+    compactListenerAttached=true;
+    window.addEventListener('scroll',updateMiniPlayer,false);
+    window.addEventListener('resize',updateMiniPlayer,false);
   }
   function bindStagePlayer(){
     var audio=id('vmm-r-audio'),slider=id('vmm-r-seek');
@@ -144,8 +157,6 @@
       route.className='vmm-r-quick-btn'+(wireless?' is-wireless':'');
       route.setAttribute('aria-label',wireless?'Беспроводное устройство подключено. Изменить вывод звука':'Вывод звука на другое устройство');
     });
-    id('vmm-r-back').onclick=function(){var a=id('vmm-r-audio');if(a)stageSeekTo(Number(a.currentTime)-10);};
-    id('vmm-r-next').onclick=function(){var a=id('vmm-r-audio');if(a)stageSeekTo(Number(a.currentTime)+10);};
     slider.oninput=function(){
       var d=stageDuration(audio);if(!audioFileId||!d)return;
       playerScrub=true;
@@ -165,6 +176,7 @@
       audio.addEventListener(name,syncStagePlayer);
     });
     syncStagePlayer();syncSystemMenu();
+    installMiniPlayerListener();
   }
   function header(){
     panel.innerHTML=
@@ -182,8 +194,11 @@
       '<p class="sync-note">Файл переименуется латиницей по названию песни и сохранится в твою закрытую папку Google Drive. Доступ к файлам остаётся личным.</p></div>'+
       '<div id="vmm-r-records" class="vmm-r-records"></div></div>'+
       '<div id="vmm-r-player-section" class="hidden">'+
-      '<div class="vmm-r-player"><div class="vmm-r-player-head"><button type="button" id="vmm-r-toggle-text" class="vmm-r-player-title" aria-expanded="false"><strong>Прослушивание</strong><span id="vmm-r-toggle-text-label">Показать текст</span></button>'+
-      '<span id="vmm-r-player-sync" class="vmm-r-player-sync" role="status" aria-label="Фонограмма не выбрана" title="Фонограмма не выбрана"><span aria-hidden="true">☁</span><span id="vmm-r-sync-mark" aria-hidden="true">—</span></span>'+
+      '<span id="vmm-r-player-sentinel" aria-hidden="true"></span>'+
+      '<div id="vmm-r-player-card" class="vmm-r-player"><div class="vmm-r-player-head"><button type="button" id="vmm-r-toggle-text" class="vmm-r-player-title" aria-expanded="false"><strong>Прослушивание</strong><span id="vmm-r-toggle-text-label">Показать текст</span></button>'+
+      '<span id="vmm-r-player-sync" class="vmm-r-player-sync" role="status" aria-label="Фонограмма не выбрана" title="Фонограмма не выбрана">'+
+      '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 16.5A4.5 4.5 0 0 0 17.6 8a6.5 6.5 0 0 0-12.4 1.9A4 4 0 0 0 6 18h12a4 4 0 0 0 2-1.5Z"/></svg>'+
+      '<span id="vmm-r-sync-mark" aria-hidden="true">—</span></span>'+
       '<button type="button" id="vmm-r-edit" class="vmm-r-edit-toggle" aria-label="Редактировать выбранную фонограмму" title="Редактировать выбранную фонограмму" aria-controls="vmm-r-editor" aria-expanded="false">'+
       '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4 10.5-10.5z"/></svg></button></div>'+
       '<div class="vmm-r-controls-shell">'+
@@ -193,13 +208,11 @@
       '<svg class="vmm-r-pause-icon" viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1.3"/><rect x="14" y="4" width="5" height="16" rx="1.3"/></svg></button>'+
       '<div class="vmm-r-timeline"><input id="vmm-r-seek" type="range" min="0" max="1000" step="1" value="0" disabled aria-label="Позиция воспроизведения" aria-valuetext="0:00 из 0:00">'+
       '<div class="vmm-r-clock"><output id="vmm-r-elapsed" for="vmm-r-seek">0:00</output><output id="vmm-r-remaining" for="vmm-r-seek">—:—</output></div></div>'+
-      '<button type="button" id="vmm-r-back" class="vmm-r-jump" aria-label="Назад на 10 секунд" disabled><span aria-hidden="true">↶</span><small>10</small></button>'+
-      '<button type="button" id="vmm-r-next" class="vmm-r-jump" aria-label="Вперёд на 10 секунд" disabled><span aria-hidden="true">↷</span><small>10</small></button></div>'+
       '<div class="vmm-r-quick-actions" role="group" aria-label="Вывод звука и дополнительные функции">'+
       '<button type="button" id="vmm-r-route" class="vmm-r-quick-btn" aria-label="Вывод звука на другое устройство" title="Вывод звука" disabled>'+
       '<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M12 12l-6 9h12z" fill="currentColor" stroke="none"/></svg></button>'+
       '<button type="button" id="vmm-r-more" class="vmm-r-quick-btn" aria-label="Открыть системное меню плеера" title="Дополнительные функции" aria-controls="vmm-r-system" aria-expanded="false" disabled>'+
-      '<svg viewBox="0 0 24 24" width="23" height="23" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button></div></div>'+
+      '<svg viewBox="0 0 24 24" width="23" height="23" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button></div></div></div>'+
       '<details id="vmm-r-system" class="vmm-r-system"><summary>Системные функции плеера</summary>'+
       '<p class="sync-note">AirPlay, системное меню и громкость устройства доступны в стандартном плеере iPhone.</p>'+
       '<audio id="vmm-r-audio" controls preload="none" x-webkit-airplay="allow"></audio></details>'+
@@ -224,7 +237,7 @@
     id('vmm-r-edit').onclick=function(){
       var r=record(audioFileId);
       if(!r||r.archived||r.catalogId!==songId){msg('Сначала выбери нужную запись кнопкой «Слушать».');return;}
-      editOpen=!editOpen;renderPlayerEditor();
+      editOpen=!editOpen;renderPlayerEditor();updateMiniPlayer();
     };
     id('vmm-r-offline-toggle').onclick=function(){
       var r=record(audioFileId);
@@ -308,9 +321,9 @@
     var t=song();
     show(id('vmm-r-song-section'),!!t&&!playback);
     show(id('vmm-r-player-section'),!!t&&playback);
-    if(!t){renderPlayerEditor();return;}
+    if(!t){renderPlayerEditor();updateMiniPlayer();return;}
     id('vmm-r-song-title').textContent=t.title;
-    renderFolder();renderRecords();renderLyrics();toggleText(textVisible);
+    renderFolder();renderRecords();renderLyrics();toggleText(textVisible);updateMiniPlayer();
     if(user&&window.VMM_OFFLINE&&window.VMM_OFFLINE.rememberSelection&&saved.some(function(s){return s.catalogId===t.id;})){
       window.VMM_OFFLINE.rememberSelection(user.uid,t.id).catch(function(){});
     }
@@ -357,6 +370,7 @@
     var btn=id('vmm-r-toggle-text');
     if(btn)btn.setAttribute('aria-expanded',textVisible?'true':'false');
     var caption=id('vmm-r-toggle-text-label');if(caption)caption.textContent=textVisible?'Скрыть текст':'Показать текст';
+    updateMiniPlayer();
   }
   function setMode(which){
     mode=which;
@@ -389,6 +403,7 @@
       button.title=editOpen?'Закрыть управление фонограммой':'Редактировать выбранную фонограмму';
     }
     show(pane,editOpen&&valid);
+    updateMiniPlayer();
     if(!valid)return;
     var target=id('vmm-r-edit-target');
     if(target)target.textContent=(selected.title||song().title||'Песня')+' · '+(selected.variant||'Фонограмма');
@@ -500,7 +515,7 @@
     }).catch(function(e){msg('Ошибка репертуара: '+e.message);});
   }
   function open(){
-    if(active){show(panel,true);return;}
+    if(active){show(panel,true);updateMiniPlayer();return;}
     suggestOpen=false;textVisible=false;playerVisible=false;formSongId='';
     active=true;header();
     if(window.VMM_STUDIO&&window.VMM_STUDIO.rememberPanel)window.VMM_STUDIO.rememberPanel('recordings');
@@ -510,7 +525,7 @@
     show(id('panel-lyrics'),false);show(id('panel-future'),false);show(id('panel-data'),false);show(id('vmm-workflows'),false);show(panel,true);
     load();
   }
-  function hide(){active=false;editOpen=false;renderPlayerEditor();show(panel,false);}
+  function hide(){active=false;editOpen=false;renderPlayerEditor();show(panel,false);updateMiniPlayer();}
   function connect(force){
     if(!navigator.onLine)return Promise.reject(new Error('Для подключения Google Drive нужен интернет.'));
     if(driveToken&&!force)return Promise.resolve(driveToken);

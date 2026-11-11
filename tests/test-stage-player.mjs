@@ -13,8 +13,9 @@ const source=read('studio/recordings.js'),
 assert.equal((source.match(/<audio id="vmm-r-audio"/g)||[]).length,1);
 assert.match(source,/id="vmm-r-play"/);
 assert.match(source,/id="vmm-r-seek"/);
-assert.match(source,/id="vmm-r-back"/);
-assert.match(source,/id="vmm-r-next"/);
+assert.doesNotMatch(source,/id="vmm-r-back"|id="vmm-r-next"/);
+assert.match(source,/id="vmm-r-route"/);
+assert.match(source,/id="vmm-r-more"/);
 assert.match(source,/id="vmm-r-elapsed"/);
 assert.match(source,/id="vmm-r-remaining"/);
 assert.match(source,/id="vmm-r-system"/);
@@ -28,9 +29,9 @@ assert.match(source,/function bindStagePlayer\(\)/);
 assert.match(css,/\.vmm-r-play-button/);
 assert.match(css,/\.vmm-r-timeline input\[type="range"\]::-webkit-slider-thumb/);
 assert.match(css,/\.vmm-r-system audio/);
-assert.ok(html.includes('src="recordings.js?v=8"'));
-assert.ok(html.includes('href="recordings.css?v=8"'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v9'"));
+assert.ok(html.includes('src="recordings.js?v=9"'));
+assert.ok(html.includes('href="recordings.css?v=9"'));
+assert.ok(sw.includes("STUDIO_PREFIX+'v10'"));
 assert.ok(!/drive\.googleapis\.com|audio\/flac|audio\/mpeg/.test(sw),'Private audio must not be cached in the public PWA shell');
 
 const elements={};
@@ -98,10 +99,9 @@ assert.equal(elements['vmm-r-play']['aria-pressed'],'true');
 audio.currentTime=70;audio.dispatch('timeupdate');
 assert.equal(elements['vmm-r-elapsed'].textContent,'1:10');
 assert.equal(elements['vmm-r-remaining'].textContent,'-4:20');
-elements['vmm-r-back'].onclick();
-assert.equal(audio.currentTime,60);
-elements['vmm-r-next'].onclick();
-assert.equal(audio.currentTime,70);
+// Skip controls are intentionally removed; slider seeking stays intact.
+assert.equal(elements['vmm-r-back'],undefined);
+assert.equal(elements['vmm-r-next'],undefined);
 
 const slider=elements['vmm-r-seek'];
 slider.value='500';slider.oninput();
@@ -124,4 +124,4 @@ assert.equal(elements['vmm-r-play'].disabled,true);
 assert.equal(elements['vmm-r-seek'].disabled,true);
 assert.equal(elements['vmm-r-elapsed'].textContent,'0:00');
 assert.equal(elements['vmm-r-remaining'].textContent,'—:—');
-console.log('PASS: one media engine, large play/pause, seek, ±10s, elapsed/remaining, reset and native iOS controls');
+console.log('PASS: one media engine, compact play/pause, seek, elapsed/remaining, reset and native iOS controls');
