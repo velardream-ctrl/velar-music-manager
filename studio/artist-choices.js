@@ -48,6 +48,15 @@
    found.sort(function(a,b){return a.label.localeCompare(b.label,'ru');});
    return presets.concat(found);
  }
+ function inferredId(name){
+   var normalized=key(name);
+   if(!normalized)return '';
+   for(var i=0;i<PRESETS.length;i++){
+     var p=PRESETS[i];
+     if(p.aliases.some(function(alias){return key(alias)===normalized;}))return p.id;
+   }
+   return sourceId(name);
+ }
  function byId(rows,id){
    for(var i=0;i<rows.length;i++)if(rows[i].id===id)return rows[i];
    return null;
@@ -57,5 +66,5 @@
    return {artistId:candidate.id,title:candidate.label,
      subtitle:'',description:'',url:'',imageUrl:'',visible:false};
  }
- window.VMM_ARTIST_CHOICES={choices:choices,byId:byId,newCard:newCard};
+ window.VMM_ARTIST_CHOICES={choices:choices,byId:byId,newCard:newCard,inferredId:inferredId};
 }());
