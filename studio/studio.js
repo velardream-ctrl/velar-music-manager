@@ -242,7 +242,9 @@
     var keys=document.querySelectorAll('#workspace [data-panel]');
     for(var i=0;i<keys.length;i++)keys[i].className=keys[i].getAttribute('data-panel')===id?'nav-active':'';
     show(el('panel-lyrics'),id==='lyrics');show(el('panel-landing'),id==='landing');show(el('panel-future'),id!=='lyrics'&&id!=='data'&&id!=='landing');show(el('panel-data'),id==='data');
-    if(id==='data')show(el('vmm-workflows'),false);
+    // The independent workflow/overview panel must never remain visible
+    // underneath the landing CMS, Lyrics or any other selected panel.
+    show(el('vmm-workflows'),false);
     if(id==='landing'&&window.VMM_LANDING)window.VMM_LANDING.open();
     else if(window.VMM_LANDING)window.VMM_LANDING.hide();
     if(id!=='recordings'&&window.VMM_RECORDINGS)window.VMM_RECORDINGS.hide();
