@@ -347,6 +347,25 @@ assert.equal(records.get('vmm_public_drafts/landing').content.genres.assistant.q
 assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.quickTopics.length,5);
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.quickTopics.length,4);
+// RUN-083: admin can add, edit, save and separately publish a FAQ.
+nav[8].onclick();await flush();
+const addKnowledge=traverse(get('landing-fields'),n=>n.textContent==='+ Добавить вопрос и ответ');
+assert.ok(addKnowledge,'Owner sees the knowledge-base editor');
+addKnowledge.onclick();
+assert.equal(findInput('Категория FAQ').value,'Мои ответы');
+findInput('Вопросы и ключевые фразы через запятую').input('уникальная новая песня');
+findInput('Ответ VELAR').input('Мой новый ответ с музыкальной подсказкой.');
+const knowledgeRoute=findInput('Что предложить после ответа');
+knowledgeRoute.value='topic:love';knowledgeRoute.onchange.call(knowledgeRoute);
+get('landing-save').onclick();await flush();
+const savedFaq=records.get('vmm_public_drafts/landing').content.genres.assistant.faq;
+assert.equal(savedFaq.length,114);
+assert.equal(savedFaq[113].keywords,'уникальная новая песня');
+assert.equal(savedFaq[113].route,'topic:love');
+assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.faq.length,113,
+ 'New FAQ must remain a private draft before publication');
+get('landing-publish').onclick();await flush();
+assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.faq.length,114);
 // Remote write must never be overwritten by stale admin tab.
 nav[0].onclick();
 findInput('Подзаголовок').input('Несохранённый локальный текст');
