@@ -12,51 +12,115 @@
    return n;
  }
  var original={};
+ function buildArtistCard(item,type){
+   var card=create('article','cms-card');
+   if(item.imageData||item.imageUrl){
+     var img=document.createElement('img');
+     img.src=item.imageData||item.imageUrl;img.alt=item.title;img.loading='lazy';img.decoding='async';
+     img.referrerPolicy='no-referrer';
+     if(type==='artists'){
+       var portraitShape=item.imageShape==='circle'?'circle':'square';
+       var frame=create('div','cms-artist-photo cms-artist-photo--'+portraitShape);
+       frame.appendChild(img);
+       card.className+=' cms-artist-card cms-artist-card--'+portraitShape;
+       img.className='cms-card-art cms-artist-photo-image';
+       card.appendChild(frame);
+     }else{
+       img.className='cms-card-art';
+       card.appendChild(img);
+     }
+   }
+   var copy=create('div','cms-card-copy');
+   copy.appendChild(create('h3','',item.title));
+   if(item.subtitle)copy.appendChild(create('p','cms-card-subtitle',item.subtitle));
+   if(item.description)copy.appendChild(create('p','',item.description));
+   if(item.url){
+     var link=create('a','cms-card-link',type==='artists'?'Профиль артиста ↗':'Открыть релиз ↗');
+     link.href=item.url;link.rel='noopener noreferrer';link.target='_blank';
+     copy.appendChild(link);
+   }
+   card.appendChild(copy);
+   return card;
+ }
+ function musicPanel(item){
+   var panel=create('aside','cms-music-panel');
+   panel.setAttribute('aria-label','Лучшие песни: '+item.title);
+   var title=create('div','cms-music-heading');
+   title.appendChild(create('span','cms-music-kicker','СЛУШАТЬ АРТИСТА'));
+   title.appendChild(create('h3','','Лучшие песни'));
+   panel.appendChild(title);
+   var tracks=item.featuredTracks||[];
+   if(!tracks.length){
+     panel.className+=' cms-music-panel--empty';
+     panel.appendChild(create('p','cms-music-empty','Подборка композиций появится здесь после выбора в музыкальной студии.'));
+     return panel;
+   }
+   var list=create('div','cms-music-list');
+   var player=create('div','cms-music-player');
+   player.setAttribute('role','region');
+   player.setAttribute('aria-label','Встроенный музыкальный плеер');
+   var active=null,buttons=[];
+   tracks.forEach(function(track,index){
+     var button=create('button','cms-music-track');
+     button.type='button';
+     button.setAttribute('aria-pressed','false');
+     button.appendChild(create('span','cms-music-number',('0'+(index+1)).slice(-2)));
+     var details=create('span','cms-music-track-info');
+     details.appendChild(create('strong','',track.title));
+     details.appendChild(create('small','',track.provider==='spotify'?'Spotify':'YouTube'));
+     button.appendChild(details);
+     button.appendChild(create('span','cms-music-play-icon','▶'));
+     button.onclick=function(){
+       if(active===index)return;
+       active=index;
+       buttons.forEach(function(b,i){b.setAttribute('aria-pressed',i===index?'true':'false');});
+       empty(player);
+       var validated=window.VMM_LANDING_SCHEMA.songUrl(track.url,track.provider);
+       if(!validated)return;
+       var frame=document.createElement('iframe');
+       frame.className='cms-music-iframe'+(track.provider==='youtube'?' cms-music-iframe--video':'');
+       frame.title=track.title+' — '+(track.provider==='spotify'?'плеер Spotify':'видео YouTube');
+       frame.src=track.provider==='spotify'?
+         'https://open.spotify.com/embed/track/'+validated.split('/').pop():
+         'https://www.youtube-nocookie.com/embed/'+validated.split('v=')[1];
+       frame.loading='lazy';frame.setAttribute('allow','autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture');
+       frame.setAttribute('allowfullscreen','');
+       frame.referrerPolicy='strict-origin-when-cross-origin';
+       player.appendChild(frame);
+       var external=create('a','cms-music-external','Открыть в '+(track.provider==='spotify'?'Spotify':'YouTube'));
+       external.href=validated;external.rel='noopener noreferrer';external.target='_blank';
+       player.appendChild(external);
+     };
+     buttons.push(button);list.appendChild(button);
+   });
+   panel.appendChild(list);
+   player.appendChild(create('p','cms-music-hint','Выбери песню, чтобы открыть официальный плеер. Никаких аудиофайлов на сайте нет.'));
+   panel.appendChild(player);
+   return panel;
+ }
  function cards(id,rows,type){
    var target=byId(id);
    if(!target)return;
    var shown=rows.filter(function(x){return x.visible===true;});
-   // Do not remove the hand-designed "Скоро" placeholder until real public
-   // cards exist. A new editor is therefore harmless before first launch.
    if(!original[id])original[id]={markup:target.innerHTML,css:target.className};
    if(!shown.length){
-     // Restore the static "Скоро" feature when the next publication hides
-     // every card. This HTML comes only from our own checked-in index.html.
      target.className=original[id].css;
      target.innerHTML=original[id].markup;
      return;
    }
-   empty(target);target.className='cms-card-grid';
-   shown.forEach(function(item){
-     var card=create('article','cms-card');
-     if(item.imageData||item.imageUrl){
-       var img=document.createElement('img');
-       img.src=item.imageData||item.imageUrl;img.alt=item.title;img.loading='lazy';img.decoding='async';
-       img.referrerPolicy='no-referrer';
-       if(type==='artists'){
-         // Artist portraits have TWO distinct layouts; do not use the
-         // rectangular 210/185px cover style intended for release covers.
-         var portraitShape=item.imageShape==='circle'?'circle':'square';
-         var frame=create('div','cms-artist-photo cms-artist-photo--'+portraitShape);
-         frame.appendChild(img);
-         card.className+=' cms-artist-card cms-artist-card--'+portraitShape;
-         img.className='cms-card-art cms-artist-photo-image';
-         card.appendChild(frame);
-       }else{
-         img.className='cms-card-art';
-         card.appendChild(img);
-       }
-     }
-     var copy=create('div','cms-card-copy');
-     copy.appendChild(create('h3','',item.title));
-     if(item.subtitle)copy.appendChild(create('p','cms-card-subtitle',item.subtitle));
-     if(item.description)copy.appendChild(create('p','',item.description));
-     if(item.url){
-       var link=create('a','cms-card-link',type==='artists'?'Профиль артиста ↗':'Открыть релиз ↗');
-       link.href=item.url;link.rel='noopener noreferrer';link.target='_blank';
-       copy.appendChild(link);
-     }
-     card.appendChild(copy);target.appendChild(card);
+   empty(target);
+   // Without curated songs, tile the portraits across the full width, instead
+   // of leaving an empty left column. With music, form alternating story rows.
+   var stories=type==='artists'&&shown.some(function(x){return !!(x.featuredTracks&&x.featuredTracks.length);});
+   target.className=type==='artists'?(stories?'cms-artist-stories':'cms-card-grid cms-artist-tiles'):'cms-card-grid';
+   shown.forEach(function(item,index){
+     var card=buildArtistCard(item,type);
+     if(stories){
+       var row=create('div','cms-artist-story'+(index%2?' cms-artist-story--reverse':''));
+       row.appendChild(card);
+       row.appendChild(musicPanel(item));
+       target.appendChild(row);
+     }else target.appendChild(card);
    });
  }
  function render(content){

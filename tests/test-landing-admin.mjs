@@ -25,7 +25,7 @@ const database={
  collection(collection){return {
   limit(n){assert.equal(n,1200);return {get(){return Promise.resolve({
    forEach(cb){[
-    {id:'songVelar1',data:()=>({title:'Белая берёза',artist:'Velar'})},
+    {id:'songVelar1',data:()=>({title:'Белая берёза',artist:'Velar',links:{spotify:'https://open.spotify.com/track/0123456789ABCDEFGHIJKL',youtube:'https://youtu.be/ABCDEFGHIjk'}})},
     {id:'songVelar2',data:()=>({title:'Crazy Bobr Party',artist:'Velar'})},
     {id:'songIlya',data:()=>({title:'Север',artist:'Илья Дмитриев'})}
    ].forEach(cb);}
@@ -102,15 +102,25 @@ findInput('Имя / название артиста').input('DJ Velar');
 findInput('Роль / стиль').input('Бас и композитор');
 findInput('Публичная HTTPS-ссылка (профиль, Spotify, YouTube…) — необязательно')
  .input('https://example.com/velar');
+const bestRow=traverse(get('landing-fields'),node=>node.className==='landing-featured-row');
+assert.ok(bestRow,'Artist with a direct Spotify/YouTube track should offer a best-song checkbox');
+assert.equal(bestRow.children[2].value,'spotify');
+bestRow.children[0].checked=true;
+bestRow.children[0].onchange.call(bestRow.children[0]);
+assert.equal(api.isDirty(),true);
 const checkbox=traverse(get('landing-fields'),n=>n.type==='checkbox');
 assert.ok(checkbox);checkbox.checked=true;checkbox.onchange.call(checkbox);
 assert.equal(api.isDirty(),true);
 get('landing-save').onclick();await flush();
 assert.equal(records.get('vmm_public_drafts/landing').content.artists.cards.length,1);
+assert.equal(records.get('vmm_public_drafts/landing').content.artists.cards[0].featuredTracks.length,1);
+assert.equal(records.get('vmm_public_drafts/landing').content.artists.cards[0].featuredTracks[0].url,
+ 'https://open.spotify.com/track/0123456789ABCDEFGHIJKL');
 assert.equal(records.get('vmm_public_pages/landing').content.artists.cards.length,0);
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.artists.cards[0].title,'DJ Velar');
 assert.equal(records.get('vmm_public_pages/landing').content.artists.cards[0].artistId,'velar');
+assert.equal(records.get('vmm_public_pages/landing').content.artists.cards[0].featuredTracks.length,1);
 assert.equal(records.get('vmm_public_pages/landing').content.artists.cards[0].visible,true);
 // Crazy Bobr is a separate preset even when the catalog still credits Velar.
 const chooser=traverse(get('landing-fields'),n=>n.className==='landing-artist-select');
