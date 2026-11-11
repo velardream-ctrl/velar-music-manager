@@ -165,3 +165,57 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 @media(max-width:600px){
  .cms-artist-photo--circle{max-width:215px;margin-top:24px}
 }
+
+
+/* RUN-067: music-first artist gallery. Headline across page, not a tall left rail. */
+#artists.showcase{display:block;padding-top:66px;padding-bottom:78px}
+#artists>.section-heading{max-width:760px;margin:0 0 22px}
+#artists>.section-heading p{max-width:690px}
+#artists .cms-artist-tiles{grid-template-columns:repeat(auto-fit,minmax(min(270px,100%),1fr));gap:22px}
+.cms-artist-stories{display:flex;flex-direction:column;gap:32px;margin-top:30px}
+.cms-artist-story{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);align-items:start;gap:26px}
+.cms-artist-story>.cms-card,.cms-artist-story>.cms-music-panel{min-width:0;height:100%}
+.cms-artist-story--reverse>.cms-card{order:2}
+.cms-artist-story--reverse>.cms-music-panel{order:1}
+.cms-music-panel{
+  padding:24px 22px;min-height:265px;border:1px solid rgba(229,204,154,.32);
+  border-radius:18px;
+  background:radial-gradient(circle at 10% 0%,rgba(73,93,144,.22),transparent 64%),#111d38;
+  box-shadow:0 12px 27px rgba(0,0,0,.14)
+}
+.cms-music-heading{margin-bottom:18px}
+.cms-music-kicker{font-size:.64rem;letter-spacing:.19em;color:#d8bc89}
+.cms-music-heading h3{font:400 clamp(1.45rem,2.4vw,1.92rem)/1.25 Georgia,serif;color:#fff0d8;margin:6px 0 0}
+.cms-music-list{display:flex;flex-direction:column;gap:8px}
+.cms-music-track{
+  width:100%;min-height:68px;display:flex;align-items:center;gap:12px;
+  text-align:left;color:#edf1fa;background:#1d2d4c;border:1px solid rgba(199,212,233,.18);
+  border-radius:12px;padding:12px;cursor:pointer;font:inherit;transition:background .18s,border-color .18s
+}
+.cms-music-track:hover,.cms-music-track[aria-pressed=true]{background:#283d63;border-color:#dbbc85}
+.cms-music-track:focus-visible{outline:2px solid #ead4a2;outline-offset:3px}
+.cms-music-number{font:400 1.08rem Georgia,serif;color:#e5bd83;flex:0 0 25px}
+.cms-music-track-info{display:flex;flex-direction:column;flex:1;min-width:0;overflow-wrap:anywhere}
+.cms-music-track-info strong{font-size:.92rem;font-weight:600}
+.cms-music-track-info small{font-size:.72rem;color:#aebdd3;margin-top:3px}
+.cms-music-play-icon{color:#efcc8e;font-size:1.08rem}
+.cms-music-player{margin-top:14px}
+.cms-music-hint,.cms-music-empty{font-size:.86rem;color:#aebdd3;line-height:1.5;margin:0}
+.cms-music-iframe{display:block;width:100%;height:152px;border:0;border-radius:12px;background:#0d172b}
+.cms-music-iframe--video{height:auto;aspect-ratio:16/9;min-height:190px}
+.cms-music-external{display:inline-block;margin-top:12px;font-size:.86rem;color:#e3c78f;text-underline-offset:4px}
+.cms-music-panel--empty{display:flex;flex-direction:column;justify-content:center}
+.cms-music-panel--empty .cms-music-heading{margin-bottom:11px}
+@media(max-width:800px){
+  #artists.showcase{padding-top:43px;padding-bottom:54px}
+  #artists>.section-heading{margin-bottom:22px}
+  .cms-artist-story{grid-template-columns:minmax(0,1fr);gap:14px}
+  .cms-artist-story--reverse>.cms-card{order:0}
+  .cms-artist-story--reverse>.cms-music-panel{order:0}
+  .cms-artist-stories{gap:27px;margin-top:22px}
+  .cms-music-panel{min-height:0;padding:20px}
+}
+@media(max-width:420px){
+  .cms-music-track{min-height:61px}
+  .cms-music-iframe--video{min-height:155px}
+}
