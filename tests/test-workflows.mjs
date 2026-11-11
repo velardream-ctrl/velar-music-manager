@@ -7,10 +7,10 @@ for(const p of ['studio/workflows.js','studio/lyrics-tools.js','studio/studio.js
  const result=cp.spawnSync(process.execPath,['--check',new URL('../'+p,import.meta.url).pathname],{encoding:'utf8'});
  assert.equal(result.status,0,p+': '+result.stderr);
 }
-assert.match(html,/<script src="workflows\.js\?v=5"><\/script>/);
+assert.match(html,/<script src="workflows\.js\?v=6"><\/script>/);
 assert.match(html,/<script src="lyrics-tools\.js\?v=4"><\/script>/);
-assert.ok(html.indexOf('import.js?v=1')<html.indexOf('workflows.js?v=5'));
-assert.ok(html.indexOf('workflows.js?v=5')<html.indexOf('lyrics-tools.js?v=4'));
+assert.ok(html.indexOf('import.js?v=1')<html.indexOf('workflows.js?v=6'));
+assert.ok(html.indexOf('workflows.js?v=6')<html.indexOf('lyrics-tools.js?v=4'));
 for(const k of ['overview','catalog','platforms','recordings','contacts','outreach','extras','audit'])assert.ok(workflows.includes(k));
 for(const path of ["'vmm_admins'","'vmm_catalog'","'vmm_links'","'vmm_audit'","'vmm_recordings'","'vmm_contacts'","'vmm_outreach'","'vmm_platforms'"])assert.ok(workflows.includes(path),'Firestore collection missing: '+path);
 assert.match(workflows,/get\(\{source:'server'\}\)/);
