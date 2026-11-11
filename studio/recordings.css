@@ -441,3 +441,36 @@
   color:#ddc89f;line-height:1.4;font-size:.9rem;
   overflow-wrap:anywhere;
 }
+
+
+/* RUN-059: Firefox scrolling must never snap lyrics backwards when sticky
+   player switches heights. The sticky block stays above lyrics and clickable. */
+#vmm-repertoire #vmm-r-player-section{
+  overflow-anchor:none;
+  position:relative;
+  isolation:isolate;
+}
+#vmm-repertoire #vmm-r-text-wrapper{
+  overflow-anchor:none;
+  position:relative;
+  z-index:0;
+}
+#vmm-repertoire #vmm-r-player-card{
+  overflow-anchor:none;
+  pointer-events:auto;
+  position:-webkit-sticky;
+  position:sticky;
+  top:0;
+  z-index:40;
+}
+#vmm-repertoire #vmm-r-player-card.is-minimized{
+  z-index:100;
+  pointer-events:auto;
+  touch-action:auto;
+}
+#vmm-repertoire #vmm-r-player-card.is-minimized .vmm-r-stage,
+#vmm-repertoire #vmm-r-player-card.is-minimized .vmm-r-timeline,
+#vmm-repertoire #vmm-r-player-card.is-minimized button,
+#vmm-repertoire #vmm-r-player-card.is-minimized input{
+  pointer-events:auto;
+}
