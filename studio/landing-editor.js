@@ -279,8 +279,10 @@
      if(!file)return;
      if(!window.VMM_ARTIST_IMAGE){info('Редактор фотографий не загружен. Обнови страницу.');return;}
      window.VMM_ARTIST_IMAGE.open(file,function(imageData){
+       var previousData=item.imageData,previousUrl=item.imageUrl;
        item.imageData=imageData;item.imageUrl='';
-       render();info('Фото обрезано и сжато. Нажми «Сохранить черновик», затем «Опубликовать».');
+       try{API.normalize(data);}catch(err){item.imageData=previousData;item.imageUrl=previousUrl;info('Фото не добавлено: '+err.message);return;}
+       render();info('Фотография обрезана и сжата до '+Math.round(imageData.length*0.75/1024)+' КБ. Сохрани черновик, затем опубликуй.');
      },function(message){info(message);});
    };
    panel.appendChild(input);
