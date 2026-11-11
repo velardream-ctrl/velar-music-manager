@@ -74,7 +74,7 @@
         heading:'Музыка, которую можно открыть заново',
         intro:'Синглы, альбомы, клипы и внешние плееры — без загрузки тяжёлых музыкальных файлов на собственный сервер.',
         cards:[],
-        radio:{enabled:true,title:'VELAR RADIO',provider:'spotify',url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh'},
+        radio:{enabled:false,controlVersion:2,title:'VELAR RADIO',provider:'spotify',url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh'},
         playlists:[{title:'Мой лучший плейлист',description:'Музыкальная подборка VELAR',provider:'spotify',
           url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh',visible:true}],
         subscriptions:[{title:'DJ Velar в Spotify',provider:'spotify',
@@ -191,14 +191,17 @@
   }
   function radioConfig(raw){
     var x=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
-    var enabled=x.enabled===true;
+    // RUN-078: old published documents can have enabled:true, but were never
+    // opted into the new Studio-wide radio switch. Keep them OFF until the
+    // owner explicitly republishes settings using this control version.
+    var enabled=x.enabled===true&&x.controlVersion===2;
     var provider=x.provider==='youtube'?'youtube':'spotify';
     if(typeof x.provider!=='undefined'&&x.provider!=='youtube'&&x.provider!=='spotify')
       throw new Error('VELAR RADIO: выбери Spotify или YouTube.');
     var link=playlistUrl(x.url||'',provider);
     if(x.url&&!link)throw new Error('VELAR RADIO: укажи официальную ссылку на публичный плейлист '+provider+'.');
     if(enabled&&!link)throw new Error('VELAR RADIO: сначала укажи ссылку на плейлист.');
-    return {enabled:enabled,title:plain(typeof x.title==='string'?x.title:'VELAR RADIO','Название радио',70,true),
+    return {enabled:enabled,controlVersion:2,title:plain(typeof x.title==='string'?x.title:'VELAR RADIO','Название радио',70,true),
       provider:provider,url:link};
   }
 
