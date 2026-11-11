@@ -54,7 +54,7 @@ assert.ok(!/audio\/mpeg|audio\/flac|drive\.google\.com|firestore\.googleapis\.co
 assert.ok(html.includes('src="recordings.js?v=11"'));
 assert.ok(html.includes('src="offline-repertoire.js?v=3"'));
 assert.ok(html.includes('href="recordings.css?v=11"'));
-assert.ok(html.indexOf('workflows.js?v=5')<html.indexOf('recordings.js?v=11'));
+assert.ok(html.indexOf('workflows.js?v=6')<html.indexOf('recordings.js?v=11'));
 assert.match(workflows,/window\.VMM_RECORDINGS\.open\(\)/);
 assert.match(css,/vmm-r-player/);
 console.log('PASS: repertoire transliteration, 50MB MP3/FLAC, Drive OAuth, signed uploads, private offline audio and song text modes');
