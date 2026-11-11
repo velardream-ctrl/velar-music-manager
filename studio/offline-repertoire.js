@@ -112,6 +112,24 @@
       tx.onerror=function(){reject(tx.error||new Error('Не удалось отметить синхронизацию'));};
     });});
   }
+  // One-time migration marker: combine existing offline selections from each
+  // old device only once. Later removals must propagate instead of resurrecting.
+  function cloudReadyKey(uid){return '__offline_cloud_ready__'+String(uid);}
+  function wasCloudReady(uid){
+    return open().then(function(db){return new Promise(function(resolve,reject){
+      var tx=db.transaction(META,'readonly'),req=tx.objectStore(META).get(cloudReadyKey(uid));
+      tx.oncomplete=function(){resolve(!!(req.result&&req.result.ready));};
+      tx.onerror=function(){reject(tx.error||new Error('Ошибка проверки синхронизации'));};
+    });});
+  }
+  function markCloudReady(uid){
+    return open().then(function(db){return new Promise(function(resolve,reject){
+      var tx=db.transaction(META,'readwrite');
+      tx.objectStore(META).put({uid:cloudReadyKey(uid),ready:true,updatedAt:Date.now()});
+      tx.oncomplete=function(){resolve();};
+      tx.onerror=function(){reject(tx.error||new Error('Ошибка отметки синхронизации'));};
+    });});
+  }
   function estimate(){
     if(navigator.storage&&navigator.storage.estimate)return navigator.storage.estimate().catch(function(){return null;});
     return Promise.resolve(null);
@@ -120,5 +138,5 @@
     if(navigator.storage&&navigator.storage.persist)return navigator.storage.persist().catch(function(){return false;});
     return Promise.resolve(false);
   }
-  window.VMM_OFFLINE={key:key,put:put,get:get,remove:remove,list:list,rememberSelection:rememberSelection,lastSelection:lastSelection,queuePinChange:queuePinChange,pendingPinChanges:pendingPinChanges,acknowledgePinChange:acknowledgePinChange,estimate:estimate,persist:persist};
+  window.VMM_OFFLINE={key:key,put:put,get:get,remove:remove,list:list,rememberSelection:rememberSelection,lastSelection:lastSelection,queuePinChange:queuePinChange,pendingPinChanges:pendingPinChanges,acknowledgePinChange:acknowledgePinChange,wasCloudReady:wasCloudReady,markCloudReady:markCloudReady,estimate:estimate,persist:persist};
 }());
