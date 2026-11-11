@@ -61,7 +61,7 @@ assert.equal(nodes['public-topic-orbit'].children.length,10,
  'Only top ten selected topic planets render around the crystal');
 assert.equal(nodes['public-topic-cloud'].children.length,tags.length,
  'Every visible tag appears in the complete accessible cloud');
-assert.equal(nodes['public-topic-detail'].children[1].className,'topic-song-list');
+assert.equal(nodes['public-topic-detail'].children[2].className,'topic-song-list');
 const wedding=nodes['public-topic-cloud'].children.find(x=>x.textContent==='Свадьба');
 assert.ok(wedding);
 wedding.onclick();
