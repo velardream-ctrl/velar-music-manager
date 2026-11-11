@@ -44,7 +44,7 @@ assert.throws(()=>api.languagesConfig({entries:[
  {code:'es',label:'Второй',visible:true,tracks:[]}
 ]},defaults.genres.languages),/уникальными/);
 assert.throws(()=>api.universeConfig({nodes:[
- {id:'x',label:'X',target:'https://example.com',visible:true}]},defaults.genres.universe),/раздел сайта/);
+ {id:'xx',label:'X',target:'https://example.com',visible:true}]},defaults.genres.universe),/раздел сайта/);
 assert.throws(()=>api.universeConfig({nodes:Array(13).fill({
  id:'world-1',label:'World',target:'artists',visible:true
 })},defaults.genres.universe),/12/);
