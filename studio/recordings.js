@@ -225,8 +225,20 @@
     renderLyrics();
   }
   function renderPlayerEditor(){
-    var selected=record(audioFileId),valid=!!(selected&&!selected.archived&&selected.catalogId===songId);
+    var selected=record(audioFileId),
+      valid=!!(playerVisible&&selected&&!selected.archived&&selected.catalogId===songId);
     if(!valid)editOpen=false;
+    var badge=id('vmm-r-player-sync'),mark=id('vmm-r-sync-mark');
+    if(badge){
+      var isOffline=valid&&isSaved(selected.driveFileId);
+      var inCloud=valid&&!!(selected.id&&selected.id.indexOf('offline:')!==0);
+      var label=!valid?'Фонограмма не выбрана':
+        inCloud?(isOffline?'Google Drive и сохранено офлайн':'В Google Drive, офлайн-копии нет'):
+        isOffline?'Сохранено только на этом устройстве':'Нет подтверждённой облачной копии';
+      badge.setAttribute('aria-label',label);badge.title=label;
+      badge.className='vmm-r-player-sync'+(isOffline?' is-offline':'');
+      if(mark)mark.textContent=isOffline?'✓':inCloud?'':'—';
+    }
     var button=id('vmm-r-edit'),pane=id('vmm-r-editor');
     if(button){
       button.disabled=!valid;
@@ -238,6 +250,9 @@
     if(!valid)return;
     var target=id('vmm-r-edit-target');
     if(target)target.textContent=(selected.title||song().title||'Песня')+' · '+(selected.variant||'Фонограмма');
+    var date=selected.createdAt&&selected.createdAt.toDate?selected.createdAt.toDate().toLocaleDateString('ru-RU'):'';
+    var meta=id('vmm-r-edit-meta');
+    if(meta)meta.textContent=(selected.filename||'')+' · '+mb(selected.size)+(date?' · '+date:'');
     var toggle=id('vmm-r-offline-toggle');
     if(toggle)toggle.textContent=isSaved(selected.driveFileId)?'Убрать из офлайна':'Сохранить офлайн';
     var trash=id('vmm-r-trash-current');
@@ -261,17 +276,15 @@
     var box=id('vmm-r-records'),t=song();if(!box||!t)return;
     var items=recordings.filter(function(r){return r.catalogId===t.id&&!r.archived;});
     var archived=recordings.filter(function(r){return r.catalogId===t.id&&r.archived;});
-    var live=items.length?items.map(function(r){
-      var offline=isSaved(r.driveFileId),name=esc(r.variant||'Фонограмма'),date=r.createdAt&&r.createdAt.toDate?r.createdAt.toDate().toLocaleDateString('ru-RU'):'';
-      return '<div class="vmm-r-track">'+
-        '<div class="vmm-r-track-info"><strong>'+name+'</strong><small>'+esc((r.filename||'')+' · '+mb(r.size))+(date?' · '+date:'')+'</small></div>'+
-        '<div class="vmm-r-track-actions">'+
-          '<button type="button" data-r-action="play" data-r-id="'+esc(r.driveFileId)+'">▶ Слушать</button>'+
-          '<button type="button" data-r-action="download" data-r-id="'+esc(r.driveFileId)+'">↓ Скачать</button>'+
-          '<span class="vmm-r-offline-status">'+(offline?'Офлайн ✓':'Только онлайн')+'</span>'+
-        '</div></div>';
-    }).join(''):'<p class="sync-note">У этой песни пока нет фонограммы. Загрузи MP3 или FLAC выше.</p>';
-    var archiveHTML=archived.length?'<details class="vmm-r-archive"><summary>Корзина фонограмм ('+archived.length+')</summary><p class="sync-note">Записи скрыты из репертуара, файлы находятся в корзине Google Drive. Их можно восстановить.</p>'+
+    // The catalog is an upload selector, never a second playback/metadata panel.
+    // A cloud-only recording can still be opened deliberately without an offline pin.
+    var live=items.length?
+      '<p class="sync-note">У песни есть '+items.length+' '+(items.length===1?'фонограмма':'фонограмм')+' в каталоге. Для прослушивания открой нужный вариант.</p>'+
+      '<div class="vmm-r-open-choices">'+items.map(function(r){
+        return '<button type="button" data-r-action="open-track" data-r-id="'+esc(r.driveFileId)+'">Открыть в плеере · '+esc(r.variant||'Фонограмма')+'</button>';
+      }).join('')+'</div>':
+      '<p class="sync-note">У этой песни пока нет фонограммы. Загрузи MP3 или FLAC выше.</p>';
+    var archiveHTML=archived.length?'<details class="vmm-r-archive"><summary>Корзина фонограмм ('+archived.length+')</summary><p class="sync-note">Файлы находятся в корзине Google Drive. Их можно восстановить.</p>'+
       archived.map(function(r){return '<div class="vmm-r-track">'+
         '<div class="vmm-r-track-info"><strong>'+esc(r.variant||'Фонограмма')+'</strong><small>'+esc(r.filename||'')+'</small></div>'+
         '<button type="button" data-r-action="restore" data-r-id="'+esc(r.driveFileId)+'">Восстановить</button></div>';}).join('')+'</details>':'';
