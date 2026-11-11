@@ -413,3 +413,42 @@ body.vmm-print-open{overflow:hidden}
 .vmm-photo-control input{display:block;width:100%;accent-color:#e5ca8c;min-height:28px}
 .vmm-photo-actions{display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap;margin-top:15px}
 .vmm-photo-actions button{min-height:44px;padding:9px 14px;background:#e7c98e;color:#15243d;border-radius:10px;font:inherit;border:1px solid #be9e71}
+
+
+/* RUN-067 — curated featured music picker in protected artist editor. */
+#panel-landing .landing-featured{
+ margin:18px 0 12px;padding:16px;border:1px solid #697e9d;
+ border-radius:14px;background:#101f3b;min-width:0;
+}
+#panel-landing .landing-featured-search{
+ display:block;width:100%;min-width:0;min-height:46px;padding:9px 12px;
+ border:1px solid #8b9db9;border-radius:10px;background:#0a1630;
+ color:#f4e8d2;font:inherit;font-size:16px;margin:12px 0;
+}
+#panel-landing .landing-featured-list{
+ max-height:420px;overflow:auto;border:1px solid #506583;border-radius:10px;
+}
+#panel-landing .landing-featured-row{
+ min-height:55px;display:flex;align-items:center;gap:10px;
+ padding:10px 12px;border-bottom:1px solid #52657a;color:#f3e9d9;min-width:0;
+}
+#panel-landing .landing-featured-row:last-child{border-bottom:0}
+#panel-landing .landing-featured-row input{
+ flex:0 0 23px;width:23px;height:23px;accent-color:#e4c28b;margin:0;
+}
+#panel-landing .landing-featured-row span{min-width:0;flex:1;overflow-wrap:anywhere;font-size:.9rem}
+#panel-landing .landing-featured-provider{
+ min-width:116px;max-width:130px;height:44px;padding:6px;border:1px solid #91a6c5;
+ border-radius:9px;background:#0b1933;color:#faedda;font:inherit;font-size:16px;
+}
+#panel-landing .landing-featured-selection{margin-bottom:10px}
+#panel-landing .landing-featured-chosen{
+ display:flex;align-items:center;gap:7px;padding:8px 0;border-bottom:1px solid #54678188;
+}
+#panel-landing .landing-featured-chosen span{min-width:0;flex:1;font-size:.9rem;overflow-wrap:anywhere}
+#panel-landing .landing-featured-chosen button{min-width:42px;min-height:42px;padding:8px}
+@media(max-width:520px){
+ #panel-landing .landing-featured{padding:11px}
+ #panel-landing .landing-featured-row{gap:7px;padding:8px 7px}
+ #panel-landing .landing-featured-provider{min-width:102px;max-width:110px}
+}
