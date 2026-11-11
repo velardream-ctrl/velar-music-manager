@@ -48,7 +48,7 @@ assert.equal(fromCrazy.trackB,undefined,'Releasing manually assigned song restor
 const fromVelar=link.apply({},'velar',['trackA'],tracks);
 assert.equal(fromVelar.trackB,'unassigned','Unchecking an inferred Velar song must not resurrect it');
 assert.equal(link.effective(tracks[1],fromVelar),'');
-assert.throws(()=>link.apply({},'crazy-bobr',['unknown'],tracks),/отсутствующую/);
+assert.throws(()=>link.apply({},'crazy-bobr',['unknown'],tracks),/отсутствующая/);
 assert.throws(()=>link.apply({},'crazy-bobr',['trackB'],[{id:'trackB'},{id:'trackB'}]),/Повторяющийся/);
 const dbState=new Map(),calls=[];
 const db={
