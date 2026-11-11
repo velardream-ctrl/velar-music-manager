@@ -795,7 +795,11 @@
              active.tracks.push({
                title:song.title,artist:song.artist,provider:pair[0],url:pair[1]
              });
-             render();info('Песня назначена языку '+active.label+'. Сохрани черновик перед публикацией.');
+             // Keep the current search and scroll position when tagging many
+             // catalog songs. Save/publish still require explicit actions.
+             add.disabled=true;add.textContent='✓ '+pair[0];
+             drawTracks();updateButtons();
+             info('Песня назначена языку '+active.label+'. Сохрани черновик перед публикацией.');
            },'landing-small');
            add.disabled=onList;entry.appendChild(add);
          });
