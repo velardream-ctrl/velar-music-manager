@@ -19,8 +19,43 @@
  function avatarFace(cls,expression){
    var face=el('span',cls+' velar-expression','V');
    face.setAttribute('aria-hidden','true');
-   face.setAttribute('data-expression',expression||'neutral');
+   setAvatar(face,expression||'neutral');
    return face;
+ }
+ function setAvatar(face,expression){
+   if(!face)return;
+   var chosen=String(expression||'neutral'),images=config&&config.avatars&&config.avatars.customImages;
+   var customIndex=chosen==='custom1'?0:chosen==='custom2'?1:-1;
+   var photo=customIndex>=0&&images&&images[customIndex]&&images[customIndex].dataUrl||'';
+   face.className=face.className.replace(/\svelar-expression--custom/g,'');
+   if(photo&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(photo)&&photo.length<=24000){
+     face.className+=' velar-expression--custom';
+     face.style.backgroundImage='url("'+photo+'")';
+     face.setAttribute('data-expression','neutral');
+   }else{
+     face.style.backgroundImage='';
+     face.setAttribute('data-expression',customIndex>=0?'neutral':chosen);
+   }
+ }
+ function greetingChoice(){
+   var selected=config&&config.avatars&&config.avatars.greeting;
+   return selected&&selected!=='auto'?selected:greetingFace();
+ }
+ function reactionChoice(raw,reply){
+   var avatars=config&&config.avatars;
+   if(avatars){
+     var rules=avatars.keywordRules||[];
+     for(var i=0;i<rules.length;i++){
+       var r=rules[i],source=r.source||'question';
+       if((source==='question'||source==='both')&&contains(norm(raw),r.keywords))
+         return r.expression;
+       if((source==='answer'||source==='both')&&contains(norm(reply),r.keywords))
+         return r.expression;
+     }
+     var type=expressionFor(raw);
+     return avatars.reactions&&avatars.reactions[type]||type;
+   }
+   return expressionFor(raw);
  }
  function expressionFor(raw){
    var q=norm(raw);
@@ -174,7 +209,7 @@
    if(!t)return;
    itemMessage('visitor',t);
    var result=answer(t,published,config);
-   itemMessage('assistant',result.text,result.action?result:null,expressionFor(t));
+   itemMessage('assistant',result.text,result.action?result:null,reactionChoice(t,result.text));
    if(input)input.value='';
  }
  function paint(){
@@ -184,11 +219,11 @@
    var launcher=el('button','velar-assistant-launch');
    launcher.type='button';launcher.setAttribute('aria-controls','velar-assistant-dialog');
    launcher.setAttribute('aria-expanded','false');
-   var symbol=avatarFace('velar-assistant-symbol','neutral');
+   var symbol=avatarFace('velar-assistant-symbol',config&&config.avatars&&config.avatars.launcher||'neutral');
    launcher.appendChild(symbol);launcher.appendChild(el('span','velar-assistant-launch-label','Помощник VELAR'));
    root.appendChild(launcher);
    prompt=el('div','velar-assistant-greeting hidden');
-   var helloSticker=avatarFace('velar-assistant-greeting-avatar',greetingFace());
+   var helloSticker=avatarFace('velar-assistant-greeting-avatar',greetingChoice());
    prompt.appendChild(helloSticker);
    prompt.appendChild(el('span','velar-assistant-wave','')); // CSS waving hand; no emoji
    prompt.appendChild(el('span','velar-assistant-greeting-text','Добро пожаловать! Подобрать музыку?'));
@@ -200,7 +235,7 @@
    dialog.setAttribute('role','region');dialog.setAttribute('aria-label','VELAR — музыкальный помощник');
    header=el('div','velar-assistant-header');
    var headerTitle=el('strong','velar-assistant-title');
-   var face=avatarFace('velar-assistant-header-avatar','neutral');
+   var face=avatarFace('velar-assistant-header-avatar',config&&config.avatars&&config.avatars.header||'neutral');
    header.appendChild(face);header.appendChild(headerTitle);
    header.appendChild(el('span','velar-assistant-header-note','Локальный бот · без платного ИИ'));
    var close=el('button','velar-assistant-close','×');close.type='button';
@@ -233,7 +268,7 @@
      launcher.setAttribute('aria-expanded',opened?'true':'false');
      prompt.className='velar-assistant-greeting hidden';markGreeting();
      if(opened){
-       if(!log.children.length)itemMessage('assistant',config.welcome,null,greetingFace());
+       if(!log.children.length)itemMessage('assistant',config.welcome,null,greetingChoice());
        if(input&&input.focus&&(!window.matchMedia||!window.matchMedia('(max-width:590px)').matches))input.focus();
      }else if(launcher.focus)launcher.focus();
    }
@@ -270,6 +305,13 @@
      if(el)el.textContent=text;
      return el;
    }
+   var avatars=config&&config.avatars||{};
+   setAvatar(root.querySelector&&root.querySelector('.velar-assistant-symbol'),
+     avatars.launcher||'neutral');
+   setAvatar(root.querySelector&&root.querySelector('.velar-assistant-header-avatar'),
+     avatars.header||'neutral');
+   setAvatar(root.querySelector&&root.querySelector('.velar-assistant-greeting-avatar'),
+     greetingChoice());
    setText('.velar-assistant-launch-label',configLabel('launcher','Помощник VELAR'));
    setText('.velar-assistant-header-note',configLabel('headerNote','Локальный бот · без платного ИИ'));
    setText('.velar-assistant-greeting-text',configLabel('greetingBubble',config.welcome));
