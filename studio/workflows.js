@@ -360,7 +360,8 @@
     id('vmm-search').oninput=function(){filter=this.value;auditPage();refocus();};
   }
   function open(type) {
-    if(!labels[type]||type==='lyrics')return;
+    if(!labels[type]||type==='lyrics'||type==='recordings')return;
+    if(window.VMM_STUDIO&&window.VMM_STUDIO.rememberPanel)window.VMM_STUDIO.rememberPanel(type);
     current=type;filter='';page=0;mode=type==='platforms'?'pending':'all';navActive(type);loading(labels[type]);
     authenticated(function(){
       if(type==='overview'||type==='catalog'||type==='platforms'){loadCommon(function(){if(type==='overview')overview();else if(type==='catalog')catalogPage();else platformPage();});}
@@ -399,6 +400,7 @@
     var auditButton=sidebar.querySelector('[data-panel="audit"]');
     if(auditButton)sidebar.insertBefore(extraButton,auditButton);else sidebar.appendChild(extraButton);
   }
+  window.VMM_WORKFLOWS={open:open};
   var nav=document.querySelectorAll('#workspace [data-panel]');
   for(var i=0;i<nav.length;i++){
     nav[i].addEventListener('click',function(e){
