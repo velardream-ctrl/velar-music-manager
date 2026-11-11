@@ -385,6 +385,8 @@
    playlistGallery(value.releases);
    renderRadio(value.releases.radio);
    if(window.VELAR_UNIVERSE&&window.VELAR_UNIVERSE.render)window.VELAR_UNIVERSE.render(value);
+   if(window.VELAR_LANGUAGES&&window.VELAR_LANGUAGES.render)
+     window.VELAR_LANGUAGES.render(value.genres.languages);
    return true;
  }
  function start(){
@@ -404,5 +406,5 @@
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);
  else start();
- window.VMM_PUBLIC_LANDING={render:render}; // pure UI hook, never writes
+ window.VMM_PUBLIC_LANDING={render:render,stopExternalPlayers:pauseOtherEmbeds}; // public UI only, never writes
 }());
