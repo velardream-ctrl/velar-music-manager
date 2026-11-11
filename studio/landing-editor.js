@@ -1072,6 +1072,114 @@
    greet.appendChild(gt);parent.appendChild(greet);
    field(parent,'Имя помощника',assistant.title,function(v){assistant.title=v;});
    field(parent,'Текст приветствия',assistant.welcome,function(v){assistant.welcome=v;},true);
+   // RUN-080: all public labels are owner-editable. The chat continues to
+   // generate replies locally; these fields never create an external API.
+   var labelFields=[
+     ['launcher','Надпись на кнопке открытия'],
+     ['greetingBubble','Текст всплывающего приветствия'],
+     ['headerNote','Подпись под именем помощника (можно оставить пустой)'],
+     ['greetingCloseText','Символ закрытия приветствия'],
+     ['greetingCloseAria','Описание закрытия приветствия для доступности'],
+     ['closeText','Символ закрытия окна чата'],
+     ['closeAria','Описание закрытия чата для доступности'],
+     ['dialogAria','Название окна для голосового чтения'],
+     ['inputAria','Описание поля ввода для доступности'],
+     ['inputPlaceholder','Подсказка внутри поля сообщения'],
+     ['submit','Надпись кнопки отправки'],
+     ['privacy','Строка под полем сообщения (пусто — скрыть)']
+   ];
+   var labelsBlock=document.createElement('details');labelsBlock.className='landing-card';
+   var labelsSummary=document.createElement('summary');
+   labelsSummary.textContent='Все надписи и подписи окна чата';labelsBlock.appendChild(labelsSummary);
+   labelFields.forEach(function(pair){
+     field(labelsBlock,pair[1],assistant.labels[pair[0]],function(v){assistant.labels[pair[0]]=v;},
+       pair[0]==='greetingBubble');
+   });
+   parent.appendChild(labelsBlock);
+   heading(parent,'Быстрые темы внизу чата',
+     'Количество от 0 до 12, порядок настраивается. Надпись кнопки видна посетителю, а запрос отправляется помощнику после нажатия. Можно выбрать готовую музыкальную тему или вписать свой текст.');
+   assistant.quickTopics.forEach(function(topic,index){
+     var card=document.createElement('section');card.className='landing-card';
+     heading(card,'Быстрая кнопка '+(index+1));
+     field(card,'Надпись кнопки №'+(index+1),topic.label,function(v){topic.label=v;});
+     field(card,'Запрос кнопки №'+(index+1),topic.query,function(v){topic.query=v;});
+     var available=(data.genres.topics&&data.genres.topics.entries||[]).filter(function(t){
+       return t.visible===true;
+     });
+     if(available.length){
+       var themeLabel=document.createElement('label');themeLabel.className='landing-field';
+       var caption=document.createElement('span');caption.textContent='Подставить опубликованную тему';themeLabel.appendChild(caption);
+       var choice=document.createElement('select');choice.className='landing-artist-select';
+       var placeholder=document.createElement('option');placeholder.value='';
+       placeholder.textContent='Выбрать тему…';choice.appendChild(placeholder);
+       available.forEach(function(t,j){
+         var option=document.createElement('option');option.value=String(j);
+         option.textContent=t.label;choice.appendChild(option);
+       });
+       choice.onchange=function(){
+         if(this.value==='')return;
+         var chosen=available[Number(this.value)];
+         if(!chosen)return;
+         topic.label=chosen.label;topic.query=chosen.label;
+         render();
+       };
+       themeLabel.appendChild(choice);card.appendChild(themeLabel);
+     }
+     var actions=document.createElement('div');actions.className='landing-item-actions';
+     actions.appendChild(button('↑ Выше',function(){
+       if(index===0)return;
+       var current=assistant.quickTopics.splice(index,1)[0];
+       assistant.quickTopics.splice(index-1,0,current);render();
+     }));
+     actions.appendChild(button('↓ Ниже',function(){
+       if(index===assistant.quickTopics.length-1)return;
+       var current=assistant.quickTopics.splice(index,1)[0];
+       assistant.quickTopics.splice(index+1,0,current);render();
+     }));
+     actions.appendChild(button('Удалить кнопку',function(){
+       if(!window.confirm('Удалить быструю кнопку из черновика?'))return;
+       assistant.quickTopics.splice(index,1);render();
+     },'landing-danger'));
+     card.appendChild(actions);parent.appendChild(card);
+   });
+   parent.appendChild(button('+ Добавить быструю тему',function(){
+     if(assistant.quickTopics.length>=12){info('Можно добавить не более 12 быстрых тем.');return;}
+     assistant.quickTopics.push({label:'Новая тема',query:'тема'});render();
+   },'landing-add'));
+   var replyFields=[
+     ['emptyInput','Если пользователь не ввёл запрос'],
+     ['contactEnabled','Сотрудничество: почта настроена'],
+     ['contactDisabled','Сотрудничество: почта не настроена'],
+     ['contactEnabledButton','Кнопка: написать автору'],
+     ['contactDisabledButton','Кнопка: официальные страницы'],
+     ['moodWithTracks','Тема с песнями: текст ответа'],
+     ['moodWithoutTracks','Тема без песен: текст ответа'],
+     ['moodButton','Кнопка: открыть музыкальную тему'],
+     ['hello','Ответ на приветствие'],
+     ['radio','Ответ про радио'],
+     ['radioButton','Кнопка: плейлисты'],
+     ['languages','Ответ про языки'],
+     ['languagesButton','Кнопка: языки'],
+     ['releases','Ответ про релизы'],
+     ['releasesButton','Кнопка: релизы'],
+     ['artists','Ответ про артистов'],
+     ['artistsButton','Кнопка: артисты'],
+     ['fallbackEnabled','Неизвестный запрос: почта настроена'],
+     ['fallbackDisabled','Неизвестный запрос: почта не настроена'],
+     ['fallbackButton','Кнопка: исследовать темы']
+   ];
+   var repliesBlock=document.createElement('details');repliesBlock.className='landing-card';
+   var repliesSummary=document.createElement('summary');
+   repliesSummary.textContent='Встроенные ответы помощника и их кнопки';
+   repliesBlock.appendChild(repliesSummary);
+   var note=document.createElement('p');note.className='sync-note';
+   note.textContent='В ответах о музыкальных темах {topic} — название темы, {count} — число песен. Пустая надпись кнопки действия скрывает кнопку.';
+   repliesBlock.appendChild(note);
+   replyFields.forEach(function(pair){
+     field(repliesBlock,pair[1],assistant.replies[pair[0]],function(v){assistant.replies[pair[0]]=v;},
+       pair[0].indexOf('Button')===-1);
+   });
+   parent.appendChild(repliesBlock);
    heading(parent,'Связь с автором',
      'Необходим публичный рабочий email. Адрес будет виден посетителям и в опубликованных данных. Пока поле пустое, бот предложит официальные страницы артистов. Письмо открывается как черновик в почте посетителя; автоматическая отправка, Telegram/WhatsApp и хранение обращений пока не включены.');
    field(parent,'Публичный email для предложений (необязательно)',assistant.contactEmail||'',function(v){
