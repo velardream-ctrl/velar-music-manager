@@ -9,14 +9,14 @@ const win={};
 vm.runInNewContext(schema,{window:win,Array,String,Number,Object,JSON,Error},{timeout:1000});
 const api=win.VMM_LANDING_SCHEMA;
 const defaults=api.defaults();
-assert.equal(defaults.genres.universe.nodes.length,7);
+assert.equal(defaults.genres.universe.nodes.length,8);
 assert.equal(defaults.genres.languages.entries.length,13);
 assert.equal(defaults.genres.languages.entries.filter(x=>x.fictional).length,2);
 assert.equal(defaults.genres.languages.entries.some(x=>x.code==='zh'),false,
  'Chinese full songs were not yet verified');
 assert.equal(defaults.genres.languages.entries.every(x=>x.tracks.length===0),true,
  'Never assume unreleased or privately stored songs are public');
-assert.equal(api.normalize({...defaults}).genres.universe.nodes.length,7);
+assert.equal(api.normalize({...defaults}).genres.universe.nodes.length,8);
 const t1={title:'Noche de Bachata',artist:'DJ Velar',provider:'spotify',
  url:'https://open.spotify.com/track/0123456789ABCDEFGHIJKL'};
 const t2={title:'Bachata Rave',artist:'DJ Velar',provider:'youtube',url:'https://youtu.be/ABCDEFGHIjk'};
@@ -32,7 +32,7 @@ const page=api.normalize({...defaults,genres:{...defaults.genres,
  languages:{...defaults.genres.languages,entries}
 }});
 assert.equal(page.genres.languages.entries.find(x=>x.code==='es').tracks.length,2);
-assert.equal(page.genres.universe.nodes.length,8);
+assert.equal(page.genres.universe.nodes.length,9);
 assert.equal(page.genres.universe.nodes[7].visible,false);
 assert.deepEqual(Object.keys(page.genres.languages.entries.find(x=>x.code==='es').tracks[0]),
  ['title','artist','provider','url']);
@@ -103,7 +103,7 @@ assert.equal(elements['universe-title'].textContent,page.genres.universe.heading
 assert.equal(typeof elements['velar-universe-toggle'].onclick,'function');
 elements['velar-universe-toggle'].onclick();
 const stage=elements['velar-universe-stage'];
-assert.equal(stage.children.length,8,'Only 7 visible menu buttons plus genuine crystal core');
+assert.equal(stage.children.length,9,'Eight visible navigation buttons plus official crystal core');
 assert.equal(stage.children[0].children[1].src,'assets/velardream-symbol.svg');
 const languageNode=stage.children[7];
 languageNode.onclick();
