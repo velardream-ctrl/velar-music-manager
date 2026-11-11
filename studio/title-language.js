@@ -88,7 +88,11 @@ function guess(title){
  return {code:best,confidence:'review',reason:'Неоднозначное название (требуется проверка)'};
 }
 function selectedLanguage(record){
- return plain(record.titleLanguage||record.title_language||'').toLowerCase();
+ var raw=plain(record.titleLanguage||record.title_language||'').toLowerCase();
+ for(var i=0;i<supported.length;i++){
+   if(raw===supported[i][0]||raw===supported[i][1].toLowerCase())return supported[i][0];
+ }
+ return raw;
 }
 function options(languages){
  var out=supported.slice();
@@ -104,10 +108,11 @@ function proposals(catalog,langs){
    var current=selectedLanguage(r),predicted=guess(r.title);
    var valid=allowed.indexOf(current)>=0;
    return {id:String(r.id),title:plain(r.title),artist:plain(r.artist),
-     before:valid?current:'',guess:predicted.code,
-     code:valid?current:(predicted.confidence==='high'?predicted.code:''),
-     review:!valid&&predicted.confidence!=='high',
-     reason:valid?'Уже указано в каталоге':predicted.reason,
+     before:current||'',guess:predicted.code,
+     code:valid?current:(current?'':predicted.confidence==='high'?predicted.code:''),
+     review:!valid&&(!current&&predicted.confidence!=='high'),
+     reason:valid?'Уже указано в каталоге':current?
+       'Неизвестное существующее значение — не перезаписывается автоматически':predicted.reason,
      accepted:valid,
      changed:false,
      record:r};
@@ -213,7 +218,9 @@ function attach(opts){
      var byCode={};
      langs.entries.forEach(function(t){byCode[t.code]=t;});
      rows.forEach(function(row){
-       var code=row.before||row.code,lang=byCode[code],record=row.record;
+       // Only persisted catalog language values feed public worlds. Preview guesses
+     // remain private until the administrator explicitly commits them.
+     var code=row.before,lang=byCode[code],record=row.record;
        if(!code||!lang){excluded++;return;}
        var urls=record.links||{};
        var spotify=window.VMM_LANDING_SCHEMA.songUrl(urls.spotify||'','spotify'),
