@@ -327,3 +327,45 @@ body.vmm-print-open{overflow:hidden}
  #panel-landing .landing-controls{align-items:stretch}
  #panel-landing .landing-controls button{flex:1 1 46%}
 }
+
+
+/* RUN-064 — one-tap artist selection and private, mobile-friendly track checklists. */
+#panel-landing .landing-artist-picker,
+#panel-landing .landing-track-editor{
+ margin:16px 0;border:1px solid #637693;border-radius:14px;
+ background:#12223e;padding:14px;
+}
+#panel-landing .landing-artist-picker-actions,
+#panel-landing .landing-track-toolbar{
+ display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:12px 0;
+}
+#panel-landing .landing-artist-select,
+#panel-landing .landing-track-search{
+ min-height:48px;max-width:100%;box-sizing:border-box;
+ border:1px solid #8c9ab5;border-radius:10px;background:#0d1b32;
+ color:#fff0d0;padding:9px 12px;font:inherit;font-size:16px;
+}
+#panel-landing .landing-artist-select{flex:1 1 245px;min-width:0}
+#panel-landing .landing-track-search{width:100%}
+#panel-landing .landing-track-list{
+ max-height:410px;overflow-y:auto;overscroll-behavior:contain;
+ border:1px solid #516582;border-radius:11px;margin:12px 0;
+}
+#panel-landing .landing-track-row{
+ display:flex;gap:12px;align-items:center;min-height:49px;
+ padding:9px 12px;border-bottom:1px solid #4a5e78;
+ color:#f2e8d7;line-height:1.35;cursor:pointer;
+}
+#panel-landing .landing-track-row:last-child{border-bottom:0}
+#panel-landing .landing-track-row input{
+ width:23px;height:23px;min-width:23px;margin:0;accent-color:#e9cd94;
+}
+#panel-landing .landing-track-row span{font-size:.92rem;overflow-wrap:anywhere}
+#panel-landing .landing-track-toolbar button{min-height:44px;font:inherit;padding:9px 12px}
+#panel-landing .landing-artist-source{color:#d9c594}
+@media(max-width:540px){
+ #panel-landing .landing-artist-picker,
+ #panel-landing .landing-track-editor{padding:10px}
+ #panel-landing .landing-track-toolbar button{flex:1 1 160px}
+ #panel-landing .landing-artist-picker-actions button{width:100%}
+}
