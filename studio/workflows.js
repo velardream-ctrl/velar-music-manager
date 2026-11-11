@@ -76,7 +76,7 @@
   function loading(title) {pane.innerHTML='<h2>'+esc(title)+'</h2><p id="vmm-w-status" class="sync-note">Читаем записи из защищённой базы…</p>';}
   function row(s){var x=parseInt(s,10);return isFinite(x)&&x>=2?x:0;}
   function findTrack(n) {var r=row(n);for(var i=0;i<catalog.length;i++)if(Number(catalog[i].sourceRow)===r)return catalog[i];return null;}
-  function getDocs(name){return db.collection(name).limit(1200).get({source:'server'}).then(function(s){var a=[];s.forEach(function(d){var x=d.data();x.id=d.id;a.push(x);});return a;});}
+  function getDocs(name){return db.collection(name).limit(1200).get({source:'server'}).then(function(s){var a=[];s.forEach(function(d){if(name==='vmm_links'&&d.id==='artist_track_assignments_v1')return;var x=d.data();x.id=d.id;a.push(x);});return a;});}
   function loadCommon(then) {
     Promise.all([getDocs('vmm_catalog'),getDocs('vmm_links')]).then(function(a){catalog=a[0];proposals=a[1];then();}).catch(function(e){pane.innerHTML='<h2>Ошибка загрузки</h2><p>'+esc(e.message)+'</p><button data-act="retry">Повторить</button>';});
   }

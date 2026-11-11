@@ -27,8 +27,8 @@ const privateObject={...def,secretToken:'abc123',lyrics:[{text:'не публи�
 const clean=JSON.stringify(api.normalize(privateObject));
 assert.doesNotMatch(clean,/secretToken|не публиковать/);
 assert.match(html,/landing-public\.js\?v=1/);
-assert.match(html,/landing-schema\.js\?v=1/);
-assert.match(studio,/landing-editor\.js\?v=1/);
+assert.match(html,/landing-schema\.js\?v=2/);
+assert.match(studio,/landing-editor\.js\?v=2/);
 assert.match(studio,/data-panel="landing"/);
 for(const tab of ['hero','artists','releases','genres','about','publish'])
  assert.match(studio,new RegExp('data-landing-tab="'+tab+'"'));

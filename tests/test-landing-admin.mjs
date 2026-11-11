@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
-const schema=read('landing-schema.js'),source=read('studio/landing-editor.js'),studio=read('studio/studio.js');
+const schema=read('landing-schema.js'),choicesSrc=read('studio/artist-choices.js'),linksSrc=read('studio/artist-track-links.js'),source=read('studio/landing-editor.js'),studio=read('studio/studio.js');
 const nodes={},tabNames=['hero','artists','releases','genres','about','publish'];
 function elem(tag='div'){
  const el={tagName:tag,type:'',value:'',textContent:'',className:'',disabled:false,checked:false,
@@ -22,7 +22,15 @@ const document={getElementById:get,createElement:elem,querySelectorAll(q){return
 const records=new Map(),reads=[];
 function snapshot(id){return {exists:records.has(id),data(){return records.get(id);}};}
 const database={
- collection(collection){return {doc(id){
+ collection(collection){return {
+  limit(n){assert.equal(n,1200);return {get(){return Promise.resolve({
+   forEach(cb){[
+    {id:'songVelar1',data:()=>({title:'Белая берёза',artist:'Velar'})},
+    {id:'songVelar2',data:()=>({title:'Crazy Bobr Party',artist:'Velar'})},
+    {id:'songIlya',data:()=>({title:'Север',artist:'Илья Дмитриев'})}
+   ].forEach(cb);}
+  });}};},
+  doc(id){
   const key=collection+'/'+id;
   return {id,key,get(options){reads.push({key,options});if(collection==='vmm_admins')
    return Promise.resolve({exists:true,data:()=>({enabled:true})});
@@ -45,6 +53,8 @@ const firebase={apps:[1],auth(){return {currentUser:account};},firestore(){retur
 firebase.firestore.FieldValue={serverTimestamp:()=> 'SERVER_TIME'};
 const window={firebase,confirm:()=>true,VMM_LANDING_SCHEMA:null};
 vm.runInNewContext(schema,{window,Array,String,Number,Object,JSON,Error},{timeout:1000});
+vm.runInNewContext(choicesSrc,{window,Array,String,Number,Object,JSON,Math,Error},{timeout:1000});
+vm.runInNewContext(linksSrc,{window,Array,String,Number,Object,JSON,Math,Promise,Error,firebase,navigator:{onLine:true}},{timeout:1000});
 vm.runInNewContext(source,{document,window,firebase,navigator:{onLine:true},Promise,Array,String,Number,Object,JSON,Error},{timeout:1000});
 const api=window.VMM_LANDING;
 assert.ok(api&&typeof api.open==='function');
@@ -81,11 +91,14 @@ assert.equal(live.status,'published');
 assert.equal(live.content.hero.subtitle,'Музыка меняет мир');
 assert.equal(live.updatedBy,'owner1234');
 // Artist card editor works independently from the private release catalog.
-nav[1].onclick();
+nav[1].onclick();await flush();
+const select=traverse(get('landing-fields'),n=>n.className==='landing-artist-select');
+assert.ok(select);
+select.value='velar';
 const add=traverse(get('landing-fields'),n=>n.className==='landing-add');
 assert.ok(add);
 add.onclick();
-findInput('Имя / название артиста').input('Velar');
+findInput('Имя / название артиста').input('DJ Velar');
 findInput('Роль / стиль').input('Бас и композитор');
 findInput('Публичная HTTPS-ссылка (профиль, Spotify, YouTube…) — необязательно')
  .input('https://example.com/velar');
@@ -96,8 +109,42 @@ get('landing-save').onclick();await flush();
 assert.equal(records.get('vmm_public_drafts/landing').content.artists.cards.length,1);
 assert.equal(records.get('vmm_public_pages/landing').content.artists.cards.length,0);
 get('landing-publish').onclick();await flush();
-assert.equal(records.get('vmm_public_pages/landing').content.artists.cards[0].title,'Velar');
+assert.equal(records.get('vmm_public_pages/landing').content.artists.cards[0].title,'DJ Velar');
+assert.equal(records.get('vmm_public_pages/landing').content.artists.cards[0].artistId,'velar');
 assert.equal(records.get('vmm_public_pages/landing').content.artists.cards[0].visible,true);
+// Crazy Bobr is a separate preset even when the catalog still credits Velar.
+const chooser=traverse(get('landing-fields'),n=>n.className==='landing-artist-select');
+chooser.value='crazy-bobr';
+traverse(get('landing-fields'),n=>n.className==='landing-add').onclick();
+assert.equal(traverse(get('landing-fields'),n=>n.textContent==='Имя / название артиста')!==null,true);
+function all(root,predicate,out=[]){
+ if(predicate(root))out.push(root);
+ for(const x of root.children)all(x,predicate,out);
+ return out;
+}
+let trackButtons=all(get('landing-fields'),n=>n.textContent==='Назначить песни');
+assert.equal(trackButtons.length,2);
+trackButtons[1].onclick();
+const trackSearch=traverse(get('landing-fields'),n=>n.className==='landing-track-search');
+assert.ok(trackSearch);
+trackSearch.value='Crazy Bobr Party';
+trackSearch.oninput.call(trackSearch);
+const trackRow=traverse(get('landing-fields'),n=>n.className==='landing-track-row');
+assert.ok(trackRow);
+assert.match(trackRow.children[1].textContent,/Crazy Bobr Party/);
+const tick=trackRow.children[0];
+tick.checked=true;tick.onchange.call(tick);
+assert.equal(api.isDirty(),true);
+const saveLinks=traverse(get('landing-fields'),n=>n.textContent==='Сохранить привязки песен');
+assert.ok(saveLinks&&!saveLinks.disabled);
+saveLinks.onclick();await flush();
+const links=records.get('vmm_links/artist_track_assignments_v1');
+assert.equal(links.overrides.songVelar2,'crazy-bobr');
+assert.equal(links.revision,1);
+assert.equal(records.get('vmm_public_pages/landing').content.artists.cards.length,1,
+ 'Private song assignments must not publish the new artist without explicit public publish');
+get('landing-save').onclick();await flush();
+assert.equal(records.get('vmm_public_drafts/landing').content.artists.cards[1].title,'Crazy Bobr');
 // Remote write must never be overwritten by stale admin tab.
 nav[0].onclick();
 findInput('Подзаголовок').input('Несохранённый локальный текст');
@@ -110,4 +157,4 @@ assert.equal(api.isDirty(),true);
 assert.equal(get('landing-publish').disabled,true);
 assert.match(studio,/window\.VMM_LANDING\.canLeave\(\)/);
 assert.match(studio,/window\.VMM_LANDING\.reset/);
-console.log('PASS: admin-only landing editor, isolated draft, explicit publication, artist cards, conflict protection and unsaved-change guards');
+console.log('PASS: admin-only landing editor, catalog-backed artist chooser, isolated draft/publication and conflict protection');
