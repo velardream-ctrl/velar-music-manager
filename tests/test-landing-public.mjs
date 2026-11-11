@@ -60,7 +60,11 @@ assert.equal(elements['releases-title'].textContent,'Новые песни');
 assert.equal(elements['public-genres-tags'].children.length,2);
 const artistCard=elements['public-artists-cards'].children[0];
 assert.equal(artistCard.tagName,'article');
-assert.equal(artistCard.children[0].tagName,'img');
+const artistPhotoFrame=artistCard.children[0];
+assert.equal(artistPhotoFrame.tagName,'div');
+assert.match(artistPhotoFrame.className,/cms-artist-photo--square/);
+assert.equal(artistPhotoFrame.children[0].tagName,'img');
+assert.match(artistPhotoFrame.children[0].className,/cms-artist-photo-image/);
 const copy=artistCard.children[1];
 assert.equal(copy.children[0].textContent,'Velar <script>alert(1)</script>');
 assert.ok(!JSON.stringify(artistCard.innerHTML).includes('<script>'));
@@ -68,6 +72,17 @@ const link=copy.children.find(x=>x.tagName==='a');
 assert.equal(link.href,'https://example.com/velar');
 assert.equal(link.rel,'noopener noreferrer');
 assert.equal(elements['public-releases-cards'].children.length,1);
+assert.equal(elements['public-releases-cards'].children[0].children[0].className,'cms-card-copy',
+  'Release cards without images must not gain an artist portrait frame');
+// Changing the admin setting and publishing must switch the SAME photo to a circle.
+const circlePublished={...published,artists:{...published.artists,cards:published.artists.cards.map(x=>({...x,imageShape:'circle'}))}};
+listener({exists:true,data:()=>({schemaVersion:1,status:'published',content:circlePublished})});
+const circleCard=elements['public-artists-cards'].children[0];
+assert.match(circleCard.className,/cms-artist-card--circle/);
+assert.match(circleCard.children[0].className,/cms-artist-photo--circle/);
+assert.equal(circleCard.children[0].children[0].src,artistPhotoFrame.children[0].src);
+listener({exists:true,data:()=>({schemaVersion:1,status:'published',content:published})});
+assert.match(elements['public-artists-cards'].children[0].children[0].className,/cms-artist-photo--square/);
 assert.equal(elements['public-about-notice'].textContent,'Новый текст о проекте');
 // Unpublished pages or wrong schema must never paint over an existing page.
 listener({exists:true,data:()=>({schemaVersion:1,status:'draft',content:api.defaults()})});
