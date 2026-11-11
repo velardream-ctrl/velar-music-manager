@@ -268,6 +268,57 @@
    target.appendChild(filters);target.appendChild(grid);target.appendChild(more);
    paint();
  }
+
+ function playlistGallery(value){
+   var grid=byId('public-playlists-cards'),follow=byId('public-subscriptions');
+   if(!grid||!follow)return;
+   empty(grid);empty(follow);
+   var playlists=value.playlists.filter(function(row){return row.visible&&row.url;});
+   playlists.forEach(function(item,index){
+     var card=create('article','cms-playlist-card'+(index===0?' cms-playlist-card--featured':''));
+     var decoration=create('div','cms-playlist-art');
+     decoration.appendChild(create('span','cms-playlist-vinyl'));
+     card.appendChild(decoration);
+     var details=create('div','cms-playlist-copy');
+     if(index===0)details.appendChild(create('span','cms-release-type','ВЫБОР VELAR'));
+     details.appendChild(create('h3','',item.title));
+     if(item.description)details.appendChild(create('p','',item.description));
+     var actions=create('div','cms-playlist-actions');
+     var choose=create('button','cms-release-listen','Послушать плейлист');
+     choose.type='button';
+     choose.setAttribute('aria-label','Открыть официальный плейлист: '+item.title);
+     var player=create('div','cms-playlist-player');
+     choose.onclick=function(){
+       var src=officialEmbed(item.url,item.provider,'playlist');
+       if(!src)return;
+       pauseOtherEmbeds();empty(player);
+       var frame=create('iframe','cms-release-iframe'+(item.provider==='youtube'?' cms-release-iframe--video':''));
+       frame.src=src;frame.title=item.title+' — официальный плейлист '+item.provider;
+       frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
+       frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
+       frame.setAttribute('allowfullscreen','');
+       player.appendChild(frame);
+       var close=create('button','cms-release-close','Закрыть плеер');
+       close.type='button';close.onclick=function(){empty(player);};player.appendChild(close);
+     };
+     actions.appendChild(choose);
+     var external=create('a','cms-card-link','Открыть в '+(item.provider==='spotify'?'Spotify':'YouTube'));
+     external.href=item.url;external.target='_blank';external.rel='noopener noreferrer';
+     actions.appendChild(external);details.appendChild(actions);
+     card.appendChild(details);card.appendChild(player);grid.appendChild(card);
+   });
+   if(!playlists.length)
+     grid.appendChild(create('p','cms-release-empty','Здесь появятся официальные плейлисты.'));
+   value.subscriptions.filter(function(row){return row.visible&&row.url;}).forEach(function(item){
+     var link=create('a','cms-subscription-link');
+     link.href=item.url;link.target='_blank';link.rel='noopener noreferrer';
+     link.appendChild(create('span','cms-subscription-icon'));
+     link.appendChild(create('span','',item.title));
+     follow.appendChild(link);
+   });
+   if(!follow.children||!follow.children.length)
+     follow.appendChild(create('p','cms-release-empty','Ссылки для подписки появятся здесь.'));
+ }
  function renderRadio(config){
    var host=byId('velar-radio');
    if(!host)return;
@@ -330,6 +381,7 @@
    }
    cards('public-artists-cards',value.artists.cards,'artists');
    releaseGallery(value.releases);
+   playlistGallery(value.releases);
    renderRadio(value.releases.radio);
    return true;
  }
