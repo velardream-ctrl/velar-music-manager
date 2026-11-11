@@ -200,9 +200,9 @@ assert.ok(addWorld);addWorld.onclick();
 assert.equal(api.isDirty(),true);
 get('landing-save').onclick();await flush();
 const newWorlds=records.get('vmm_public_drafts/landing').content.genres.universe.nodes;
-assert.equal(newWorlds.length,8);
-assert.equal(newWorlds[7].visible,false,'A new constellation must be hidden until curator approval');
-assert.equal(records.get('vmm_public_pages/landing').content.genres.universe.nodes.length,7);
+assert.equal(newWorlds.length,9);
+assert.equal(newWorlds[8].visible,false,'A new constellation must be hidden until curator approval');
+assert.equal(records.get('vmm_public_pages/landing').content.genres.universe.nodes.length,9);
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.genres.universe.nodes.length,8);
 // Language-specific songs are manually selected from the owner-only catalog.
