@@ -56,7 +56,9 @@
    // The universe is built around the *actual* VELARDREAM crystal mark,
    // reused from the hero asset already cached by the public shell.
    // Never synthesize a planet/orb in place of the logo.
-   var center=el('div','universe-core');center.setAttribute('aria-hidden','true');
+   var center=el('button','universe-core');center.type='button';
+   center.setAttribute('aria-label','Кристалл VELARDREAM — показать мир артистов');
+   center.onclick=function(){select('artists');};
    var light=el('span','universe-core-light');center.appendChild(light);
    var crystal=el('img','universe-core-crystal');crystal.src='assets/velardream-crystal.png';
    crystal.alt='';crystal.loading='lazy';crystal.decoding='async';
@@ -80,6 +82,10 @@
    details=document.getElementById('velar-universe-details');
    if(!toggle||!panel||!stage||!details)return;
    initialized=true;
+   var heroCrystal=document.getElementById('hero-crystal-link');
+   if(heroCrystal)heroCrystal.onclick=function(){
+     if(!opened)toggle.onclick();
+   };
    toggle.onclick=function(){
      opened=!opened;panel.className=opened?'universe-panel':'universe-panel hidden';
      toggle.setAttribute('aria-expanded',opened?'true':'false');
