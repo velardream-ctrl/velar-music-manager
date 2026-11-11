@@ -110,5 +110,5 @@
    });
    select(active);
  }
- window.VELAR_TOPICS={render:render,entries:entries};
+ window.VELAR_TOPICS={render:render,entries:entries,select:select};
 }());
