@@ -1162,7 +1162,7 @@
      assistant.faq.push({id:id,group:'Мои ответы',keywords:'новый вопрос',
        answer:'Здесь будет ответ VELAR.',route:'none',followups:'',enabled:true});
      faqGroup='Мои ответы';faqSearch='';search.value='';
-     if(!Array.prototype.some.call(category.options,function(o){return o.value==='Мои ответы';})){
+     if(!Array.prototype.some.call(category.children,function(o){return o.value==='Мои ответы';})){
        var option=document.createElement('option');option.value='Мои ответы';
        option.textContent='Мои ответы';category.appendChild(option);
      }
