@@ -11,13 +11,21 @@
    if(typeof words==='string')n.textContent=words;
    return n;
  }
+ var original={};
  function cards(id,rows,type){
    var target=byId(id);
    if(!target)return;
    var shown=rows.filter(function(x){return x.visible===true;});
    // Do not remove the hand-designed "Скоро" placeholder until real public
    // cards exist. A new editor is therefore harmless before first launch.
-   if(!shown.length)return;
+   if(!original[id])original[id]={markup:target.innerHTML,css:target.className};
+   if(!shown.length){
+     // Restore the static "Скоро" feature when the next publication hides
+     // every card. This HTML comes only from our own checked-in index.html.
+     target.className=original[id].css;
+     target.innerHTML=original[id].markup;
+     return;
+   }
    empty(target);target.className='cms-card-grid';
    shown.forEach(function(item){
      var card=create('article','cms-card');
