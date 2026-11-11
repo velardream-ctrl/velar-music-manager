@@ -973,3 +973,15 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .velar-assistant-wave{animation:none!important}
  .velar-assistant-dialog,.velar-assistant-launch,.velar-chat-line{transition:none!important}
 }
+
+/* Original user-supplied DJ Velar sticker, stored as a single ~3KB WebP.
+   No remote image CDN, no animation frames, no extra Firebase reads. */
+.velar-assistant-symbol{width:32px;height:32px;object-fit:cover;border-radius:50%;background:#f6f3e8}
+.velar-assistant-greeting-avatar{width:37px;height:37px;flex:0 0 37px;
+ object-fit:contain;border-radius:50%;background:#fff}
+.velar-assistant-header-avatar{width:35px;height:35px;flex:0 0 35px;
+ object-fit:contain;border-radius:50%;background:#fff}
+.velar-chat-line.is-assistant{display:flex;align-items:flex-start;gap:8px}
+.velar-chat-avatar{width:34px;height:34px;flex:0 0 34px;
+ border-radius:50%;object-fit:cover;background:#f7f4ed}
+.velar-chat-line.is-assistant p{flex:1;min-width:0}
