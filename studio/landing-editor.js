@@ -666,6 +666,14 @@
      'Привязывай только проверенные опубликованные песни. Язык автоматически по названию не угадывается. До 20 языков и 300 песен на каждый, с общим ограничением объёма Firestore.');
    field(parent,'Заголовок языкового мира',config.heading,function(v){config.heading=v;});
    field(parent,'Описание языкового мира',config.intro,function(v){config.intro=v;},true);
+   if(window.VMM_TITLE_LANGUAGE&&window.VMM_TITLE_LANGUAGE.attach){
+     window.VMM_TITLE_LANGUAGE.attach({
+       parent:parent,catalog:catalogArtists,catalogLoaded:catalogLoaded,
+       db:db,uid:uid,languages:config,
+       onLoad:function(){loadCatalogArtists(true);},
+       onDraftChanged:function(){updateButtons();}
+     });
+   }
    var menu=document.createElement('div');menu.className='landing-language-menu';
    langs.forEach(function(lang,index){
      var item=document.createElement('div');item.className='landing-language-menu-item';
