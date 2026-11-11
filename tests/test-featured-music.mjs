@@ -117,7 +117,7 @@ assert.match(editor,/selected\.length>=3/);
 assert.match(editor,/markChanged\(\)/);
 assert.match(studio,/show\(el\('vmm-workflows'\),false\)/);
 assert.match(workflows,/show\(id\('panel-landing'\),false\)/);
-assert.match(html,/style\.css\?v=18/);
+assert.match(html,/style\.css\?v=19/);
 assert.match(html,/landing-public\.js\?v=9/);
 assert.match(sw,/CACHE_PREFIX \+ 'v20'/);
 assert.match(css,/\.cms-music-play-icon::before\{/);
