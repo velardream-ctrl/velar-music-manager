@@ -963,6 +963,9 @@
       return archiveMetadata(r,toTrash);
     }).then(function(){
       r.archived=toTrash;
+      if(toTrash&&window.VMM_OFFLINE&&window.VMM_CLOUD_PINS){
+        queueOfflinePinChange(r,false).catch(function(err){msg('Корзина сохранена, но синхронизация офлайн не завершена: '+err.message);});
+      }
       if(toTrash&&audioFileId===r.driveFileId)clearAudio();
       if(toTrash&&window.VMM_OFFLINE&&isSaved(r.driveFileId)){
         return window.VMM_OFFLINE.remove(user.uid,r.driveFileId).then(function(){
