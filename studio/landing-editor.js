@@ -15,7 +15,11 @@
  function text(el,t){if(el)el.textContent=String(t==null?'':t);}
  function show(el,on){if(el)el.className=el.className.replace(/\s*hidden\b/g,'')+(on?'':' hidden');}
  function clone(x){return JSON.parse(JSON.stringify(x));}
- function draftDirty(){return loaded&&JSON.stringify(data)!==baseline;}
+ function draftDirty(){
+   if(!loaded)return false;
+   try{return JSON.stringify(API.normalize(data))!==baseline;}
+   catch(err){return JSON.stringify(data)!==baseline;}
+ }
  function trackDirty(){
    if(!trackEditorArtist||!trackLinksLoaded||!catalogLoaded)return false;
    return catalogArtists.some(function(t){
