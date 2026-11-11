@@ -112,6 +112,39 @@ get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.artists.cards[0].title,'DJ Velar');
 assert.equal(records.get('vmm_public_pages/landing').content.artists.cards[0].artistId,'velar');
 assert.equal(records.get('vmm_public_pages/landing').content.artists.cards[0].visible,true);
+// Crazy Bobr is a separate preset even when the catalog still credits Velar.
+const chooser=traverse(get('landing-fields'),n=>n.className==='landing-artist-select');
+chooser.value='crazy-bobr';
+traverse(get('landing-fields'),n=>n.className==='landing-add').onclick();
+assert.equal(traverse(get('landing-fields'),n=>n.textContent==='Имя / название артиста')!==null,true);
+function all(root,predicate,out=[]){
+ if(predicate(root))out.push(root);
+ for(const x of root.children)all(x,predicate,out);
+ return out;
+}
+let trackButtons=all(get('landing-fields'),n=>n.textContent==='Назначить песни');
+assert.equal(trackButtons.length,2);
+trackButtons[1].onclick();
+const trackSearch=traverse(get('landing-fields'),n=>n.className==='landing-track-search');
+assert.ok(trackSearch);
+trackSearch.value='Crazy Bobr Party';
+trackSearch.oninput.call(trackSearch);
+const trackRow=traverse(get('landing-fields'),n=>n.className==='landing-track-row');
+assert.ok(trackRow);
+assert.match(trackRow.children[1].textContent,/Crazy Bobr Party/);
+const tick=trackRow.children[0];
+tick.checked=true;tick.onchange.call(tick);
+assert.equal(api.isDirty(),true);
+const saveLinks=traverse(get('landing-fields'),n=>n.textContent==='Сохранить привязки песен');
+assert.ok(saveLinks&&!saveLinks.disabled);
+saveLinks.onclick();await flush();
+const links=records.get('vmm_links/artist_track_assignments_v1');
+assert.equal(links.overrides.songVelar2,'crazy-bobr');
+assert.equal(links.revision,1);
+assert.equal(records.get('vmm_public_pages/landing').content.artists.cards.length,1,
+ 'Private song assignments must not publish the new artist without explicit public publish');
+get('landing-save').onclick();await flush();
+assert.equal(records.get('vmm_public_drafts/landing').content.artists.cards[1].title,'Crazy Bobr');
 // Remote write must never be overwritten by stale admin tab.
 nav[0].onclick();
 findInput('Подзаголовок').input('Несохранённый локальный текст');
