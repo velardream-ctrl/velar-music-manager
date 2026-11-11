@@ -11,12 +11,12 @@ assert.match(source,/function driveInfo\(r,folderId\)/);
 assert.match(source,/m\.parents\.indexOf\(folderId\)<0/);
 assert.match(source,/tx\.update\(ref,archived\?/);
 assert.match(source,/archivedAt:firebase\.firestore\.FieldValue\.serverTimestamp\(\)/);
-assert.match(source,/data-r-action="trash"/);
+assert.match(source,/id="vmm-r-trash-current"/);
 assert.match(source,/data-r-action="restore"/);
 assert.doesNotMatch(source,/request\([^\n]+method:'DELETE'/);
-assert.ok(html.includes('src="recordings.js?v=4"'));
-assert.ok(html.includes('href="recordings.css?v=4"'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v5'"));
+assert.ok(html.includes('src="recordings.js?v=5"'));
+assert.ok(html.includes('href="recordings.css?v=5"'));
+assert.ok(sw.includes("STUDIO_PREFIX+'v6'"));
 
 const nodes={};
 const element=()=>({textContent:'',innerHTML:'',className:'',style:{},appendChild(){},addEventListener(){},pause(){},load(){},removeAttribute(){},setAttribute(){}});
@@ -70,7 +70,7 @@ vm.runInNewContext(code,{document,window,firebase,navigator:{onLine:true},fetch,
 const t=window.VMM_RECORDINGS._test,record={id:'doc-1',...recordData};
 t.set(record);
 t.renderRecords();
-assert.match(nodes['vmm-r-records'].innerHTML,/В корзину/);
+assert.doesNotMatch(nodes['vmm-r-records'].innerHTML,/data-r-action="trash"/,'Trash must be hidden from the ordinary audio row');
 function flush(){return new Promise(resolve=>setTimeout(resolve,30));}
 t.moveRecording(record,true);
 await flush();
@@ -87,7 +87,7 @@ assert.equal(fileTrashed,false);
 assert.equal(metadataUpdated,2);
 assert.equal(auditCount,2);
 assert.equal(record.archived,false);
-assert.match(nodes['vmm-r-records'].innerHTML,/В корзину/);
+assert.doesNotMatch(nodes['vmm-r-records'].innerHTML,/data-r-action="trash"/);
 // Never trash a file in a different folder, even with a valid Drive token.
 folder='unrelated-folder';
 t.moveRecording(record,true);
