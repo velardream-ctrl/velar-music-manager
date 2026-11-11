@@ -62,7 +62,18 @@
       '<span id="vmm-r-player-sync" class="vmm-r-player-sync" role="status" aria-label="Фонограмма не выбрана" title="Фонограмма не выбрана"><span aria-hidden="true">☁</span><span id="vmm-r-sync-mark" aria-hidden="true">—</span></span>'+
       '<button type="button" id="vmm-r-edit" class="vmm-r-edit-toggle" aria-label="Редактировать выбранную фонограмму" title="Редактировать выбранную фонограмму" aria-controls="vmm-r-editor" aria-expanded="false">'+
       '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L9 17l-4 1 1-4 10.5-10.5z"/></svg></button></div>'+
-      '<audio id="vmm-r-audio" controls preload="none"></audio><p id="vmm-r-now" class="sync-note">Выбери запись, чтобы включить её.</p>'+
+      '<div class="vmm-r-stage" role="group" aria-label="Фирменный аудиоплеер VELARDREAM">'+
+      '<button type="button" id="vmm-r-play" class="vmm-r-play-button" aria-label="Воспроизвести" aria-pressed="false" disabled>'+
+      '<svg class="vmm-r-play-icon" viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><path d="M7 4.8c0-.7.8-1.1 1.4-.7l12 7.2c.6.3.6 1.1 0 1.5l-12 7.1c-.6.4-1.4 0-1.4-.7z"/></svg>'+
+      '<svg class="vmm-r-pause-icon" viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1.3"/><rect x="14" y="4" width="5" height="16" rx="1.3"/></svg></button>'+
+      '<div class="vmm-r-timeline"><input id="vmm-r-seek" type="range" min="0" max="1000" step="1" value="0" disabled aria-label="Позиция воспроизведения" aria-valuetext="0:00 из 0:00">'+
+      '<div class="vmm-r-clock"><output id="vmm-r-elapsed" for="vmm-r-seek">0:00</output><output id="vmm-r-remaining" for="vmm-r-seek">—:—</output></div></div>'+
+      '<button type="button" id="vmm-r-back" class="vmm-r-jump" aria-label="Назад на 10 секунд" disabled><span aria-hidden="true">↶</span><small>10</small></button>'+
+      '<button type="button" id="vmm-r-next" class="vmm-r-jump" aria-label="Вперёд на 10 секунд" disabled><span aria-hidden="true">↷</span><small>10</small></button></div>'+
+      '<details id="vmm-r-system" class="vmm-r-system"><summary>Системные функции плеера</summary>'+
+      '<p class="sync-note">AirPlay, системное меню и громкость устройства доступны в стандартном плеере iPhone.</p>'+
+      '<audio id="vmm-r-audio" controls preload="none" x-webkit-airplay="allow"></audio></details>'+
+      '<p id="vmm-r-now" class="sync-note">Выбери запись, чтобы включить её.</p>'+
       '<div id="vmm-r-editor" class="vmm-r-editor hidden" role="group" aria-label="Управление фонограммой">'+
       '<strong id="vmm-r-edit-target"></strong><p id="vmm-r-edit-meta" class="sync-note"></p><p class="sync-note">Изменения относятся только к этой фонограмме. Текст и каталог не затрагиваются.</p>'+
       '<div class="vmm-r-edit-actions"><button type="button" id="vmm-r-download">↓ Скачать</button><button type="button" id="vmm-r-offline-toggle"></button><button type="button" id="vmm-r-trash-current" class="vmm-r-trash-btn">В корзину Google Drive</button></div></div></div>'+ 
