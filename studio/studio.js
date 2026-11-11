@@ -170,15 +170,23 @@
       text(el('sync-status'),'Не удалось загрузить данные: '+e.message);throw e;
     });
   }
-  var panelMemoryKey='vmm-studio-active-panel-v1';
+  // Hash-based tab state: only a fixed, nonsensitive panel name appears in
+  // the URL. No localStorage/sessionStorage, tokens, titles or lyrics.
   function validPanel(p){return ['overview','lyrics','catalog','recordings','platforms','contacts','outreach','extras','audit'].indexOf(p)>=0;}
   function rememberPanel(p){
     if(!validPanel(p))return;
-    try{window.sessionStorage.setItem(panelMemoryKey,p);}catch(ignore){}
+    try{
+      var here=window.location;
+      if(here&&window.history&&window.history.replaceState){
+        window.history.replaceState(null,'',here.pathname+here.search+'#vmm-'+p);
+      }
+    }catch(ignore){}
   }
   function rememberedPanel(){
-    try{var p=window.sessionStorage.getItem(panelMemoryKey);return validPanel(p)?p:'overview';}
-    catch(ignore){return 'overview';}
+    try{
+      var hash=window.location&&window.location.hash||'',match=/^#vmm-([a-z]+)$/.exec(hash);
+      return match&&validPanel(match[1])?match[1]:'overview';
+    }catch(ignore){return 'overview';}
   }
   function selectPanel(id){
     rememberPanel(id);
@@ -284,7 +292,7 @@
   };
   el('sign-out').onclick=function(){
     if(!confirmDiscard())return;
-    if(auth)auth.signOut().then(function(){try{window.sessionStorage.removeItem(panelMemoryKey);}catch(ignore){}unauthorized('Вы вышли из рабочего кабинета.');}).catch(function(err){message(err.message);});
+    if(auth)auth.signOut().then(function(){try{var here=window.location;window.history.replaceState(null,'',here.pathname+here.search);}catch(ignore){}unauthorized('Вы вышли из рабочего кабинета.');}).catch(function(err){message(err.message);});
   };
   el('lyric-song-select').onchange=function(){
     var previous=songKey;if(!chooseSong(this.value)){this.value=previous;}
