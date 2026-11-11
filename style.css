@@ -349,3 +349,62 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .cms-release-iframe,.velar-radio-iframe{min-height:352px}
  .cms-subscriptions{padding:14px}
 }
+
+
+/* RUN-070 — futuristic 2.5D music universe, entirely local and opt-in. */
+.universe-section{padding:70px 0 76px;border-bottom:1px solid rgba(224,194,142,.18);text-align:center}
+.universe-overline,.universe-info-kicker{display:block;color:#d9bc87;font-size:.68rem;letter-spacing:.21em}
+.universe-section h2{font:400 clamp(1.8rem,4.3vw,3rem)/1.13 Georgia,serif;color:#fff1d8;margin:10px auto 12px}
+.universe-intro{max-width:690px;color:#c4cfe0;margin:0 auto 22px;line-height:1.6}
+.universe-toggle{min-height:48px;padding:12px 25px;background:#e5c488;color:#17243f;border:1px solid #f8dbaa;
+ border-radius:999px;cursor:pointer;font:700 .91rem -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.universe-toggle:focus-visible,.universe-node:focus-visible,.universe-go:focus-visible{outline:3px solid #ffe2a4;outline-offset:4px}
+.universe-panel{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(240px,.85fr);
+ gap:18px;align-items:stretch;margin:25px auto 0;text-align:left}
+.universe-panel.hidden{display:none}
+.universe-scene{position:relative;min-width:0;overflow:hidden;border-radius:19px;border:1px solid #d3b88382;
+ background:radial-gradient(circle at 50% 49%,#51618048 0 4%,transparent 41%),
+ radial-gradient(1px 1px at 14% 18%,#e9d09e 0,transparent 100%),
+ radial-gradient(1px 1px at 82% 22%,#fff4de 0,transparent 100%),
+ radial-gradient(2px 2px at 37% 84%,#ebc78a 0,transparent 100%),
+ radial-gradient(1px 1px at 71% 71%,#f3d4aa 0,transparent 100%),#0b1832;
+ box-shadow:inset 0 0 75px #0008,0 10px 28px #0004}
+.universe-stage{position:relative;min-height:410px;transform-style:preserve-3d;
+ transition:transform .22s ease-out;will-change:auto}
+.universe-connectors{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.universe-connectors path{stroke:#e2c18c66;stroke-width:1.7;fill:none;stroke-dasharray:5 10}
+.universe-core{position:absolute;left:50%;top:50%;width:96px;height:96px;
+ transform:translate(-50%,-50%);border:1px solid #e5cc97a8;border-radius:50%;
+ box-shadow:0 0 18px #f0bc7d3d,0 0 65px #e9a47330,inset 0 0 24px #e9c99728;
+ background:radial-gradient(circle,#d8b780 0%,#56466e 19%,#1b2d52 45%,#101b35 100%);pointer-events:none}
+.universe-node{position:absolute;transform:translate(-50%,-50%);
+ display:flex;align-items:center;gap:7px;text-align:left;min-width:118px;max-width:160px;
+ padding:9px 12px;background:#1b2f4bed;border:1px solid #a89370;
+ border-radius:12px;box-shadow:0 7px 22px #0008;color:#e8d8ba;cursor:pointer;
+ font:600 .76rem -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+ transition:background .2s,box-shadow .2s,border-color .2s}
+.universe-node[aria-pressed=true]{background:#e8ca93;color:#15243e;border-color:#ffe8be;
+ box-shadow:0 0 25px #eabf7d60,0 5px 15px #0007;z-index:2}
+.universe-node-mark{font:400 .9rem Georgia,serif;opacity:.76}
+.universe-node-name{line-height:1.2}
+.universe-details{border:1px solid #d0b38469;border-radius:17px;padding:28px 23px;
+ background:linear-gradient(155deg,#233654,#12203b);display:flex;flex-direction:column;justify-content:center;min-width:0}
+.universe-details h3{color:#ffebc9;font:400 clamp(1.4rem,2.4vw,1.8rem) Georgia,serif;margin:9px 0}
+.universe-details p{color:#c0cbdf;font-size:.95rem;line-height:1.6;margin:6px 0}
+.universe-info-count{display:block;color:#e4c28d;font-size:.82rem;margin:13px 0}
+.universe-go{display:inline-flex;align-self:flex-start;padding:12px 16px;border:1px solid #e0c38b;
+ border-radius:10px;color:#ffddb0;text-decoration:none;font-size:.86rem}
+.universe-go:hover{background:#e5c891;color:#1b2a45}
+@media(max-width:950px){.universe-panel{grid-template-columns:1fr}.universe-stage{min-height:340px}}
+@media(max-width:610px){
+ .universe-section{padding:47px 0 53px}
+ .universe-stage{min-height:332px}
+ .universe-node{min-width:87px;max-width:118px;padding:7px 9px;font-size:.67rem;gap:4px}
+ .universe-node-mark{font-size:.76rem}
+ .universe-core{width:70px;height:70px}
+ .universe-details{padding:17px}
+}
+@media(prefers-reduced-motion:reduce){
+ .universe-stage,.universe-node,.universe-connectors{transition:none!important;animation:none!important}
+ .universe-stage{transform:none!important}
+}
