@@ -33,7 +33,7 @@ const page=api.normalize({...defaults,genres:{...defaults.genres,
 }});
 assert.equal(page.genres.languages.entries.find(x=>x.code==='es').tracks.length,2);
 assert.equal(page.genres.universe.nodes.length,9);
-assert.equal(page.genres.universe.nodes[7].visible,false);
+assert.equal(page.genres.universe.nodes[8].visible,false);
 assert.deepEqual(Object.keys(page.genres.languages.entries.find(x=>x.code==='es').tracks[0]),
  ['title','artist','provider','url']);
 assert.doesNotMatch(JSON.stringify(page),/privateRecording|DriveFile|accessToken|lyricsDocument/);
