@@ -99,6 +99,6 @@ assert.match(html,/<meta name="robots" content="noindex,nofollow,noarchive">/,
 assert.match(css,/\.topic-tag\[aria-pressed=true\]/);
 assert.match(sw,/'\.\/topics-public\.js\?v=1'/);
 assert.match(sw,/CACHE_PREFIX \+ 'v22'/);
-assert.match(sw,/STUDIO_PREFIX\+'v24'/);
+assert.match(sw,/STUDIO_PREFIX\+'v25'/);
 assert.doesNotMatch(topics,/setTimeout\(|setInterval\(|fetch\(|firestore\(|autoplay=1|loop=1/);
 console.log('PASS: RUN-073 topic cloud, multiple tags per song, curator-only catalog, noindex retained and no unrequested playback');
