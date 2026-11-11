@@ -609,7 +609,7 @@
     if(!window.firebase||!firebase.apps.length)return Promise.reject(new Error('Авторизация ещё загружается.'));
     var u=firebase.auth().currentUser;
     if(!u||!u.emailVerified||!u.providerData.some(function(x){return x.providerId==='google.com';}))return Promise.reject(new Error('Войди в личный кабинет Google.'));
-    if(user&&user.uid!==u.uid){driveToken='';driveFolderId='';catalog=[];lyrics=[];recordings=[];saved=[];songId='';clearAudio();}
+    if(user&&user.uid!==u.uid){cloudGeneration++;cloudPins=[];cloudPinsLoaded=false;cloudSyncPromise=null;cloudDownloadPromise=null;cloudStatus='';driveToken='';driveFolderId='';catalog=[];lyrics=[];recordings=[];saved=[];songId='';clearAudio();}
     db=firebase.firestore();user=u;
     return db.collection('vmm_admins').doc(u.uid).get({source:navigator.onLine?'server':'cache'}).then(function(s){
       if(!s.exists||!s.data()||s.data().enabled!==true)throw new Error('Нет подтверждённых прав владельца.');
@@ -637,6 +637,9 @@
       // Offline choices remain visible; neither the upload form nor the stage
       // player opens automatically after a refresh.
       renderSongs();renderOfflineList();setSong('');
+      // The page can show cloud-pinned titles without Drive permission.
+      // Actual downloads start automatically only when a valid Drive token is available.
+      if(navigator.onLine)refreshCloudPins();
       msg(uploadMessage||('Композиции: '+catalog.length+' · фонограммы: '+recordings.length+' · сохранено офлайн: '+saved.length+
          (navigator.onLine?' · в сети':' · без интернета')+
          (errors.length?' · Не удалось прочитать '+errors.join('; '):'')+
@@ -987,6 +990,6 @@
     }
     if(action==='restore')moveRecording(r,false);
   }
-  function reset(){hide();clearAudio();editOpen=false;driveToken='';driveFolderId='';db=null;user=null;catalog=[];lyrics=[];recordings=[];saved=[];songId='';formSongId='';playerVisible=false;audioFileId='';busy=false;textVisible=false;uploadMessage='';}
+  function reset(){hide();clearAudio();cloudGeneration++;cloudPins=[];cloudPinsLoaded=false;cloudSyncPromise=null;cloudDownloadPromise=null;cloudStatus='';editOpen=false;driveToken='';driveFolderId='';db=null;user=null;catalog=[];lyrics=[];recordings=[];saved=[];songId='';formSongId='';playerVisible=false;audioFileId='';busy=false;textVisible=false;uploadMessage='';}
   window.VMM_RECORDINGS={open:open,hide:hide,reset:reset,translit:translit,filename:filename};
 }());
