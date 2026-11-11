@@ -96,6 +96,7 @@
         assistant:{enabled:true,greetingEnabled:true,title:'VELAR · помощник',
           welcome:'Добро пожаловать во вселенную VELARDREAM! Какое настроение у вас сегодня?',
           contactEmail:'',rules:[],
+          typing:{enabled:true,speedMs:35}, // RUN-082: owner-controlled local typing effect
           labels:{
             launcher:'Помощник VELAR',
             headerNote:'Локальный бот · без платного ИИ',
@@ -412,6 +413,14 @@
         throw new Error('Ключевые слова правила: разделите слова запятыми.');
       return {keywords:words,answer:plain(rule.answer||'','Ответ правила '+(i+1),500,true)};
     });
+    // RUN-082. Safe per-character reveal, with instant reduced-motion fallback.
+    var rawTyping=item.typing&&typeof item.typing==='object'&&!Array.isArray(item.typing)?
+      item.typing:{};
+    var speedMs=typeof rawTyping.speedMs==='undefined'?def.typing.speedMs:rawTyping.speedMs;
+    if(typeof speedMs!=='number'||!isFinite(speedMs)||Math.floor(speedMs)!==speedMs||
+       speedMs<15||speedMs>90)
+      throw new Error('Скорость печати: выбери от 15 до 90 мс на символ.');
+    var typing={enabled:rawTyping.enabled!==false,speedMs:speedMs};
     // RUN-080. Preserve all older published documents: missing keys use safe
     // defaults. No arbitrary HTML, links or executable scripts are accepted.
     var labelData=item.labels&&typeof item.labels==='object'&&!Array.isArray(item.labels)?item.labels:{};
@@ -497,7 +506,7 @@
       title:plain(typeof item.title==='string'?item.title:def.title,'Название помощника',55,true),
       welcome:plain(typeof item.welcome==='string'?item.welcome:def.welcome,
         'Приветствие помощника',250,true),
-      contactEmail:mail,rules:cleaned,labels:labels,quickTopics:quickTopics,replies:replies,avatars:avatars};
+      contactEmail:mail,rules:cleaned,typing:typing,labels:labels,quickTopics:quickTopics,replies:replies,avatars:avatars};
   }
   function card(x,type,index){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Карточка '+index+': неверный формат.');

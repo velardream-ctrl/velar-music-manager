@@ -1070,6 +1070,34 @@
    greet.appendChild(greeting);
    var gt=document.createElement('span');gt.textContent='Приветствовать нового посетителя (не более одного раза за сеанс)';
    greet.appendChild(gt);parent.appendChild(greet);
+   // RUN-082: owner controls text reveal without editing JavaScript/CSS.
+   var typingLabel=document.createElement('label');typingLabel.className='landing-checkbox';
+   var typingEnabled=document.createElement('input');typingEnabled.type='checkbox';
+   typingEnabled.checked=assistant.typing.enabled===true;
+   typingEnabled.onchange=function(){assistant.typing.enabled=this.checked;updateButtons();};
+   typingLabel.appendChild(typingEnabled);
+   var typingText=document.createElement('span');
+   typingText.textContent='Показывать ответы по буквам (эффект живой печати)';
+   typingLabel.appendChild(typingText);parent.appendChild(typingLabel);
+   var speedLabel=document.createElement('label');speedLabel.className='landing-field';
+   var speedCaption=document.createElement('span');
+   speedCaption.textContent='Скорость печати (мс на символ, от 15 до 90)';
+   speedLabel.appendChild(speedCaption);
+   var speedInput=document.createElement('input');speedInput.type='range';
+   speedInput.min='15';speedInput.max='90';speedInput.step='5';
+   speedInput.value=String(assistant.typing.speedMs);
+   var speedValue=document.createElement('span');speedValue.className='sync-note';
+   speedValue.textContent=String(assistant.typing.speedMs)+' мс';
+   speedInput.oninput=function(){
+     assistant.typing.speedMs=Number(this.value);
+     speedValue.textContent=this.value+' мс';
+     updateButtons();
+   };
+   speedLabel.appendChild(speedInput);speedLabel.appendChild(speedValue);
+   parent.appendChild(speedLabel);
+   var typingHint=document.createElement('p');typingHint.className='sync-note';
+   typingHint.textContent='Длинные ответы появляются максимум за несколько секунд. При уменьшении анимации на устройстве ответ отображается сразу. Новая настройка заработает после сохранения черновика и публикации.';
+   parent.appendChild(typingHint);
    field(parent,'Имя помощника',assistant.title,function(v){assistant.title=v;});
    field(parent,'Текст приветствия',assistant.welcome,function(v){assistant.welcome=v;},true);
    // RUN-080: all public labels are owner-editable. The chat continues to

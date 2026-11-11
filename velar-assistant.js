@@ -6,7 +6,7 @@
  'use strict';
  var root=null,dialog=null,log=null,input=null,prompt=null,buttons=null,header=null;
  var config=null,published=null,opened=false,initialized=false;
- var MAX_INPUT=360;
+ var MAX_INPUT=360,activeTyping=null,announcer=null;
  function find(id){return document.getElementById(id);}
  function el(tag,cls,t){
    var e=document.createElement(tag);
@@ -164,15 +164,70 @@
    return {text:replyText(settings,settings.contactEmail?'fallbackEnabled':'fallbackDisabled'),
      action:'link',target:'#topics',label:replyText(settings,'fallbackButton')};
  }
- function itemMessage(role,text,action,expression){
+ // RUN-082: one cancellable timer, no cloud traffic or stored chat history.
+ function finishTyping(){
+   if(activeTyping&&activeTyping.finish)activeTyping.finish();
+ }
+ function typingAllowed(){
+   if(!config||!config.typing||config.typing.enabled===false||
+      typeof window.setTimeout!=='function')return false;
+   try{
+     if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+       return false;
+   }catch(ignore){}
+   return true;
+ }
+ // ES5-safe Unicode code points: avoid drawing half of an emoji surrogate pair.
+ function characters(value){
+   return String(value||'').match(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\s\S]/g)||[];
+ }
+ function scrollChat(){
+   if(log&&log.scrollHeight)log.scrollTop=log.scrollHeight;
+ }
+ function typeMessage(para,text,onFinish){
+   var letters=characters(text);
+   var speed=config&&config.typing&&config.typing.speedMs||35;
+   var ms=Math.min(speed,Math.max(8,Math.floor(4800/Math.max(letters.length,1))));
+   var position=0,session={timer:null,finish:null};
+   function finish(){
+     if(activeTyping!==session)return;
+     if(session.timer!==null&&typeof window.clearTimeout==='function')
+       window.clearTimeout(session.timer);
+     session.timer=null;
+     para.textContent=text;
+     para.className=para.className.replace(/\s*velar-chat-typing\b/g,'');
+     activeTyping=null;
+     if(log)log.setAttribute('aria-live','off');
+     onFinish();
+     if(announcer)announcer.textContent=text;
+     scrollChat();
+   }
+   session.finish=finish;
+   activeTyping=session;
+   para.className+=' velar-chat-typing';
+   if(log)log.setAttribute('aria-live','off');
+   function step(){
+     if(activeTyping!==session)return;
+     position++;
+     para.textContent=letters.slice(0,position).join('');
+     scrollChat();
+     if(position>=letters.length){finish();return;}
+     session.timer=window.setTimeout(step,ms);
+   }
+   session.timer=window.setTimeout(step,120);
+ }
+ function itemMessage(role,text,action,expression,animate){
    if(!log)return;
    var row=el('div','velar-chat-line '+(role==='visitor'?'is-visitor':'is-assistant'));
    if(role==='assistant'){
      row.appendChild(avatarFace('velar-chat-avatar',expression));
    }
-   row.appendChild(el('p','',text));
-   if(action&&action.label){
-     var a=el('button','velar-chat-action',action.label);
+   var shouldType=role==='assistant'&&animate&&text&&typingAllowed();
+   var paragraph=el('p','',shouldType?'':text);
+   row.appendChild(paragraph);
+   function addAction(){
+    if(!action||!action.label)return;
+    var a=el('button','velar-chat-action',action.label);
      a.type='button';
      a.onclick=function(){
        if(action.action==='email'){
@@ -194,7 +249,9 @@
      row.appendChild(a);
    }
    log.appendChild(row);
-   if(log.scrollHeight)log.scrollTop=log.scrollHeight;
+   if(shouldType)typeMessage(paragraph,text,addAction);
+   else {addAction();if(role==='assistant'&&announcer)announcer.textContent=text;}
+   scrollChat();
  }
  function greetingSeen(){
    try{return !!(window.sessionStorage&&window.sessionStorage.getItem('velar-assistant-greeted'));}
@@ -207,9 +264,10 @@
  function say(query){
    var t=String(query||'').trim().slice(0,MAX_INPUT);
    if(!t)return;
+   finishTyping(); // complete prior reply before showing another visitor question
    itemMessage('visitor',t);
    var result=answer(t,published,config);
-   itemMessage('assistant',result.text,result.action?result:null,reactionChoice(t,result.text));
+   itemMessage('assistant',result.text,result.action?result:null,reactionChoice(t,result.text),true);
    if(input)input.value='';
  }
  function paint(){
@@ -242,8 +300,11 @@
    close.setAttribute('aria-label','Закрыть помощника');header.appendChild(close);
    dialog.appendChild(header);
    log=el('div','velar-assistant-log');log.setAttribute('role','log');
-   log.setAttribute('aria-live','polite');log.setAttribute('aria-relevant','additions');
+   log.setAttribute('aria-live','off');log.setAttribute('aria-relevant','additions');
    dialog.appendChild(log);
+   announcer=el('div','velar-assistant-announcement');
+   announcer.setAttribute('role','status');announcer.setAttribute('aria-live','polite');
+   announcer.setAttribute('aria-atomic','true');dialog.appendChild(announcer);
    buttons=el('div','velar-assistant-suggestions');
    dialog.appendChild(buttons);
    var form=el('form','velar-assistant-form');
@@ -268,9 +329,12 @@
      launcher.setAttribute('aria-expanded',opened?'true':'false');
      prompt.className='velar-assistant-greeting hidden';markGreeting();
      if(opened){
-       if(!log.children.length)itemMessage('assistant',config.welcome,null,greetingChoice());
+       if(!log.children.length)itemMessage('assistant',config.welcome,null,greetingChoice(),true);
        if(input&&input.focus&&(!window.matchMedia||!window.matchMedia('(max-width:590px)').matches))input.focus();
-     }else if(launcher.focus)launcher.focus();
+     }else{
+       finishTyping();
+       if(launcher.focus)launcher.focus();
+     }
    }
    launcher.onclick=function(){toggle(!opened);};
    close.onclick=function(){toggle(false);};
@@ -340,6 +404,7 @@
    renderQuickTopics();
  }
  function render(data){
+   finishTyping(); // never leave an orphaned timer after live configuration updates
    published=data||published;
    var settings=published&&published.genres&&published.genres.assistant;
    if(!settings&&window.VMM_LANDING_SCHEMA)
