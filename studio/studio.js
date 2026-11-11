@@ -221,7 +221,7 @@
   }
   // Hash-based tab state: only a fixed, nonsensitive panel name appears in
   // the URL. No localStorage/sessionStorage, tokens, titles or lyrics.
-  function validPanel(p){return ['overview','lyrics','catalog','recordings','platforms','contacts','outreach','extras','audit','data'].indexOf(p)>=0;}
+  function validPanel(p){return ['overview','landing','lyrics','catalog','recordings','platforms','contacts','outreach','extras','audit','data'].indexOf(p)>=0;}
   function rememberPanel(p){
     if(!validPanel(p))return;
     try{
@@ -241,8 +241,10 @@
     rememberPanel(id);
     var keys=document.querySelectorAll('#workspace [data-panel]');
     for(var i=0;i<keys.length;i++)keys[i].className=keys[i].getAttribute('data-panel')===id?'nav-active':'';
-    show(el('panel-lyrics'),id==='lyrics');show(el('panel-future'),id!=='lyrics'&&id!=='data');show(el('panel-data'),id==='data');
+    show(el('panel-lyrics'),id==='lyrics');show(el('panel-landing'),id==='landing');show(el('panel-future'),id!=='lyrics'&&id!=='data'&&id!=='landing');show(el('panel-data'),id==='data');
     if(id==='data')show(el('vmm-workflows'),false);
+    if(id==='landing'&&window.VMM_LANDING)window.VMM_LANDING.open();
+    else if(window.VMM_LANDING)window.VMM_LANDING.hide();
     if(id!=='recordings'&&window.VMM_RECORDINGS)window.VMM_RECORDINGS.hide();
     if(id!=='lyrics'){text(el('future-title'),sections[id]||'Раздел');text(el('future-message'),'Раздел работает в защищённой Firestore.');}
   }
@@ -256,12 +258,14 @@
     if(authorized&&authorizedUid!==user.uid){
       lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
       if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
+      if(window.VMM_LANDING&&window.VMM_LANDING.reset)window.VMM_LANDING.reset();
     }
     authorized=true;authorizedUid=user.uid;clearSignInWatchdog();signIn.disabled=false;signIn.textContent='Войти через Google';show(gate,false);show(workspace,true);
     text(el('account-label'),user.email||'Google');text(el('net-state'),navigator.onLine?'В сети':'Без сети');
     text(el('sync-status'),'Читаем личную базу…');
     var section=rememberedPanel();
-    if(section==='recordings'&&window.VMM_RECORDINGS)window.VMM_RECORDINGS.open();
+    if(section==='landing'&&window.VMM_LANDING)selectPanel('landing');
+    else if(section==='recordings'&&window.VMM_RECORDINGS)window.VMM_RECORDINGS.open();
     else if(section!=='lyrics'&&window.VMM_WORKFLOWS)window.VMM_WORKFLOWS.open(section);
     else selectPanel('lyrics');
     updateLoaded().catch(function(){});
@@ -269,6 +273,7 @@
   function unauthorized(note){
     authorized=false;authorizedUid='';saveBusy=false;lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
     if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
+    if(window.VMM_LANDING&&window.VMM_LANDING.reset)window.VMM_LANDING.reset();
     show(workspace,false);show(gate,true);message(note);if(auth)signinReady();
   }
   function save(e){
@@ -391,7 +396,7 @@
     });
   };
   el('sign-out').onclick=function(){
-    if(!confirmDiscard())return;
+    if(!confirmDiscard()||(window.VMM_LANDING&&!window.VMM_LANDING.canLeave()))return;
     if(auth)auth.signOut().then(function(){try{var here=window.location;window.history.replaceState(null,'',here.pathname+here.search);}catch(ignore){}unauthorized('Вы вышли из рабочего кабинета.');}).catch(function(err){message(err.message);});
   };
   el('lyric-song-select').onchange=function(){
@@ -431,12 +436,14 @@
   var nav=document.querySelectorAll('#workspace [data-panel]');
   for(var i=0;i<nav.length;i++){
     nav[i].addEventListener('click',function(e){
-      if(this.getAttribute('data-panel')!=='lyrics'&&!confirmDiscard()){e.preventDefault();e.stopImmediatePropagation();}
+      var nextPanel=this.getAttribute('data-panel');
+      if(nextPanel!=='landing'&&window.VMM_LANDING&&!window.VMM_LANDING.canLeave()){e.preventDefault();e.stopImmediatePropagation();return;}
+      if(nextPanel!=='lyrics'&&!confirmDiscard()){e.preventDefault();e.stopImmediatePropagation();}
     },true);
     nav[i].onclick=function(){selectPanel(this.getAttribute('data-panel'));};
   }
   window.addEventListener('beforeunload',function(e){
-    if(!isDirty())return;
+    if(!isDirty()&&!(window.VMM_LANDING&&window.VMM_LANDING.isDirty&&window.VMM_LANDING.isDirty()))return;
     e.preventDefault();e.returnValue='';
   });
   window.addEventListener('online',function(){text(el('net-state'),'В сети');});
