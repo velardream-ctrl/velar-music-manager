@@ -80,7 +80,8 @@ const ctx={document,window,navigator:{onLine:true},firebase,Promise,Array,Object
 vm.runInNewContext(injected,ctx,{timeout:1000});
 const t=window.VMM_RECORDINGS._test;
 t.header();t.setup();
-for(const id of ['vmm-r-player-section','vmm-r-song-section','vmm-r-text-wrapper','vmm-r-editor'])document.getElementById(id);
+// The mock DOM does not parse innerHTML automatically: materialize its named nodes.
+for(const match of shell.panel.innerHTML.matchAll(/id="([^"]+)"/g))document.getElementById(match[1]);
 els['vmm-r-player-section'].className='hidden';
 els['vmm-r-song-section'].className='hidden';
 els['vmm-r-text-wrapper'].className='hidden';
