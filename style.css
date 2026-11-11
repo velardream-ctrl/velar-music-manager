@@ -863,7 +863,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 /* RUN-074 — homegrown 0-API chat concierge, accessible and cache-friendly. */
 .velar-assistant{
  position:fixed;right:clamp(12px,2.5vw,34px);
- bottom:calc(max(16px,env(safe-area-inset-bottom,0px)) + 66px);
+ bottom:0;
  width:min(345px,calc(100vw - 24px));z-index:80;
  color:#f5e5c9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
 }
@@ -904,8 +904,9 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .velar-assistant-dialog{
  display:flex;flex-direction:column;gap:0;
  width:100%;height:auto;max-height:min(560px,65vh);
- margin-bottom:9px;border:1px solid #d4b17d;border-radius:17px;
+ margin-bottom:0;border:1px solid #d4b17d;border-radius:17px 17px 0 0;
  background:#101f39;box-shadow:0 10px 38px #000b;overflow:hidden;
+ padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;
 }
 .velar-assistant-dialog.hidden{display:none}
 .velar-assistant-header{
@@ -963,7 +964,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 }
 @media(max-width:590px){
  .velar-assistant{
-  right:12px;bottom:calc(max(16px,env(safe-area-inset-bottom,0px)) + 63px);
+  right:12px;bottom:0;
   width:min(360px,calc(100vw - 24px));
  }
  .velar-assistant-dialog{max-height:min(540px,68vh)}
@@ -1014,3 +1015,10 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .velar-assistant-dialog{max-height:46vh}
  .velar-assistant-header-note{display:none}
 }
+
+/* RUN-077 iPhone 19:57: bottom-docked chat; keep replies readable alongside action buttons. */
+.velar-chat-line.is-assistant{display:grid;grid-template-columns:34px minmax(0,1fr);gap:8px;
+ width:100%;max-width:100%;box-sizing:border-box;align-items:start}
+.velar-chat-line.is-assistant .velar-chat-avatar{grid-column:1;grid-row:1}
+.velar-chat-line.is-assistant p{grid-column:2;grid-row:1;min-width:0;overflow-wrap:break-word;word-break:normal}
+.velar-chat-line.is-assistant .velar-chat-action{grid-column:2;grid-row:2;box-sizing:border-box;width:100%;margin-top:0}

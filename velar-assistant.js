@@ -261,7 +261,10 @@
      opened=false;return;
    }
    root.className='velar-assistant';
-   if(header&&header.firstChild)header.firstChild.textContent=config.title;
+   if(header&&header.querySelector){
+     var title=header.querySelector('.velar-assistant-title');
+     if(title)title.textContent=config.title;
+   }
    if(prompt&&config.greetingEnabled&&!greetingSeen()&&!opened){
      prompt.className='velar-assistant-greeting';
      var span=prompt.querySelector&&prompt.querySelector('.velar-assistant-greeting-text');
