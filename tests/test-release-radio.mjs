@@ -151,7 +151,7 @@ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(css,/.cms-release-art::before/);
 assert.match(html,/universe\.js\?v=5/);
 assert.match(html,/style\.css\?v=20/);
-assert.match(sw,/CACHE_PREFIX \+ 'v21'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v22'/);
 assert.match(sw,/STUDIO_PREFIX\+'v24'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);

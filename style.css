@@ -1048,3 +1048,10 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
    font-size:.63rem;line-height:1.1;white-space:nowrap;
    overflow:hidden;text-overflow:ellipsis}
 }
+
+/* RUN-080: selected number of quick tags never crowds out the messages.
+   Zero tags means no extra row; twelve tags scroll within the strip. */
+.velar-assistant-suggestions:empty{display:none}
+@media(max-width:590px){
+ .velar-assistant-suggestions{max-height:74px;overflow-y:auto;overscroll-behavior:contain}
+}
