@@ -122,7 +122,7 @@ const constellation=map['velar-universe-stage'];
 assert.equal(constellation.children.length,7,'Six accessible constellation buttons, one light core');
 const crystalCore=constellation.children[1];
 assert.equal(crystalCore.tagName,'button');
-assert.equal(crystalCore.children[1].src,'assets/velardream-crystal.png',
+assert.equal(crystalCore.children[1].src,'assets/velardream-symbol.svg',
   'Universe center must be the existing official crystal logo, never a generated planet');
 assert.match(crystalCore.attributes['aria-label'],/Кристалл VELARDREAM/);
 const selected=constellation.children[2];
