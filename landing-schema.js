@@ -52,7 +52,7 @@
   function card(x,type,index){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Карточка '+index+': неверный формат.');
     var title=plain(x.title,'Название карточки '+index,110,!!x.visible);
-    return {
+    var result={
       title:title,
       subtitle:plain(x.subtitle||'','Подзаголовок '+index,110,false),
       description:plain(x.description||'','Описание '+index,360,false),
@@ -60,6 +60,15 @@
       imageUrl:url(x.imageUrl||'','Изображение '+index),
       visible:x.visible===true
     };
+    // A stable identifier is safe for the public page and permits future
+    // links to approved releases. Private song documents are not included.
+    if(type==='Артисты'){
+      var artistId=plain(x.artistId||'','Ключ артиста '+index,80,false);
+      if(artistId&&!/^[a-z0-9-]+$/.test(artistId))
+        throw new Error('Ключ артиста: недопустимый формат.');
+      result.artistId=artistId;
+    }
+    return result;
   }
   function section(value,key,def){
     var x=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
