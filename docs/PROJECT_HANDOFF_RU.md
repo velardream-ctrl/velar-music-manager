@@ -203,3 +203,10 @@ CI (run ID и результат):
 - Новый `velar-faq-engine.js` вызывается перед общим fallback, находит название опубликованной песни и FAQ. Предлагает до двух песен и переход к теме/языку; новый `openFromChat` тем и языков создаёт iframe лишь от явного клика. Данные строго из существующего публичного landing snapshot и после `songUrl`, без Firestore reads per message и без Google Drive/автозапуска.
 - Полный список начальных 113 пар: [RUN083_FAQ_LIBRARY_RU.md](RUN083_FAQ_LIBRARY_RU.md). Это не лог сообщений реальных посетителей. Для пользовательского ответа/музыки нужен реальный опубликованный список треков, без него бот честно объясняет, что песен пока нет.
 - Визуально новая группа кнопок `velar-chat-actions`, компактная на iPhone, совместимая с печатью RUN-082. Кэш: CSS v22, schema v12, assistant v6, faq engine v1, topics v2/languages v2, Studio editor v13, SW public v24, studio v27. Firebase Rules, приватный Drive, персональные аудио и радио не менялись.
+
+
+## RUN-083 — подтверждённая публикация 12.11.2026
+- PR #37 merged main `7c49c5d6c7237c1cb06a4b2caa6f31e9d8fecdf7`; main CI #43113721680 SUCCESS; Pages #43113721410 SUCCESS. Дальнейшие документационные коммиты могут обновить HEAD, перед работой сверять GitHub.
+- Редактируемая база знаний 113 FAQ опубликована как новая функция кода (реальные настройки из Studio появляются после «Сохранить черновик» → «Опубликовать»). Вопросы: [RUN083_FAQ_LIBRARY_RU.md](RUN083_FAQ_LIBRARY_RU.md). Новые `velar-faq-engine.js`, `genres.assistant.faq`, `VELAR_TOPICS.openFromChat` и `VELAR_LANGUAGES.openFromChat`; без дополнительных Firestore запросов и autoplay.
+- Чтобы появились **кнопки конкретных песен**, песни с официальными ссылками должны быть назначены в публичных темах или языках в Studio и опубликованы. В живую Firestore мы не заглядывали и не утверждаем, что там уже есть такие привязки.
+- В следующий чат передать проверку настоящего iPhone/Safari/PWA на https://velardream.com/?v=83, Studio https://velardream.com/studio/?v=83. Полная JS/CI-публикация не заменяет проверку пользователя. Существующие аватары, VELAR RADIO, приватные фонограммы/Drive, Firestore Rules и прочие данные без изменений.
