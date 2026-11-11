@@ -120,7 +120,7 @@ toggle.onclick();
 assert.equal(toggle.attributes['aria-expanded'],'true');
 const constellation=map['velar-universe-stage'];
 assert.equal(constellation.children.length,7,'Six accessible constellation buttons, one light core');
-const crystalCore=constellation.children[1];
+const crystalCore=constellation.children[0];
 assert.equal(crystalCore.tagName,'button');
 assert.equal(crystalCore.children[1].src,'assets/velardream-symbol.svg',
   'Universe center must be the existing official crystal logo, never a generated planet');
@@ -132,7 +132,7 @@ assert.match(map['velar-universe-details'].children[1].textContent,/Релизы
 constellation.children[3].onclick();
 assert.equal(constellation.children[3].attributes['aria-pressed'],'true');
 crystalCore.onclick();
-assert.equal(constellation.children[2].attributes['aria-pressed'],'true','Touching the crystal returns to artists');
+assert.equal(constellation.children[1].attributes['aria-pressed'],'true','Touching the crystal returns to artists');
 assert.equal(window.VELAR_UNIVERSE.counts(page).videos,1);
 toggle.onclick();
 assert.equal(toggle.attributes['aria-expanded'],'false');
