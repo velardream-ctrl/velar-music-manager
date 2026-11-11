@@ -9,7 +9,7 @@
   panel.className='panel hidden';
   shell.appendChild(panel);
   var db=null,user=null,driveToken='',driveFolderId='',busy=false,active=false,listenersAttached=false,suggestOpen=false;
-  var catalog=[],lyrics=[],recordings=[],saved=[],songId='',audioFileId='',audioURL='',mode='a4',textVisible=false,uploadMessage='',editOpen=false,playRequestId=0,formSongId='',playerVisible=false,playerScrub=false,playerPending=false,compactListenerAttached=false;
+  var catalog=[],lyrics=[],recordings=[],saved=[],songId='',audioFileId='',audioURL='',mode='a4',textVisible=false,uploadMessage='',editOpen=false,playRequestId=0,formSongId='',playerVisible=false,playerScrub=false,playerPending=false,compactListenerAttached=false,cloudPins=[],cloudPinsLoaded=false,cloudSyncPromise=null,cloudDownloadPromise=null,cloudGeneration=0,cloudStatus='',cloudResyncRequested=false;
   var MAX=50*1024*1024,DRIVE_SCOPE='https://www.googleapis.com/auth/drive.file',FOLDER='VELARDREAM RECORDS - Фонограммы';
   function id(s){return document.getElementById(s);}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','&quot;':'&quot;',"'":'&#39;'}[c];});}
@@ -186,7 +186,8 @@
       '<div class="vmm-r-pick"><label for="vmm-r-search">Найти композицию</label><input id="vmm-r-search" type="search" placeholder="Название песни или исполнитель" autocomplete="off" aria-controls="vmm-r-results">'+
       '<div id="vmm-r-results" class="vmm-r-results" role="status" aria-live="polite"></div>'+
       '<label for="vmm-r-song">Выбрать песню</label><select id="vmm-r-song"><option value="">Выбери песню…</option></select></div>'+
-      '<div id="vmm-r-offline-list" class="vmm-r-offline-list" aria-label="Офлайн-подборка"></div>'+
+      '<div id="vmm-r-offline-list" class="vmm-r-offline-list" aria-label="Офлайн-подборка"></div>'+ 
+      '<p id="vmm-r-sync-status" class="sync-note" role="status"></p>'+ 
       '<div id="vmm-r-song-section" class="hidden">'+
       '<div class="vmm-r-tools"><strong id="vmm-r-song-title"></strong><span id="vmm-r-folder"></span></div>'+
       '<div class="vmm-r-upload"><label for="vmm-r-variant">Вариант фонограммы</label><input id="vmm-r-variant" type="text" maxlength="80" value="Минусовка" placeholder="Минусовка, оригинал, бэк-вокал…">'+
@@ -226,7 +227,7 @@
       '<button type="button" id="vmm-r-large" aria-pressed="false">Читать крупно</button></div></div>'+
       '<div id="vmm-r-lyrics" class="vmm-r-lyrics"></div></div></div>'+ 
       '<p id="vmm-r-storage" class="sync-note"></p>';
-    id('vmm-r-connect').onclick=function(){connect(true).then(ensureFolder).then(function(){msg('Google Drive подключён. Можно загружать и воспроизводить записи.');renderFolder();}).catch(function(e){msg('Google Drive: '+e.message);});};
+    id('vmm-r-connect').onclick=function(){connect(true).then(ensureFolder).then(function(){msg('Google Drive подключён. Проверяем синхронизацию фонограмм…');renderFolder();return refreshCloudPins();}).catch(function(e){msg('Google Drive: '+e.message);});};
     id('vmm-r-search').oninput=function(){suggestOpen=true;renderSongs();};
     id('vmm-r-search').onkeydown=function(e){if(e.key==='Enter'){var q=norm(this.value),matches=catalog.filter(function(t){return norm(clean(t.title)+' '+clean(t.artist||'')).indexOf(q)>=0;});if(q&&matches.length){e.preventDefault();chooseSearchResult(matches[0]);}}};
     id('vmm-r-song').onchange=function(){setSong(this.value,false);};
@@ -415,19 +416,38 @@
     var trash=id('vmm-r-trash-current');
     if(trash)show(trash,!!(selected.id&&selected.id.indexOf('offline:')!==0));
   }
+  function renderCloudStatus(){
+    var el=id('vmm-r-sync-status');if(!el)return;
+    if(cloudStatus){el.textContent=cloudStatus;return;}
+    var pending=cloudPins.filter(function(p){return !stored(p.fileId);});
+    el.textContent=pending.length?
+      ('В облачной подборке ещё '+pending.length+' '+(pending.length===1?'запись':'записей')+
+       '. '+(driveToken?'Загрузка начнётся автоматически при наличии сети.':
+             'Нажми «Подключить Google Drive», чтобы скачать их на это устройство.')) :
+      cloudPinsLoaded?'Офлайн-подборка синхронизирована с твоим аккаунтом.':'';
+  }
   function renderOfflineList(){
     var target=id('vmm-r-offline-list');if(!target)return;
-    if(!saved.length){
-      target.innerHTML='<p class="sync-note">Офлайн-подборка пуста. Отметь галочкой нужные фонограммы — здесь они останутся доступными после возвращения на сайт.</p>';
-      return;
+    var pending=cloudPins.filter(function(p){return !stored(p.fileId);});
+    var count=saved.length+pending.length;
+    if(!count){
+      target.innerHTML='<p class="sync-note">Офлайн-подборка пуста. Сохрани фонограммы на любом своём устройстве — выбор синхронизируется через аккаунт.</p>';
+      renderCloudStatus();return;
     }
     var rows=saved.slice().sort(function(a,b){return clean(a.title).localeCompare(clean(b.title),'ru');});
-    target.innerHTML='<h3>Офлайн-подборка · '+rows.length+'</h3>'+
-      '<p class="sync-note">Выбранные фонограммы хранятся на этом устройстве. Тексты раскрываются только при прослушивании.</p>'+
+    var pendingRows=pending.slice().sort(function(a,b){return clean(a.title).localeCompare(clean(b.title),'ru');});
+    target.innerHTML='<h3>Офлайн-подборка · '+count+'</h3>'+
+      '<p class="sync-note">Файлы остаются на каждом устройстве после закрытия сайта. Недостающие записи загружаются из личного Google Drive после разрешения доступа.</p>'+
       rows.map(function(s){
         return '<button type="button" class="vmm-r-pinned" data-r-action="offline-play" data-r-id="'+esc(s.fileId)+'">'+
           '<span>▶ '+esc(s.title||'Без названия')+'</span><small>'+esc(s.variant||'Фонограмма')+' · '+mb(s.size)+' · офлайн ✓</small></button>';
+      }).join('')+
+      pendingRows.map(function(s){
+        return '<div class="vmm-r-pinned vmm-r-awaiting" role="status">'+
+          '<span>☁ '+esc(s.title||'Без названия')+'</span><small>'+esc(s.variant||'Фонограмма')+
+          ' · '+mb(s.size)+' · ожидает загрузки на это устройство</small></div>';
       }).join('');
+    renderCloudStatus();
   }
   function renderRecords(){
     var box=id('vmm-r-records'),t=song();if(!box||!t)return;
@@ -454,6 +474,121 @@
     if(driveFolderId&&/^[\w-]+$/.test(driveFolderId))target.innerHTML='<a target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/'+esc(driveFolderId)+'">Папка Google Drive</a>';
     else target.textContent='Google Drive пока не подключён';
   }
+  function syncValid(uid,generation){return !!(user&&user.uid===uid&&cloudGeneration===generation);}
+  function inSeries(items,fn){
+    var p=Promise.resolve();
+    items.forEach(function(x){p=p.then(function(){return fn(x);});});
+    return p;
+  }
+  function setCloudStatus(text){cloudStatus=String(text||'');renderCloudStatus();}
+  function queueOfflinePinChange(r,enabled){
+    if(!user||!window.VMM_OFFLINE||!window.VMM_CLOUD_PINS)return Promise.resolve();
+    var pin=window.VMM_CLOUD_PINS.pin(r);
+    if(!pin)return Promise.reject(new Error('У фонограммы нет корректного ID.'));
+    var uid=user.uid;
+    return window.VMM_OFFLINE.queuePinChange(uid,pin,enabled).then(function(){
+      cloudPins=cloudPins.filter(function(p){return p.fileId!==pin.fileId;});
+      if(enabled)cloudPins.push(pin);
+      renderOfflineList();
+      if(navigator.onLine)refreshCloudPins();
+      else setCloudStatus('Выбор сохранён локально. Он синхронизируется при следующем подключении к интернету.');
+    });
+  }
+  function downloadCloudPins(){
+    if(cloudDownloadPromise)return cloudDownloadPromise;
+    if(!active||!user||!driveToken||!navigator.onLine){renderCloudStatus();return Promise.resolve();}
+    var uid=user.uid,generation=cloudGeneration;
+    var missing=cloudPins.filter(function(p){return !stored(p.fileId);});
+    if(!missing.length){setCloudStatus('Подборка синхронизирована. Фонограммы доступны офлайн.');return Promise.resolve();}
+    var total=missing.length,done=0,errors=[];
+    var work=inSeries(missing,function(p){
+      if(!syncValid(uid,generation)||!driveToken||!navigator.onLine||stored(p.fileId)||!cloudPins.some(function(x){return x.fileId===p.fileId;}))return;
+      var r=record(p.fileId);
+      if(!r||r.archived||r.catalogId!==p.catalogId){errors.push(p.title+': запись отсутствует в каталоге');return;}
+      setCloudStatus('Загружаем офлайн: '+(done+1)+' из '+total+' — '+p.title+'…');
+      return window.VMM_OFFLINE.estimate().then(function(v){
+        var size=Number(p.size)||Number(r.size)||0;
+        if(v&&v.quota&&v.usage&&v.quota-v.usage<size+5*1024*1024)
+          throw new Error('Недостаточно памяти на устройстве.');
+        return audioBlob(r);
+      }).then(function(blob){
+        if(!syncValid(uid,generation))return;
+        if(blob.size>MAX)throw new Error('Файл больше 50 МБ.');
+        var t=catalog.filter(function(x){return x.id===r.catalogId;})[0];
+        var l=t&&matchingLyrics(t)[0];
+        return window.VMM_OFFLINE.put(uid,{
+          fileId:r.driveFileId,catalogId:r.catalogId,title:r.title,artist:r.artist,
+          variant:r.variant,filename:r.filename,mimeType:r.mimeType,
+          blob:blob,lyrics:l?l.text:''
+        }).then(function(){return window.VMM_OFFLINE.persist();})
+          .then(function(){return readCache().then(function(){done++;renderOfflineList();renderPlayerEditor();});});
+      }).catch(function(err){errors.push(p.title+': '+err.message);});
+    });
+    cloudDownloadPromise=work.then(function(){
+      cloudDownloadPromise=null;
+      if(!syncValid(uid,generation))return;
+      if(errors.length)setCloudStatus('Скачано '+done+' из '+total+'. Ошибки: '+errors.join('; ')+
+        '. Повтори подключение Google Drive и проверь память.');
+      else setCloudStatus('Синхронизация завершена: '+cloudPins.length+' фонограмм доступны офлайн.');
+      renderOfflineList();
+    },function(err){cloudDownloadPromise=null;setCloudStatus('Ошибка синхронизации: '+err.message);});
+    return cloudDownloadPromise;
+  }
+  function refreshCloudPins(){
+    if(cloudSyncPromise){cloudResyncRequested=true;return cloudSyncPromise;}
+    cloudResyncRequested=false;
+    if(!user||!db||!window.VMM_CLOUD_PINS||!window.VMM_OFFLINE||!navigator.onLine){
+      renderCloudStatus();return Promise.resolve();
+    }
+    var uid=user.uid,generation=cloudGeneration;
+    var api=window.VMM_CLOUD_PINS,store=window.VMM_OFFLINE;
+    setCloudStatus('Сверяем офлайн-подборку между устройствами…');
+    var job=api.read(db,uid,saved).then(function(state){
+      if(!syncValid(uid,generation)||!state.authoritative)return null;
+      return Promise.all([store.wasCloudReady(uid),store.pendingPinChanges(uid)]).then(function(data){
+        var migrated=data[0],pending=data[1],removed={};
+        pending.forEach(function(x){if(!x.enabled)removed[x.fileId]=true;});
+        var old=migrated?[]:saved.filter(function(s){return !removed[s.fileId];});
+        return inSeries(old,function(s){
+          if(syncValid(uid,generation))return api.update(db,uid,s,true);
+        }).then(function(){
+          return inSeries(pending,function(op){
+            if(!syncValid(uid,generation))return;
+            return api.update(db,uid,op.item,op.enabled).then(function(){
+              return store.acknowledgePinChange(uid,op.fileId,op.nonce);
+            });
+          });
+        }).then(function(){if(syncValid(uid,generation))return store.markCloudReady(uid);});
+      }).then(function(){
+        if(!syncValid(uid,generation))return null;
+        return api.read(db,uid,[]).then(function(result){
+          if(!result.authoritative||!syncValid(uid,generation))return null;
+          cloudPins=result.pins;cloudPinsLoaded=true;
+          var desired={};cloudPins.forEach(function(p){desired[p.fileId]=true;});
+          var unpinned=saved.filter(function(s){return !desired[s.fileId];});
+          return inSeries(unpinned,function(s){
+            if(syncValid(uid,generation))return store.remove(uid,s.fileId);
+          }).then(function(){
+            if(syncValid(uid,generation))return readCache().then(function(){
+              renderOfflineList();renderPlayerEditor();
+            });
+          });
+        });
+      });
+    });
+    cloudSyncPromise=job.then(function(){
+      cloudSyncPromise=null;
+      if(syncValid(uid,generation)){
+        if(cloudResyncRequested){cloudResyncRequested=false;return refreshCloudPins();}
+        cloudStatus='';renderOfflineList();return downloadCloudPins();
+      }
+    },function(err){
+      cloudSyncPromise=null;
+      if(syncValid(uid,generation))setCloudStatus('Не удалось синхронизировать подборку: '+
+        err.message+'. Существующие локальные файлы сохранены.');
+    });
+    return cloudSyncPromise;
+  }
   function readCache(){
     if(!user||!window.VMM_OFFLINE)return Promise.resolve();
     return window.VMM_OFFLINE.list(user.uid).then(function(rows){
@@ -476,7 +611,7 @@
     if(!window.firebase||!firebase.apps.length)return Promise.reject(new Error('Авторизация ещё загружается.'));
     var u=firebase.auth().currentUser;
     if(!u||!u.emailVerified||!u.providerData.some(function(x){return x.providerId==='google.com';}))return Promise.reject(new Error('Войди в личный кабинет Google.'));
-    if(user&&user.uid!==u.uid){driveToken='';driveFolderId='';catalog=[];lyrics=[];recordings=[];saved=[];songId='';clearAudio();}
+    if(user&&user.uid!==u.uid){cloudGeneration++;cloudPins=[];cloudPinsLoaded=false;cloudSyncPromise=null;cloudDownloadPromise=null;cloudStatus='';driveToken='';driveFolderId='';catalog=[];lyrics=[];recordings=[];saved=[];songId='';clearAudio();}
     db=firebase.firestore();user=u;
     return db.collection('vmm_admins').doc(u.uid).get({source:navigator.onLine?'server':'cache'}).then(function(s){
       if(!s.exists||!s.data()||s.data().enabled!==true)throw new Error('Нет подтверждённых прав владельца.');
@@ -504,6 +639,9 @@
       // Offline choices remain visible; neither the upload form nor the stage
       // player opens automatically after a refresh.
       renderSongs();renderOfflineList();setSong('');
+      // The page can show cloud-pinned titles without Drive permission.
+      // Actual downloads start automatically only when a valid Drive token is available.
+      if(navigator.onLine)refreshCloudPins();
       msg(uploadMessage||('Композиции: '+catalog.length+' · фонограммы: '+recordings.length+' · сохранено офлайн: '+saved.length+
          (navigator.onLine?' · в сети':' · без интернета')+
          (errors.length?' · Не удалось прочитать '+errors.join('; '):'')+
@@ -727,9 +865,13 @@
   function offlineOn(r,checked){
     if(!window.VMM_OFFLINE)return msg('Локальное хранилище не поддерживается.');
     if(!checked){
-      window.VMM_OFFLINE.remove(user.uid,r.driveFileId).then(function(){
+      // Persist the global unpin before deleting the local copy.
+      queueOfflinePinChange(r,false).then(function(){
+        return window.VMM_OFFLINE.remove(user.uid,r.driveFileId);
+      }).then(function(){
         saved=saved.filter(function(s){return s.fileId!==r.driveFileId;});
-        renderRecords();renderOfflineList();renderPlayerEditor();msg('Убрано из офлайн-подборки. В Google Drive файл сохранён.');
+        renderRecords();renderOfflineList();renderPlayerEditor();
+        msg('Убрано из офлайна. Изменение будет синхронизировано на других устройствах. Google Drive не затронут.');
       }).catch(function(e){renderRecords();msg('Не удалось убрать офлайн: '+e.message);});
       return;
     }
@@ -748,7 +890,9 @@
       return readCache().then(function(){
         renderRecords();renderOfflineList();renderPlayerEditor();
         if(window.VMM_OFFLINE.rememberSelection)window.VMM_OFFLINE.rememberSelection(user.uid,r.catalogId).catch(function(){});
-        msg('Готово: '+r.title+' сохранена офлайн на этом устройстве. Перед концертом проверь без интернета.');
+        return queueOfflinePinChange(r,true).then(function(){
+          msg('Готово: '+r.title+' сохранена офлайн. Подборка будет синхронизирована на других устройствах после подключения Google Drive.');
+        });
       });
     }).catch(function(e){renderRecords();msg('Не удалось сохранить офлайн: '+e.message);});
   }
@@ -821,6 +965,9 @@
       return archiveMetadata(r,toTrash);
     }).then(function(){
       r.archived=toTrash;
+      if(toTrash&&window.VMM_OFFLINE&&window.VMM_CLOUD_PINS){
+        queueOfflinePinChange(r,false).catch(function(err){msg('Корзина сохранена, но синхронизация офлайн не завершена: '+err.message);});
+      }
       if(toTrash&&audioFileId===r.driveFileId)clearAudio();
       if(toTrash&&window.VMM_OFFLINE&&isSaved(r.driveFileId)){
         return window.VMM_OFFLINE.remove(user.uid,r.driveFileId).then(function(){
@@ -854,6 +1001,6 @@
     }
     if(action==='restore')moveRecording(r,false);
   }
-  function reset(){hide();clearAudio();editOpen=false;driveToken='';driveFolderId='';db=null;user=null;catalog=[];lyrics=[];recordings=[];saved=[];songId='';formSongId='';playerVisible=false;audioFileId='';busy=false;textVisible=false;uploadMessage='';}
+  function reset(){hide();clearAudio();cloudGeneration++;cloudPins=[];cloudPinsLoaded=false;cloudSyncPromise=null;cloudDownloadPromise=null;cloudStatus='';editOpen=false;driveToken='';driveFolderId='';db=null;user=null;catalog=[];lyrics=[];recordings=[];saved=[];songId='';formSongId='';playerVisible=false;audioFileId='';busy=false;textVisible=false;uploadMessage='';}
   window.VMM_RECORDINGS={open:open,hide:hide,reset:reset,translit:translit,filename:filename};
 }());

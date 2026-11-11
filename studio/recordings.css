@@ -426,3 +426,18 @@
  #vmm-repertoire .vmm-r-player.is-minimized{padding:4px 5px}
  #vmm-repertoire .vmm-r-player.is-minimized .vmm-r-stage{padding:2px 4px}
 }
+
+/* RUN-058 — cloud-selected tracks are never mislabelled as downloaded. */
+#vmm-repertoire .vmm-r-awaiting{
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+  border-style:dashed;border-color:#8190a8;
+  background:#172840;color:#e3d4b2;
+}
+#vmm-repertoire .vmm-r-awaiting small{
+  color:#b5c3d8;font-size:.84rem;overflow-wrap:anywhere;
+}
+#vmm-repertoire #vmm-r-sync-status{
+  margin:7px 0 15px;padding:0 2px;
+  color:#ddc89f;line-height:1.4;font-size:.9rem;
+  overflow-wrap:anywhere;
+}
