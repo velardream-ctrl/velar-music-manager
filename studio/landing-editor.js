@@ -7,20 +7,31 @@
  var tab='hero',data=API.defaults(),baseline='',published=null;
  var uid='',db=null,loaded=false,busy=false,draftRev=0,publishedRev=0,loadGeneration=0;
  var catalogArtists=[],catalogLoaded=false,catalogLoading=false,catalogError='';
+ var trackLinks={revision:0,overrides:{}},trackLinksLoaded=false;
+ var trackEditorArtist='',trackChecked={},trackSearch='',trackSaving=false;
  var tabs={hero:'Первый экран',artists:'Артисты',releases:'Музыка и релизы',genres:'Жанры',about:'О проекте',publish:'Публикация'};
  function id(k){return document.getElementById(k);}
  function clear(el){while(el.firstChild)el.removeChild(el.firstChild);}
  function text(el,t){if(el)el.textContent=String(t==null?'':t);}
  function show(el,on){if(el)el.className=el.className.replace(/\s*hidden\b/g,'')+(on?'':' hidden');}
  function clone(x){return JSON.parse(JSON.stringify(x));}
- function dirty(){return loaded&&JSON.stringify(data)!==baseline;}
+ function draftDirty(){return loaded&&JSON.stringify(data)!==baseline;}
+ function trackDirty(){
+   if(!trackEditorArtist||!trackLinksLoaded||!catalogLoaded)return false;
+   return catalogArtists.some(function(t){
+     if(!t.id)return false;
+     var before=window.VMM_ARTIST_TRACKS.effective(t,trackLinks.overrides)===trackEditorArtist;
+     return before!==!!trackChecked[t.id];
+   });
+ }
+ function dirty(){return draftDirty()||trackDirty();}
  function info(s){text(id('landing-status'),s);}
  function updateButtons(){
-   id('landing-save').disabled=!loaded||busy||!dirty();
-   id('landing-publish').disabled=!loaded||busy||!draftRev||dirty();
-   id('landing-reload').disabled=busy;
-   id('landing-restore').disabled=!published||busy;
-   text(id('landing-dirty'),busy?'Идёт операция…':!loaded?'Данные ещё не загружены':dirty()?'Есть несохранённые изменения':'Изменения сохранены');
+   id('landing-save').disabled=!loaded||busy||!draftDirty();
+   id('landing-publish').disabled=!loaded||busy||!draftRev||dirty()||trackSaving;
+   id('landing-reload').disabled=busy||trackSaving;
+   id('landing-restore').disabled=!published||busy||trackSaving;
+   text(id('landing-dirty'),busy?'Идёт операция…':trackSaving?'Сохраняем связи песен…':!loaded?'Данные ещё не загружены':dirty()?'Есть несохранённые изменения':'Изменения сохранены');
  }
  function safeStatus(err){
    return err&&err.code==='permission-denied'?
@@ -69,15 +80,20 @@
    if(catalogLoaded&&!force)return Promise.resolve();
    var generation=loadGeneration,account=uid;
    catalogLoading=true;catalogError='';
-   return db.collection('vmm_catalog').limit(1200).get({source:'server'}).then(function(snapshot){
+   return Promise.all([
+     db.collection('vmm_catalog').limit(1200).get({source:'server'}),
+     window.VMM_ARTIST_TRACKS.read(db)
+   ]).then(function(result){
      if(generation!==loadGeneration||account!==uid)return;
      var rows=[];
-     snapshot.forEach(function(doc){rows.push(doc.data()||{});});
-     catalogArtists=rows;catalogLoaded=true;catalogLoading=false;
+     result[0].forEach(function(doc){var song=doc.data()||{};song.id=doc.id;rows.push(song);});
+     if(rows.length>=1200)throw new Error('Каталог достиг лимита 1200 записей. Для безопасного назначения требуется загрузить полный каталог.');
+     catalogArtists=rows;trackLinks=result[1];trackLinksLoaded=true;
+     catalogLoaded=true;catalogLoading=false;
      if(tab==='artists')render();
    }).catch(function(err){
      if(generation!==loadGeneration||account!==uid)return;
-     catalogLoading=false;catalogError=err&&err.message||'Каталог временно недоступен.';
+     catalogLoading=false;catalogError=err&&err.message||'Каталог или связи песен временно недоступны.';
      if(tab==='artists')render();
    });
  }
@@ -241,8 +257,9 @@
  }
  function load(force){
    if(busy)return Promise.resolve();
-   if(loaded&&!force){render();return Promise.resolve();}
-   if(force&&dirty()&&!window.confirm('Несохранённый черновик будет потерян. Обновить из облака?'))return Promise.resolve();
+   if(loaded&&!force){render();if(tab==='artists')loadCatalogArtists();return Promise.resolve();}
+   if(force&&dirty()&&!window.confirm('Несохранённые изменения карточек или привязок будут потеряны. Обновить из облака?'))return Promise.resolve();
+   if(force){trackEditorArtist='';trackChecked={};trackSearch='';catalogLoaded=false;trackLinksLoaded=false;}
    var currentLoad=++loadGeneration;
    busy=true;updateButtons();info('Проверяем права и загружаем черновик…');
    return authorized().then(function(auth){
@@ -291,7 +308,7 @@
  }
  function publish(){
    if(!loaded||busy||!draftRev)return;
-   if(dirty()){info('Сначала сохрани изменения в черновике.');return;}
+   if(dirty()){info('Сначала сохрани изменения в черновике и привязки песен.');return;}
    if(!navigator.onLine){info('Публикация требует интернета.');return;}
    if(!window.confirm('Опубликовать выбранные артистов, релизы и тексты на открытой главной странице velardream.com?'))return;
    var cleanData;try{cleanData=API.normalize(data);}catch(e){info('Публикация остановлена: '+e.message);return;}
@@ -320,10 +337,10 @@
    }).catch(function(e){busy=false;updateButtons();info('Публикация не выполнена: '+safeStatus(e));});
  }
  function canLeave(){
-   if(busy){info('Дождись завершения сохранения или публикации.');return false;}
+   if(busy||trackSaving){info('Дождись завершения сохранения или публикации.');return false;}
    if(!dirty())return true;
-   if(!window.confirm('В главной странице есть несохранённые изменения. Отменить их и выйти из раздела?'))return false;
-   data=JSON.parse(baseline);render();return true;
+   if(!window.confirm('В главной странице или связях песен есть несохранённые изменения. Отменить их и выйти из раздела?'))return false;
+   data=JSON.parse(baseline);trackEditorArtist='';trackChecked={};trackSearch='';render();return true;
  }
  function open(){
    show(root,true);
@@ -334,6 +351,7 @@
    loadGeneration++;
    uid='';db=null;loaded=false;busy=false;draftRev=0;publishedRev=0;
    catalogArtists=[];catalogLoaded=false;catalogLoading=false;catalogError='';
+   trackLinks={revision:0,overrides:{}};trackLinksLoaded=false;trackEditorArtist='';trackChecked={};trackSearch='';trackSaving=false;
    data=API.defaults();baseline='';published=null;tab='hero';hide();updateButtons();
  }
  var nav=document.querySelectorAll('#landing-tabs [data-landing-tab]');
