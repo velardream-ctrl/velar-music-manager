@@ -9,6 +9,12 @@ const def=api.normalize(api.defaults());
 assert.equal(def.artists.cards.length,0);
 assert.equal(def.releases.cards.length,0);
 assert.equal(def.genres.tags.length,7);
+assert.equal(def.genres.universe.nodes.length,7);
+assert.equal(def.genres.languages.entries.length,13);
+assert.ok(def.genres.languages.entries.some(x=>x.code==='beaver'&&x.fictional));
+assert.ok(def.genres.languages.entries.some(x=>x.code==='alien'&&x.fictional));
+assert.equal(def.genres.languages.entries.every(x=>x.tracks.length===0),true);
+
 assert.ok(Object.keys(def).join(',')==='hero,artists,releases,genres,about');
 assert.match(def.hero.subtitle,/Разные голоса/);
 assert.throws(()=>api.normalize({...def,hero:{subtitle:'',intro:'A'}}),/обязательно/);
@@ -30,6 +36,9 @@ assert.match(html,/landing-public\.js\?v=6/);
 assert.match(html,/landing-schema\.js\?v=5/);
 assert.match(studio,/landing-editor\.js\?v=5/);
 assert.match(studio,/data-panel="landing"/);
+assert.match(studio,/data-landing-tab="universe"/);
+assert.match(studio,/data-landing-tab="languages"/);
+
 for(const tab of ['hero','artists','releases','genres','about','publish'])
  assert.match(studio,new RegExp('data-landing-tab="'+tab+'"'));
 assert.match(rules,/match \/vmm_public_drafts\/\{pageId\}/);
