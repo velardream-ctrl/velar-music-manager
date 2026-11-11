@@ -93,12 +93,12 @@ assert.match(admin,/topics:'Темы песен'/);
 assert.match(universe,/topics:'#topics'/);
 assert.match(html,/id="public-topic-cloud"/);
 assert.match(html,/id="public-topic-orbit"/);
-assert.match(html,/topics-public\.js\?v=1/);
+assert.match(html,/topics-public\.js\?v=2/);
 assert.match(html,/<meta name="robots" content="noindex,nofollow,noarchive">/,
  'The user explicitly wants the developing website blocked from search indexing');
 assert.match(css,/\.topic-tag\[aria-pressed=true\]/);
-assert.match(sw,/'\.\/topics-public\.js\?v=1'/);
-assert.match(sw,/CACHE_PREFIX \+ 'v23'/);
-assert.match(sw,/STUDIO_PREFIX\+'v26'/);
+assert.match(sw,/'\.\/topics-public\.js\?v=2'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v24'/);
+assert.match(sw,/STUDIO_PREFIX\+'v27'/);
 assert.doesNotMatch(topics,/setTimeout\(|setInterval\(|fetch\(|firestore\(|autoplay=1|loop=1/);
 console.log('PASS: RUN-073 topic cloud, multiple tags per song, curator-only catalog, noindex retained and no unrequested playback');
