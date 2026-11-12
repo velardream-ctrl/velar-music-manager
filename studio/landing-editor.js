@@ -1505,8 +1505,83 @@
      assistant.contactEmail=v.trim();
    });
    faqEditor(parent,assistant);
-   heading(parent,'Ответы по ключевым словам',
+   // RUN-084: original jokes in the same published assistant configuration.
+   heading(parent,'Музыкальные анекдоты',
+     'На слова «анекдот», «пошути», «ещё анекдот» VELAR выдаёт следующую короткую шутку. Все тексты можно менять; сообщения посетителей не собираются.');
+   var jokeActive=document.createElement('label');jokeActive.className='landing-checkbox';
+   var jokesOn=document.createElement('input');jokesOn.type='checkbox';
+   jokesOn.checked=assistant.jokesEnabled!==false;
+   jokesOn.onchange=function(){assistant.jokesEnabled=this.checked;updateButtons();};
+   jokeActive.appendChild(jokesOn);
+   var jokeOnText=document.createElement('span');jokeOnText.textContent='Включить музыкальные анекдоты';
+   jokeActive.appendChild(jokeOnText);parent.appendChild(jokeActive);
+   var jokesBlock=document.createElement('details');jokesBlock.className='landing-card';
+   var jokesTitle=document.createElement('summary');
+   jokesTitle.textContent='Редактировать анекдоты ('+assistant.jokes.length+')';
+   jokesBlock.appendChild(jokesTitle);
+   assistant.jokes.forEach(function(joke,index){
+     var card=document.createElement('section');card.className='landing-card';
+     field(card,'Анекдот №'+(index+1),joke,function(v){assistant.jokes[index]=v;},true);
+     card.appendChild(button('Удалить анекдот',function(){
+       if(!window.confirm('Удалить шутку только из черновика?'))return;
+       assistant.jokes.splice(index,1);render();
+     },'landing-danger'));
+     jokesBlock.appendChild(card);
+   });
+   jokesBlock.appendChild(button('+ Добавить анекдот',function(){
+     if(assistant.jokes.length>=40){info('Максимум 40 анекдотов.');return;}
+     assistant.jokes.push('— Почему музыканты любят паузы? — Можно успеть выпить чай!');
+     render();info('Новая шутка добавлена в черновик. Сохрани и опубликуй.');
+   },'landing-add'));
+   parent.appendChild(jokesBlock);
+      heading(parent,'Ответы по ключевым словам',
      'Правила проверяются перед общими подсказками по музыке. Ключевые слова перечисляются через запятую; ответ виден посетителям. Не вводи сюда личные данные или секретные ключи. До 25 правил.');
+   var rulesAudit=API.auditAssistantRules(assistant.rules,assistant.faq);
+   var inspection=document.createElement('details');inspection.className='landing-card';
+   var inspectionTitle=document.createElement('summary');
+   inspectionTitle.textContent='Проверка повторов ответов ('+rulesAudit.findings.length+' замечаний)';
+   inspection.appendChild(inspectionTitle);
+   var summaryNote=document.createElement('p');summaryNote.className='sync-note';
+   summaryNote.textContent='Равные ответы для нескольких правил: '+rulesAudit.merged+
+     '; пересечения с общей базой FAQ: '+rulesAudit.overlaps+
+     '; разные ответы на одно слово: '+rulesAudit.conflicts+
+     '. Авторские тексты не удаляются автоматически.';
+   inspection.appendChild(summaryNote);
+   if(!rulesAudit.findings.length){
+     var cleanNote=document.createElement('p');cleanNote.className='sync-note';
+     cleanNote.textContent='Точных повторов не обнаружено. Смысловые совпадения проверяются вручную.';
+     inspection.appendChild(cleanNote);
+   }
+   rulesAudit.findings.slice(0,30).forEach(function(message){
+     var line=document.createElement('p');line.className='sync-note';
+     line.textContent='• '+message;inspection.appendChild(line);
+   });
+   if(rulesAudit.findings.length>30){
+     var more=document.createElement('p');more.className='sync-note';
+     more.textContent='Показаны первые 30 замечаний из '+rulesAudit.findings.length+'.';
+     inspection.appendChild(more);
+   }
+   var cleanRules=button('Очистить только точные повторы',function(){
+     var audit=API.auditAssistantRules(assistant.rules,assistant.faq);
+     if(!audit.changed){info('Точных повторов для очистки нет.');return;}
+     if(!window.confirm('Объединить только одинаковые ответы и убрать точные повторы ключей? Разные авторские ответы сохранятся.'))return;
+     assistant.rules=audit.rules;render();
+     info('Точные повторы устранены в черновике. Разные авторские ответы и пересечения с FAQ оставлены для ручной проверки.');
+   },'landing-small');
+   cleanRules.disabled=!rulesAudit.changed;
+   inspection.appendChild(cleanRules);
+   var recommended=button('+ Добавить 6 особых ответов',function(){
+     var result=API.addRecommendedAssistantRules(assistant.rules,assistant.faq);
+     if(!result.added){info('Все предложенные ответы уже есть либо достигнут лимит 25 правил.');return;}
+     assistant.rules=result.rules;render();
+     info('Добавлено специальных ответов: '+result.added+
+       '. Повторяющиеся ключи пропущены. Проверь черновик и затем опубликуй.');
+   },'landing-add');
+   inspection.appendChild(recommended);
+   var note=document.createElement('p');note.className='sync-note';
+   note.textContent='Рекомендуемые ответы: заказ песни, стихи, живая музыка на свадьбе, идея для песни, отсутствующий трек, неизданная музыка. Они добавляются только по вашему нажатию; опубликованные правила без команды не изменяются.';
+   inspection.appendChild(note);
+   parent.appendChild(inspection);
    assistant.rules.forEach(function(rule,index){
      var card=document.createElement('section');card.className='landing-card';
      heading(card,'Ответ '+(index+1));

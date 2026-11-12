@@ -31,7 +31,7 @@ assert.equal(answer('песня на немецком').target,'#languages');
 const custom={...settings,rules:[{keywords:'эксклюзив',answer:'У нас есть особая подборка.'}]};
 assert.equal(answer('эксклюзив',custom).text,'У нас есть особая подборка.');
 assert.match(html,/id="velar-assistant"/);
-assert.match(html,/velar-assistant\.js\?v=6/);
+assert.match(html,/velar-assistant\.js\?v=7/);
 assert.match(html,/name="robots" content="noindex,nofollow,noarchive"/);
 assert.match(css,/\.velar-assistant-launch/);
 assert.match(css,/\.velar-assistant-wave/);
@@ -47,7 +47,7 @@ assert.equal(w.VELAR_ASSISTANT.expressionFor('OK'),'okay');
 assert.ok(css.includes("max-height:min(390px,50vh)"));
 assert.ok(!code.includes("dj-velar-assistant.webp"));
 assert.match(code,/sessionStorage/);
-assert.match(sw,/'\.\/velar-assistant\.js\?v=6'/);
+assert.match(sw,/'\.\/velar-assistant\.js\?v=7'/);
 assert.match(publicCode,/velar-radio-hidden/);
 assert.match(publicCode,/VELAR_ASSISTANT\.render\(value\)/);
 assert.doesNotMatch(code,/fetch\(|firebase|XMLHttpRequest|setInterval\(|WebSocket|autoplay=|\.play\(/);
@@ -67,7 +67,7 @@ assert.match(css,/\.velar-assistant-suggestion\{min-height:28px;padding:2px 7px/
 assert.match(css,/\.velar-assistant-privacy\{padding:1px 7px 3px/);
 assert.match(css,/\.velar-assistant-header-note\{display:none\}/);
 assert.match(css,/\.velar-assistant-input\{height:36px;padding:6px 8px;font-size:16px\}/);
-assert.match(sw,/CACHE_PREFIX \+ 'v24'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v25'/);
 assert.match(html,/style\.css\?v=22/);
 assert.ok(code.includes("querySelector('.velar-assistant-launch')"));
 

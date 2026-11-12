@@ -366,6 +366,39 @@ assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.fa
  'New FAQ must remain a private draft before publication');
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.faq.length,114);
+// RUN-084 — joke editor and special-answer deduplication remain draft-only until publish.
+nav[8].onclick();await flush();
+const firstJoke=findInput('Анекдот №1');
+assert.ok(firstJoke,'Editable jokes shown in Studio');
+firstJoke.input('— Почему бас не спорит? — Он остаётся на низких тонах!');
+const jokeSwitch=traverse(get('landing-fields'),n=>n.className==='landing-checkbox'&&
+ n.children[1]?.textContent==='Включить музыкальные анекдоты');
+assert.ok(jokeSwitch);
+jokeSwitch.children[0].checked=false;
+jokeSwitch.children[0].onchange.call(jokeSwitch.children[0]);
+const suggestSix=traverse(get('landing-fields'),n=>n.textContent==='+ Добавить 6 особых ответов');
+assert.ok(suggestSix);
+suggestSix.onclick();
+assert.ok(findInput('Ключевые слова через запятую'));
+const firstRuleField=findInput('Ключевые слова через запятую');
+const firstAlias=firstRuleField.value.split(',')[0];
+firstRuleField.input(firstRuleField.value+','+firstAlias);
+nav[8].onclick();await flush();
+const auditBtn=traverse(get('landing-fields'),n=>n.textContent==='Очистить только точные повторы');
+assert.ok(auditBtn&&!auditBtn.disabled,'Duplicate rule can be cleaned safely');
+auditBtn.onclick();
+get('landing-save').onclick();await flush();
+const jokesDraft=records.get('vmm_public_drafts/landing').content.genres.assistant;
+assert.equal(jokesDraft.jokes.length,18);
+assert.match(jokesDraft.jokes[0],/низких тонах/);
+assert.equal(jokesDraft.jokesEnabled,false);
+assert.equal(jokesDraft.rules.length,6);
+assert.equal(jokesDraft.rules[0].keywords.split(',').filter(x=>x===firstAlias).length,1);
+assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.rules.length,0,
+ 'Special answers must remain private until explicit publication');
+get('landing-publish').onclick();await flush();
+assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.rules.length,6);
+assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.jokesEnabled,false);
 // Remote write must never be overwritten by stale admin tab.
 nav[0].onclick();
 findInput('Подзаголовок').input('Несохранённый локальный текст');
