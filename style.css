@@ -1156,3 +1156,23 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .public-song-source.is-primary{width:34px;height:34px;min-height:34px;padding:0}
  .public-song-inline .cms-release-iframe--video{height:210px}
 }
+
+/* RUN-094: Spotify paints pale antialiased rounded edges INSIDE its
+   cross-origin embed. A clipped viewport hides those pixels while the iframe
+   bleeds 8px beyond each edge. This leaves the documented on-screen player
+   height unchanged and does not affect YouTube or click-to-close behavior.
+   The old Safari 12 supports overflow:hidden, radius and calc(). */
+.spotify-embed-viewport{
+ display:block;position:relative;overflow:hidden;box-sizing:border-box;
+ width:100%;max-width:100%;height:352px;min-width:0;
+ border-radius:12px;background:#192b48;
+}
+.spotify-embed-viewport--compact{height:152px}
+.spotify-embed-viewport>.cms-music-iframe,
+.spotify-embed-viewport>.cms-release-iframe,
+.spotify-embed-viewport>.velar-radio-iframe{
+ display:block;position:absolute;top:-8px;left:-8px;
+ width:calc(100% + 16px);height:calc(100% + 16px);
+ max-width:none;max-height:none;min-width:0;min-height:0;
+ border:0;border-radius:0;margin:0;
+}

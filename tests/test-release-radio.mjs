@@ -101,6 +101,8 @@ musicBtn.onclick();
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1);
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe')[0].src,
  'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
+assert.equal(doc.querySelectorAll('iframe.cms-release-iframe')[0].parentNode.className,
+ 'spotify-embed-viewport','Large Spotify release player hides rounded corner artifacts');
 // RUN-092: opening control is also the closing control on repeat press.
 musicBtn.onclick();
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0,'Repeat release click unloads Spotify iframe');
@@ -118,6 +120,8 @@ assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,1);
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0,'Opening radio closes the release player');
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src,
  'https://open.spotify.com/embed/playlist/11Vdx5lXmtfMiXh63YhIwh');
+assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0].parentNode.className,
+ 'spotify-embed-viewport','Spotify radio uses the same masking component');
 startRadio.onclick();
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0,'Repeat radio start click unloads iframe');
 assert.equal(startRadio.attributes['aria-pressed'],'false');
@@ -146,6 +150,7 @@ assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0,'Repeat 
 assert.equal(openPlaylist.attributes['aria-pressed'],'false');
 openPlaylist.onclick();
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1);
+assert.equal(doc.querySelectorAll('iframe.cms-release-iframe')[0].parentNode.className,'spotify-embed-viewport');
 assert.equal(map['public-subscriptions'].children[0].href,profile);
 const toggle=map['velar-universe-toggle'];assert.equal(map['velar-universe-stage'].children.length,0);
 toggle.onclick();
@@ -178,8 +183,8 @@ assert.doesNotMatch(publicJS,/autoplay=1|loop=1|muted=1|setInterval\(/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(css,/.cms-release-art::before/);
 assert.match(html,/universe\.js\?v=5/);
-assert.match(html,/style\.css\?v=28/);
-assert.match(sw,/CACHE_PREFIX \+ 'v33'/);
+assert.match(html,/style\.css\?v=29/);
+assert.match(sw,/CACHE_PREFIX \+ 'v34'/);
 assert.match(sw,/STUDIO_PREFIX\+'v30'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);

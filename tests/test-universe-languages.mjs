@@ -100,14 +100,18 @@ assert.equal(detail.children[1].textContent.includes('2'),true);
 const list=detail.children[2];
 assert.equal(detail.children.length,3,'No extra player at bottom of list');
 assert.equal(list.children.length,2);
+const mediaFrame=holder=>{
+ const first=holder.children[0];return first&&first.tagName==='iframe'?first:first&&first.children[0];
+};
 const firstRow=list.children[0],secondRow=list.children[1];
 assert.equal(firstRow.children[2].children.length,0,'No iframe before visitor clicks');
 firstRow.children[0].children[1].onclick(); // song title opens primary
 assert.equal(stopped,1,'Other external players are stopped before opening a song');
-assert.equal(firstRow.children[2].children[0].tagName,'iframe',
+assert.equal(firstRow.children[2].children[0].className,'spotify-embed-viewport');
+assert.equal(mediaFrame(firstRow.children[2]).tagName,'iframe',
  'Inline iframe is immediately after the first clicked song, before next row');
-assert.equal(firstRow.children[2].children[0].src,'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
-assert.equal(firstRow.children[2].children[0].attributes.allow.includes('autoplay'),false);
+assert.equal(mediaFrame(firstRow.children[2]).src,'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
+assert.equal(mediaFrame(firstRow.children[2]).attributes.allow.includes('autoplay'),false);
 secondRow.children[1].children[0].onclick();
 assert.equal(stopped,2);
 assert.equal(firstRow.children[2].children.length,0,'Opening another song closes the previous iframe');
@@ -149,8 +153,8 @@ assert.match(admin,/API\.songUrl\(urls\.spotify/);
 assert.match(html,/id="languages"/);
 assert.match(html,/src="assets\/velardream-symbol.svg"/);
 assert.match(html,/languages-public\.js\?v=3/);
-assert.match(html,/public-song-ui\.js\?v=3/);
-assert.match(sw,/'\.\/public-song-ui\.js\?v=3'/);
+assert.match(html,/public-song-ui\.js\?v=4/);
+assert.match(sw,/'\.\/public-song-ui\.js\?v=4'/);
 assert.match(css,/\.language-orbit-node\[aria-pressed=true\]/);
 assert.match(css,/\.language-song-play::before/);
 assert.match(sw,/'\.\/languages-public\.js\?v=3'/);

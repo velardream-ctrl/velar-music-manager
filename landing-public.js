@@ -11,6 +11,13 @@
    if(typeof words==='string')n.textContent=words;
    return n;
  }
+ // RUN-094: mask Spotify's own pale iframe corners in a Safari12-safe viewport.
+ // Never alter YouTube video iframes or Spotify cross-origin document styles.
+ function appendOfficialFrame(host,frame,provider,compact){
+   if(provider!=='spotify'){host.appendChild(frame);return;}
+   var mask=create('div','spotify-embed-viewport'+(compact?' spotify-embed-viewport--compact':''));
+   mask.appendChild(frame);host.appendChild(mask);
+ }
  var original={};
  // RUN-086: only visible, owner-enabled radio controls can be opened from chat.
  var radioControls=null;
@@ -100,7 +107,7 @@
        frame.loading='lazy';frame.setAttribute('allow','clipboard-write; encrypted-media; fullscreen; picture-in-picture');
        frame.setAttribute('allowfullscreen','');
        frame.referrerPolicy='strict-origin-when-cross-origin';
-       player.appendChild(frame);
+       appendOfficialFrame(player,frame,track.provider,true);
        var external=create('a','cms-music-external','Открыть в '+(track.provider==='spotify'?'Spotify':'YouTube'));
        external.href=validated;external.rel='noopener noreferrer';external.target='_blank';
        player.appendChild(external);
@@ -161,14 +168,24 @@
  }
  // Repeated play clicks must detect a LIVE iframe, not a stale external link
  // left after another public section has unloaded the previous iframe.
- function hasEmbed(host){return !!(host&&host.firstChild&&host.firstChild.tagName==='iframe');}
+ function hasEmbed(host){
+   if(!host||!host.firstChild)return false;
+   var first=host.firstChild;
+   return first.tagName==='iframe'||!!(first.className&&
+     (' '+first.className+' ').indexOf(' spotify-embed-viewport ')>=0&&
+     first.firstChild&&first.firstChild.tagName==='iframe');
+ }
  function pauseOtherEmbeds(){
    // Remove any previous external embed instead of starting parallel players.
    // Cross-origin APIs must not be used to simulate streams or playback.
    if(typeof document.querySelectorAll!=='function')return;
    var frames=document.querySelectorAll('iframe.cms-music-iframe,iframe.cms-release-iframe,iframe.velar-radio-iframe');
-   for(var i=0;i<frames.length;i++)if(frames[i].parentNode)
-     frames[i].parentNode.removeChild(frames[i]);
+   for(var i=0;i<frames.length;i++)if(frames[i].parentNode){
+     var parent=frames[i].parentNode;
+     if(parent.className&&(' '+parent.className+' ').indexOf(' spotify-embed-viewport ')>=0&&
+        parent.parentNode)parent.parentNode.removeChild(parent);
+     else parent.removeChild(frames[i]);
+   }
  }
  function releaseCard(item,feature){
    var isVideo=item.kind==='video';
@@ -222,7 +239,7 @@
        frame.src=media;frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
        frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
        frame.setAttribute('allowfullscreen','');
-       player.appendChild(frame);
+       appendOfficialFrame(player,frame,item.mediaProvider,false);
        var close=create('button','cms-release-close','Закрыть плеер');close.type='button';
        close.onclick=function(){empty(player);listen.setAttribute('aria-pressed','false');};player.appendChild(close);
      };
@@ -317,7 +334,7 @@
        frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
        frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
        frame.setAttribute('allowfullscreen','');
-       player.appendChild(frame);
+       appendOfficialFrame(player,frame,item.provider,false);
        var close=create('button','cms-release-close','Закрыть плеер');
        close.type='button';close.onclick=function(){empty(player);choose.setAttribute('aria-pressed','false');};player.appendChild(close);
      };
@@ -388,7 +405,7 @@
      frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
      frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
      frame.setAttribute('allowfullscreen','');
-     player.appendChild(frame);
+     appendOfficialFrame(player,frame,config.provider,false);
      var link=create('a','velar-radio-external','Открыть в '+(config.provider==='spotify'?'Spotify':'YouTube'));
      link.href=config.url;link.target='_blank';link.rel='noopener noreferrer';player.appendChild(link);
    };

@@ -55,7 +55,10 @@
      frame.src=link;frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
      frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
      frame.setAttribute('allowfullscreen','');
-     host.appendChild(frame);
+     if(src.provider==='spotify'){
+       var viewport=el('div','spotify-embed-viewport');
+       viewport.appendChild(frame);host.appendChild(viewport);
+     }else host.appendChild(frame);
      var external=el('a','cms-card-link','Открыть в '+(src.provider==='spotify'?'Spotify':'YouTube'));
      external.href=src.url;external.rel='noopener noreferrer';external.target='_blank';
      host.appendChild(external);
@@ -71,7 +74,10 @@
    // Explicit repeat click toggles off; picking the other service switches players.
    // The chat deep link calls open() directly so it can always OPEN the requested song.
    function toggle(i,src,fromTitle){
-     var slot=slots[i],playing=slot&&slot.firstChild&&slot.firstChild.tagName==='iframe';
+     var slot=slots[i],first=slot&&slot.firstChild,
+       playing=!!(first&&(first.tagName==='iframe'||
+         first.className==='spotify-embed-viewport'&&
+         first.firstChild&&first.firstChild.tagName==='iframe'));
      if(index===i&&playing&&(fromTitle||source===src.provider)){
        clearActive(); // Remove the iframe, not only hide it: external audio stops.
        return true;
