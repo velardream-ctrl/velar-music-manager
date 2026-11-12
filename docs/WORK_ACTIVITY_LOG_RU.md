@@ -526,3 +526,10 @@
 - [PR #39](https://github.com/velardream-ctrl/velar-music-manager/pull/39) успешно слит в `main`, merge SHA `19fcf4478fd161c0edaddfb7c17862428d17d60e`; [CI run 43152624186](https://github.com/velardream-ctrl/velar-music-manager/actions/runs/43152624186) — SUCCESS; [GitHub Pages run 43152623659](https://github.com/velardream-ctrl/velar-music-manager/actions/runs/43152623659) — SUCCESS.
 - Создан `docs/EMAIL_BREADCRUMB_AUDIT_RU.md` и связанные записи в master/handoff. Отдельный [Sanastoyhteisö PR #69](https://github.com/sanastoyhteiso/sanastoyhteiso.github.io/pull/69) также документально дополнил его журнал: merge `93474c7e5f432f87c00db28c8eb03f020e672f5a`, [Pages run 43153044589](https://github.com/sanastoyhteiso/sanastoyhteiso.github.io/actions/runs/43153044589) — SUCCESS.
 - **Граница:** это **первичный неполный** аудит писем. Нужно досмотреть страницы и периоды Gmail после лимита, сверить с Git/архивами; пользовательские ошибки iPhone/iPad ожидают скриншотов. Никакого исправления анимации или изменения Firestore/Drive в этом RUN не было.
+
+
+### 2026-11-12 — RUN-086 — НАЧАЛ: команда VELAR RADIO из чата не открывает плеер
+- Пользователь проверил фразу «Velar, включи радио»: плеер не открылся. Реальный код `velar-assistant.js` отвечал на «радио» только ссылкой `#playlists`, а `velar-faq-engine.js` мог перехватывать FAQ. В `landing-public.js` радио не имеет открытого метода для вызова из чата.
+- В RUN-083 реализованы кнопки **отдельных песен** в темах и языках, но не запуск VELAR RADIO. Прежнее обещание о прямом запуске радио было неточным.
+- Настройки `releases.radio.enabled` по умолчанию OFF (RUN-078), состояние реального опубликованного Firestore неизвестно. Нельзя включать радио вопреки переключателю владельца.
+- План: безопасная явная команда → кнопка «Открыть VELAR RADIO» → официальный Spotify/YouTube iframe только после нажатия, либо честное сообщение «радио выключено»; сохраняем ES5/Safari12, отсутствие autoplay и дополнительных запросов к Firebase/Drive, учитываем локальное скрытие радио. Добавить тесты, проверить CI/Pages, зафиксировать результат.
