@@ -13,15 +13,20 @@
  var topicEditorSlug='',topicCatalogSearch='',topicTrackFilter='';
  var faqSearch='',faqGroup='',faqPage=0;
  // Offline admin: private IndexedDB outbox, no publication without explicit click.
- var offlineSyncing=false,offlineNonce='',offlineTimer=null,offlineWorking=null;
+ var offlineSyncing=false,offlineNonce='',offlineTimer=null,
+   offlineWorking=Promise.resolve(),offlineSavedSignature='';
  var offlineStore=window.VMM_OFFLINE_ADMIN;
  function pendingName(){return 'pending:landing';}
  function offlineStatus(msg){var element=id('landing-offline-status');if(element)text(element,msg);}
  function snapshotLocal(){
    if(!offlineStore||!uid||!loaded||busy||!draftDirty())return Promise.resolve(null);
    var payload={content:clone(data),baseRevision:draftRev,baseBaseline:baseline};
-   return offlineStore.put(uid,pendingName(),payload).then(function(item){
-     offlineNonce=item.nonce;
+   var account=uid,signature=JSON.stringify(payload.content);
+   offlineWorking=offlineWorking.catch(function(){}).then(function(){
+     return offlineStore.put(account,pendingName(),payload);
+   });
+   return offlineWorking.then(function(item){
+     offlineNonce=item.nonce;offlineSavedSignature=signature;
      offlineStatus('На устройстве сохранён черновик · ожидает синхронизации с облаком.');
      return item;
    }).catch(function(err){
@@ -31,6 +36,7 @@
  }
  function scheduleLocal(){
    if(!offlineStore||!uid||!loaded||!draftDirty()||busy)return;
+   if(JSON.stringify(data)===offlineSavedSignature)return;
    if(offlineTimer!==null)clearTimeout(offlineTimer);
    offlineTimer=setTimeout(function(){
      offlineTimer=null;snapshotLocal().catch(function(){});
@@ -48,7 +54,7 @@
      data=clean;
      baseline=value.baseBaseline||baseline;
      draftRev=Number(value.baseRevision)||0;
-     offlineNonce=saved.nonce;render();
+     offlineNonce=saved.nonce;offlineSavedSignature=JSON.stringify(clean);render();
      offlineStatus('Восстановлен локальный черновик. Синхронизация после подключения; при конфликте данные останутся на устройстве.');
      return saved;
    }).catch(function(err){offlineStatus('Не удалось восстановить локальные изменения: '+err.message);return null;});
@@ -56,7 +62,9 @@
  function syncOffline(){
    if(offlineSyncing||!offlineStore||!uid||!loaded||busy||!navigator.onLine)return Promise.resolve();
    offlineSyncing=true;
-   return offlineStore.get(uid,pendingName()).then(function(saved){
+   return offlineWorking.catch(function(){}).then(function(){
+     return offlineStore.get(uid,pendingName());
+   }).then(function(saved){
      if(!saved||!saved.value)return null;
      var payload=saved.value,clean=API.normalize(payload.content),account=uid,nonce=saved.nonce;
      // Always reverify online authority and revision in a server transaction.
@@ -1986,7 +1994,11 @@
    if(!dirty())return true;
    // Locally persisted entries survive navigation; do not discard silently.
    if(!navigator.onLine&&offlineStore){
-     snapshotLocal().catch(function(){});
+     if(JSON.stringify(data)!==offlineSavedSignature){
+       snapshotLocal().catch(function(){});
+       info('Сначала дождись сообщения о сохранении на устройстве. Локальная запись ещё выполняется.');
+       return false;
+     }
      return true;
    }
    if(!window.confirm('В главной странице или связях песен есть несохранённые изменения. Отменить их и выйти из раздела?'))return false;
@@ -1999,7 +2011,8 @@
  function hide(){show(root,false);}
  function reset(){
    loadGeneration++;
-   uid='';db=null;loaded=false;busy=false;draftRev=0;publishedRev=0;offlineNonce='';offlineSyncing=false;
+   uid='';db=null;loaded=false;busy=false;draftRev=0;publishedRev=0;
+   offlineNonce='';offlineSyncing=false;offlineSavedSignature='';
    if(offlineTimer!==null){clearTimeout(offlineTimer);offlineTimer=null;}
    catalogArtists=[];catalogLoaded=false;catalogLoading=false;catalogError='';
    trackLinks={revision:0,overrides:{}};trackLinksLoaded=false;trackEditorArtist='';trackChecked={};trackSearch='';trackSaving=false;
@@ -2011,6 +2024,12 @@
    if(tab==='artists'||tab==='releases'||tab==='languages'||tab==='topics')loadCatalogArtists();
  };
  id('landing-save').onclick=save;
+ id('landing-export-offline').onclick=function(){
+   if(!offlineStore||!uid){info('Войди в личный кабинет перед резервным копированием.');return;}
+   offlineStore.exportPending(uid,'pending:landing').then(function(count){
+     info('Скачана локальная резервная копия ('+count+' записей). Не пересылай её посторонним.');
+   }).catch(function(err){info('Резервная копия: '+err.message);});
+ };
  id('landing-publish').onclick=publish;
  id('landing-reload').onclick=function(){load(true);};
  id('landing-restore').onclick=function(){
