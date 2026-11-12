@@ -33,7 +33,7 @@ const sw = read('sw.js');
 assert.match(sw, /CACHE_PREFIX/);
 assert.match(sw, /isPublicAsset/);
 assert.match(sw, /velardream-crystal\.png/);
-assert.match(sw, /CACHE_PREFIX \+ 'v26'/);
+assert.match(sw, /CACHE_PREFIX \+ 'v27'/);
 const css = read('style.css');
 assert.ok(homepage.includes('class="brand-emblem brand-emblem-header"'), 'Header emblem missing');
 assert.ok(homepage.includes('class="brand-emblem brand-emblem-footer"'), 'Footer emblem missing');

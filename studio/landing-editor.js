@@ -1220,6 +1220,10 @@
    parent.appendChild(typingHint);
    field(parent,'Имя помощника',assistant.title,function(v){assistant.title=v;});
    field(parent,'Текст приветствия',assistant.welcome,function(v){assistant.welcome=v;},true);
+   heading(parent,'Музыкальный выбор VELAR',
+     'Любимая композиция — выбор помощника, а не признак публикации. Слушать можно только песню с официальной ссылкой в открытой теме или языке. Случайный выбор также ограничен опубликованными треками.');
+   field(parent,'Любимая песня помощника',assistant.favoriteSongTitle,
+     function(v){assistant.favoriteSongTitle=v;});
    // RUN-080: all public labels are owner-editable. The chat continues to
    // generate replies locally; these fields never create an external API.
    var labelFields=[

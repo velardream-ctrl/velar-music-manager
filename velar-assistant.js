@@ -162,6 +162,9 @@
      return {text:settings.jokes[jokeCursor],
        action:'ask',target:'ещё анекдот',label:'Ещё анекдот 🎵'};
    }
+   // RUN-087: contextual music guide keeps owner rules above defaults.
+   var guide=window.VELAR_FAQ&&window.VELAR_FAQ.guide&&window.VELAR_FAQ.guide(q,data,settings);
+   if(guide)return guide;
    var suggested=window.VELAR_FAQ&&window.VELAR_FAQ.answer(q,data,settings);
    if(suggested)return suggested;
    if(contains(q,'оператор,поговорить с оператором,свяжи с автором,человек,сотрудничество,сотрудничать,певец,певица,артист для песни,выступление,выступить,концерт,предложение,коллаборация,контакт,почта,написать автору')){
@@ -300,6 +303,11 @@
            say(choice.target);
          }else if(choice.action==='link'&&choice.target&&choice.target.charAt(0)==='#'){
            window.location.hash=choice.target.slice(1);
+           // On narrow screens reveal the requested section instead of covering it with chat.
+           if(choice.target==='#topics'&&root&&root.querySelector){
+             var closeChat=root.querySelector('.velar-assistant-close');
+             if(closeChat&&closeChat.onclick)closeChat.onclick();
+           }
          }
        };
        group.appendChild(a);

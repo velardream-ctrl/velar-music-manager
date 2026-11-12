@@ -182,6 +182,7 @@
           entries:defaultTopics()},
         assistant:{enabled:true,greetingEnabled:true,title:'VELAR · помощник',
           welcome:'Добро пожаловать во вселенную VELARDREAM! Какое настроение у вас сегодня?',
+          favoriteSongTitle:'Velar Superstar', // RUN-087: editorial favorite, not evidence of public availability
           contactEmail:'',rules:[],
           jokesEnabled:true,jokes:defaultAssistantJokes(),
           faq:defaultAssistantFaq(),
@@ -628,6 +629,8 @@
       title:plain(typeof item.title==='string'?item.title:def.title,'Название помощника',55,true),
       welcome:plain(typeof item.welcome==='string'?item.welcome:def.welcome,
         'Приветствие помощника',250,true),
+      favoriteSongTitle:plain(typeof item.favoriteSongTitle==='string'?item.favoriteSongTitle:def.favoriteSongTitle,
+        'Любимая песня VELAR',110,true),
       contactEmail:mail,rules:cleaned,jokes:jokes,jokesEnabled:jokesEnabled,faq:faq,typing:typing,labels:labels,quickTopics:quickTopics,replies:replies,avatars:avatars};
   }
   function card(x,type,index){

@@ -87,12 +87,54 @@ assert.ok(w.VELAR_FAQ.publishedSongs(sample).every(t=>t.url.indexOf('drive.googl
 const noSongsResult=answer('любовь',defaults);
 assert.ok(!noSongsResult.actions,'No fabricated play buttons when a topic is empty');
 assert.match(noSongsResult.text,/нет назначенных/);
+// RUN-087: recommendations use only published tracks and never invent audio.
+assert.equal(settings.favoriteSongTitle,'Velar Superstar');
+const guideFavorite=answer('Какая твоя любимая песня?');
+assert.match(guideFavorite.text,/Velar Superstar/);
+assert.ok(![...(guideFavorite.actions||[])].some(x=>x.action==='song'),'Private catalog must not produce a public song action');
+const advice=answer('А что посоветуешь?');
+assert.equal(advice.actions.length,3);
+assert.equal(advice.actions[0].target,'#topics','Recommendation directs visitors to topic descriptions');
+assert.equal(advice.actions[1].action,'ask');
+const randomEmpty=answer('случайную песню');
+assert.equal(randomEmpty.action,'link');
+assert.equal(randomEmpty.target,'#topics');
+const guideSample=api.defaults();
+guideSample.genres.topics.entries.find(x=>x.slug==='love').tracks=[
+ {title:'Velar Superstar',artist:'Velar',url,provider:'spotify'}];
+guideSample.genres.topics.entries.find(x=>x.slug==='space').tracks=[
+ {title:'Галактика',artist:'Velar',url:video,provider:'youtube'}];
+const availableFavorite=answer('какая твоя любимая песня',guideSample);
+assert.ok(availableFavorite.actions.some(x=>x.action==='song'&&x.url===url));
+assert.ok(answer('открой песню Велар Суперстар',guideSample).actions.some(x=>x.action==='song'));
+const unnamed=answer('открой песню',guideSample);
+assert.equal(unnamed.actions[0].target,'#topics','Missing song title asks visitor to choose');
+const notPublished=answer('открой песню Совсем другая',guideSample);
+assert.ok(notPublished.text.indexOf('нет среди опубликованных')!==-1);
+assert.ok(!notPublished.actions.some(x=>x.action==='song'));
+assert.equal(answer('открой песню Velar Superstar',guideSample).action,'song');
+const firstRandom=answer('выбери случайную песню',guideSample);
+assert.equal(firstRandom.actions[0].action,'song');
+assert.ok([url,video].includes(firstRandom.actions[0].url));
+assert.equal(firstRandom.actions[1].action,'ask');
+const secondRandom=answer('случайная песня',guideSample);
+assert.notEqual(secondRandom.actions[0].url,firstRandom.actions[0].url,
+ 'With two tracks consecutive random suggestions must differ');
+const ownerAdvice={...settings,rules:[{keywords:'что посоветуешь',answer:'Мой авторский ответ'}]};
+assert.equal(answer('что посоветуешь',guideSample,ownerAdvice).text,'Мой авторский ответ');
+const ownerFavorite={...settings,favoriteSongTitle:'Галактика'};
+assert.ok(answer('какая твоя любимая песня',guideSample,ownerFavorite).actions.some(x=>x.url===video),
+ 'Changing favorite in Studio affects next public answer');
+const noLeaks=api.defaults();
+noLeaks.genres.topics.entries.find(x=>x.slug==='love').tracks=[
+ {title:'Velar Superstar',artist:'Velar',url:'https://drive.google.com/file/d/private',provider:'spotify'}];
+assert.ok(!(answer('какая твоя любимая песня',noLeaks).actions||[]).some(x=>x.action==='song'));
 const sampleSection=api.normalize({...defaults,genres:{...defaults.genres,assistant:settings}});
 assert.equal(sampleSection.genres.assistant.faq.length,113);
-assert.match(html,/velar-faq-engine\.js\?v=1/);
-assert.ok(html.indexOf('velar-faq-engine.js?v=1')<html.indexOf('velar-assistant.js?v=8'));
-assert.match(sw,/'\.\/velar-faq-engine\.js\?v=1'/);
-assert.match(sw,/CACHE_PREFIX \+ 'v26'/);
+assert.match(html,/velar-faq-engine\.js\?v=2/);
+assert.ok(html.indexOf('velar-faq-engine.js?v=2')<html.indexOf('velar-assistant.js?v=9'));
+assert.match(sw,/'\.\/velar-faq-engine\.js\?v=2'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v27'/);
 assert.match(read('style.css'),/velar-chat-actions/);
 assert.match(bot,/choice\.action==='song'/);
 assert.match(bot,/choice\.action==='ask'/);
