@@ -1088,3 +1088,50 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  display:flex;flex-direction:column;gap:4px;min-width:0;width:100%}
 .velar-chat-actions .velar-chat-action{width:100%;min-height:30px;
  margin:0;padding:5px 8px;line-height:1.25;overflow-wrap:anywhere}
+
+
+/* RUN-090 — unified song lists: one row per composition, official source buttons,
+   a single iframe immediately BELOW the clicked row, never at list bottom.
+   Flex/width fallbacks support Safari 12. */
+.public-song-entry{
+ display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+ border:1px solid rgba(224,197,150,.45);border-radius:11px;
+ background:#22375a;padding:9px 12px;margin:7px 0;box-sizing:border-box;
+ max-width:100%;min-width:0;
+}
+.public-song-label{display:flex;flex:1 1 195px;align-items:center;min-width:0}
+.public-song-index{flex:0 0 33px;color:#dec187;font:400 1.05rem Georgia,serif}
+.public-song-copy{
+ display:flex;flex-direction:column;align-items:flex-start;flex:1 1 auto;
+ min-width:0;text-align:left;padding:5px 8px;border:0;background:transparent;
+ color:#f5e4c8;cursor:pointer;font:inherit;
+}
+.public-song-copy strong{font-size:.88rem;line-height:1.3;overflow-wrap:break-word;overflow-wrap:anywhere}
+.public-song-copy small{font-size:.72rem;font-weight:400;color:#c1d0e5;margin-top:2px}
+.public-song-platforms{display:flex;flex-wrap:wrap;align-items:center;margin-left:7px}
+.public-song-source{
+ min-height:40px;padding:7px 11px;margin:2px 0 2px 6px;
+ border-radius:10px;border:1px solid #bd9e68;background:#172b48;
+ color:#eed09d;cursor:pointer;font:600 .79rem Arial,sans-serif;
+}
+.public-song-source.is-primary{border-color:#f1d29c}
+.public-song-source[aria-pressed=true]{background:#f0d29c;color:#172942;border-color:#ffe9bb}
+.public-song-title-button:focus-visible,.public-song-source:focus-visible{
+ outline:2px solid #f5d699;outline-offset:2px
+}
+.public-song-inline{flex:1 0 100%;width:100%;min-width:0;box-sizing:border-box}
+.public-song-inline:not(:empty){
+ padding:13px 4px 4px;margin-top:9px;border-top:1px solid rgba(231,194,138,.35)
+}
+.public-song-inline .cms-release-iframe{display:block;width:100%;max-width:100%;
+ box-sizing:border-box;min-height:152px;border:0;border-radius:9px}
+.public-song-inline .cms-release-iframe--video{height:280px;min-height:200px}
+.public-song-inline .cms-card-link{display:inline-block;margin:11px 9px 7px 0}
+.public-song-inline .cms-release-close{display:inline-block;margin:6px 0 4px}
+@media(max-width:590px){
+ .public-song-entry{padding:8px 7px}
+ .public-song-label{flex:1 1 100%}
+ .public-song-platforms{flex:1 1 100%;margin-left:0;margin-top:4px}
+ .public-song-source{flex:1 1 100px;margin:3px}
+ .public-song-inline .cms-release-iframe--video{height:210px}
+}
