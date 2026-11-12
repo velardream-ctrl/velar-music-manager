@@ -66,7 +66,7 @@ assert.match(publicHTML,/landing-public\.js\?v=16/);
 assert.match(studioHTML,/artist-image-editor\.js\?v=1/);
 assert.match(studioHTML,/landing-editor\.js\?v=22/);
 assert.match(studioHTML,/landing-schema\.js\?v=16/);
-assert.match(sw,/STUDIO_PREFIX\+'v35'/);
+assert.match(sw,/STUDIO_PREFIX\+'v36'/);
 assert.match(sw,/CACHE_PREFIX \+ 'v37'/);
 assert.doesNotMatch(sw,/data:image\/webp/);
 console.log('PASS: local crop geometry, WebP/JPEG compression, image MIME/size validation, circle/square, public-only opt-in and no new Storage costs');
