@@ -29,13 +29,14 @@
  function mount(list,tracks,opts){
    opts=opts||{};
    var classes=opts.prefix==='language'?'language':'topic';
-   var amount=opts.batch||12,index=-1,source='',slots=[],buttons=[],count=0,more=null,instance=null;
+   var amount=opts.batch||12,index=-1,source='',slots=[],buttons=[],titles=[],count=0,more=null,instance=null;
    clear(list);
    function clearActive(){
      if(index>=0&&slots[index])clear(slots[index]);
      buttons.forEach(function(pair){pair.forEach(function(button){
        button.setAttribute('aria-pressed','false');
      });});
+     titles.forEach(function(button){if(button)button.setAttribute('aria-pressed','false');});
      index=-1;source='';
      if(activeMount===instance)activeMount=null;
    }
@@ -64,7 +65,18 @@
      buttons[i].forEach(function(button){
        button.setAttribute('aria-pressed',button.getAttribute('data-provider')===src.provider?'true':'false');
      });
+     if(titles[i])titles[i].setAttribute('aria-pressed','true');
      return true;
+   }
+   // Explicit repeat click toggles off; picking the other service switches players.
+   // The chat deep link calls open() directly so it can always OPEN the requested song.
+   function toggle(i,src,fromTitle){
+     var slot=slots[i],playing=slot&&slot.firstChild&&slot.firstChild.tagName==='iframe';
+     if(index===i&&playing&&(fromTitle||source===src.provider)){
+       clearActive(); // Remove the iframe, not only hide it: external audio stops.
+       return true;
+     }
+     return open(i,src);
    }
    function addRow(i){
      var track=tracks[i],sources=approved(track);
@@ -73,8 +85,9 @@
      var title=el('div','public-song-label');
      title.appendChild(el('span','public-song-index',('0'+(i+1)).slice(-2)));
      var copy=el('button','public-song-copy public-song-title-button');
-     copy.type='button';copy.setAttribute('aria-label','Слушать '+track.title+' в основном плеере');
-     copy.onclick=function(){open(i,sources[0]);};
+     copy.type='button';copy.setAttribute('aria-label','Открыть или закрыть плеер: '+track.title);
+     copy.setAttribute('aria-pressed','false');titles[i]=copy;
+     copy.onclick=function(){toggle(i,sources[0],true);};
      copy.appendChild(el('strong','',track.title));
      copy.appendChild(el('small','',(track.artist?track.artist+' · ':'')+
        (sources[0].provider==='spotify'?'Spotify':'YouTube')));
@@ -89,7 +102,7 @@
        choice.type='button';choice.setAttribute('aria-pressed','false');
        choice.setAttribute('data-provider',src.provider);
        choice.setAttribute('aria-label','Слушать '+track.title+' в '+(src.provider==='spotify'?'Spotify':'YouTube'));
-       choice.onclick=function(){open(i,src);};
+       choice.onclick=function(){toggle(i,src,false);};
        controls.appendChild(choice);buttons[i].push(choice);
      });
      item.appendChild(controls);
