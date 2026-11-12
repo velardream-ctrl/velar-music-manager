@@ -44,6 +44,14 @@ first.children[0].children[1].onclick();
 assert.equal(stops,1);
 assert.equal(first.children[2].children[0].tagName,'iframe');
 assert.equal(first.children[2].children[0].src,'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
+assert.equal(first.children[0].children[1].attributes['aria-pressed'],'true');
+// RUN-092: click on selected song row again to stop external playback.
+first.children[0].children[1].onclick();
+assert.equal(first.children[2].children.length,0,'Second title click must unload Spotify iframe');
+assert.equal(first.children[1].children[0].attributes['aria-pressed'],'false');
+assert.equal(first.children[0].children[1].attributes['aria-pressed'],'false');
+first.children[0].children[1].onclick();
+assert.equal(first.children[2].children[0].tagName,'iframe','Third click reopens primary');
 assert.equal(first.children[2].children[0].attributes.allow.includes('autoplay'),false);
 assert.equal(list.children[1].children[2].children.length,0);
 const originalIframe=first.children[2].children[0];
@@ -51,12 +59,22 @@ const more=list.children[12];
 more.onclick();
 assert.equal(list.children.length,25,'Second batch appends without moving first row');
 assert.equal(first.children[2].children[0],originalIframe,'Adding more tracks NEVER resets active player');
-assert.equal(stops,1,'More does not restart external player');
+assert.equal(stops,2,'More does not restart external player');
 first.children[1].children[1].onclick();
 assert.equal(first.children[2].children[0].src,'https://www.youtube-nocookie.com/embed/ABCDEFGHIjk');
 assert.equal(first.children[1].children[1].attributes['aria-pressed'],'true');
 assert.equal(first.children[1].children[0].attributes['aria-pressed'],'false');
-assert.equal(stops,2);
+assert.equal(stops,3);
+first.children[1].children[1].onclick();
+assert.equal(first.children[2].children.length,0,'Second click on selected YouTube choice stops iframe');
+assert.equal(first.children[1].children[1].attributes['aria-pressed'],'false');
+first.children[1].children[0].onclick();
+assert.equal(first.children[2].children[0].src,'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
+// Clicking a different source must SWITCH, never toggle off the whole row.
+first.children[1].children[1].onclick();
+assert.equal(first.children[2].children[0].src,'https://www.youtube-nocookie.com/embed/ABCDEFGHIjk');
+first.children[0].children[1].onclick();
+assert.equal(first.children[2].children.length,0,'Song title closes either primary or secondary iframe');
 const last=tracks[27];
 assert.equal(app.openByUrl(last.url),true,'Deep link to song beyond initial batch opens exact track');
 assert.equal(list.children.length,28);
@@ -66,6 +84,10 @@ assert.equal(lastRow.children[2].children[0].src,
  'https://open.spotify.com/embed/track/'+String(27).padStart(22,'0'));
 lastRow.children[2].children[2].onclick();
 assert.equal(lastRow.children[2].children.length,0,'Close destroys iframe');
+assert.equal(app.openByUrl(last.url),true,'Chat deep link explicitly opens again after a close');
+assert.equal(app.openByUrl(last.url),true,'Repeated chat action must OPEN, not toggle off');
+assert.equal(lastRow.children[2].children[0].tagName,'iframe');
+app.close();
 assert.equal(app.openByUrl('https://drive.google.com/file/d/private'),false,
  'Private Drive URLs never produce a player');
 assert.equal(window.VELAR_PUBLIC_SONGS.approved({
