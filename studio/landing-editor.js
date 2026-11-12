@@ -877,7 +877,7 @@
        line.appendChild(edit);
        line.appendChild(button('Открепить',function(){
          var index=entry.tracks.indexOf(t);if(index<0)return;
-         entry.tracks.splice(index,1);drawAssigned();drawCatalog();updateButtons();
+         entry.tracks.splice(index,1);drawAssigned();if(catalogLoaded)drawCatalog();updateButtons();
        },'landing-danger'));
        outer.appendChild(line);
        var editArea=document.createElement('div');editArea.className='landing-attached-editor';
