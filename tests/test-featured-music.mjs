@@ -103,6 +103,12 @@ assert.equal(player.children[0].loading,'lazy');
 assert.equal(player.children[1].href,s1.url);
 assert.equal(firstButton.attributes['aria-pressed'],'true');
 assert.equal(secondPlayer.children.length,0);
+// RUN-092: tap the same row again to UNLOAD the external player.
+firstButton.onclick();
+assert.equal(player.children.length,0,'Second tap removes Spotify iframe and external link');
+assert.equal(firstButton.attributes['aria-pressed'],'false');
+firstButton.onclick();
+assert.equal(player.children[0].tagName,'iframe','Third tap opens the same song again');
 secondButton.onclick();
 assert.equal(player.children.length,0,'Opening second song destroys first song iframe');
 assert.equal(secondPlayer.children.length,2,'Only one official iframe at a time');
@@ -119,6 +125,10 @@ listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:thre
 const list3=host.children[0].children[1].children[1];
 assert.equal(list3.children.length,3);
 assert.equal(list3.children[0].children[1].children.length,0);
+list3.children[0].children[0].onclick();
+assert.equal(list3.children[0].children[1].children[0].tagName,'iframe');
+list3.children[0].children[0].onclick();
+assert.equal(list3.children[0].children[1].children.length,0,'First of three closes on repeat tap');
 list3.children[0].children[0].onclick();
 assert.equal(list3.children[0].children[1].children[0].tagName,'iframe');
 assert.equal(list3.children[1].children[1].children.length,0);
