@@ -320,6 +320,8 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  right:clamp(12px,2.5vw,34px);z-index:75;width:min(365px,calc(100vw - 24px));
  color:#f5e3c7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
 .velar-radio.hidden{display:none}
+/* RUN-086: the explicitly opened radio stays above the chat only until closed. */
+.velar-radio--chat-open{z-index:90}
 .velar-radio-toggle{display:flex;align-items:center;gap:10px;min-height:50px;width:100%;
  border:1px solid #e9c58b;border-radius:13px;padding:10px 17px;color:#ffe1a8;background:#162945;
  font:700 .89rem -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;box-shadow:0 12px 27px #0009;
