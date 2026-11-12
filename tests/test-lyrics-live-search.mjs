@@ -8,7 +8,7 @@ assert.match(html,/aria-controls="lyric-search-results"/);
 assert.match(css,/\.lyrics-search-hit/);
 assert.match(css,/min-height:48px/);
 assert.ok(html.includes('src="studio.js?v=10"'));
-assert.ok(html.includes('href="studio.css?v=18"'));
+assert.ok(html.includes('href="studio.css?v=19"'));
 assert.ok(sw.includes("STUDIO_PREFIX+'v31'"));
 assert.doesNotMatch(src,/localStorage\.setItem|sessionStorage\.setItem/);
 assert.match(src,/function pickLyricSearchResult\(key\)/);
