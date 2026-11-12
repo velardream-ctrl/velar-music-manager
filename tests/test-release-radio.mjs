@@ -185,7 +185,7 @@ assert.match(css,/.cms-release-art::before/);
 assert.match(html,/universe\.js\?v=5/);
 assert.match(html,/style\.css\?v=30/);
 assert.match(sw,/CACHE_PREFIX \+ 'v37'/);
-assert.match(sw,/STUDIO_PREFIX\+'v34'/);
+assert.match(sw,/STUDIO_PREFIX\+'v35'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);
 console.log('PASS: RUN-069/070 safe releases, Spotify playlists, subscribers, opt-in radio, one active iframe and lazy 2.5D universe');
