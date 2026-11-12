@@ -107,6 +107,12 @@ guideSample.genres.topics.entries.find(x=>x.slug==='space').tracks=[
 const availableFavorite=answer('какая твоя любимая песня',guideSample);
 assert.ok(availableFavorite.actions.some(x=>x.action==='song'&&x.url===url));
 assert.ok(answer('открой песню Велар Суперстар',guideSample).actions.some(x=>x.action==='song'));
+const unnamed=answer('открой песню',guideSample);
+assert.equal(unnamed.actions[0].target,'#topics','Missing song title asks visitor to choose');
+const notPublished=answer('открой песню Совсем другая',guideSample);
+assert.ok(notPublished.text.indexOf('нет среди опубликованных')!==-1);
+assert.ok(!notPublished.actions.some(x=>x.action==='song'));
+assert.equal(answer('открой песню Velar Superstar',guideSample).action,'song');
 const firstRandom=answer('выбери случайную песню',guideSample);
 assert.equal(firstRandom.actions[0].action,'song');
 assert.ok([url,video].includes(firstRandom.actions[0].url));
