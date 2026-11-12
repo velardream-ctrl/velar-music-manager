@@ -79,7 +79,7 @@ assert.match(css,/\.velar-assistant-privacy\{padding:1px 7px 3px/);
 assert.match(css,/\.velar-assistant-header-note\{display:none\}/);
 assert.match(css,/\.velar-assistant-input\{height:36px;padding:6px 8px;font-size:16px\}/);
 assert.match(sw,/CACHE_PREFIX \+ 'v26'/);
-assert.match(html,/style\.css\?v=22/);
+assert.match(html,/style\.css\?v=23/);
 assert.ok(code.includes("querySelector('.velar-assistant-launch')"));
 
 const customLabels={...settings,labels:{...settings.labels,
