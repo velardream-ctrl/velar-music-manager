@@ -26,12 +26,23 @@ assert.equal(answer('космос').target,'space');
 assert.equal(answer('поговорить с оператором').action,'link');
 assert.equal(answer('сотрудничество',{...settings,contactEmail:'hello@example.com'}).action,'email');
 assert.equal(answer('хочу радио').target,'#playlists');
+// RUN-086: explicit player commands work only when owner enabled a valid radio.
+const radioData=w.VMM_LANDING_SCHEMA.defaults();
+radioData.releases.radio={...radioData.releases.radio,enabled:true,controlVersion:2};
+assert.equal(w.VELAR_ASSISTANT.answer('Velar, включи радио!',radioData,settings).action,'radio');
+assert.equal(w.VELAR_ASSISTANT.answer('включи Velar Radio',radioData,settings).action,'radio');
+assert.equal(w.VELAR_ASSISTANT.answer('start radio',radioData,settings).action,'radio');
+assert.equal(answer('Velar, включи радио!').target,'#playlists','OFF switch wins');
+assert.notEqual(w.VELAR_ASSISTANT.answer('выключи радио',radioData,settings).action,'radio');
+const ruleOverride={...settings,rules:[{keywords:'радио',answer:'Только текст'}]};
+assert.equal(w.VELAR_ASSISTANT.answer('включи радио',radioData,ruleOverride).action,'radio','explicit UI command wins over text-only FAQ');
+
 assert.equal(answer('на финском').target,'#languages');
 assert.equal(answer('песня на немецком').target,'#languages');
 const custom={...settings,rules:[{keywords:'эксклюзив',answer:'У нас есть особая подборка.'}]};
 assert.equal(answer('эксклюзив',custom).text,'У нас есть особая подборка.');
 assert.match(html,/id="velar-assistant"/);
-assert.match(html,/velar-assistant\.js\?v=7/);
+assert.match(html,/velar-assistant\.js\?v=8/);
 assert.match(html,/name="robots" content="noindex,nofollow,noarchive"/);
 assert.match(css,/\.velar-assistant-launch/);
 assert.match(css,/\.velar-assistant-wave/);
@@ -47,7 +58,7 @@ assert.equal(w.VELAR_ASSISTANT.expressionFor('OK'),'okay');
 assert.ok(css.includes("max-height:min(390px,50vh)"));
 assert.ok(!code.includes("dj-velar-assistant.webp"));
 assert.match(code,/sessionStorage/);
-assert.match(sw,/'\.\/velar-assistant\.js\?v=7'/);
+assert.match(sw,/'\.\/velar-assistant\.js\?v=8'/);
 assert.match(publicCode,/velar-radio-hidden/);
 assert.match(publicCode,/VELAR_ASSISTANT\.render\(value\)/);
 assert.doesNotMatch(code,/fetch\(|firebase|XMLHttpRequest|setInterval\(|WebSocket|autoplay=|\.play\(/);
@@ -67,7 +78,7 @@ assert.match(css,/\.velar-assistant-suggestion\{min-height:28px;padding:2px 7px/
 assert.match(css,/\.velar-assistant-privacy\{padding:1px 7px 3px/);
 assert.match(css,/\.velar-assistant-header-note\{display:none\}/);
 assert.match(css,/\.velar-assistant-input\{height:36px;padding:6px 8px;font-size:16px\}/);
-assert.match(sw,/CACHE_PREFIX \+ 'v25'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v26'/);
 assert.match(html,/style\.css\?v=22/);
 assert.ok(code.includes("querySelector('.velar-assistant-launch')"));
 
