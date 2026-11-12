@@ -360,9 +360,9 @@
     var kind=x.kind||'collection';
     if(kind!=='official'&&kind!=='collection')throw new Error('Альбом: официальный релиз или авторская коллекция.');
     var picture=x.imageData||'',provider=x.mediaProvider||'spotify';
-    if(typeof picture!=='string'||picture.length>100000||
+    if(typeof picture!=='string'||picture.length>126000||
        picture&&!/^data:image\/(?:webp|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(picture))
-      throw new Error('Обложка альбома: нужен сжатый JPEG/WebP до 75 КБ.');
+      throw new Error('Обложка альбома: нужен сжатый JPEG/WebP до 90 КБ.');
     if(provider!=='spotify')throw new Error('Официальная ссылка альбома: пока поддерживается Spotify.');
     var official=releaseMediaUrl(x.mediaUrl||'',provider);
     if(official&&!/^https:\/\/open\.spotify\.com\/album\/[A-Za-z0-9]{22}$/.test(official))
@@ -446,7 +446,7 @@
     var item=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
     var nodes=typeof item.nodes==='undefined'?def.nodes:item.nodes;
     if(!Array.isArray(nodes)||nodes.length>12)throw new Error('Созвездия: максимум 12 меню.');
-    var used={},allowed={artists:true,releases:true,playlists:true,genres:true,
+    var used={},allowed={artists:true,releases:true,albums:true,playlists:true,genres:true,
       languages:true,topics:true,about:true,radio:true};
     var cleaned=nodes.map(function(n,i){
       if(!n||typeof n!=='object'||Array.isArray(n))throw new Error('Созвездие '+(i+1)+': неверный объект.');
