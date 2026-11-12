@@ -24,10 +24,11 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" defer></script>
   <script src="studio/firebase-config.js" defer></script>
-  <script src="landing-schema.js?v=15" defer></script>
-  <script src="landing-public.js?v=13" defer></script>
+  <script src="landing-schema.js?v=16" defer></script>
+  <script src="landing-public.js?v=14" defer></script>
   <script src="universe.js?v=5" defer></script>
-  <script src="public-song-ui.js?v=4" defer></script>
+  <script src="public-song-ui.js?v=5" defer></script>
+  <script src="albums-public.js?v=1" defer></script>
   <script src="languages-public.js?v=3" defer></script>
   <script src="topics-public.js?v=3" defer></script>
   <script src="velar-faq-engine.js?v=3" defer></script>
@@ -44,6 +45,7 @@
     <nav class="site-nav" aria-label="Разделы сайта">
       <a href="#artists">Артисты</a>
       <a href="#releases">Релизы</a>
+      <a href="#albums">Альбомы</a>
       <a href="#playlists">Плейлисты</a>
       <a href="#genres">Жанры</a>
       <a href="#languages">Языки</a>
@@ -143,9 +145,20 @@
         </div>
       </section>
 
+      <section id="albums" class="showcase cms-albums-section" aria-labelledby="albums-title">
+        <div class="section-heading">
+          <span class="section-number">03 / ALBUMS</span>
+          <h2 id="albums-title">Альбомы VELARDREAM</h2>
+          <p id="public-albums-intro">Официальные альбомы и авторские коллекции из отдельно выпущенных синглов.</p>
+        </div>
+        <div id="public-albums-cards" class="cms-album-gallery">
+          <p class="cms-album-empty">Альбомы появятся после публикации.</p>
+        </div>
+      </section>
+
       <section id="playlists" class="showcase cms-playlists-section" aria-labelledby="playlists-title">
         <div class="section-heading">
-          <span class="section-number">03 / PLAYLISTS &amp; FOLLOW</span>
+          <span class="section-number">04 / PLAYLISTS &amp; FOLLOW</span>
           <h2 id="playlists-title">Плейлисты и подписки</h2>
           <p>Музыкальные подборки VELARDREAM — слушайте на официальных площадках и подписывайтесь на артистов.</p>
         </div>
@@ -229,7 +242,7 @@
 
       <section id="genres" class="showcase genres-section" aria-labelledby="genres-title">
         <div class="section-heading">
-          <span class="section-number">04 / MOODS &amp; GENRES</span>
+          <span class="section-number">05 / MOODS &amp; GENRES</span>
           <h2 id="genres-title">От оперы до новых звуков</h2>
           <p id="public-genres-intro">Ищите музыку по настроению, жанру, артисту или тематической подборке. Жанры и плейлисты будут дополнять друг друга, а не смешивать песни в один список.</p>
         </div>
@@ -240,7 +253,7 @@
 
       <section id="about" class="showcase about-section" aria-labelledby="about-title">
         <div class="section-heading">
-          <span class="section-number">05 / THE LABEL</span>
+          <span class="section-number">06 / THE LABEL</span>
           <h2 id="about-title">VELARDREAM RECORDS</h2>
           <p id="public-about-intro">Музыкальный проект, объединяющий разных исполнителей, жанры и творческие идеи. Сейчас мы создаём его официальный дом в интернете.</p>
         </div>
