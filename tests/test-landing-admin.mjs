@@ -440,6 +440,50 @@ assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.ru
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.rules.length,6);
 assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.jokesEnabled,false);
+// RUN-096: add a genuine curated album with cover and catalog-backed singles.
+const albumTab=nav.find(x=>x.attributes['data-landing-tab']==='albums');
+assert.ok(albumTab,'Album Studio tab exists');
+albumTab.onclick();await flush();
+const createAlbum=traverse(get('landing-fields'),n=>n.textContent==='+ Создать альбом');
+assert.ok(createAlbum,'Can create a curated album in Studio');
+createAlbum.onclick();
+findInput('Название альбома').input('Музыкальный Север');
+findInput('Исполнитель').input('Velar');
+findInput('HTTPS-ссылка на публичную обложку (не Google Drive) — необязательно')
+ .input('https://example.com/cover-singles.jpg');
+const albumVisible=traverse(get('landing-fields'),n=>n.className==='landing-checkbox');
+assert.ok(albumVisible);
+albumVisible.children[0].checked=true;albumVisible.children[0].onchange.call(albumVisible.children[0]);
+const albumCatalogRow=traverse(get('landing-fields'),n=>n.className==='landing-topic-catalog-row');
+assert.ok(albumCatalogRow,'Album uses the SAME official song picker as language/topic sections');
+const albumSongCheck=albumCatalogRow.children[0].children[0];
+albumSongCheck.checked=true;albumSongCheck.onchange.call(albumSongCheck);
+assert.equal(api.isDirty(),true);
+get('landing-save').onclick();await flush();
+const albumDraft=records.get('vmm_public_drafts/landing').content.albums.entries;
+assert.equal(albumDraft.length,1);
+assert.equal(albumDraft[0].kind,'collection');
+assert.equal(albumDraft[0].visible,true);
+assert.equal(albumDraft[0].tracks.length,1);
+assert.equal(albumDraft[0].imageUrl,'https://example.com/cover-singles.jpg');
+assert.equal(records.get('vmm_public_pages/landing').content.albums.entries.length,0,
+ 'Album and cover remain PRIVATE until owner publishes');
+get('landing-publish').onclick();await flush();
+assert.equal(records.get('vmm_public_pages/landing').content.albums.entries[0].tracks.length,1);
+const albumView=findInput('Вид песен в альбомах, языках и темах');
+albumView.value='covers';albumView.onchange.call(albumView);
+get('landing-save').onclick();await flush();
+assert.equal(records.get('vmm_public_drafts/landing').content.albums.trackView,'covers');
+assert.equal(records.get('vmm_public_pages/landing').content.albums.trackView,'rows',
+ 'Design settings are also draft-only until published');
+get('landing-publish').onclick();await flush();
+assert.equal(records.get('vmm_public_pages/landing').content.albums.trackView,'covers');
+nav[1].onclick();await flush();
+const featuredDisplay=findInput('Вид лучших песен');
+featuredDisplay.value='tiles';featuredDisplay.onchange.call(featuredDisplay);
+get('landing-save').onclick();await flush();
+assert.equal(records.get('vmm_public_drafts/landing').content.artists.featuredView,'tiles');
+get('landing-publish').onclick();await flush();
 // Remote write must never be overwritten by stale admin tab.
 nav[0].onclick();
 findInput('Подзаголовок').input('Несохранённый локальный текст');
