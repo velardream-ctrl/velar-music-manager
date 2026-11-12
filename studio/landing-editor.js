@@ -36,6 +36,8 @@
        return auth.db.runTransaction(function(tx){
          return tx.get(ref).then(function(old){
            var d=old.exists?old.data()||{}:{},rev=Number(d.revision)||0;
+           if(old.exists&&d.schemaVersion!==1)
+             throw new Error('Несовместимый формат облачных привязок.');
            if(rev!==Number(p.baseRevision||0))
              throw new Error('КОНФЛИКТ: связи артистов уже изменились с другого устройства.');
            tx.set(ref,{schemaVersion:1,revision:rev+1,overrides:map,updatedBy:account,
@@ -183,7 +185,12 @@
    id('landing-publish').disabled=!loaded||busy||!draftRev||dirty()||trackSaving||pendingArtistLinks;
    id('landing-reload').disabled=busy||trackSaving;
    id('landing-restore').disabled=!published||busy||trackSaving;
-   text(id('landing-dirty'),busy?'Идёт операция…':trackSaving?'Сохраняем связи песен…':!loaded?'Данные ещё не загружены':dirty()?'Есть несохранённые изменения':'Изменения сохранены');
+   var localMatch=loaded&&offlineSavedSignature===JSON.stringify(data);
+   text(id('landing-dirty'),busy?'Идёт операция…':trackSaving?'Сохраняем связи песен…':
+     !loaded?'Данные ещё не загружены':
+     pendingArtistLinks?'Назначения артистов ожидают облачной синхронизации':
+     dirty()?(localMatch?'Сохранено на устройстве · ожидает синхронизации':'Есть изменения, локальная запись ожидается'):
+     'Изменения сохранены');
  }
  function safeStatus(err){
    return err&&err.code==='permission-denied'?
