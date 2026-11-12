@@ -1,14 +1,14 @@
 /* VELAR public shell only. NEVER cache authenticated API responses or personal lyrics here. ES5 compatible. */
 'use strict';
 var CACHE_PREFIX = 'velar-public-shell-';
-var CACHE_NAME = CACHE_PREFIX + 'v34';
+var CACHE_NAME = CACHE_PREFIX + 'v35';
 /* Only private studio SOURCE FILES are cached. Never cache Firestore, Drive files,
    authenticated responses, user lyrics or audio through this Service Worker. */
 var STUDIO_PREFIX='velar-studio-shell-';
-var STUDIO_CACHE=STUDIO_PREFIX+'v30';
+var STUDIO_CACHE=STUDIO_PREFIX+'v31';
 var STUDIO_ASSETS=[
-  './studio/','./studio/index.html','./studio/studio.css?v=18','./studio/artist-choices.js?v=1','./studio/artist-track-links.js?v=1','./studio/artist-image-editor.js?v=1','./studio/title-language.js?v=1', './studio/landing-editor.js?v=16',
-  './studio/recordings.css?v=12','./studio/studio.js?v=10',
+  './studio/','./studio/index.html','./studio/studio.css?v=19','./studio/artist-choices.js?v=1','./studio/artist-track-links.js?v=1','./studio/artist-image-editor.js?v=1','./studio/title-language.js?v=1', './studio/landing-editor.js?v=17',
+  './studio/recordings.css?v=12','./studio/offline-admin.js?v=1','./studio/offline-lyrics-sync.js?v=1','./studio/studio.js?v=11',
   './studio/import.js?v=1','./studio/workflows.js?v=7',
   './studio/lyrics-tools.js?v=4','./studio/print-export.js?v=1',
   './studio/offline-repertoire.js?v=3','./studio/offline-cloud-sync.js?v=1','./studio/recordings.js?v=12',
@@ -31,7 +31,7 @@ function studioNavigation(url){
 }
 var ASSETS = [
   './', './index.html', './app/', './app/index.html',
-  './style.css', './style.css?v=29', './main.js', './landing-schema.js?v=15', './landing-public.js?v=13', './universe.js?v=5', './public-song-ui.js?v=4', './languages-public.js?v=3', './topics-public.js?v=3', './velar-faq-engine.js?v=3', './velar-assistant.js?v=10', './living-art.js?v=2', './manifest.webmanifest',
+  './style.css', './style.css?v=29', './main.js', './landing-schema.js?v=15', './public-offline.js?v=1', './landing-public.js?v=14', './universe.js?v=5', './public-song-ui.js?v=4', './languages-public.js?v=3', './topics-public.js?v=3', './velar-faq-engine.js?v=3', './velar-assistant.js?v=11', './living-art.js?v=2', './manifest.webmanifest',
   './favicon.svg', './favicon.svg?v=2', './assets/velardream-crystal.png', './assets/velardream-symbol.svg', './assets/velardream-app-icon-192.png', './assets/velardream-app-icon-512.png','./assets/dj-velar-expressions.jpg'
 ];
 function isPublicAsset(url) {
