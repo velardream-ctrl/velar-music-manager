@@ -10,15 +10,6 @@
  function clear(n){while(n&&n.firstChild)n.removeChild(n.firstChild);}
  function entries(){return data&&Array.isArray(data.entries)?
    data.entries.filter(function(t){return t.visible===true;}):[];}
- function approvedLink(t){
-   return window.VMM_LANDING_SCHEMA?window.VMM_LANDING_SCHEMA.songUrl(t.url,t.provider):'';
- }
- function playerUrl(t){
-   var link=approvedLink(t);if(!link)return '';
-   if(t.provider==='spotify')return 'https://open.spotify.com/embed/track/'+link.split('/').pop();
-   if(t.provider==='youtube')return 'https://www.youtube-nocookie.com/embed/'+link.split('v=')[1];
-   return '';
- }
  function select(slug,requestedUrl){
    var selected=null,list=entries(),area=byId('public-topic-detail');
    list.forEach(function(t){if(t.slug===slug)selected=t;});
@@ -38,55 +29,14 @@
      return;
    }
    area.appendChild(el('p','topic-count','Песен по теме: '+selected.tracks.length));
-   var songs=el('div','topic-song-list'),player=el('div','topic-player');
-   var requestedIndex=-1;
-   if(requestedUrl&&selected.slug===slug)selected.tracks.forEach(function(t,i){
-     if(t.url===requestedUrl&&approvedLink(t)===requestedUrl)requestedIndex=i;
-   });
-   var limit=Math.max(12,requestedIndex+1),playing=-1;
-   function paint(){
-     clear(songs);
-     selected.tracks.slice(0,limit).forEach(function(t,i){
-       var song=el('button','topic-song');song.type='button';
-       song.setAttribute('aria-label','Слушать: '+t.title);
-       song.setAttribute('aria-pressed',playing===i?'true':'false');
-       var number=el('span','topic-song-index',String(i+1).padStart?String(i+1).padStart(2,'0'):('0'+(i+1)).slice(-2));
-       var info=el('span','topic-song-info');
-       info.appendChild(el('strong','',t.title));
-       info.appendChild(el('small','',(t.artist?t.artist+' · ':'')+(t.provider==='spotify'?'Spotify':'YouTube')));
-       var play=el('span','topic-song-play');play.setAttribute('aria-hidden','true');
-       song.appendChild(number);song.appendChild(info);song.appendChild(play);
-       song.onclick=function(){
-         var src=playerUrl(t);if(!src)return;
-         if(window.VMM_PUBLIC_LANDING&&window.VMM_PUBLIC_LANDING.stopExternalPlayers)
-           window.VMM_PUBLIC_LANDING.stopExternalPlayers();
-         clear(player);playing=i;
-         var iframe=el('iframe','cms-release-iframe topic-song-iframe'+
-           (t.provider==='youtube'?' cms-release-iframe--video':''));
-         iframe.title=t.title+' — '+t.provider;iframe.src=src;iframe.loading='lazy';
-         iframe.referrerPolicy='strict-origin-when-cross-origin';
-         iframe.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
-         iframe.setAttribute('allowfullscreen','');
-         player.appendChild(iframe);
-         var external=el('a','cms-card-link','Открыть в '+(t.provider==='spotify'?'Spotify':'YouTube'));
-         external.href=approvedLink(t);external.rel='noopener noreferrer';
-         external.target='_blank';player.appendChild(external);
-         var stop=el('button','cms-release-close','Закрыть плеер');
-         stop.type='button';stop.onclick=function(){clear(player);playing=-1;paint();};
-         player.appendChild(stop);paint();
-       };
-       songs.appendChild(song);
-     });
-     if(limit<selected.tracks.length){
-       var more=el('button','topic-show-more','Показать ещё ('+(selected.tracks.length-limit)+')');
-       more.type='button';more.onclick=function(){limit+=12;paint();};songs.appendChild(more);
-     }
+   var songs=el('div','topic-song-list');
+   area.appendChild(songs);
+   if(!window.VELAR_PUBLIC_SONGS){
+     area.appendChild(el('p','topic-empty','Плеер временно недоступен.'));return false;
    }
-   area.appendChild(songs);area.appendChild(player);paint();
-   if(requestedIndex>=0&&songs.children[requestedIndex]){
-     // This is called ONLY from the visitor's explicit click on a chat song.
-     songs.children[requestedIndex].onclick();return true;
-   }
+   var player=window.VELAR_PUBLIC_SONGS.mount(songs,selected.tracks,{prefix:'topic',batch:12});
+   // A requested source opens inline immediately below its one song row.
+   if(requestedUrl&&selected.slug===slug)return player.openByUrl(requestedUrl);
    return false;
  }
  function openFromChat(slug,url){return select(slug,url);}
