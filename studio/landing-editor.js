@@ -11,8 +11,9 @@
  var trackEditorArtist='',trackChecked={},trackSearch='',trackSaving=false;
  var languageEditorCode='',languageCatalogSearch='',languageTrackFilter='';
  var topicEditorSlug='',topicCatalogSearch='',topicTrackFilter='';
+ var albumEditorId='',albumCatalogSearch='',albumTrackFilter='';
  var faqSearch='',faqGroup='',faqPage=0;
- var tabs={hero:'Первый экран',artists:'Артисты',releases:'Музыка и релизы',playlists:'Плейлисты и подписки',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',about:'О проекте',publish:'Публикация'};
+ var tabs={hero:'Первый экран',artists:'Артисты',releases:'Музыка и релизы',albums:'Альбомы',playlists:'Плейлисты и подписки',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',about:'О проекте',publish:'Публикация'};
  function id(k){return document.getElementById(k);}
  function clear(el){while(el.firstChild)el.removeChild(el.firstChild);}
  function text(el,t){if(el)el.textContent=String(t==null?'':t);}
@@ -97,11 +98,11 @@
      if(rows.length>=1200)throw new Error('Каталог достиг лимита 1200 записей. Для безопасного назначения требуется загрузить полный каталог.');
      catalogArtists=rows;trackLinks=result[1];trackLinksLoaded=true;
      catalogLoaded=true;catalogLoading=false;
-     if(tab==='artists'||tab==='releases'||tab==='languages'||tab==='topics')render();
+     if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
    }).catch(function(err){
      if(generation!==loadGeneration||account!==uid)return;
      catalogLoading=false;catalogError=err&&err.message||'Каталог или связи песен временно недоступны.';
-     if(tab==='artists'||tab==='releases'||tab==='languages'||tab==='topics')render();
+     if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
    });
  }
  function artistPicker(parent){
@@ -1763,8 +1764,15 @@
    }else if(tab==='artists'||tab==='releases'){
      heading(panel,tabs[tab],tab==='artists'?'Профили артистов публикуются только после включения галочки.':'Добавляй только ссылки на публичные релизы, без приватных фонограмм и текстов.');
      sectionFields(panel,tab);
-     if(tab==='artists')artistPicker(panel);
+     if(tab==='artists'){
+       artistPicker(panel);
+       selectField(panel,'Вид лучших песен',
+         [['classic','Обычные строки (как сейчас)'],['covers','Строки с маленькими обложками'],['tiles','Квадратные карточки']],
+         data.artists.featuredView||'classic',function(v){data.artists.featuredView=v;});
+     }
      cardFields(panel,tab);
+   }else if(tab==='albums'){
+     albumsEditor(panel);
    }else if(tab==='playlists'){
      playAndFollowEditor(panel);
    }else if(tab==='radio'){
@@ -1805,7 +1813,7 @@
  }
  function load(force){
    if(busy)return Promise.resolve();
-   if(loaded&&!force){render();if(tab==='artists'||tab==='releases'||tab==='languages'||tab==='topics')loadCatalogArtists();return Promise.resolve();}
+   if(loaded&&!force){render();if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();return Promise.resolve();}
    if(force&&dirty()&&!window.confirm('Несохранённые изменения карточек или привязок будут потеряны. Обновить из облака?'))return Promise.resolve();
    if(force){trackEditorArtist='';trackChecked={};trackSearch='';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';catalogLoaded=false;trackLinksLoaded=false;}
    var currentLoad=++loadGeneration;
@@ -1821,7 +1829,7 @@
        draftRev=draft?Number(draft.revision)||0:0;
        data=API.normalize(draft&&draft.content?draft.content:published||API.defaults());
        baseline=JSON.stringify(data);loaded=true;busy=false;render();
-       if(tab==='artists'||tab==='releases'||tab==='languages'||tab==='topics')loadCatalogArtists();
+       if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();
        info(draft?'Черновик загружен. Изменения пока не опубликованы.':
           (published?'Загружена последняя публикация. Сохрани черновик, прежде чем публиковать изменения.':
           'Публикаций пока нет. Подготовь разделы и сохрани первый черновик.'));
@@ -1905,7 +1913,7 @@
  var nav=document.querySelectorAll('#landing-tabs [data-landing-tab]');
  for(var i=0;i<nav.length;i++)nav[i].onclick=function(){
    tab=this.getAttribute('data-landing-tab');render();
-   if(tab==='artists'||tab==='releases'||tab==='languages'||tab==='topics')loadCatalogArtists();
+   if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();
  };
  id('landing-save').onclick=save;
  id('landing-publish').onclick=publish;
