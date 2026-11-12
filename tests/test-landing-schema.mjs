@@ -15,7 +15,7 @@ assert.ok(def.genres.languages.entries.some(x=>x.code==='beaver'&&x.fictional));
 assert.ok(def.genres.languages.entries.some(x=>x.code==='alien'&&x.fictional));
 assert.equal(def.genres.languages.entries.every(x=>x.tracks.length===0),true);
 
-assert.ok(Object.keys(def).join(',')==='hero,artists,releases,genres,about');
+assert.ok(Object.keys(def).join(',')==='hero,artists,albums,releases,genres,about');
 assert.match(def.hero.subtitle,/Разные голоса/);
 assert.throws(()=>api.normalize({...def,hero:{subtitle:'',intro:'A'}}),/обязательно/);
 assert.throws(()=>api.normalize({...def,hero:{subtitle:'x'.repeat(161),intro:'A'}}),/160/);
