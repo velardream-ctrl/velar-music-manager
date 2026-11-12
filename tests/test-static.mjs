@@ -75,7 +75,7 @@ const studioRules = read('firestore.rules');
 assert.match(studioPage, /content="noindex,nofollow,noarchive"/);
 assert.ok(studioPage.includes('Войти через Google'));
 assert.ok(studioPage.includes('id="lyric-form"'));
-assert.ok(studioPage.includes('href="studio.css?v=21"'));
+assert.ok(studioPage.includes('href="studio.css?v=22"'));
 assert.ok(studioJs.includes("collection('vmm_admins').doc(user.uid).get({source:'server'})"), 'Studio must check the admin allowlist');
 assert.ok(studioJs.includes('doc.exists&&doc.data()&&doc.data().enabled===true'), 'Disabled admins denied');
 assert.ok(studioJs.includes('signInWithPopup(provider)'), 'Google sign-in must not use redirect');
@@ -102,3 +102,9 @@ for (const match of studioPage.matchAll(/(?:src|href)="([^"]+)"/g)) {
   const target = path.join(root,'studio',match[1].split(/[?#]/)[0]);
   assert.ok(fs.existsSync(target), 'Broken studio asset: ' + match[1]);
 }
+
+// RUN-102: the shared catalog search in topics, languages and albums uses one style.
+assert.ok(studioCss.includes('#panel-landing input.landing-language-catalog-search,'),
+  'Catalog search CSS must not be scoped only to languages');
+assert.ok(studioCss.includes('-webkit-appearance:none;appearance:none;box-sizing:border-box;'),
+  'iOS Safari must not draw a native black pill');

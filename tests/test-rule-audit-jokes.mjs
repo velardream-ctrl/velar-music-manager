@@ -87,6 +87,6 @@ assert.match(read('index.html'),/landing-schema\.js\?v=16/);
 assert.match(read('index.html'),/velar-assistant\.js\?v=11/);
 assert.match(read('studio/index.html'),/landing-editor\.js\?v=22/);
 assert.match(read('sw.js'),/CACHE_PREFIX \+ 'v37'/);
-assert.match(read('sw.js'),/STUDIO_PREFIX\+'v35'/);
+assert.match(read('sw.js'),/STUDIO_PREFIX\+'v36'/);
 assert.doesNotMatch(bot,/fetch\(|XMLHttpRequest|WebSocket|firebase|localStorage\.setItem/);
 console.log('PASS RUN-084: editable musical jokes, rotation, special rule templates, lossless collision audit and cache');
