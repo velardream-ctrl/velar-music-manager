@@ -1211,7 +1211,7 @@
      var select=document.createElement('select');select.className='landing-artist-select';
      var options=[
        ['none','Только ответ'],['clarify','Уточняющие кнопки'],['contact','Написать автору'],
-       ['section:artists','Раздел «Артисты»'],['section:releases','Раздел «Релизы»'],
+       ['section:artists','Раздел «Артисты»'],['section:releases','Раздел «Релизы»'],['section:albums','Раздел «Альбомы»'],
        ['section:playlists','Раздел «Плейлисты»'],['section:topics','Раздел «Темы»'],
        ['section:languages','Раздел «Языки»'],['section:genres','Раздел «Жанры»'],
        ['section:about','Раздел «О проекте»']
