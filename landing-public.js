@@ -58,10 +58,8 @@
      return panel;
    }
    var list=create('div','cms-music-list');
-   var player=create('div','cms-music-player');
-   player.setAttribute('role','region');
-   player.setAttribute('aria-label','Встроенный музыкальный плеер');
-   var active=null,buttons=[];
+   // RUN-091: player belongs to the clicked row, not after the entire list.
+   var active=null,buttons=[],players=[];
    tracks.forEach(function(track,index){
      var button=create('button','cms-music-track');
      button.type='button';
@@ -77,14 +75,18 @@
      playIcon.setAttribute('aria-hidden','true');
      button.appendChild(playIcon);
      button.setAttribute('aria-label','Слушать: '+track.title+' — '+(track.provider==='spotify'?'Spotify':'YouTube'));
+     var entry=create('div','cms-music-entry');
+     var player=create('div','cms-music-player cms-music-player--inline');
+     player.setAttribute('role','region');
+     player.setAttribute('aria-label','Плеер: '+track.title);
      button.onclick=function(){
        if(active===index)return;
+       var validated=window.VMM_LANDING_SCHEMA.songUrl(track.url,track.provider);
+       if(!validated)return;
        pauseOtherEmbeds();
        active=index;
        buttons.forEach(function(b,i){b.setAttribute('aria-pressed',i===index?'true':'false');});
-       empty(player);
-       var validated=window.VMM_LANDING_SCHEMA.songUrl(track.url,track.provider);
-       if(!validated)return;
+       players.forEach(function(p){empty(p);});
        var frame=document.createElement('iframe');
        frame.className='cms-music-iframe'+(track.provider==='youtube'?' cms-music-iframe--video':'');
        frame.title=track.title+' — '+(track.provider==='spotify'?'плеер Spotify':'видео YouTube');
@@ -99,11 +101,11 @@
        external.href=validated;external.rel='noopener noreferrer';external.target='_blank';
        player.appendChild(external);
      };
-     buttons.push(button);list.appendChild(button);
+     buttons.push(button);players.push(player);
+     entry.appendChild(button);entry.appendChild(player);
+     list.appendChild(entry);
    });
    panel.appendChild(list);
-   player.appendChild(create('p','cms-music-hint','Выбери песню, чтобы открыть официальный плеер. Никаких аудиофайлов на сайте нет.'));
-   panel.appendChild(player);
    return panel;
  }
  function cards(id,rows,type){
