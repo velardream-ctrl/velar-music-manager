@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const schema=read('landing-schema.js'),choicesSrc=read('studio/artist-choices.js'),linksSrc=read('studio/artist-track-links.js'),source=read('studio/landing-editor.js'),studio=read('studio/studio.js');
-const nodes={},tabNames=['hero','artists','releases','playlists','radio','universe','languages','topics','assistant','genres','about','publish'];
+const nodes={},tabNames=['hero','artists','releases','playlists','radio','universe','languages','topics','assistant','genres','about','publish','albums'];
 function elem(tag='div'){
  const el={tagName:tag,type:'',value:'',textContent:'',className:'',disabled:false,checked:false,
    children:[],events:{},style:{},attributes:{},
