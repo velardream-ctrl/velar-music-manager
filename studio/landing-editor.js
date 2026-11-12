@@ -749,25 +749,20 @@
    }
    return null;
  }
- function attachedAvailableModes(sources){
-   var modes=[];
-   if(sources.spotify)modes.push(['spotify','Spotify']);
-   if(sources.youtube)modes.push(['youtube','YouTube']);
-   if(sources.spotify&&sources.youtube){
-     modes.push(['spotify+youtube','Spotify основной + YouTube']);
-     modes.push(['youtube+spotify','YouTube основной + Spotify']);
-   }
-   return modes;
+ // RUN-097: visual checkbox picker only; RUN-090's single-track data model stays intact.
+ function attachedCheckMode(currentPrimary,spotifyChecked,youtubeChecked){
+   if(!spotifyChecked&&!youtubeChecked)return '';
+   if(spotifyChecked&&youtubeChecked)
+     return currentPrimary==='youtube'?'youtube+spotify':'spotify+youtube';
+   return spotifyChecked?'spotify':'youtube';
  }
- function attachedModeSelect(modes,value){
-   var select=document.createElement('select');select.className='landing-release-select landing-attached-platform';
-   modes.forEach(function(mode){
-     var option=document.createElement('option');option.value=mode[0];option.textContent=mode[1];
-     select.appendChild(option);
-   });
-   select.value=value;
-   if(select.value!==value&&modes.length)select.value=modes[0][0];
-   return select;
+ function attachedSourceCheckbox(parent,provider,checked,disabled){
+   var label=document.createElement('label');label.className='landing-source-check'+(disabled?' is-disabled':'');
+   var box=document.createElement('input');box.type='checkbox';box.checked=!!checked;
+   box.disabled=!!disabled;box.setAttribute('aria-label',provider==='spotify'?'Spotify':'YouTube');
+   label.appendChild(box);
+   var title=document.createElement('span');title.textContent=provider==='spotify'?'Spotify':'YouTube';
+   label.appendChild(title);parent.appendChild(label);return box;
  }
  function attachedBuildSong(song,mode,sources){
    var parts=String(mode||'').split('+'),primary=parts[0],second=parts[1]||'';
@@ -809,7 +804,7 @@
    var options=attachedCatalogOptions();
    heading(parent,isLanguage?'Подтверждённые песни ('+entry.tracks.length+')':
      'Назначенные песни ('+entry.tracks.length+')',
-     'Единый редактор. Одна песня — одна строка. Выбирай основной Spotify/YouTube и, если нужно, второй плеер. Изменение сохранится только в черновике.');
+     'Найди композицию по названию или выбери из списка. Галочками отметь Spotify, YouTube или оба источника. Одна песня остаётся одной строкой. Изменения сохраняются сначала в черновике.');
    var search=document.createElement('input');search.type='search';search.className='landing-release-search';
    search.placeholder='Найти прикреплённую песню…';search.value=filter();parent.appendChild(search);
    var assigned=document.createElement('div');assigned.className='landing-language-songs';
@@ -846,13 +841,13 @@
            if(!sources.youtube)sources.youtube=catalog.youtube;
          }
          var wrap=document.createElement('div');wrap.className='landing-attached-fields';
-         var platform=attachedModeSelect([
-           ['spotify','Spotify — основной'],['youtube','YouTube — основной'],
-           ['spotify+youtube','Spotify основной + YouTube'],
-           ['youtube+spotify','YouTube основной + Spotify']
-         ],attachedSongMode(t));
-         platform.setAttribute('aria-label','Основной и дополнительный плеер: '+t.title);
-         wrap.appendChild(platform);
+         var activeSources=attachedSongSources(t);
+         var checks=document.createElement('div');checks.className='landing-song-sources';
+         checks.setAttribute('role','group');
+         checks.setAttribute('aria-label','Источники записи: '+t.title);
+         var spotifyCheck=attachedSourceCheckbox(checks,'spotify',!!activeSources.spotify,false);
+         var youtubeCheck=attachedSourceCheckbox(checks,'youtube',!!activeSources.youtube,false);
+         wrap.appendChild(checks);
          function urlField(label,url){
            var holder=document.createElement('label');holder.className='landing-attached-url';
            var text=document.createElement('span');text.textContent=label;
@@ -865,11 +860,13 @@
          var buttons=document.createElement('div');buttons.className='landing-item-actions';
          buttons.appendChild(button('Применить',function(){
            try{
-             attachedReplace(entry,t,t,platform.value,
+             var chosen=attachedCheckMode(t.provider,spotifyCheck.checked,youtubeCheck.checked);
+             if(!chosen)throw new Error('Отметь Spotify, YouTube или оба источника.');
+             attachedReplace(entry,t,t,chosen,
                {spotify:spotify.value.trim(),youtube:youtube.value.trim()});
            }catch(e){info('Не удалось изменить плеер: '+e.message);return;}
-           drawAssigned();updateButtons();
-           info('Плеер обновлён в черновике. Нажми «Сохранить черновик», затем «Опубликовать».');
+           drawAssigned();drawCatalog();updateButtons();
+           info('Источники обновлены в черновике. Нажми «Сохранить черновик», затем «Опубликовать».');
          },'landing-add'));
          buttons.appendChild(button('Отмена',function(){drawAssigned();},'landing-small'));
          wrap.appendChild(buttons);editArea.appendChild(wrap);
@@ -897,8 +894,8 @@
    }
    search.oninput=function(){setFilter(this.value);drawAssigned();};
    drawAssigned();
-   heading(parent,'Каталог песен — единое управление',
-     'Поиск, выбор основного плеера и дополнительного Spotify/YouTube одинаковы для языков и тем. Существующая песня меняется на месте, без изменения порядка.');
+   heading(parent,'Каталог песен — быстрый выбор',
+     'Найди песню по названию или исполнителю и нажми на неё. Spotify и YouTube выбираются отдельными галочками; обе площадки относятся к одной песне.');
    if(!catalogLoaded){
      var msg=document.createElement('p');msg.className='sync-note';
      msg.textContent=catalogLoading?'Загружаем каталог…':catalogError?
@@ -927,29 +924,49 @@
          if(!sources.spotify)sources.spotify=old.spotify;
          if(!sources.youtube)sources.youtube=old.youtube;
        }
-       var modes=attachedAvailableModes(sources);
-       if(!modes.length)return;
+       if(!sources.spotify&&!sources.youtube)return;
        var row=document.createElement('div');row.className='landing-topic-catalog-row';
        var holder=document.createElement('label');holder.className='landing-checkbox';
        var check=document.createElement('input');check.type='checkbox';check.checked=!!existing;
        holder.appendChild(check);
        var name=document.createElement('span');name.textContent=song.title+' · '+song.artist;
        holder.appendChild(name);row.appendChild(holder);
-       var provider=attachedModeSelect(modes,existing?attachedSongMode(existing):modes[0][0]);
-       provider.setAttribute('aria-label','Плеер для '+song.title);row.appendChild(provider);
-       function apply(){
+       var currentSources=existing?attachedSongSources(existing):{spotify:'',youtube:''};
+       var choices=document.createElement('div');choices.className='landing-song-sources';
+       choices.setAttribute('role','group');choices.setAttribute('aria-label','Источники: '+song.title);
+       var spotifyCheck=attachedSourceCheckbox(choices,'spotify',!!currentSources.spotify,!sources.spotify);
+       var youtubeCheck=attachedSourceCheckbox(choices,'youtube',!!currentSources.youtube,!sources.youtube);
+       row.appendChild(choices);
+       function applySources(){
          var current=attachedFind(entry,song);
-         if(!check.checked){
-           if(current){entry.tracks.splice(entry.tracks.indexOf(current),1);drawAssigned();updateButtons();}
-           drawCatalog();return;
+         var mode=attachedCheckMode(current&&current.provider,spotifyCheck.checked,youtubeCheck.checked);
+         if(!mode){
+           if(current)entry.tracks.splice(entry.tracks.indexOf(current),1);
+           check.checked=false;drawAssigned();updateButtons();
+           info('Песня откреплена от этой подборки только в черновике.');
+           return;
          }
-         try{attachedReplace(entry,current,song,provider.value,sources);}
-         catch(e){check.checked=!!current;info('Нельзя прикрепить песню: '+e.message);return;}
-         drawAssigned();updateButtons();
+         try{attachedReplace(entry,current,song,mode,sources);}
+         catch(e){
+           var restore=current?attachedSongSources(current):{spotify:'',youtube:''};
+           spotifyCheck.checked=!!restore.spotify;
+           youtubeCheck.checked=!!restore.youtube;
+           check.checked=!!current;
+           info('Нельзя прикрепить песню: '+e.message);return;
+         }
+         check.checked=true;drawAssigned();updateButtons();
          info('Привязка обновлена в черновике. Сохрани и опубликуй, чтобы изменения увидели слушатели.');
        }
-       check.onchange=apply;
-       provider.onchange=function(){if(check.checked)apply();};
+       check.onchange=function(){
+         if(!this.checked){spotifyCheck.checked=false;youtubeCheck.checked=false;}
+         else if(!spotifyCheck.checked&&!youtubeCheck.checked){
+           if(sources.spotify)spotifyCheck.checked=true;
+           else youtubeCheck.checked=true;
+         }
+         applySources();
+       };
+       spotifyCheck.onchange=applySources;
+       youtubeCheck.onchange=applySources;
        results.appendChild(row);
      });
      if(count>40){
