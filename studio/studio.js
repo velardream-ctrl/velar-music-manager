@@ -515,6 +515,9 @@
     openData:function(){selectPanel('data');},
     getLyricsMeta:function(){return metadata();},
     isLyricsDirty:isDirty,
+    offlineAdminContext:function(){
+      return authorized&&user&&db?{uid:user.uid,db:db}:null;
+    },
     offlineLyricContext:function(){
       if(!authorized||!user||!db||!songKey||!(selectedRecord||selectedDraft))return null;
       return {uid:user.uid,db:db,key:songKey,
