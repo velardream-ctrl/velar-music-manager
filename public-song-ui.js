@@ -25,11 +25,26 @@
    if(src.provider==='youtube')return 'https://www.youtube-nocookie.com/embed/'+src.url.split('v=')[1];
    return '';
  }
- var activeMount=null;
+ var activeMount=null,defaultView='rows',coverMap={};
+ function configure(view,albums){
+   defaultView=['rows','covers','tiles'].indexOf(view)>=0?view:'rows';
+   coverMap={};
+   (albums||[]).filter(function(a){return a.visible;}).forEach(function(album){
+     var picture=album.imageData||album.imageUrl||'';
+     if(!picture)return;
+     (album.tracks||[]).forEach(function(t){
+       if(t.url&&!coverMap[t.url])coverMap[t.url]=picture;
+       if(t.alternateUrl&&!coverMap[t.alternateUrl])coverMap[t.alternateUrl]=picture;
+     });
+   });
+ }
  function mount(list,tracks,opts){
    opts=opts||{};
-   var classes=opts.prefix==='language'?'language':'topic';
-   var amount=opts.batch||12,index=-1,source='',slots=[],buttons=[],titles=[],count=0,more=null,instance=null;
+   var classes=opts.prefix==='language'?'language':opts.prefix==='album'?'album':'topic';
+   var view=opts.view||defaultView;
+   if(['rows','covers','tiles'].indexOf(view)<0)view='rows';
+   if(view==='tiles')list.className+=' public-song-list--tiles';
+   var amount=opts.batch||12,index=-1,source='',slots=[],buttons=[],titles=[],entries=[],count=0,more=null,instance=null;
    clear(list);
    function clearActive(){
      if(index>=0&&slots[index])clear(slots[index]);
@@ -37,6 +52,7 @@
        button.setAttribute('aria-pressed','false');
      });});
      titles.forEach(function(button){if(button)button.setAttribute('aria-pressed','false');});
+     entries.forEach(function(entry){if(entry)entry.className=entry.className.replace(/ is-playing/g,'');});
      index=-1;source='';
      if(activeMount===instance)activeMount=null;
    }
@@ -49,6 +65,7 @@
        window.VMM_PUBLIC_LANDING.stopExternalPlayers();
      clearActive();
      index=i;source=src.provider;activeMount=instance;
+     if(entries[i])entries[i].className+=' is-playing';
      var host=slots[i],frame=el('iframe','cms-release-iframe '+classes+'-song-iframe'+
        (src.provider==='youtube'?' cms-release-iframe--video':''));
      frame.title=tracks[i].title+' — официальный плеер '+(src.provider==='spotify'?'Spotify':'YouTube');
@@ -87,9 +104,22 @@
    function addRow(i){
      var track=tracks[i],sources=approved(track);
      if(!sources.length)return;
-     var item=el('div','public-song-entry '+classes+'-song-entry');
+     var item=el('div','public-song-entry '+classes+'-song-entry'+
+       (view==='covers'?' public-song-entry--covers':view==='tiles'?' public-song-entry--tiles':''));
+     entries[i]=item;
      var title=el('div','public-song-label');
      title.appendChild(el('span','public-song-index',('0'+(i+1)).slice(-2)));
+     if(view==='covers'||view==='tiles'){
+       var art=opts.cover||coverMap[track.url]||coverMap[track.alternateUrl]||'';
+       if(art){
+         var thumb=el('img','public-song-thumbnail');
+         thumb.src=art;thumb.alt='Обложка: '+track.title;thumb.loading='lazy';
+         thumb.decoding='async';thumb.referrerPolicy='no-referrer';title.appendChild(thumb);
+       }else{
+         var placeholder=el('span','public-song-thumbnail public-song-thumbnail--empty','♫');
+         placeholder.setAttribute('aria-hidden','true');title.appendChild(placeholder);
+       }
+     }
      var copy=el('button','public-song-copy public-song-title-button');
      copy.type='button';copy.setAttribute('aria-label','Открыть или закрыть плеер: '+track.title);
      copy.setAttribute('aria-pressed','false');titles[i]=copy;
@@ -141,5 +171,5 @@
    appendBatch();
    return instance;
  }
- window.VELAR_PUBLIC_SONGS={mount:mount,approved:approved};
+ window.VELAR_PUBLIC_SONGS={mount:mount,approved:approved,configure:configure};
 }());
