@@ -537,6 +537,48 @@ body.vmm-print-open{overflow:hidden}
 }
 
 
+/* RUN-090 — shared editor for every attached language/topic song.
+   Inline dropdown plus editable verified URLs; keep rows legible on old iPads. */
+#panel-landing .landing-attached-song{
+ border-radius:10px;margin:7px 0;background:#132641;
+ border:1px solid rgba(220,186,140,.35);overflow:hidden;
+}
+#panel-landing .landing-attached-song .landing-language-song-row{margin:0;border:0;background:transparent}
+#panel-landing .landing-attached-song .landing-language-song-row span{
+ min-width:130px;word-wrap:break-word;overflow-wrap:anywhere
+}
+#panel-landing .landing-attached-editor:empty{display:none}
+#panel-landing .landing-attached-fields{
+ display:flex;flex-direction:column;padding:11px;gap:9px;
+ border-top:1px solid rgba(226,191,140,.3);min-width:0;
+}
+#panel-landing .landing-attached-platform{
+ width:100%;min-height:44px;font-size:16px;box-sizing:border-box
+}
+#panel-landing .landing-attached-url{
+ display:flex;flex-direction:column;gap:4px;color:#e7d1ad;
+ font-size:.85rem;min-width:0;
+}
+#panel-landing .landing-attached-url input{
+ display:block;width:100%;min-width:0;box-sizing:border-box;min-height:44px;
+ border:1px solid #a99a80;border-radius:8px;padding:8px 10px;
+ background:#0b1a31;color:#f8e8cf;font:400 16px Arial,sans-serif;
+}
+#panel-landing .landing-attached-fields .landing-item-actions{
+ display:flex;flex-wrap:wrap;gap:8px
+}
+@media(max-width:560px){
+ #panel-landing .landing-attached-song .landing-language-song-row{
+  display:flex;flex-direction:column;align-items:stretch
+ }
+ #panel-landing .landing-attached-song .landing-language-song-row span{
+  min-width:0
+ }
+ #panel-landing .landing-attached-song .landing-language-song-row button{
+  min-height:42px
+ }
+}
+
 /* RUN-075 — privacy-safe catalog language review. No extra public rendering. */
 #panel-landing .vmm-lang-bulk{
  border-color:rgba(234,205,158,.7);margin:15px 0 23px;padding:14px;
