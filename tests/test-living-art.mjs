@@ -14,7 +14,7 @@ assert.doesNotMatch(html,/class="crystal-journey-crystal"[\s\S]{0,250}assets\/ve
 assert.match(html,/href="#universe" id="hero-crystal-link"/);
 assert.match(html,/living-art\.js\?v=1/);
 assert.match(html,/universe\.js\?v=5/);
-assert.match(html,/style\.css\?v=23/);
+assert.match(html,/style\.css\?v=24/);
 assert.match(universe,/crystal\.src='assets\/velardream-symbol\.svg'/);
 assert.match(universe,/var center=el\('button','universe-core'\)/);
 assert.match(universe,/universe-beam is-active/);
@@ -23,7 +23,7 @@ assert.match(css,/\.crystal-journey-ring--outer/);
 assert.match(css,/\.crystal-journey-stars--near/);
 assert.match(css,/\.has-living-art \.crystal-journey-stage\{/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
-assert.match(sw,/CACHE_PREFIX \+ 'v27'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v28'/);
 assert.match(sw,/'\.\/living-art\.js\?v=1'/);
 assert.match(sw,/'\.\/universe\.js\?v=5'/);
 assert.doesNotMatch(art,/setTimeout\(|setInterval\(|fetch\(|firebase|firestore\(|XMLHttpRequest|WebSocket|getContext\(/);
@@ -75,6 +75,8 @@ assert.equal(r.api.phaseFor(.1),0);
 assert.equal(r.api.phaseFor(.4),1);
 assert.equal(r.api.phaseFor(.9),2);
 assert.match(r.doc.documentElement.className,/has-living-art/);
+assert.equal(r.api.motionStatus(),'enabled');
+assert.equal(r.chapter.attributes['data-motion-status'],'enabled');
 assert.equal(r.observers.length,2,'Only two IntersectionObservers, no timers');
 assert.equal(r.observers[0].targets[0],r.chapter);
 assert.equal(r.observers[1].targets.length,7);
@@ -104,5 +106,8 @@ for(const opt of [{reduced:true},{saveData:true},{clip:false},{height:490},{widt
  assert.equal(e.observers.length,0,'Fallback must be static: '+JSON.stringify(opt));
  assert.equal(e.queued.length,0);
  assert.ok(!e.doc.documentElement.className.includes('has-living-art'));
+ const expected=opt.reduced?'reduced-motion':opt.saveData?'data-saver':opt.clip===false?'unsupported-clip':'small-viewport';
+ assert.equal(e.api.motionStatus(),expected);
+ assert.equal(e.chapter.attributes['data-motion-status'],expected);
 }
 console.log('PASS: RUN-071 real crystal core, visible-only scroll layers, reduced motion/data saver/old browser fallback, no media or requests');
