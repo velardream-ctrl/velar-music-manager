@@ -130,10 +130,25 @@
    return String(text||'').split('{topic}').join(topic.label)
      .split('{count}').join(String(topic.tracks&&topic.tracks.length||0));
  }
+ // Explicit UI command: narrower than general FAQ, no implicit playback.
+ function radioCommand(q){
+   return /^(?:(?:velar|велар)\s+)?(?:включи|включить|запусти|открой|поставь|покажи|хочу|слушать)\s+(?:(?:velar|велар)\s+)?(?:радио|radio)$/.test(q)||
+     /^(?:(?:velar|велар)\s+)?(?:play|open|start)\s+(?:(?:velar|велар)\s+)?(?:radio|радио)$/.test(q);
+ }
  function answer(raw,data,settings){
    var q=norm(raw);
    if(!q)return {text:replyText(settings,'emptyInput')};
    settings=settings||{};
+   // RUN-086: direct radio control overrides text-only FAQ, never the owner's OFF gate.
+   if(radioCommand(q)){
+     var radio=data&&data.releases&&data.releases.radio,api=window.VMM_LANDING_SCHEMA;
+     var ready=!!(radio&&radio.enabled===true&&radio.controlVersion===2&&
+       api&&api.playlistUrl&&api.playlistUrl(radio.url,radio.provider));
+     if(ready)return {text:'VELAR RADIO готово. Нажми кнопку ниже, чтобы открыть официальный плеер. Воспроизведение выбираешь ты.',
+       action:'radio',target:'',label:'▶ Открыть VELAR RADIO'};
+     return {text:'VELAR RADIO сейчас выключено владельцем сайта или не настроено. Другие доступные плейлисты можно открыть в музыкальном разделе.',
+       action:'link',target:'#playlists',label:'Посмотреть плейлисты'};
+   }
    // Custom answers written by the owner have priority over the FAQ library.
    var rules=settings.rules||[];
    for(var i=0;i<rules.length;i++){
@@ -272,6 +287,11 @@
            window.location.hash=choice.kind==='language'?'languages':'topics';
            if(!openedSong&&choice.kind==='topic'&&window.VELAR_TOPICS&&window.VELAR_TOPICS.select)
              window.VELAR_TOPICS.select(choice.target);
+         }else if(choice.action==='radio'){
+           // One explicit click: reuse existing Spotify/YouTube embed path, no autoplay.
+           var openedRadio=window.VMM_PUBLIC_LANDING&&window.VMM_PUBLIC_LANDING.openRadioFromChat&&
+             window.VMM_PUBLIC_LANDING.openRadioFromChat();
+           if(!openedRadio)itemMessage('assistant','Радио сейчас недоступно. Проверь настройки VELAR RADIO или открой раздел плейлистов.',null,'neutral',false);
          }else if(choice.action==='language'){
            if(window.VELAR_LANGUAGES&&window.VELAR_LANGUAGES.show)
              window.VELAR_LANGUAGES.show(choice.target);
