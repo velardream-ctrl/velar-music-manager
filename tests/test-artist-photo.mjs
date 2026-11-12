@@ -64,7 +64,7 @@ assert.match(read('style.css'),/cms-artist-photo--square/);
 assert.match(read('style.css'),/cms-artist-photo--circle/);
 assert.match(publicHTML,/landing-public\.js\?v=13/);
 assert.match(studioHTML,/artist-image-editor\.js\?v=1/);
-assert.match(studioHTML,/landing-editor\.js\?v=16/);
+assert.match(studioHTML,/landing-editor\.js\?v=17/);
 assert.match(studioHTML,/landing-schema\.js\?v=15/);
 assert.match(sw,/STUDIO_PREFIX\+'v31'/);
 assert.match(sw,/CACHE_PREFIX \+ 'v34'/);
