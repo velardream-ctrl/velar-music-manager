@@ -34,7 +34,7 @@ assert.ok(html.includes('src="studio.js?v=10"'));
 assert.ok(html.includes('src="workflows.js?v=7"'));
 assert.ok(html.includes('href="recordings.css?v=12"'));
 assert.match(css,/\.vmm-r-player-sync/);
-assert.ok(sw.includes("STUDIO_PREFIX+'v31'"));
+assert.ok(sw.includes("STUDIO_PREFIX+'v32'"));
 
 const els={};
 function node(tag){
