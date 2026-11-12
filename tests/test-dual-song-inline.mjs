@@ -35,6 +35,10 @@ assert.equal(list.children.length,13,'First 12 songs plus show-more button');
 const first=list.children[0];
 assert.equal(first.children.length,3,'One song row has label, source controls, inline slot');
 assert.equal(first.children[1].children.length,2,'Spotify and YouTube belong to ONE composition');
+assert.equal(first.children[1].children[0].textContent,'',
+ 'Main play button is a CSS vector circle, not an oversized Spotify/emoji label');
+assert.equal(first.children[1].children[1].textContent,'YouTube',
+ 'Secondary source is a compact labeled button on SAME row');
 assert.equal(first.children[2].children.length,0,'Nothing loads before visitor click');
 first.children[0].children[1].onclick();
 assert.equal(stops,1);
@@ -73,5 +77,14 @@ assert.equal(app.openByUrl(spotify),true);
 assert.equal(other.children[0].children[2].children.length,0,
  'Only one player across topic and language sections');
 assert.match(read('style.css'),/\.public-song-inline:not\(:empty\)/);
+const mobileCSS=read('style.css');
+assert.match(mobileCSS,/\.public-song-source\.is-primary::before\{/,
+ 'Old gold play triangle is drawn as CSS, not device emoji');
+assert.match(mobileCSS,/\.public-song-source\.is-primary\{[\s\S]*?border-radius:50%/,
+ 'Primary source must be compact and round');
+assert.doesNotMatch(mobileCSS,/\.public-song-platforms\{flex:1 1 100%/,
+ 'Mobile sources cannot turn into a full-width Spotify button');
+assert.doesNotMatch(mobileCSS,/\.public-song-source\{flex:1 1 100px/,
+ 'Mobile source buttons cannot grow to the entire width');
 assert.match(read('index.html'),/public-song-ui\.js\?v=2/);
 console.log('PASS: RUN-090 Spotify/YouTube inline single-row player, long lists, safe deep links, one active iframe');
