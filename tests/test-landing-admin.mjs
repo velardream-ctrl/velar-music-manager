@@ -68,7 +68,7 @@ function traverse(root,fn){
 }
 function findInput(label){
  const node=traverse(get('landing-fields'),el=>el.tagName==='label'&&el.children[0]?.textContent===label);
- assert.ok(node,'Missing form input: '+label);
+ assert.ok(node,'Missing form input: '+label+'; status='+get('landing-status').textContent+'; loaded='+get('landing-dirty').textContent);
  return node.children[1];
 }
 api.open();await flush();
