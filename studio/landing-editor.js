@@ -2066,10 +2066,12 @@
      info('Опубликовано! Версия '+v+'. Открой главную страницу в новой вкладке, чтобы проверить.');
    }).catch(function(e){busy=false;updateButtons();info('Публикация не выполнена: '+safeStatus(e));});
  }
- window.addEventListener('online',function(){syncOffline();syncArtistLinks();});
- window.addEventListener('pagehide',function(){
-   if(offlineTimer!==null){clearTimeout(offlineTimer);offlineTimer=null;snapshotLocal().catch(function(){});}
- });
+ if(window.addEventListener){
+   window.addEventListener('online',function(){syncOffline();syncArtistLinks();});
+   window.addEventListener('pagehide',function(){
+     if(offlineTimer!==null){clearTimeout(offlineTimer);offlineTimer=null;snapshotLocal().catch(function(){});}
+   });
+ }
  function canLeave(){
    if(busy||trackSaving){info('Дождись завершения сохранения или публикации.');return false;}
    if(!dirty())return true;
