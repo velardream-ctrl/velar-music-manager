@@ -238,3 +238,11 @@ CI (run ID и результат):
 ## RUN-085 — опубликованная карта почтовых следов, 12.11.2026
 - [RUN-085 Email breadcrumb audit](EMAIL_BREADCRUMB_AUDIT_RU.md) опубликован через [PR #39](https://github.com/velardream-ctrl/velar-music-manager/pull/39), merge `19fcf4478fd161c0edaddfb7c17862428d17d60e`, CI #43152624186 SUCCESS, Pages #43152623659 SUCCESS. В Sanastoyhteisö аналогичный [PR #69](https://github.com/sanastoyhteiso/sanastoyhteiso.github.io/pull/69) merged `93474c7e5f432f87c00db28c8eb03f020e672f5a`, Pages #43153044589 SUCCESS.
 - Открыто: дальнейшая хронология писем и точная диагностика preflight Auth/Drive/iPad/Mediatri Sanastoyhteisö; скриншоты реального iPhone/iPad VELARDREAM (нет анимации печати, различается отображение). Не заявлять устранение до приёмки.
+
+
+## RUN-086 — команда чата для VELAR RADIO (12.11.2026)
+- Причина: прежний `velar-assistant.js` вместо запуска радио давал только `#playlists`. RUN-083 поддерживал плееры **песен**, не VELAR RADIO; радио было отключено владельцем по умолчанию после RUN-078.
+- Исправлено в PR #40: https://github.com/velardream-ctrl/velar-music-manager/pull/40. Явные команды «Velar, включи радио», «включи Velar Radio», «start radio» → ответ с `▶ Открыть VELAR RADIO` при radio.enabled=true + controlVersion=2 + валидная ссылка. При OFF — без кнопки, только сообщение и ссылка на плейлисты. Специальные команды управления обрабатываются до текстовых FAQ, но не обходят выключатель владельца.
+- `VMM_PUBLIC_LANDING.openRadioFromChat()` вызывает существующий официальный iframe только из явного нажатия, восстанавливает локально скрытую панель и поднимает её над чатом до закрытия. Без автоматического потока, новых Firebase/Drive/Firestore расходов и доступа к частным файлам. Safari12 ES5.
+- Cache: `style.css?v=23`, `landing-public.js?v=10`, `velar-assistant.js?v=8`, public SW v26, Studio SW v28; тесты версии обновлены. CI HEAD 58fd113 SUCCESS: https://github.com/velardream-ctrl/velar-music-manager/actions/runs/43162230325 (до финального документационного коммита).
+- После merge и Pages проверить публикацию на https://velardream.com/?v=86; при radio OFF сначала владелец включает в Studio → Главная страница → VELAR RADIO → Сохранить черновик → Опубликовать. Safari/PWA/iPad требуется ручная проверка. История RUN-086: `docs/WORK_ACTIVITY_LOG_RU.md`.
