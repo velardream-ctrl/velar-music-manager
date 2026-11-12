@@ -232,9 +232,14 @@ const english=traverse(get('landing-fields'),n=>n.tagName==='button'&&
 assert.ok(english,'English language can be edited');
 english.onclick();
 assert.equal(findInput('Название языка').value,'Английский');
-const addSong=traverse(get('landing-fields'),n=>n.tagName==='button'&&n.textContent==='+ spotify');
-assert.ok(addSong,'Approved official Spotify track from private catalog is selectable');
-addSong.onclick();
+// RUN-090: a common language/topic catalog checkbox + source-mode selector.
+const languageOption=traverse(get('landing-fields'),n=>n.className==='landing-topic-catalog-row');
+assert.ok(languageOption,'Language uses the same row picker as themes');
+const languageChoice=languageOption.children[0].children[0];
+assert.equal(languageChoice.type,'checkbox');
+const languageMode=languageOption.children[1];
+assert.equal(languageMode.children.length,4,'Single/dual source choice for a song with two URLs');
+languageChoice.checked=true;languageChoice.onchange.call(languageChoice);
 assert.equal(api.isDirty(),true);
 get('landing-save').onclick();await flush();
 let languageDraft=records.get('vmm_public_drafts/landing').content.genres.languages.entries;
@@ -245,6 +250,32 @@ assert.equal(records.get('vmm_public_pages/landing').content.genres.languages.en
  'A language song must not become public at draft save');
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.genres.languages.entries.find(x=>x.code==='en').tracks.length,1);
+// Editing an already published attachment must be possible IN PLACE.
+const attachedRow=traverse(get('landing-fields'),n=>n.className==='landing-attached-song');
+assert.ok(attachedRow,'Attached language song has inline editor');
+const editPlayer=traverse(attachedRow,n=>n.textContent==='Изменить плеер');
+assert.ok(editPlayer);
+editPlayer.onclick();
+const platformChoice=traverse(attachedRow,n=>n.className==='landing-release-select landing-attached-platform');
+assert.ok(platformChoice);
+platformChoice.value='youtube+spotify';
+const applyPlayer=traverse(attachedRow,n=>n.textContent==='Применить');
+assert.ok(applyPlayer);
+applyPlayer.onclick();
+assert.equal(api.isDirty(),true);
+get('landing-save').onclick();await flush();
+languageDraft=records.get('vmm_public_drafts/landing').content.genres.languages.entries;
+const switched=languageDraft.find(x=>x.code==='en').tracks;
+assert.equal(switched.length,1,'Switching provider must NOT create a duplicate track');
+assert.equal(switched[0].provider,'youtube');
+assert.equal(switched[0].url,'https://www.youtube.com/watch?v=ABCDEFGHIjk');
+assert.equal(switched[0].alternateProvider,'spotify');
+assert.equal(switched[0].alternateUrl,'https://open.spotify.com/track/0123456789ABCDEFGHIJKL');
+assert.equal(records.get('vmm_public_pages/landing').content.genres.languages.entries.find(x=>x.code==='en').tracks[0].provider,'spotify',
+ 'Saving an edited player must not publish it immediately');
+get('landing-publish').onclick();await flush();
+assert.equal(records.get('vmm_public_pages/landing').content.genres.languages.entries.find(x=>x.code==='en').tracks[0].provider,'youtube');
+
 const addLanguage=traverse(get('landing-fields'),n=>n.tagName==='button'&&n.textContent==='+ Добавить язык');
 assert.ok(addLanguage);addLanguage.onclick();
 get('landing-save').onclick();await flush();
@@ -259,6 +290,10 @@ assert.equal(findInput('Название темы').value,'Любовь');
 const firstTopic=traverse(get('landing-fields'),n=>n.className==='landing-topic-catalog-row');
 assert.ok(firstTopic,'Catalog songs appear as selectable checkboxes for the chosen theme');
 const loveCheckbox=firstTopic.children[0].children[0];
+const loveMode=firstTopic.children[1];
+assert.equal(loveMode.children.length,4,'Topic catalog uses SAME modes as language');
+loveMode.value='spotify+youtube';
+
 assert.equal(loveCheckbox.type,'checkbox');
 loveCheckbox.checked=true;loveCheckbox.onchange.call(loveCheckbox);
 assert.equal(api.isDirty(),true);
@@ -273,6 +308,8 @@ weddingRow.children[0].children[0].onchange.call(weddingRow.children[0].children
 get('landing-save').onclick();await flush();
 const topicsDraft=records.get('vmm_public_drafts/landing').content.genres.topics;
 assert.equal(topicsDraft.entries.find(x=>x.slug==='love').tracks.length,1);
+assert.equal(topicsDraft.entries.find(x=>x.slug==='love').tracks[0].alternateProvider,'youtube',
+ 'Choosing two providers in topics still saves one composition');
 assert.equal(topicsDraft.entries.find(x=>x.slug==='wedding').tracks.length,1);
 assert.equal(topicsDraft.entries.find(x=>x.slug==='love').tracks[0].url,
  topicsDraft.entries.find(x=>x.slug==='wedding').tracks[0].url,
