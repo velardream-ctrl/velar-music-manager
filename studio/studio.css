@@ -632,3 +632,22 @@ body.vmm-print-open{overflow:hidden}
  max-width:100%;white-space:normal;text-align:left;
 }
 .vmm-offline-backup:focus-visible{outline:2px solid #ffe2a4;outline-offset:2px}
+
+/* RUN-100: mobile-first catalog paging; no hidden songs after the first 40. */
+#panel-landing .landing-song-pagination{
+ display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+ padding:10px 11px;margin:15px 0 4px;
+ border:1px solid rgba(226,190,139,.52);border-radius:10px;
+ background:#172d4b;
+}
+#panel-landing .landing-song-page-status{
+ flex:1 1 100%;text-align:center;font-size:.88rem;
+ font-weight:600;color:#f1d29a;line-height:1.4;
+}
+#panel-landing .landing-song-pagination button{
+ flex:1 1 112px;min-width:0;min-height:44px;
+ text-align:center;white-space:normal;
+}
+#panel-landing .landing-song-pagination button:disabled{
+ opacity:.45;cursor:default;
+}

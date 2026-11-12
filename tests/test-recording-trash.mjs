@@ -16,7 +16,7 @@ assert.match(source,/data-r-action="restore"/);
 assert.doesNotMatch(source,/request\([^\n]+method:'DELETE'/);
 assert.ok(html.includes('src="recordings.js?v=12"'));
 assert.ok(html.includes('href="recordings.css?v=12"'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v34'"));
+assert.ok(sw.includes("STUDIO_PREFIX+'v35'"));
 
 const nodes={};
 const element=()=>({textContent:'',innerHTML:'',className:'',style:{},appendChild(){},addEventListener(){},pause(){},load(){},removeAttribute(){},setAttribute(){}});
