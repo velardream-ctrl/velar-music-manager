@@ -80,7 +80,11 @@
      player.setAttribute('role','region');
      player.setAttribute('aria-label','Плеер: '+track.title);
      button.onclick=function(){
-       if(active===index)return;
+       if(active===index&&hasEmbed(player)){
+         empty(player);active=null;
+         buttons.forEach(function(b){b.setAttribute('aria-pressed','false');});
+         return; // second click stops Spotify/YouTube and collapses the row.
+       }
        var validated=window.VMM_LANDING_SCHEMA.songUrl(track.url,track.provider);
        if(!validated)return;
        pauseOtherEmbeds();
@@ -155,6 +159,9 @@
    }
    return '';
  }
+ // Repeated play clicks must detect a LIVE iframe, not a stale external link
+ // left after another public section has unloaded the previous iframe.
+ function hasEmbed(host){return !!(host&&host.firstChild&&host.firstChild.tagName==='iframe');}
  function pauseOtherEmbeds(){
    // Remove any previous external embed instead of starting parallel players.
    // Cross-origin APIs must not be used to simulate streams or playback.
@@ -204,8 +211,12 @@
      icon.setAttribute('aria-hidden','true');listen.appendChild(icon);
      listen.appendChild(create('span','',isVideo?'Смотреть клип':'Слушать'));
      listen.setAttribute('aria-label',(isVideo?'Смотреть клип: ':'Слушать релиз: ')+item.title);
+     listen.setAttribute('aria-pressed','false');
      listen.onclick=function(){
-       pauseOtherEmbeds();empty(player);
+       if(hasEmbed(player)){
+         empty(player);listen.setAttribute('aria-pressed','false');return;
+       }
+       pauseOtherEmbeds();empty(player);listen.setAttribute('aria-pressed','true');
        var frame=create('iframe','cms-release-iframe'+(item.mediaProvider==='youtube'?' cms-release-iframe--video':''));
        frame.title=item.title+' — '+(item.mediaProvider==='spotify'?'Spotify':'YouTube');
        frame.src=media;frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
@@ -213,7 +224,7 @@
        frame.setAttribute('allowfullscreen','');
        player.appendChild(frame);
        var close=create('button','cms-release-close','Закрыть плеер');close.type='button';
-       close.onclick=function(){empty(player);};player.appendChild(close);
+       close.onclick=function(){empty(player);listen.setAttribute('aria-pressed','false');};player.appendChild(close);
      };
      actions.appendChild(listen);
    }
@@ -293,10 +304,14 @@
      choose.type='button';
      choose.setAttribute('aria-label','Открыть официальный плейлист: '+item.title);
      var player=create('div','cms-playlist-player');
+     choose.setAttribute('aria-pressed','false');
      choose.onclick=function(){
+       if(hasEmbed(player)){
+         empty(player);choose.setAttribute('aria-pressed','false');return;
+       }
        var src=officialEmbed(item.url,item.provider,'playlist');
        if(!src)return;
-       pauseOtherEmbeds();empty(player);
+       pauseOtherEmbeds();empty(player);choose.setAttribute('aria-pressed','true');
        var frame=create('iframe','cms-release-iframe'+(item.provider==='youtube'?' cms-release-iframe--video':''));
        frame.src=src;frame.title=item.title+' — официальный плейлист '+item.provider;
        frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
@@ -304,7 +319,7 @@
        frame.setAttribute('allowfullscreen','');
        player.appendChild(frame);
        var close=create('button','cms-release-close','Закрыть плеер');
-       close.type='button';close.onclick=function(){empty(player);};player.appendChild(close);
+       close.type='button';close.onclick=function(){empty(player);choose.setAttribute('aria-pressed','false');};player.appendChild(close);
      };
      actions.appendChild(choose);
      var external=create('a','cms-card-link','Открыть в '+(item.provider==='spotify'?'Spotify':'YouTube'));
@@ -361,10 +376,13 @@
    panel.appendChild(create('p','velar-radio-note','Воспроизведение только по вашему выбору, через официальный плеер '+(config.provider==='spotify'?'Spotify':'YouTube')+'.'));
    var player=create('div','velar-radio-player');
    var open=create('button','velar-radio-start','Открыть плейлист');
-   open.type='button';
+   open.type='button';open.setAttribute('aria-pressed','false');
    open.onclick=function(){
+     if(hasEmbed(player)){
+       empty(player);open.setAttribute('aria-pressed','false');return;
+     }
      var src=officialEmbed(config.url,config.provider,'playlist');if(!src)return;
-     pauseOtherEmbeds();empty(player);
+     pauseOtherEmbeds();empty(player);open.setAttribute('aria-pressed','true');
      var frame=create('iframe','velar-radio-iframe'+(config.provider==='youtube'?' velar-radio-iframe--video':''));
      frame.src=src;frame.title=config.title+' — '+config.provider;
      frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
@@ -378,20 +396,20 @@
    var hide=create('button','velar-radio-hide','Скрыть радио на этом устройстве');
    hide.type='button';
    hide.onclick=function(){
-     empty(player);
+     empty(player);open.setAttribute('aria-pressed','false');
      try{if(window.localStorage)window.localStorage.setItem('velar-radio-hidden','1');}
      catch(ignore){}
      renderRadio(config);
    };
    panel.appendChild(hide);
    host.appendChild(panel);
-   radioControls={toggle:toggle,start:open,host:host};
+   radioControls={toggle:toggle,start:open,player:player,host:host};
    toggle.onclick=function(){
      var shown=panel.className.indexOf(' hidden')!==-1;
      panel.className=shown?'velar-radio-panel':'velar-radio-panel hidden';
      toggle.setAttribute('aria-expanded',shown?'true':'false');
      if(!shown){
-       empty(player); // closing stops external playback.
+       empty(player);open.setAttribute('aria-pressed','false'); // stop the iframe.
        host.className=host.className.replace(/\svelar-radio--chat-open/g,'');
      }
    };
@@ -406,7 +424,7 @@
    if(controls.toggle.getAttribute('aria-expanded')!=='true')controls.toggle.onclick();
    if(controls.host.className.indexOf('velar-radio--chat-open')===-1)
      controls.host.className+=' velar-radio--chat-open';
-   controls.start.onclick(); // official iframe is created by the existing safe handler.
+   if(!hasEmbed(controls.player))controls.start.onclick(); // Chat command means OPEN, not toggle.
    return true;
  }
  function render(content){
