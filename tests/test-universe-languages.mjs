@@ -64,7 +64,7 @@ assert.throws(()=>api.universeConfig({nodes:Array(13).fill({
  id:'world-1',label:'World',target:'artists',visible:true
 })},defaults.genres.universe),/12/);
 assert.match(rules,/content\.keys\(\)\.hasOnly\(\[/);
-assert.match(rules,/'hero','artists','releases','genres','about'/);
+assert.match(rules,/'hero','artists','albums','releases','genres','about'/);
 assert.doesNotMatch(JSON.stringify(page),/"contentSecret"/);
 
 function node(tag='div'){
