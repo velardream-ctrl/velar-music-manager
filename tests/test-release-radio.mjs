@@ -101,6 +101,12 @@ musicBtn.onclick();
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1);
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe')[0].src,
  'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
+// RUN-092: opening control is also the closing control on repeat press.
+musicBtn.onclick();
+assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0,'Repeat release click unloads Spotify iframe');
+assert.equal(musicBtn.attributes['aria-pressed'],'false');
+musicBtn.onclick();
+assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1,'Third release click reopens it');
 const radio=map['velar-radio'];assert.equal(radio.className,'velar-radio');
 assert.equal(radio.children.length,2);
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0);
@@ -112,6 +118,11 @@ assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,1);
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0,'Opening radio closes the release player');
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src,
  'https://open.spotify.com/embed/playlist/11Vdx5lXmtfMiXh63YhIwh');
+startRadio.onclick();
+assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0,'Repeat radio start click unloads iframe');
+assert.equal(startRadio.attributes['aria-pressed'],'false');
+startRadio.onclick();
+assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,1);
 radio.children[0].onclick();
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0,'Closing radio destroys iframe');
 // RUN-086: a real click on the assistant's radio action reuses the safe radio UI.
@@ -119,12 +130,20 @@ assert.equal(window.VMM_PUBLIC_LANDING.openRadioFromChat(),true);
 assert.equal(radio.children[0].attributes['aria-expanded'],'true');
 assert.match(radio.className,/velar-radio--chat-open/);
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,1);
+assert.equal(window.VMM_PUBLIC_LANDING.openRadioFromChat(),true,
+ 'Asking again in chat must not toggle the playing radio off');
+assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,1);
 radio.children[0].onclick();
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0);
 assert.doesNotMatch(radio.className,/velar-radio--chat-open/);
 assert.equal(map['public-playlists-cards'].children.length,1);
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0);
 const openPlaylist=map['public-playlists-cards'].children[0].children[1].children[3].children[0];
+openPlaylist.onclick();
+assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1);
+openPlaylist.onclick();
+assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0,'Repeat playlist click unloads iframe');
+assert.equal(openPlaylist.attributes['aria-pressed'],'false');
 openPlaylist.onclick();
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1);
 assert.equal(map['public-subscriptions'].children[0].href,profile);
@@ -160,7 +179,7 @@ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(css,/.cms-release-art::before/);
 assert.match(html,/universe\.js\?v=5/);
 assert.match(html,/style\.css\?v=27/);
-assert.match(sw,/CACHE_PREFIX \+ 'v31'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v32'/);
 assert.match(sw,/STUDIO_PREFIX\+'v30'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);

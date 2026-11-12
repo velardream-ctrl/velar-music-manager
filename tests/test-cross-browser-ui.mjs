@@ -19,7 +19,7 @@ assert.ok(publicHtml.includes('href="style.css?v=27"'));
 assert.ok(page.includes('src="studio.js?v=10"'));
 assert.ok(page.includes('src="recordings.js?v=12"'));
 assert.ok(page.includes('href="recordings.css?v=12"'));
-assert.ok(sw.includes("CACHE_PREFIX + 'v31'"));
+assert.ok(sw.includes("CACHE_PREFIX + 'v32'"));
 assert.ok(sw.includes("STUDIO_PREFIX+'v30'"));
 assert.match(studio,/db\.collection\('vmm_admins'\)\.doc\(user\.uid\)\.get\(\{source:'server'\}\)/,
   'Safari workaround must not bypass verified admin rules');
