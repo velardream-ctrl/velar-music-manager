@@ -66,6 +66,86 @@
     return rows.map(function(x){return {id:x[0],group:x[1],keywords:x[2],
       answer:x[3],route:x[4],followups:x[5],enabled:true};});
   }
+
+  // RUN-084: reusable editorial material, not the owner's saved Firestore answers.
+  function defaultAssistantJokes(){return ["— Почему дирижёр никогда не теряет часы? — Потому что время у него всегда в руках.","— Какой ключ музыканты никогда не находят в кармане? — Скрипичный!","— Почему барабанщик не спорит? — У него свои ударные аргументы.","— Что сказал метроном опоздавшему пианисту? — Я тут один стараюсь держать темп!","— Почему контрабас так спокоен? — Ему всё по басу.","— Зачем гитарист взял на свидание тюнер? — Хотел сразу настроиться на одну волну.","— Почему скрипач берёт отпуск? — Даже смычку нужна передышка.","— Что сказал бас тенору? — Давай поговорим на более низких тонах.","— Почему композитор долго выбирал лифт? — Искал правильный подъём.","— Почему музыкант любит дождь? — По крыше играет бесплатная перкуссия.","— Как диджей просит тишины? — Давайте на минутку выключим ремикс жизни.","— Что сказала флейта трубе? — Зачем так громко? Мы же рядом!","— Почему пианист не боится ошибок? — У него всегда есть запасные клавиши.","— Как назвать очень вежливый барабан? — Тот, что вступает строго по очереди.","— Почему музыкант редко скучает в пробке? — Можно репетировать паузы.","— Что сказал бобр на концерте? — У вас очень плотный звук!","— Почему певец не обижается на эхо? — Оно всегда просит на бис.","— Что такое идеальная репетиция? — Когда все пришли вовремя, а соседи не заметили."].slice();}
+  function recommendedAssistantRules(){return [{"keywords":"заказать авторскую песню,песня на заказ по стихам","answer":"Хотите авторскую песню? Расскажите о задумке, стиле и событии — может родиться новая музыкальная история!"},{"keywords":"передать автору стихотворение,написал стихи для песни","answer":"Стихи уже есть? Прекрасное начало! Подготовьте текст и коротко расскажите о желаемой музыке. Сотрудничество обсуждается напрямую с автором."},{"keywords":"музыкант на нашу свадьбу,живое исполнение на свадьбе","answer":"Живая музыка для свадьбы — прекрасная идея! Для предложения укажите дату, место и формат выступления."},{"keywords":"предложить сюжет для новой песни,идея для новой композиции","answer":"Иногда большая песня начинается с одной строчки. Подготовьте свою идею и поделитесь ею с автором."},{"keywords":"мою композицию не видно на сайте,почему трек отсутствует в подборке","answer":"Возможно, трек ещё не опубликован или не добавлен в музыкальную подборку. Проверьте официальные релизы."},{"keywords":"покажи неизданные песни,можно услышать секретный трек","answer":"Премьерам нужно немного тайны! 🎭 Пока можно исследовать уже опубликованные музыкальные миры."}].map(function(r){
+    return {keywords:r.keywords,answer:r.answer};
+  });}
+  function keywordAlias(text){return String(text||'').toLowerCase().replace(/ё/g,'е')
+    .replace(/\s+/g,' ').trim();}
+  // Conservative dry-run: do not delete conflicting author-written replies.
+  function auditAssistantRules(rules,faq){
+    var clean=[],findings=[],duplicates=0,merged=0,conflicts=0,overlaps=0;
+    var faqWords={},seenWord={};
+    (faq||[]).forEach(function(r){
+      if(!r||r.enabled===false)return;
+      String(r.keywords||'').split(',').forEach(function(word){
+        var k=keywordAlias(word);
+        if(k.length>=2)faqWords[k]=true;
+      });
+    });
+    (rules||[]).forEach(function(rule,index){
+      var kept=[],within={};
+      String(rule.keywords||'').split(',').forEach(function(raw){
+        var v=raw.trim(),key=keywordAlias(v);
+        if(!key)return;
+        if(within[key]){duplicates++;findings.push('Правило '+(index+1)+': повтор «'+v+'» в этом правиле.');return;}
+        within[key]=true;kept.push(v);
+        if(faqWords[key]){overlaps++;findings.push('Правило '+(index+1)+': фраза «'+v+'» уже есть в общей базе знаний; авторский ответ имеет приоритет.');}
+        if(seenWord[key]&&seenWord[key].answer!==rule.answer){
+          conflicts++;findings.push('Правила '+seenWord[key].index+' и '+(index+1)+': фраза «'+v+'» ведёт к разным ответам. Требуется решение владельца.');
+        }
+        if(!seenWord[key])seenWord[key]={index:index+1,answer:rule.answer};
+      });
+      if(!kept.length){clean.push({keywords:rule.keywords,answer:rule.answer});return;}
+      var keylist=kept.join(',');
+      var counterpart=-1;
+      clean.forEach(function(existing,j){
+        if(counterpart<0&&existing.answer===rule.answer)counterpart=j;
+      });
+      if(counterpart>=0){
+        var target=clean[counterpart],present={};
+        target.keywords.split(',').forEach(function(w){present[keywordAlias(w)]=true;});
+        var extras=kept.filter(function(w){return !present[keywordAlias(w)];});
+        var combined=target.keywords+(extras.length?','+extras.join(','):'');
+        if(combined.length<=140){
+          target.keywords=combined;merged++;
+          findings.push('Правила '+(counterpart+1)+' и '+(index+1)+': одинаковый ответ; предложено объединить.');
+          return;
+        }
+      }
+      if(keylist!==rule.keywords)duplicates++;
+      clean.push({keywords:keylist,answer:rule.answer});
+    });
+    return {rules:clean,findings:findings,duplicates:duplicates,
+      merged:merged,conflicts:conflicts,overlaps:overlaps,
+      changed:JSON.stringify(clean)!==JSON.stringify(rules||[])};
+  }
+  function addRecommendedAssistantRules(rules,faq){
+    var clone=(rules||[]).map(function(r){return {keywords:r.keywords,answer:r.answer};});
+    var occupied={};
+    (faq||[]).forEach(function(r){
+      if(r&&r.enabled!==false)String(r.keywords||'').split(',').forEach(function(w){
+        occupied[keywordAlias(w)]=true;
+      });
+    });
+    clone.forEach(function(r){String(r.keywords||'').split(',').forEach(function(w){
+      occupied[keywordAlias(w)]=true;
+    });});
+    var added=0,skipped=0;
+    recommendedAssistantRules().forEach(function(r){
+      if(clone.length>=25){skipped++;return;}
+      var words=r.keywords.split(',').filter(function(w){
+        return w.trim()&&!occupied[keywordAlias(w)];
+      });
+      if(!words.length){skipped++;return;}
+      var entry={keywords:words.join(','),answer:r.answer};
+      clone.push(entry);words.forEach(function(w){occupied[keywordAlias(w)]=true;});
+      added++;
+    });
+    return {rules:clone,added:added,skipped:skipped};
+  }
   function defaults(){
     return {
       hero:{
@@ -103,6 +183,7 @@
         assistant:{enabled:true,greetingEnabled:true,title:'VELAR · помощник',
           welcome:'Добро пожаловать во вселенную VELARDREAM! Какое настроение у вас сегодня?',
           contactEmail:'',rules:[],
+          jokesEnabled:true,jokes:defaultAssistantJokes(),
           faq:defaultAssistantFaq(),
           typing:{enabled:true,speedMs:35}, // RUN-082: owner-controlled local typing effect
           labels:{
@@ -421,6 +502,14 @@
         throw new Error('Ключевые слова правила: разделите слова запятыми.');
       return {keywords:words,answer:plain(rule.answer||'','Ответ правила '+(i+1),500,true)};
     });
+    // RUN-084: jokes are editable in Studio and never stored as visitor chat logs.
+    var jokeInput=typeof item.jokes==='undefined'?def.jokes:item.jokes;
+    if(!Array.isArray(jokeInput)||jokeInput.length>40)
+      throw new Error('Музыкальные анекдоты: максимум 40 шуток.');
+    var jokes=jokeInput.map(function(joke,i){
+      return plain(joke,'Музыкальный анекдот '+(i+1),220,true);
+    });
+    var jokesEnabled=item.jokesEnabled!==false;
     // RUN-083: a bounded, owner-editable knowledge base. Owner's older
     // custom rules continue to override these editorial defaults.
     var faqInput=typeof item.faq==='undefined'?def.faq:item.faq;
@@ -539,7 +628,7 @@
       title:plain(typeof item.title==='string'?item.title:def.title,'Название помощника',55,true),
       welcome:plain(typeof item.welcome==='string'?item.welcome:def.welcome,
         'Приветствие помощника',250,true),
-      contactEmail:mail,rules:cleaned,faq:faq,typing:typing,labels:labels,quickTopics:quickTopics,replies:replies,avatars:avatars};
+      contactEmail:mail,rules:cleaned,jokes:jokes,jokesEnabled:jokesEnabled,faq:faq,typing:typing,labels:labels,quickTopics:quickTopics,replies:replies,avatars:avatars};
   }
   function card(x,type,index){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Карточка '+index+': неверный формат.');
@@ -640,5 +729,7 @@
     universeConfig:universeConfig,languagesConfig:languagesConfig,
     defaultUniverseNodes:defaultUniverseNodes,defaultLanguages:defaultLanguages,
     defaultTopics:defaultTopics,topicsConfig:topicsConfig,
-    assistantConfig:assistantConfig};
+    assistantConfig:assistantConfig,auditAssistantRules:auditAssistantRules,
+    recommendedAssistantRules:recommendedAssistantRules,
+    addRecommendedAssistantRules:addRecommendedAssistantRules};
 }());
