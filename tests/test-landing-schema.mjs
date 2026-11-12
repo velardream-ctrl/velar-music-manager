@@ -54,6 +54,7 @@ const assistant=def.genres.assistant;
 assert.equal(assistant.quickTopics.length,4);
 assert.equal(assistant.typing.enabled,true);
 assert.equal(assistant.typing.speedMs,35);
+assert.equal(assistant.favoriteSongTitle,'Velar Superstar');
 assert.equal(assistant.labels.launcher,'Помощник VELAR');
 assert.equal(assistant.labels.privacy,'Не сохраняем и не отправляем автору');
 assert.equal(assistant.avatars.reactions.heart,'heart');
@@ -65,6 +66,7 @@ const migrated=api.normalize(legacy).genres.assistant;
 assert.equal(migrated.labels.greetingBubble,'Привет из старой версии!');
 assert.equal(migrated.quickTopics.length,4);
 assert.equal(migrated.typing.enabled,true,'Older published configs gain default typing');
+assert.equal(migrated.favoriteSongTitle,'Velar Superstar','Old published assistants receive editorial favorite without migration');
 assert.equal(migrated.avatars.greeting,'auto');
 const ownerConfig={...assistant,
  labels:{...assistant.labels,privacy:'',submit:'Отправить'},
@@ -90,6 +92,7 @@ assert.throws(()=>invalidAssistant({typing:{enabled:true,speedMs:'35'}}),/15 д�
 assert.throws(()=>invalidAssistant({quickTopics:Array(13).fill({label:'Тема',query:'музыка'})}),/12/);
 assert.throws(()=>invalidAssistant({quickTopics:[{label:' ',query:'музыка'}]}),/обязательно/);
 assert.throws(()=>invalidAssistant({labels:{...assistant.labels,submit:'x'.repeat(41)}}),/40/);
+assert.throws(()=>invalidAssistant({favoriteSongTitle:'x'.repeat(115)}),/110/);
 assert.throws(()=>invalidAssistant({replies:{...assistant.replies,hello:'x'.repeat(501)}}),/500/);
 assert.throws(()=>invalidAssistant({avatars:{...assistant.avatars,launcher:'remote-url'}}),/Аватар/);
 assert.throws(()=>invalidAssistant({avatars:{...assistant.avatars,keywordRules:Array(21).fill({keywords:'любовь',source:'question',expression:'heart'})}}),/20/);
