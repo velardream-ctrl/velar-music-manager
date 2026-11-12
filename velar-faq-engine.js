@@ -82,6 +82,15 @@
      return make('Я бы начал с настроения. В разделе «Темы песен» можно прочитать описания и выбрать подходящую историю. А если хочется неожиданности — предложу случайную опубликованную композицию.',
        [topicLink(),randomAsk(),favoriteAsk()]);
    }
+   // Named requests remain handled by the approved-title matcher below.
+   // If no such public title exists, ask for clarification instead of a fake player.
+   var request=/^(?:включи|открой|поставь|найди|послушать) (?:мне )?(?:песню|трек|композицию)(?: (.+))?$/.exec(q);
+   if(request){
+     if(request[1]&&songMatch(q,songs).length)return null;
+     return make(request[1]?'Песни с таким названием пока нет среди опубликованных подборок. Можешь проверить темы или попробовать другую композицию.':
+       'Назови, какую песню открыть, или выбери подходящую тему. Могу также предложить случайную опубликованную композицию.',
+       [topicLink(),randomAsk()]);
+   }
    return null;
  }
  function find(q,settings){
