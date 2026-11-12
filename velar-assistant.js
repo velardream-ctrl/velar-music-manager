@@ -6,7 +6,7 @@
  'use strict';
  var root=null,dialog=null,log=null,input=null,prompt=null,buttons=null,header=null;
  var config=null,published=null,opened=false,initialized=false;
- var MAX_INPUT=360,activeTyping=null,announcer=null;
+ var MAX_INPUT=360,activeTyping=null,announcer=null,jokeCursor=-1;
  function find(id){return document.getElementById(id);}
  function el(tag,cls,t){
    var e=document.createElement(tag);
@@ -138,6 +138,14 @@
    var rules=settings.rules||[];
    for(var i=0;i<rules.length;i++){
      if(contains(q,rules[i].keywords))return {text:rules[i].answer};
+   }
+   // RUN-084: original, owner-editable jokes; each request gets the next one.
+   // No timer, tracking or cloud call. A special owner rule still wins.
+   if(settings.jokesEnabled!==false&&Array.isArray(settings.jokes)&&settings.jokes.length&&
+      contains(q,'анекдот,анекдоты,еще анекдот,ещё анекдот,ещё шутку,еще шутку,шутка,шутки,пошути,расскажи смешное,рассмеши,про музыкантов пошути')){
+     jokeCursor=(jokeCursor+1)%settings.jokes.length;
+     return {text:settings.jokes[jokeCursor],
+       action:'ask',target:'ещё анекдот',label:'Ещё анекдот 🎵'};
    }
    var suggested=window.VELAR_FAQ&&window.VELAR_FAQ.answer(q,data,settings);
    if(suggested)return suggested;
