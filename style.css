@@ -1002,7 +1002,8 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .velar-expression{position:relative;display:inline-flex;align-items:center;justify-content:center;
  flex-shrink:0;overflow:hidden;border-radius:50%;background:#1c3250;color:#efd29b;
  font:700 18px Georgia,serif;line-height:1;vertical-align:middle}
-.velar-expression::before{content:"";position:absolute;inset:0;border-radius:inherit;
+/* RUN-093: iOS 12 Safari does not support the CSS inset shorthand. */
+.velar-expression::before{content:"";position:absolute;top:0;right:0;bottom:0;left:0;border-radius:inherit;
  background-image:url('assets/dj-velar-expressions.jpg');background-repeat:no-repeat;
  background-size:1000% 100%;background-position:0% 50%}
 .velar-expression[data-expression="wave"]::before{background-position:11.1111% 50%}
