@@ -119,7 +119,7 @@
    var c=ctx();return c&&store?store.get(c.uid,key(c)).then(function(v){return !!v;}):Promise.resolve(false);
  }
  function syncAll(){
-   var c=ctx();
+   var c=ctx()||(studio()&&studio().offlineAdminContext&&studio().offlineAdminContext());
    if(syncing||!store||!c||!c.uid||!c.db||navigator.onLine===false)return Promise.resolve();
    syncing=true;var uid=c.uid,db=c.db,done=0,issues=[];
    return queue.catch(function(){}).then(function(){
