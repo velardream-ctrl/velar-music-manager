@@ -71,6 +71,18 @@ function findInput(label){
  assert.ok(node,'Missing form input: '+label);
  return node.children[1];
 }
+// RUN-099: even before Firebase catalog hydration the MAIN searchable catalog
+// field must exist, and an empty assigned list must not steal the search input.
+nav[7].onclick();
+const pendingCatalogSearch=traverse(get('landing-fields'),el=>el.className==='landing-language-catalog-search');
+assert.ok(pendingCatalogSearch,'Theme catalog search is visible while loading or awaiting admin connection');
+assert.match(pendingCatalogSearch.placeholder,/всём каталоге/);
+assert.equal(traverse(get('landing-fields'),el=>el.placeholder==='Поиск среди назначенных песен…'),null,
+ 'An empty attached-song filter must not be mistaken for the catalog search');
+pendingCatalogSearch.value='Люб';pendingCatalogSearch.oninput.call(pendingCatalogSearch);
+assert.equal(pendingCatalogSearch.value,'Люб');
+pendingCatalogSearch.value='';pendingCatalogSearch.oninput.call(pendingCatalogSearch);
+nav[0].onclick();
 api.open();await flush();
 assert.ok(reads.some(x=>x.key==='vmm_admins/owner1234'&&x.options?.source==='server'));
 assert.ok(reads.some(x=>x.key==='vmm_public_drafts/landing'));
