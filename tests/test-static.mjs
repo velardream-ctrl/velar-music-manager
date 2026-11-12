@@ -75,7 +75,7 @@ const studioRules = read('firestore.rules');
 assert.match(studioPage, /content="noindex,nofollow,noarchive"/);
 assert.ok(studioPage.includes('Войти через Google'));
 assert.ok(studioPage.includes('id="lyric-form"'));
-assert.ok(studioPage.includes('href="studio.css?v=21"'));
+assert.ok(studioPage.includes('href="studio.css?v=22"'));
 assert.ok(studioJs.includes("collection('vmm_admins').doc(user.uid).get({source:'server'})"), 'Studio must check the admin allowlist');
 assert.ok(studioJs.includes('doc.exists&&doc.data()&&doc.data().enabled===true'), 'Disabled admins denied');
 assert.ok(studioJs.includes('signInWithPopup(provider)'), 'Google sign-in must not use redirect');
