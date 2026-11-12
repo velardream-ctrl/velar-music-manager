@@ -109,6 +109,21 @@ assert.equal(secondPlayer.children.length,2,'Only one official iframe at a time'
 assert.equal(secondPlayer.children[0].src,'https://www.youtube-nocookie.com/embed/ABCDEFGHIjk');
 assert.equal(firstButton.attributes['aria-pressed'],'false');
 assert.equal(secondButton.attributes['aria-pressed'],'true');
+// User-reported case: a 3-song list must place first song iframe BEFORE rows 2 and 3.
+const s3={title:'Ты моя Карелия',provider:'spotify',
+ url:'https://open.spotify.com/track/ABCDEFGHIJKL0123456789'};
+const three=api.normalize({...original,artists:{...original.artists,cards:[
+ {...profile,featuredTracks:[s1,s2,s3]},other
+]}});
+listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:three})});
+const list3=host.children[0].children[1].children[1];
+assert.equal(list3.children.length,3);
+assert.equal(list3.children[0].children[1].children.length,0);
+list3.children[0].children[0].onclick();
+assert.equal(list3.children[0].children[1].children[0].tagName,'iframe');
+assert.equal(list3.children[1].children[1].children.length,0);
+assert.equal(list3.children[2].children[1].children.length,0);
+assert.match(css,/\.cms-music-entry>\.cms-music-player:not\(:empty\)/);
 const plain=api.normalize({...original,artists:{...original.artists,cards:[
  {...profile,featuredTracks:[]},{...other,featuredTracks:[]}
 ]}});
