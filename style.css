@@ -643,7 +643,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  justify-content:center;text-align:center;
 }
 .universe-stage.is-dense .universe-connectors{display:none}
-.universe-node-name{overflow-wrap:anywhere}
+.universe-node-name{word-wrap:break-word;overflow-wrap:break-word;overflow-wrap:anywhere}
 .languages-section{
  padding:68px 0 78px;text-align:center;
  border-bottom:1px solid rgba(230,210,174,.18);
@@ -808,7 +808,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  box-shadow:inset 0 0 15px rgba(222,198,153,.09),0 6px 19px #0005;
  font:600 .77rem -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
  cursor:pointer;z-index:2;text-align:center}
-.topic-planet-name{line-height:1.24;overflow-wrap:anywhere}
+.topic-planet-name{line-height:1.24;word-wrap:break-word;overflow-wrap:break-word;overflow-wrap:anywhere}
 .topic-planet small{font-size:.66rem;opacity:.76;margin-top:3px;font-weight:400}
 .topic-planet:hover,.topic-planet[aria-pressed=true]{
  border-color:#ffe3ad;background:#edcf98;color:#152440;
