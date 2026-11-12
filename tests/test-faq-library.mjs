@@ -134,7 +134,7 @@ assert.equal(sampleSection.genres.assistant.faq.length,113);
 assert.match(html,/velar-faq-engine\.js\?v=2/);
 assert.ok(html.indexOf('velar-faq-engine.js?v=2')<html.indexOf('velar-assistant.js?v=10'));
 assert.match(sw,/'\.\/velar-faq-engine\.js\?v=2'/);
-assert.match(sw,/CACHE_PREFIX \+ 'v28'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v29'/);
 assert.match(read('style.css'),/velar-chat-actions/);
 assert.match(bot,/choice\.action==='song'/);
 assert.match(bot,/choice\.action==='ask'/);
