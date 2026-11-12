@@ -73,5 +73,5 @@ assert.equal(app.openByUrl(spotify),true);
 assert.equal(other.children[0].children[2].children.length,0,
  'Only one player across topic and language sections');
 assert.match(read('style.css'),/\.public-song-inline:not\(:empty\)/);
-assert.match(read('index.html'),/public-song-ui\.js\?v=1/);
+assert.match(read('index.html'),/public-song-ui\.js\?v=2/);
 console.log('PASS: RUN-090 Spotify/YouTube inline single-row player, long lists, safe deep links, one active iframe');
