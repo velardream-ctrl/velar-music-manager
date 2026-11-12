@@ -366,7 +366,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .universe-panel{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(240px,.85fr);
  gap:18px;align-items:stretch;margin:25px auto 0;text-align:left}
 .universe-panel.hidden{display:none}
-.universe-scene{position:relative;min-width:0;overflow:hidden;border-radius:19px;border:1px solid #d3b88382;
+.universe-scene{position:relative;min-width:0;max-width:100%;box-sizing:border-box;overflow:hidden;border-radius:19px;border:1px solid #d3b88382;
  background:radial-gradient(circle at 50% 49%,#51618048 0 4%,transparent 41%),
  radial-gradient(1px 1px at 14% 18%,#e9d09e 0,transparent 100%),
  radial-gradient(1px 1px at 82% 22%,#fff4de 0,transparent 100%),
@@ -381,7 +381,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  transform:translate(-50%,-50%);border:1px solid #e5cc97a8;border-radius:50%;
  box-shadow:0 0 18px #f0bc7d3d,0 0 65px #e9a47330,inset 0 0 24px #e9c99728;
  background:radial-gradient(circle,#d8b780 0%,#56466e 19%,#1b2d52 45%,#101b35 100%);pointer-events:none}
-.universe-node{position:absolute;transform:translate(-50%,-50%);
+.universe-node{position:absolute;transform:translate(-50%,-50%);box-sizing:border-box;
  display:flex;align-items:center;gap:7px;text-align:left;min-width:118px;max-width:160px;
  padding:9px 12px;background:#1b2f4bed;border:1px solid #a89370;
  border-radius:12px;box-shadow:0 7px 22px #0008;color:#e8d8ba;cursor:pointer;
@@ -399,7 +399,8 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .universe-go{display:inline-flex;align-self:flex-start;padding:12px 16px;border:1px solid #e0c38b;
  border-radius:10px;color:#ffddb0;text-decoration:none;font-size:.86rem}
 .universe-go:hover{background:#e5c891;color:#1b2a45}
-@media(max-width:950px){.universe-panel{grid-template-columns:1fr}.universe-stage{min-height:340px}}
+/* RUN-089: 1024px iPad landscape keeps the full-width safe orbit. */
+@media(max-width:1100px){.universe-panel{grid-template-columns:1fr}.universe-stage{min-height:340px}}
 @media(max-width:610px){
  .universe-section{padding:47px 0 53px}
  .universe-stage{min-height:332px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
@@ -657,7 +658,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  max-width:735px;margin:0 auto 21px;
 }
 .language-cosmos{
- position:relative;isolation:isolate;min-height:590px;width:100%;
+ position:relative;isolation:isolate;min-height:590px;width:100%;max-width:100%;box-sizing:border-box;
  border-radius:19px;overflow:hidden;
  border:1px solid rgba(222,186,135,.48);
  background:
@@ -683,7 +684,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 }
 .language-orbit{position:absolute;inset:0;min-height:0}
 .language-orbit-node{
- position:absolute;z-index:2;transform:translate(-50%,-50%);
+ position:absolute;z-index:2;transform:translate(-50%,-50%);box-sizing:border-box;min-width:0;max-width:100%;
  display:flex;flex-direction:column;align-items:center;justify-content:center;
  min-height:55px;width:126px;padding:7px 10px;
  background:rgba(21,38,69,.96);color:#e9d4ae;
@@ -698,7 +699,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  border-color:#ffdfaa;color:#182745;background:#efd2a0;
  box-shadow:0 0 23px rgba(232,199,140,.37);
 }
-.language-orbit-label{overflow-wrap:anywhere;line-height:1.2}
+.language-orbit-label{word-wrap:break-word;overflow-wrap:break-word;overflow-wrap:anywhere;line-height:1.2}
 .language-orbit-node small{font-size:.64rem;font-weight:400;opacity:.76;margin-top:3px}
 .language-orbit.is-dense{
  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;
@@ -746,7 +747,9 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .language-player{min-width:0}
 .language-more{align-self:center;min-height:42px;border-radius:10px;padding:8px 16px;
  background:#233a5b;border:1px solid #d2b17e;color:#f5d9a5;cursor:pointer}
-@media(max-width:950px){
+/* RUN-089: preserve the bounded crystal-and-grid layout in both iPad orientations.
+   The old 43% orbit clipped fixed-width labels at 1024px. */
+@media(max-width:1100px){
  .languages-section{padding:48px 0 60px}
  .language-cosmos{display:flex;flex-direction:column;gap:3px;min-height:0;padding:15px 13px 20px}
  .language-cosmos-core{
@@ -754,13 +757,13 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
    width:88px;height:158px;margin:5px auto 8px;flex:0 0 158px;
  }
  .language-orbit,.language-orbit.is-dense{
-   position:relative;inset:auto;display:grid;
+   position:relative;inset:auto;display:grid;width:100%;max-width:100%;box-sizing:border-box;
    grid-template-columns:repeat(3,minmax(0,1fr));
    padding:0;gap:9px;align-content:initial;
  }
  .language-orbit-node,.language-orbit.is-dense .language-orbit-node{
    position:relative;left:auto!important;top:auto!important;transform:none!important;
-   width:auto;min-height:54px;
+   box-sizing:border-box;min-width:0;max-width:100%;width:100%;min-height:54px;
  }
  .universe-orbit-controls span{font-size:.55rem}
 }
@@ -783,7 +786,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .topics-section h2{font:400 clamp(1.75rem,3.9vw,2.85rem)/1.16 Georgia,serif;color:#fbe6c6;margin:12px 0}
 .topics-intro{max-width:710px;margin:0 auto 22px;color:#c1cfe1;line-height:1.6;font-size:.95rem}
 .topics-cosmos{
- position:relative;isolation:isolate;height:525px;border:1px solid rgba(230,195,138,.55);
+ position:relative;isolation:isolate;height:525px;max-width:100%;box-sizing:border-box;border:1px solid rgba(230,195,138,.55);
  border-radius:18px;overflow:hidden;
  background:radial-gradient(circle at 50% 50%,rgba(72,94,145,.32),transparent 56%),
  radial-gradient(circle at 14% 20%,#e9c891 0 1px,transparent 2px),
@@ -797,7 +800,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .topics-cosmos-glow{position:absolute;inset:-35%;border-radius:50%;z-index:-1;
  background:radial-gradient(ellipse,rgba(235,195,125,.2),rgba(99,143,207,.12) 45%,transparent 72%)}
 .topics-orbit{position:absolute;inset:0}
-.topic-planet{position:absolute;transform:translate(-50%,-50%);
+.topic-planet{position:absolute;transform:translate(-50%,-50%);box-sizing:border-box;max-width:100%;
  display:flex;align-items:center;justify-content:center;flex-direction:column;
  padding:8px 11px;min-height:58px;width:130px;
  border:1px solid rgba(231,194,140,.7);border-radius:999px;
@@ -841,7 +844,8 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .topic-player{min-width:0}
 .topic-show-more{padding:10px 15px;border:1px solid #d0b47e;border-radius:10px;
  background:#283e60;color:#f4d9ab;min-height:44px;cursor:pointer}
-@media(max-width:850px){
+/* RUN-089: keep the same safe topic layout at 768px and 1024px. */
+@media(max-width:1100px){
  .topics-section{padding:42px 0 55px}
  .topics-cosmos{height:auto;min-height:0;display:flex;flex-direction:column;padding:13px}
  .topics-cosmos-core{position:relative;left:auto;top:auto;transform:none;
@@ -863,9 +867,12 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 
 
 /* RUN-074 — homegrown 0-API chat concierge, accessible and cache-friendly. */
+/* RUN-089: Safari 12 ignores clamp() and min() in layout properties.
+   Fallback declarations keep the assistant right-docked on old iPad. */
 .velar-assistant{
- position:fixed;right:clamp(12px,2.5vw,34px);
+ position:fixed;right:12px;right:clamp(12px,2.5vw,34px);
  bottom:0;
+ width:calc(100% - 24px);max-width:345px;
  width:min(345px,calc(100vw - 24px));z-index:80;
  color:#f5e5c9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
 }
@@ -905,7 +912,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 }
 .velar-assistant-dialog{
  display:flex;flex-direction:column;gap:0;
- width:100%;height:auto;max-height:min(560px,65vh);
+ width:100%;height:auto;max-height:65vh;max-height:min(560px,65vh);
  margin-bottom:0;border:1px solid #d4b17d;border-radius:17px 17px 0 0;
  background:#101f39;box-shadow:0 10px 38px #000b;overflow:hidden;
  padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;
@@ -967,6 +974,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 @media(max-width:590px){
  .velar-assistant{
   right:12px;bottom:0;
+  width:calc(100% - 24px);max-width:360px;
   width:min(360px,calc(100vw - 24px));
  }
  .velar-assistant-dialog{max-height:min(540px,68vh)}
@@ -1007,7 +1015,8 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .velar-expression[data-expression="off"]::before{background-position:88.8889% 50%}
 .velar-expression[data-expression="celebrate"]::before{background-position:100% 50%}
 @media(max-width:590px){
- .velar-assistant{width:min(306px,calc(100vw - 24px));right:12px}
+ .velar-assistant{width:calc(100% - 24px);max-width:306px;
+   width:min(306px,calc(100vw - 24px));right:12px}
  .velar-assistant-dialog{max-height:min(390px,50vh)}
  .velar-assistant-greeting{padding:8px;gap:6px}
  .velar-assistant-suggestions{padding:5px 7px}
