@@ -63,8 +63,8 @@
      };
    });
  }
- function exportPending(uid){
-   return list(uid,'pending:').then(function(items){
+ function exportPending(uid,prefix){
+   return list(uid,prefix||'pending:').then(function(items){
      if(!items.length)throw new Error('Нет ожидающих синхронизации записей.');
      var data={format:'VELAR_ADMIN_OFFLINE_BACKUP_V1',createdAt:new Date().toISOString(),
        ownerUid:String(uid),items:items.map(function(item){
