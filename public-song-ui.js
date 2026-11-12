@@ -76,13 +76,16 @@
      copy.type='button';copy.setAttribute('aria-label','Слушать '+track.title+' в основном плеере');
      copy.onclick=function(){open(i,sources[0]);};
      copy.appendChild(el('strong','',track.title));
-     if(track.artist)copy.appendChild(el('small','',track.artist));
+     copy.appendChild(el('small','',(track.artist?track.artist+' · ':'')+
+       (sources[0].provider==='spotify'?'Spotify':'YouTube')));
      title.appendChild(copy);item.appendChild(title);
      var controls=el('div','public-song-platforms');
      buttons[i]=[];
      sources.forEach(function(src,j){
+       // Preserve the original compact round Play glyph instead of a
+       // wide emoji/text button. The optional second service is a small pill.
        var choice=el('button','public-song-source'+(j===0?' is-primary':''),
-         (j===0?'▶ ':'')+(src.provider==='spotify'?'Spotify':'YouTube'));
+         j===0?'':(src.provider==='spotify'?'Spotify':'YouTube'));
        choice.type='button';choice.setAttribute('aria-pressed','false');
        choice.setAttribute('data-provider',src.provider);
        choice.setAttribute('aria-label','Слушать '+track.title+' в '+(src.provider==='spotify'?'Spotify':'YouTube'));
