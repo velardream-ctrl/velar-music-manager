@@ -1189,7 +1189,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 }
 .cms-album-cover{
  position:relative;display:flex;align-items:center;justify-content:center;
- width:100%;aspect-ratio:1/1;background:radial-gradient(circle,#31486f,#182845);
+ width:100%;height:260px;aspect-ratio:1/1;background:radial-gradient(circle,#31486f,#182845);
  overflow:hidden;
 }
 .cms-album-cover-image{display:block;width:100%;height:100%;object-fit:cover}
@@ -1214,7 +1214,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  display:grid;grid-template-columns:180px minmax(0,1fr);align-items:start;
 }
 .cms-album-gallery--list .cms-album-songs{grid-column:1/-1}
-.cms-album-gallery--list .cms-album-cover{width:180px;aspect-ratio:1/1}
+.cms-album-gallery--list .cms-album-cover{width:180px;height:180px;aspect-ratio:1/1}
 /* Optional thumbnails never change the existing classic list by default. */
 .public-song-entry--covers .public-song-thumbnail{
  flex:0 0 42px;width:42px;height:42px;object-fit:cover;
@@ -1256,7 +1256,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 }
 .cms-music-track-thumb--empty{font:400 1.5rem Georgia,serif}
 .cms-music-list--tiles .cms-music-track-thumb{
- flex:0 0 auto;width:100%;height:auto;aspect-ratio:1/1;max-height:240px;
+ flex:0 0 auto;width:100%;height:145px;aspect-ratio:1/1;max-height:240px;
 }
 .cms-music-list--tiles .cms-music-play-icon{align-self:flex-end}
 @media(max-width:950px){
@@ -1265,7 +1265,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 @media(max-width:590px){
  .cms-album-gallery{grid-template-columns:1fr}
  .cms-album-gallery--list .cms-album-card{grid-template-columns:112px minmax(0,1fr)}
- .cms-album-gallery--list .cms-album-cover{width:112px}
+ .cms-album-gallery--list .cms-album-cover{width:112px;height:112px}
  .cms-album-body{padding:13px}
  .cms-album-body h3{font-size:1.2rem}
  .cms-album-gallery--list .cms-album-songs{grid-column:1/-1}
