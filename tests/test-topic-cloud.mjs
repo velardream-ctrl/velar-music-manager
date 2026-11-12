@@ -30,7 +30,7 @@ assert.equal(edited.genres.topics.entries.find(t=>t.slug==='wedding').tracks[0].
  'https://www.youtube.com/watch?v=ZYXWVUTSRQP');
 assert.equal(edited.genres.topics.entries.find(t=>t.slug==='love').tracks[1].url,
  'https://www.youtube.com/watch?v=ABCDEFGHIjk');
-assert.equal(Object.keys(edited).sort().join(','),'about,artists,genres,hero,releases');
+assert.equal(Object.keys(edited).sort().join(','),'about,albums,artists,genres,hero,releases');
 assert.throws(()=>API.topicsConfig({entries:[{
  slug:'not-allowed',label:'Bad',visible:true,tracks:[{...song,url:'https://drive.google.com/private'}]
 }]},d.genres.topics),/прямая ссылка/);
