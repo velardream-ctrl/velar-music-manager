@@ -21,7 +21,14 @@
   function isDirty(){return !!(selectedRecord||selectedDraft) && body().value!==baseline;}
   function confirmDiscard(){
     if(saveBusy){text(el('save-message'),'Сохранение ещё выполняется; дождись подтверждения записи.');return false;}
-    return !isDirty()||window.confirm('В тексте есть несохранённые изменения. Отменить изменения и перейти к другой песне?');
+    if(!isDirty())return true;
+    if(window.VMM_OFFLINE_LYRICS){
+      if(window.VMM_OFFLINE_LYRICS.savedCurrent())return true;
+      window.VMM_OFFLINE_LYRICS.saveNow().catch(function(){});
+      text(el('save-message'),'Изменения ещё записываются на устройство. Дождись сохранения, затем повтори действие.');
+      return false;
+    }
+    return window.confirm('В тексте есть несохранённые изменения. Отменить изменения и перейти к другой песне?');
   }
   function focusSheet(yes){
     show(el('vmm-editor-view'),!yes);show(el('vmm-paper-view'),yes);
@@ -164,6 +171,7 @@
     focusSheet(false);
     refreshToolbar();
     if(window.VMM_LYRICS_TOOLS)window.VMM_LYRICS_TOOLS.onRecordLoaded();
+    if(window.VMM_OFFLINE_LYRICS)window.VMM_OFFLINE_LYRICS.recover();
   }
   function chooseVersion(id){
     if(id==='__draft'&&selectedDraft){fillLyric(selectedDraft,true);setVersionChoices('__draft');return;}
@@ -208,6 +216,8 @@
       lyrics=[];result[1].forEach(function(doc){var x=doc.data();x.id=doc.id;lyrics.push(x);});
       lyrics.sort(function(a,b){return name(a.title).localeCompare(name(b.title),'ru');});
       songOptions();
+      if(window.VMM_OFFLINE_LYRICS&&user)
+        window.VMM_OFFLINE_LYRICS.cacheDataset(user.uid,catalog,lyrics);
       text(el('sync-status'),(result[0]?'Песен в каталоге: '+catalog.length:'Каталог временно недоступен')+' · сохранено текстов: '+lyrics.length+(navigator.onLine?' · в сети':' · офлайн'));
       if(id){
         for(var i=0;i<lyrics.length;i++)if(lyrics[i].id===id){var song=songForLyric(lyrics[i]);if(song)songKey='catalog:'+song.id;else songKey='legacy:'+lyrics[i].id;break;}
@@ -216,6 +226,17 @@
       }else if(songKey)chooseSong(songKey);
       return true;
     }).catch(function(e){
+      // Fallback to the last VERIFIED admin user's cached catalog and lyrics.
+      // The page never exposes this data before the Firebase admin gate succeeds.
+      if(navigator.onLine===false&&window.VMM_OFFLINE_LYRICS&&user){
+        return window.VMM_OFFLINE_LYRICS.cachedDataset(user.uid).then(function(saved){
+          if(!saved||!Array.isArray(saved.catalog)||!Array.isArray(saved.lyrics))throw e;
+          catalog=saved.catalog;lyrics=saved.lyrics;songOptions();
+          text(el('sync-status'),'Загружен личный офлайн-каталог · '+lyrics.length+' текстов');
+          if(id){chooseVersion(id);}else if(songKey)chooseSong(songKey);
+          return true;
+        }).catch(function(err){text(el('sync-status'),'Не удалось загрузить офлайн-каталог: '+err.message);throw err;});
+      }
       text(el('sync-status'),'Не удалось загрузить данные: '+e.message);throw e;
     });
   }
@@ -270,7 +291,10 @@
     else if(section==='recordings'&&window.VMM_RECORDINGS)window.VMM_RECORDINGS.open();
     else if(section!=='lyrics'&&window.VMM_WORKFLOWS)window.VMM_WORKFLOWS.open(section);
     else selectPanel('lyrics');
-    updateLoaded().catch(function(){});
+    updateLoaded().then(function(){
+      if(window.VMM_OFFLINE_LYRICS&&navigator.onLine)
+        window.VMM_OFFLINE_LYRICS.syncAll();
+    }).catch(function(){});
   }
   function unauthorized(note){
     authorized=false;authorizedUid='';saveBusy=false;lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
@@ -284,8 +308,28 @@
     if(!authorized||!user||!db){text(el('save-message'),'Недостаточно прав.');return;}
     var meta=metadata(),current=body().value;
     if(!meta||!songKey||!name(current)){text(el('save-message'),'Сначала выбери песню и введи её текст.');return;}
-    if(!navigator.onLine){text(el('save-message'),'Нет интернета. Текст остаётся в редакторе; запись в базу пока не отправлена.');return;}
+    if(!navigator.onLine){
+      if(!window.VMM_OFFLINE_LYRICS){text(el('save-message'),'Локальное хранилище недоступно. Скопируй текст.');return;}
+      window.VMM_OFFLINE_LYRICS.saveNow().then(function(){
+        text(el('save-message'),'Сохранено на этом устройстве. При возвращении сети текст синхронизируется после проверки изменений.');
+      }).catch(function(err){text(el('save-message'),'Не удалось сохранить локально: '+err.message);});
+      return;
+    }
     if(!isDirty()){text(el('save-message'),'Изменений для сохранения нет.');return;}
+    if(window.VMM_OFFLINE_LYRICS){
+      saveBusy=true;body().readOnly=true;refreshToolbar();
+      text(el('save-message'),'Сохраняем локально и проверяем очередь синхронизации…');
+      window.VMM_OFFLINE_LYRICS.saveNow().then(function(){
+        return window.VMM_OFFLINE_LYRICS.syncAll();
+      }).then(function(){
+        saveBusy=false;body().readOnly=false;refreshToolbar();
+        if(isDirty())text(el('save-message'),'Локальная копия сохранена. Если облако изменилось, сравни версии перед продолжением.');
+      }).catch(function(err){
+        saveBusy=false;body().readOnly=false;refreshToolbar();
+        text(el('save-message'),'Локальная копия/синхронизация: '+err.message);
+      });
+      return;
+    }
     var song=songByKey(songKey),isEdit=!!selectedRecord;
     if(!song){text(el('save-message'),'Композиция не выбрана.');return;}
     // Prevent accidental identity overwrites: on edits, update only content and audit.
@@ -309,6 +353,7 @@
     }).then(function(){
       // Do not silently discard the user's current editor if a later read fails.
       baseline=current;saveBusy=false;body().readOnly=false;refreshToolbar();
+      if(window.VMM_OFFLINE_LYRICS)window.VMM_OFFLINE_LYRICS.syncAll();
       text(el('save-message'),'Сохранено. Связь с песней сохранена; изменение записано в журнал.');
       updateLoaded(recordId).catch(function(){text(el('save-message'),'Запись сохранена, но список пока не обновился. Содержимое редактора не потеряно.');});
     }).catch(function(err){
@@ -429,10 +474,21 @@
     }
   };
   el('new-lyric').onclick=newVersion;
+  el('lyrics-export-offline').onclick=function(){
+    if(!user||!authorized||!window.VMM_OFFLINE_ADMIN){
+      text(el('lyrics-offline-status'),'Войди в личный кабинет перед экспортом.');return;
+    }
+    window.VMM_OFFLINE_ADMIN.exportPending(user.uid,'pending:lyric:').then(function(n){
+      text(el('lyrics-offline-status'),'Скачана резервная копия '+n+' локальных текстов. Храни её в безопасном месте.');
+    }).catch(function(err){text(el('lyrics-offline-status'),'Экспорт: '+err.message);});
+  };
   el('lyric-view-editor').onclick=function(){focusSheet(false);};
   el('lyric-view-paper').onclick=function(){focusSheet(true);};
   form().onsubmit=save;
   body().addEventListener('input',refreshToolbar);
+  body().addEventListener('input',function(){
+    if(window.VMM_OFFLINE_LYRICS)window.VMM_OFFLINE_LYRICS.edited();
+  });
   el('print-lyric').onclick=function(){if(window.VMM_LYRICS_TOOLS)window.VMM_LYRICS_TOOLS.print();else text(el('save-message'),'Печать пока не загружена.');};
   el('share-lyric').onclick=function(){if(window.VMM_LYRICS_TOOLS&&window.VMM_LYRICS_TOOLS.share)window.VMM_LYRICS_TOOLS.share();else text(el('save-message'),'Функция передачи пока недоступна.');};
   var nav=document.querySelectorAll('#workspace [data-panel]');
@@ -448,7 +504,10 @@
     if(!isDirty()&&!(window.VMM_LANDING&&window.VMM_LANDING.isDirty&&window.VMM_LANDING.isDirty()))return;
     e.preventDefault();e.returnValue='';
   });
-  window.addEventListener('online',function(){text(el('net-state'),'В сети');});
+  window.addEventListener('online',function(){
+    text(el('net-state'),'В сети');
+    if(window.VMM_OFFLINE_LYRICS)window.VMM_OFFLINE_LYRICS.syncAll();
+  });
   window.addEventListener('offline',function(){text(el('net-state'),'Без сети');});
   window.VMM_STUDIO={
     rememberPanel:rememberPanel,
@@ -456,6 +515,34 @@
     openData:function(){selectPanel('data');},
     getLyricsMeta:function(){return metadata();},
     isLyricsDirty:isDirty,
+    offlineAdminContext:function(){
+      return authorized&&user&&db?{uid:user.uid,db:db}:null;
+    },
+    offlineLyricContext:function(){
+      if(!authorized||!user||!db||!songKey||!(selectedRecord||selectedDraft))return null;
+      return {uid:user.uid,db:db,key:songKey,
+        recordId:selectedRecord?selectedRecord.id:'',
+        meta:{title:metadata().title,upc:metadata().upc,
+          catalogRow:metadata().catalogRow,language:metadata().language,
+          version:metadata().version},
+        text:body().value,baseText:baseline,dirty:isDirty()};
+    },
+    offlineRestoreLyric:function(value,oldBaseline){
+      if(!authorized||!songKey)return;
+      baseline=String(oldBaseline||'');body().value=String(value||'');
+      refreshToolbar();
+      text(el('save-message'),'Восстановлен локальный текст; он ожидает безопасной синхронизации.');
+    },
+    offlineLyricSynced:function(key,meta,value,recordId){
+      if(songKey!==key||!metadata()||body().value!==value)return;
+      var active=metadata();
+      if(titleKey(active.title)!==titleKey(meta.title)||
+         titleKey(active.language)!==titleKey(meta.language)||
+         titleKey(active.version)!==titleKey(meta.version))return;
+      baseline=value;refreshToolbar();
+      text(el('save-message'),'Текст синхронизирован с облаком. Другие устройства смогут увидеть его после обновления.');
+      updateLoaded(recordId).catch(function(){});
+    },
     openForTrack:function(t){
       if(!authorized||!db)return Promise.reject(new Error('Нет доступа'));
       if(!confirmDiscard())return Promise.reject(new Error('Переход отменён: есть несохранённый текст.'));
