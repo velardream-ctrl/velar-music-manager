@@ -294,6 +294,7 @@ findInput('Надпись на кнопке открытия').input('VELAR сп
 findInput('Надпись кнопки отправки').input('Написать');
 findInput('Строка под полем сообщения (пусто — скрыть)').input('Только на вашем телефоне');
 findInput('Ответ на приветствие').input('Привет из Studio!');
+findInput('Любимая песня помощника').input('Velar Superstar (выбор автора)');
 const typingToggle=traverse(get('landing-fields'),n=>n.className==='landing-checkbox'&&
  n.children[1]?.textContent==='Показывать ответы по буквам (эффект живой печати)');
 assert.ok(typingToggle,'Typing toggle exists in Studio');
@@ -323,6 +324,7 @@ const draftAssistant=records.get('vmm_public_drafts/landing').content.genres.ass
 assert.equal(draftAssistant.labels.launcher,'VELAR спрашивает');
 assert.equal(draftAssistant.typing.enabled,false);
 assert.equal(draftAssistant.typing.speedMs,55);
+assert.equal(draftAssistant.favoriteSongTitle,'Velar Superstar (выбор автора)');
 assert.equal(draftAssistant.labels.submit,'Написать');
 assert.equal(draftAssistant.replies.hello,'Привет из Studio!');
 assert.equal(draftAssistant.quickTopics.length,5);
@@ -334,10 +336,12 @@ assert.equal(draftAssistant.avatars.keywordRules[0].expression,'night');
 assert.equal(draftAssistant.avatars.keywordRules[0].source,'answer');
 assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.quickTopics.length,4,
  'Chat tags must stay private until publication');
+assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.favoriteSongTitle,'Velar Superstar','Favorite changes must not go live on draft save');
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.quickTopics.length,5);
 assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.typing.enabled,false);
 assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.typing.speedMs,55);
+assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.favoriteSongTitle,'Velar Superstar (выбор автора)');
 assert.equal(records.get('vmm_public_pages/landing').content.genres.assistant.avatars.launcher,'heart');
 const tagRemove=traverse(get('landing-fields'),n=>n.textContent==='Удалить кнопку');
 assert.ok(tagRemove);
