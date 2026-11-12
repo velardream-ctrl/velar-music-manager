@@ -25,10 +25,11 @@
    if(src.provider==='youtube')return 'https://www.youtube-nocookie.com/embed/'+src.url.split('v=')[1];
    return '';
  }
+ var activeMount=null;
  function mount(list,tracks,opts){
    opts=opts||{};
    var classes=opts.prefix==='language'?'language':'topic';
-   var amount=opts.batch||12,index=-1,source='',slots=[],buttons=[],count=0,more=null;
+   var amount=opts.batch||12,index=-1,source='',slots=[],buttons=[],count=0,more=null,instance=null;
    clear(list);
    function clearActive(){
      if(index>=0&&slots[index])clear(slots[index]);
@@ -36,15 +37,17 @@
        button.setAttribute('aria-pressed','false');
      });});
      index=-1;source='';
+     if(activeMount===instance)activeMount=null;
    }
    function open(i,src){
      var link=embed(src);
      if(!link||!slots[i])return false;
+     if(activeMount&&activeMount!==instance)activeMount.close();
      // One official external player only, shared with other public sections.
      if(window.VMM_PUBLIC_LANDING&&window.VMM_PUBLIC_LANDING.stopExternalPlayers)
        window.VMM_PUBLIC_LANDING.stopExternalPlayers();
      clearActive();
-     index=i;source=src.provider;
+     index=i;source=src.provider;activeMount=instance;
      var host=slots[i],frame=el('iframe','cms-release-iframe '+classes+'-song-iframe'+
        (src.provider==='youtube'?' cms-release-iframe--video':''));
      frame.title=tracks[i].title+' — официальный плеер '+(src.provider==='spotify'?'Spotify':'YouTube');
@@ -69,7 +72,9 @@
      var item=el('div','public-song-entry '+classes+'-song-entry');
      var title=el('div','public-song-label');
      title.appendChild(el('span','public-song-index',('0'+(i+1)).slice(-2)));
-     var copy=el('span','public-song-copy');
+     var copy=el('button','public-song-copy public-song-title-button');
+     copy.type='button';copy.setAttribute('aria-label','Слушать '+track.title+' в основном плеере');
+     copy.onclick=function(){open(i,sources[0]);};
      copy.appendChild(el('strong','',track.title));
      if(track.artist)copy.appendChild(el('small','',track.artist));
      title.appendChild(copy);item.appendChild(title);
@@ -110,8 +115,9 @@
      }
      return false;
    }
+   instance={openByUrl:openByUrl,close:clearActive};
    appendBatch();
-   return {openByUrl:openByUrl,close:clearActive};
+   return instance;
  }
  window.VELAR_PUBLIC_SONGS={mount:mount,approved:approved};
 }());
