@@ -22,7 +22,9 @@ service cloud.firestore {
       allow get: if signedInGoogle() && request.auth.uid == uid;
       allow list, create, update, delete: if false;
     }
-    // RUN-061. Public landing content is entirely separate from private VMM.
+    // RUN-061 / RUN-098. Public landing content is entirely separate from private VMM.
+    // RUN-098: album gallery is an explicit sixth top-level public field.
+    // Never relax these rules to expose vmm_catalog, vmm_lyrics, or private drafts.
     // STAGED ONLY: merge into actual production rules after comparing with
     // the currently deployed rules. Never replace live rules blindly.
     function validLandingWrite(status) {
@@ -41,13 +43,16 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time
         && request.resource.data.content is map
         && request.resource.data.content.keys().hasOnly([
-          'hero','artists','releases','genres','about'
+          'hero','artists','albums','releases','genres','about'
         ])
         && request.resource.data.content.keys().hasAll([
-          'hero','artists','releases','genres','about'
+          'hero','artists','albums','releases','genres','about'
         ])
         && request.resource.data.content.hero is map
         && request.resource.data.content.artists is map
+        && request.resource.data.content.albums is map
+        && request.resource.data.content.albums.entries is list
+        && request.resource.data.content.albums.entries.size() <= 8
         && request.resource.data.content.releases is map
         && request.resource.data.content.genres is map
         && request.resource.data.content.about is map
