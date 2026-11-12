@@ -42,7 +42,7 @@ assert.equal(answer('песня на немецком').target,'#languages');
 const custom={...settings,rules:[{keywords:'эксклюзив',answer:'У нас есть особая подборка.'}]};
 assert.equal(answer('эксклюзив',custom).text,'У нас есть особая подборка.');
 assert.match(html,/id="velar-assistant"/);
-assert.match(html,/velar-assistant\.js\?v=9/);
+assert.match(html,/velar-assistant\.js\?v=10/);
 assert.match(html,/name="robots" content="noindex,nofollow,noarchive"/);
 assert.match(css,/\.velar-assistant-launch/);
 assert.match(css,/\.velar-assistant-wave/);
@@ -58,7 +58,7 @@ assert.equal(w.VELAR_ASSISTANT.expressionFor('OK'),'okay');
 assert.ok(css.includes("max-height:min(390px,50vh)"));
 assert.ok(!code.includes("dj-velar-assistant.webp"));
 assert.match(code,/sessionStorage/);
-assert.match(sw,/'\.\/velar-assistant\.js\?v=9'/);
+assert.match(sw,/'\.\/velar-assistant\.js\?v=10'/);
 assert.match(publicCode,/velar-radio-hidden/);
 assert.match(publicCode,/VELAR_ASSISTANT\.render\(value\)/);
 assert.doesNotMatch(code,/fetch\(|firebase|XMLHttpRequest|setInterval\(|WebSocket|autoplay=|\.play\(/);
@@ -73,13 +73,18 @@ assert.match(code,/querySelector\('\.velar-assistant-title'\)/);
 assert.match(code,/Не сохраняем и не отправляем автору/);
 assert.doesNotMatch(code,/Ответы формируются на устройстве\. Сообщения не сохраняются/);
 assert.match(css,/\.velar-assistant-launch\[aria-expanded="true"\]\{display:none\}/);
+// RUN-088: launcher must disappear at DESKTOP width, not only in mobile media.
+const globalLauncherRule=css.indexOf('.velar-assistant-launch[aria-expanded="true"]{display:none}');
+const mobileAssistantMedia=css.indexOf('/* RUN-079 — denser mobile assistant');
+assert.ok(globalLauncherRule>0&&globalLauncherRule<mobileAssistantMedia,
+ 'Hide expanded launcher before mobile @media; desktop should not show duplicate title');
 assert.match(css,/\.velar-assistant-log\{min-height:96px;max-height:235px/);
 assert.match(css,/\.velar-assistant-suggestion\{min-height:28px;padding:2px 7px/);
 assert.match(css,/\.velar-assistant-privacy\{padding:1px 7px 3px/);
 assert.match(css,/\.velar-assistant-header-note\{display:none\}/);
 assert.match(css,/\.velar-assistant-input\{height:36px;padding:6px 8px;font-size:16px\}/);
-assert.match(sw,/CACHE_PREFIX \+ 'v27'/);
-assert.match(html,/style\.css\?v=23/);
+assert.match(sw,/CACHE_PREFIX \+ 'v28'/);
+assert.match(html,/style\.css\?v=24/);
 assert.ok(code.includes("querySelector('.velar-assistant-launch')"));
 
 const customLabels={...settings,labels:{...settings.labels,
@@ -207,9 +212,12 @@ assert.equal(scheduled.size,1,'Only one typing timer can be active');
 const close=host.querySelector('.velar-assistant-close');
 close.onclick();
 assert.equal(scheduled.size,0,'Closing chat cancels animation');
+assert.equal(deviceWindow.VELAR_ASSISTANT.typingStatus(),'enabled');
 assert.equal(pendingParagraph.className.includes('velar-chat-typing'),false);
 // Option to disable animation, including legacy/reduced-motion users.
 config.genres.assistant.typing.enabled=false;
+deviceWindow.VELAR_ASSISTANT.render(config);
+assert.equal(deviceWindow.VELAR_ASSISTANT.typingStatus(),'disabled-in-studio');
 deviceWindow.VELAR_ASSISTANT.render(config);
 control.onclick();
 tags.children[0].onclick();
@@ -220,6 +228,7 @@ deviceWindow.VELAR_ASSISTANT.render(config);
 tags.children[0].onclick();
 assert.ok(conversation.children[conversation.children.length-1].children[1].textContent.length>5);
 assert.equal(scheduled.size,0,'prefers-reduced-motion never starts timers');
+assert.equal(deviceWindow.VELAR_ASSISTANT.typingStatus(),'reduced-motion');
 typeReduced=false;
 // Unicode surrogate pairs should appear as one character, not a broken half.
 config.genres.assistant.rules=[{keywords:'тест эмодзи',answer:'🐣Привет'}];
