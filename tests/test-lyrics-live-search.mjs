@@ -9,7 +9,7 @@ assert.match(css,/\.lyrics-search-hit/);
 assert.match(css,/min-height:48px/);
 assert.ok(html.includes('src="studio.js?v=11"'));
 assert.ok(html.includes('href="studio.css?v=20"'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v33'"));
+assert.ok(sw.includes("STUDIO_PREFIX+'v34'"));
 assert.doesNotMatch(src,/localStorage\.setItem|sessionStorage\.setItem/);
 assert.match(src,/function pickLyricSearchResult\(key\)/);
 assert.match(src,/key!==songKey&&!chooseSong\(key\)/);
