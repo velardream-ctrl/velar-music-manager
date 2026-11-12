@@ -12,6 +12,86 @@
  var languageEditorCode='',languageCatalogSearch='',languageTrackFilter='';
  var topicEditorSlug='',topicCatalogSearch='',topicTrackFilter='';
  var faqSearch='',faqGroup='',faqPage=0;
+ // Offline admin: private IndexedDB outbox, no publication without explicit click.
+ var offlineSyncing=false,offlineNonce='',offlineTimer=null,offlineWorking=null;
+ var offlineStore=window.VMM_OFFLINE_ADMIN;
+ function pendingName(){return 'pending:landing';}
+ function offlineStatus(msg){var element=id('landing-offline-status');if(element)text(element,msg);}
+ function snapshotLocal(){
+   if(!offlineStore||!uid||!loaded||busy||!draftDirty())return Promise.resolve(null);
+   var payload={content:clone(data),baseRevision:draftRev,baseBaseline:baseline};
+   return offlineStore.put(uid,pendingName(),payload).then(function(item){
+     offlineNonce=item.nonce;
+     offlineStatus('На устройстве сохранён черновик · ожидает синхронизации с облаком.');
+     return item;
+   }).catch(function(err){
+     offlineStatus('Локальное сохранение не удалось: '+err.message+'. Скопируй текст или сделай резервную копию.');
+     throw err;
+   });
+ }
+ function scheduleLocal(){
+   if(!offlineStore||!uid||!loaded||!draftDirty()||busy)return;
+   if(offlineTimer!==null)clearTimeout(offlineTimer);
+   offlineTimer=setTimeout(function(){
+     offlineTimer=null;snapshotLocal().catch(function(){});
+   },250);
+ }
+ function recoverLocal(){
+   if(!offlineStore||!uid)return Promise.resolve(null);
+   return offlineStore.get(uid,pendingName()).then(function(saved){
+     if(!saved||!saved.value)return null;
+     var value=saved.value;
+     if(!value.content)return null;
+     var clean=API.normalize(value.content);
+     // An offline revision may be older than the currently fetched server doc;
+     // retain it visibly, but don't blindly overwrite the cloud.
+     data=clean;
+     baseline=value.baseBaseline||baseline;
+     draftRev=Number(value.baseRevision)||0;
+     offlineNonce=saved.nonce;render();
+     offlineStatus('Восстановлен локальный черновик. Синхронизация после подключения; при конфликте данные останутся на устройстве.');
+     return saved;
+   }).catch(function(err){offlineStatus('Не удалось восстановить локальные изменения: '+err.message);return null;});
+ }
+ function syncOffline(){
+   if(offlineSyncing||!offlineStore||!uid||!loaded||busy||!navigator.onLine)return Promise.resolve();
+   offlineSyncing=true;
+   return offlineStore.get(uid,pendingName()).then(function(saved){
+     if(!saved||!saved.value)return null;
+     var payload=saved.value,clean=API.normalize(payload.content),account=uid,nonce=saved.nonce;
+     // Always reverify online authority and revision in a server transaction.
+     return authorized().then(function(auth){
+       if(auth.user.uid!==account)throw new Error('Смена аккаунта: синхронизация отменена.');
+       return auth.db.runTransaction(function(tx){
+         var ref=auth.db.collection('vmm_public_drafts').doc('landing');
+         return tx.get(ref).then(function(remote){
+           var rev=remote.exists?Number(remote.data().revision)||0:0;
+           if(rev!==Number(payload.baseRevision||0)){
+             throw new Error('КОНФЛИКТ: облачный черновик изменился с другого устройства. Локальная версия сохранена, требуется сравнить.');
+           }
+           tx.set(ref,{schemaVersion:1,status:'draft',revision:rev+1,
+             content:clean,updatedBy:account,
+             updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+           return rev+1;
+         });
+       });
+     }).then(function(revision){
+       return offlineStore.acknowledge(account,pendingName(),nonce).then(function(ack){
+         if(uid===account){
+           if(offlineNonce===nonce){
+             draftRev=revision;baseline=JSON.stringify(clean);
+             offlineStatus(ack?'Синхронизировано с облачным черновиком (версия '+revision+'). Для посетителей ещё не опубликовано.':
+               'Облачный черновик сохранён; более свежие правки остались в очереди.');
+             updateButtons();
+           }
+         }
+         return ack;
+       });
+     });
+   }).catch(function(err){
+     offlineStatus('Синхронизация приостановлена: '+(err&&err.message||err)+'. Изменения остались на устройстве.');
+   }).then(function(){offlineSyncing=false;});
+ }
  var tabs={hero:'Первый экран',artists:'Артисты',releases:'Музыка и релизы',playlists:'Плейлисты и подписки',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',about:'О проекте',publish:'Публикация'};
  function id(k){return document.getElementById(k);}
  function clear(el){while(el.firstChild)el.removeChild(el.firstChild);}
@@ -34,6 +114,7 @@
  function dirty(){return draftDirty()||trackDirty();}
  function info(s){text(id('landing-status'),s);}
  function updateButtons(){
+   scheduleLocal();
    id('landing-save').disabled=!loaded||busy||!draftDirty();
    id('landing-publish').disabled=!loaded||busy||!draftRev||dirty()||trackSaving;
    id('landing-reload').disabled=busy||trackSaving;
@@ -52,7 +133,10 @@
    if(!u||!u.emailVerified||!u.providerData||!u.providerData.some(function(p){return p.providerId==='google.com';}))
      return Promise.reject(new Error('Требуется подтверждённый вход администратора через Google.'));
    var database=firebase.firestore();
-   return database.collection('vmm_admins').doc(u.uid).get({source:'server'}).then(function(s){
+   var admin=database.collection('vmm_admins').doc(u.uid);
+   var check=admin.get({source:'server'});
+   if(navigator.onLine===false)check=check.catch(function(){return admin.get({source:'cache'});});
+   return check.then(function(s){
      if(!s.exists||!s.data()||s.data().enabled!==true)throw new Error('Нет прав администратора.');
      return {user:u,db:database};
    });
@@ -88,7 +172,7 @@
    var generation=loadGeneration,account=uid;
    catalogLoading=true;catalogError='';
    return Promise.all([
-     db.collection('vmm_catalog').limit(1200).get({source:'server'}),
+     db.collection('vmm_catalog').limit(1200).get(navigator.onLine?{source:'server'}:{source:'cache'}),
      window.VMM_ARTIST_TRACKS.read(db)
    ]).then(function(result){
      if(generation!==loadGeneration||account!==uid)return;
@@ -1806,14 +1890,15 @@
  function load(force){
    if(busy)return Promise.resolve();
    if(loaded&&!force){render();if(tab==='artists'||tab==='releases'||tab==='languages'||tab==='topics')loadCatalogArtists();return Promise.resolve();}
-   if(force&&dirty()&&!window.confirm('Несохранённые изменения карточек или привязок будут потеряны. Обновить из облака?'))return Promise.resolve();
+   if(force&&dirty()&&!window.confirm('Есть несинхронизированные изменения. Обновление может их перезаписать в редакторе. Обновить?'))return Promise.resolve();
    if(force){trackEditorArtist='';trackChecked={};trackSearch='';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';catalogLoaded=false;trackLinksLoaded=false;}
    var currentLoad=++loadGeneration;
    busy=true;updateButtons();info('Проверяем права и загружаем черновик…');
    return authorized().then(function(auth){
      if(currentLoad!==loadGeneration)return null;
      uid=auth.user.uid;db=auth.db;var r=refs();
-     return Promise.all([r.draft.get({source:'server'}),r.live.get({source:'server'})]).then(function(list){
+     var scope=navigator.onLine?{source:'server'}:{source:'cache'};
+     return Promise.all([r.draft.get(scope),r.live.get(scope)]).then(function(list){
        if(currentLoad!==loadGeneration)return;
        var draft=list[0].exists?list[0].data():null,live=list[1].exists?list[1].data():null;
        published=live&&live.status==='published'?API.normalize(live.content):null;
@@ -1821,19 +1906,25 @@
        draftRev=draft?Number(draft.revision)||0:0;
        data=API.normalize(draft&&draft.content?draft.content:published||API.defaults());
        baseline=JSON.stringify(data);loaded=true;busy=false;render();
-       if(tab==='artists'||tab==='releases'||tab==='languages'||tab==='topics')loadCatalogArtists();
+       // Recover outbox before allowing another cloud refresh; never discard it.
+       recoverLocal().then(function(){if(navigator.onLine)syncOffline();});
+       if(tab='artists'||tab==='releases'||tab==='languages'||tab==='topics')loadCatalogArtists();
        info(draft?'Черновик загружен. Изменения пока не опубликованы.':
           (published?'Загружена последняя публикация. Сохрани черновик, прежде чем публиковать изменения.':
           'Публикаций пока нет. Подготовь разделы и сохрани первый черновик.'));
      });
    }).catch(function(err){
      if(currentLoad!==loadGeneration)return;
-     busy=false;loaded=false;updateButtons();info('Не удалось открыть редактор: '+safeStatus(err));
+     busy=false;loaded=false;updateButtons();info('Не удалось открыть редактор из облака/кэша: '+safeStatus(err));
    });
  }
  function save(){
    if(!loaded||busy)return;
-   if(!navigator.onLine){info('Нет сети. Черновик остаётся в редакторе, но в Firestore не сохранён.');return;}
+   if(!navigator.onLine){
+     snapshotLocal().then(function(){info('Черновик сохранён на этом устройстве. Он отправится в облако после подключения.');})
+       .catch(function(e){info('Ошибка локального черновика: '+e.message);});
+     return;
+   }
    var cleanData;try{cleanData=API.normalize(data);}catch(e){info('Проверь поля: '+e.message);return;}
    var savedRevision=draftRev,account=uid;
    busy=true;updateButtons();info('Сохраняем черновик…');
@@ -1850,13 +1941,15 @@
        });
      });
    }).then(function(v){
+     var previousNonce=offlineNonce;
      draftRev=v;baseline=JSON.stringify(cleanData);busy=false;render();
+     if(offlineStore&&previousNonce)offlineStore.acknowledge(account,pendingName(),previousNonce).catch(function(){});
      info('Черновик сохранён (версия '+v+'). '+(dirty()?'Есть более поздние несохранённые правки.':'Главная страница ещё не изменилась.'));
    }).catch(function(e){busy=false;updateButtons();info('Черновик не сохранён: '+safeStatus(e));});
  }
  function publish(){
    if(!loaded||busy||!draftRev)return;
-   if(dirty()){info('Сначала сохрани изменения в черновике и привязки песен.');return;}
+   if(dirty()||offlineSyncing||offlineNonce&&draftDirty()){info('Сначала дождись облачной синхронизации черновика и привязок.');return;}
    if(!navigator.onLine){info('Публикация требует интернета.');return;}
    if(!window.confirm('Опубликовать выбранные артистов, релизы и тексты на открытой главной странице velardream.com?'))return;
    var cleanData;try{cleanData=API.normalize(data);}catch(e){info('Публикация остановлена: '+e.message);return;}
@@ -1884,9 +1977,18 @@
      info('Опубликовано! Версия '+v+'. Открой главную страницу в новой вкладке, чтобы проверить.');
    }).catch(function(e){busy=false;updateButtons();info('Публикация не выполнена: '+safeStatus(e));});
  }
+ window.addEventListener('online',function(){syncOffline();});
+ window.addEventListener('pagehide',function(){
+   if(offlineTimer!==null){clearTimeout(offlineTimer);offlineTimer=null;snapshotLocal().catch(function(){});}
+ });
  function canLeave(){
    if(busy||trackSaving){info('Дождись завершения сохранения или публикации.');return false;}
    if(!dirty())return true;
+   // Locally persisted entries survive navigation; do not discard silently.
+   if(!navigator.onLine&&offlineStore){
+     snapshotLocal().catch(function(){});
+     return true;
+   }
    if(!window.confirm('В главной странице или связях песен есть несохранённые изменения. Отменить их и выйти из раздела?'))return false;
    data=JSON.parse(baseline);trackEditorArtist='';trackChecked={};trackSearch='';render();return true;
  }
@@ -1897,7 +1999,8 @@
  function hide(){show(root,false);}
  function reset(){
    loadGeneration++;
-   uid='';db=null;loaded=false;busy=false;draftRev=0;publishedRev=0;
+   uid='';db=null;loaded=false;busy=false;draftRev=0;publishedRev=0;offlineNonce='';offlineSyncing=false;
+   if(offlineTimer!==null){clearTimeout(offlineTimer);offlineTimer=null;}
    catalogArtists=[];catalogLoaded=false;catalogLoading=false;catalogError='';
    trackLinks={revision:0,overrides:{}};trackLinksLoaded=false;trackEditorArtist='';trackChecked={};trackSearch='';trackSaving=false;
    data=API.defaults();baseline='';published=null;tab='hero';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';hide();updateButtons();
@@ -1915,5 +2018,6 @@
    data=clone(published);tab='publish';render();
    info('Последняя опубликованная версия возвращена в редактор. Сохрани как черновик, если нужно продолжить работу.');
  };
- window.VMM_LANDING={open:open,hide:hide,reset:reset,canLeave:canLeave,isDirty:dirty};
+ window.VMM_LANDING={open:open,hide:hide,reset:reset,canLeave:canLeave,isDirty:dirty,
+   syncOffline:syncOffline};
 }());
