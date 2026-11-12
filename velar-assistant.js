@@ -140,7 +140,7 @@
    var q=norm(raw);
    if(!q)return {text:replyText(settings,'emptyInput')};
    settings=settings||{};
-   if(navigator.onLine===false&&/(?:spotify|youtube|плеер|включи|послушать|поставь|слушать|радио)/.test(q)){
+   if(typeof navigator!=='undefined'&&navigator.onLine===false&&/(?:spotify|youtube|плеер|включи|послушать|поставь|слушать|радио)/.test(q)){
      return {text:'Сейчас нет подключения к интернету, поэтому Spotify, YouTube и радио могут не играть. Но я работаю из сохранённой базы: можно изучать артистов, темы, жанры и языки. Проверь Wi-Fi или мобильный интернет, затем попробуй включить песню снова.',
        actions:[{action:'link',target:'#topics',label:'Темы песен'},
                 {action:'link',target:'#languages',label:'Языки песен'}]};
@@ -331,7 +331,7 @@
  // Spotify/YouTube or remote services. The notification never auto-plays music.
  function notifyConnectivity(){
    if(!initialized||!config||config.enabled===false||!root)return;
-   var offline=navigator.onLine===false;
+   var offline=typeof navigator!=='undefined'&&navigator.onLine===false;
    if(!offline){
      if(offlineBanner&&prompt)prompt.className='velar-assistant-greeting hidden';
      offlineBanner=false;offlineInChat=false;return;
@@ -350,8 +350,10 @@
      prompt.className='velar-assistant-greeting';
    }
  }
- window.addEventListener('offline',notifyConnectivity);
- window.addEventListener('online',notifyConnectivity);
+ if(window.addEventListener){
+   window.addEventListener('offline',notifyConnectivity);
+   window.addEventListener('online',notifyConnectivity);
+ }
  function greetingSeen(){
    try{return !!(window.sessionStorage&&window.sessionStorage.getItem('velar-assistant-greeted'));}
    catch(ignore){return false;}
@@ -429,7 +431,7 @@
      prompt.className='velar-assistant-greeting hidden';markGreeting();
      if(opened){
        if(!log.children.length)itemMessage('assistant',config.welcome,null,greetingChoice(),true);
-       if(navigator.onLine===false)notifyConnectivity();
+       if(typeof navigator!=='undefined'&&navigator.onLine===false)notifyConnectivity();
        if(input&&input.focus&&(!window.matchMedia||!window.matchMedia('(max-width:590px)').matches))input.focus();
      }else{
        finishTyping();
