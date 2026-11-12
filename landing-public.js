@@ -266,12 +266,30 @@
        appendOfficialFrame(player,frame,item.mediaProvider,false);
        var close=create('button','cms-release-close','Закрыть плеер');close.type='button';
        close.onclick=function(){empty(player);listen.setAttribute('aria-pressed','false');};player.appendChild(close);
+       if(isVideo)revealInlineVideo();
      };
      actions.appendChild(listen);
    }
+   function revealInlineVideo(){
+     // Keep YouTube playback in the same page, including old iOS Safari.
+     if(!player.scrollIntoView)return;
+     try{player.scrollIntoView({block:'center'});}
+     catch(ignore){player.scrollIntoView();}
+   }
    var external=item.url||item.mediaUrl;
-   if(external){
-     var link=create('a','cms-card-link',isVideo?'Открыть видео':'На музыкальной площадке');
+   if(isVideo&&media){
+     // The old "Открыть видео" link used target=_blank and opened another tab.
+     // Now both clip actions point to the ONE in-card official iframe.
+     var openHere=create('button','cms-card-link cms-release-inline-link','Открыть видео здесь');
+     openHere.type='button';
+     openHere.setAttribute('aria-label','Открыть клип на этой странице: '+item.title);
+     openHere.onclick=function(){
+       if(!hasEmbed(player))listen.onclick();
+       else revealInlineVideo();
+     };
+     actions.appendChild(openHere);
+   }else if(external&&!isVideo){
+     var link=create('a','cms-card-link','На музыкальной площадке');
      link.href=external;link.rel='noopener noreferrer';link.target='_blank';actions.appendChild(link);
    }
    copy.appendChild(actions);card.appendChild(copy);card.appendChild(player);
