@@ -85,7 +85,7 @@ assert.match(editor,/Редактировать анекдоты/);
 assert.match(editor,/Сохрани и опубликуй/);
 assert.match(read('index.html'),/landing-schema\.js\?v=15/);
 assert.match(read('index.html'),/velar-assistant\.js\?v=10/);
-assert.match(read('studio/index.html'),/landing-editor\.js\?v=16/);
+assert.match(read('studio/index.html'),/landing-editor\.js\?v=17/);
 assert.match(read('sw.js'),/CACHE_PREFIX \+ 'v34'/);
 assert.match(read('sw.js'),/STUDIO_PREFIX\+'v31'/);
 assert.doesNotMatch(bot,/fetch\(|XMLHttpRequest|WebSocket|firebase|localStorage\.setItem/);
