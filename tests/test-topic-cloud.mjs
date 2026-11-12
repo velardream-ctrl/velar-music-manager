@@ -74,18 +74,22 @@ assert.equal(nodes['public-topic-detail'].children[0].children[1].textContent,'�
 let detail=nodes['public-topic-detail'];
 assert.equal(detail.children[2].children.length,1);
 assert.equal(detail.children.length,3,'No bottom-of-list player');
+const mediaFrame=holder=>{
+ const first=holder.children[0];return first&&first.tagName==='iframe'?first:first&&first.children[0];
+};
 const weddingSong=detail.children[2].children[0];
 assert.equal(weddingSong.children[1].children.length,2,'One song row offers Spotify + YouTube');
 assert.equal(weddingSong.children[2].children.length,0,'No iframe until clicked');
 weddingSong.children[1].children[0].onclick();
 assert.equal(stopCalls,1);
-assert.equal(weddingSong.children[2].children[0].tagName,'iframe');
-assert.equal(weddingSong.children[2].children[0].src,
+assert.equal(mediaFrame(weddingSong.children[2]).tagName,'iframe');
+assert.equal(weddingSong.children[2].children[0].className,'spotify-embed-viewport');
+assert.equal(mediaFrame(weddingSong.children[2]).src,
  'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
-assert.equal(weddingSong.children[2].children[0].attributes.allow.includes('autoplay'),false);
+assert.equal(mediaFrame(weddingSong.children[2]).attributes.allow.includes('autoplay'),false);
 weddingSong.children[1].children[1].onclick();
 assert.equal(stopCalls,2);
-assert.equal(weddingSong.children[2].children[0].src,
+assert.equal(mediaFrame(weddingSong.children[2]).src,
  'https://www.youtube-nocookie.com/embed/ZYXWVUTSRQP',
  'YouTube plays in same inline slot, not a duplicate song');
 const love=nodes['public-topic-cloud'].children.find(x=>x.textContent==='Любовь');
