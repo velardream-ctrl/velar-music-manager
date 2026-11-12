@@ -155,7 +155,12 @@
       artists:{
         heading:'У каждого голоса — своя история',
         intro:'Отдельные профили артистов с собственным оформлением, записями, клипами и ссылками на музыкальные площадки.',
-        cards:[]
+        cards:[],featuredView:'classic'
+      },
+      albums:{
+        heading:'Альбомы VELARDREAM',
+        intro:'Официальные альбомы и авторские коллекции из отдельно выпущенных синглов.',
+        entries:[],view:'grid',trackView:'rows'
       },
       releases:{
         heading:'Музыка, которую можно открыть заново',
@@ -346,6 +351,52 @@
       provider:provider,url:link};
   }
 
+  // RUN-096: a curated collection of singles must NOT claim an official album release.
+  function albumEntry(x,i){
+    if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Альбом '+i+': неверная запись.');
+    var visible=x.visible===true;
+    var id=plain(x.id||'','Код альбома '+i,55,true).toLowerCase();
+    if(!/^[a-z0-9-]{2,55}$/.test(id))throw new Error('Код альбома: латинские буквы, цифры и дефис.');
+    var kind=x.kind||'collection';
+    if(kind!=='official'&&kind!=='collection')throw new Error('Альбом: официальный релиз или авторская коллекция.');
+    var picture=x.imageData||'',provider=x.mediaProvider||'spotify';
+    if(typeof picture!=='string'||picture.length>100000||
+       picture&&!/^data:image\/(?:webp|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(picture))
+      throw new Error('Обложка альбома: нужен сжатый JPEG/WebP до 75 КБ.');
+    if(provider!=='spotify')throw new Error('Официальная ссылка альбома: пока поддерживается Spotify.');
+    var official=releaseMediaUrl(x.mediaUrl||'',provider);
+    if(official&&!/^https:\/\/open\.spotify\.com\/album\/[A-Za-z0-9]{22}$/.test(official))
+      throw new Error('Для альбома нужна ссылка именно на Spotify Album, не на сингл.');
+    if(x.mediaUrl&&!official)throw new Error('Ссылка альбома: только официальный Spotify Album.');
+    if(kind==='collection'&&official)
+      throw new Error('Подборка из синглов не должна выдавать себя за официальный альбом.');
+    var rows=typeof x.tracks==='undefined'?[]:x.tracks;
+    if(!Array.isArray(rows)||rows.length>60)throw new Error('Альбом '+i+': не более 60 песен.');
+    return {id:id,title:plain(x.title||'','Название альбома '+i,110,visible),
+      artist:plain(x.artist||'','Исполнитель альбома '+i,100,visible),
+      description:plain(x.description||'','Описание альбома '+i,450,false),
+      kind:kind,visible:visible,imageData:picture,
+      imageUrl:url(x.imageUrl||'','Обложка альбома '+i),
+      mediaProvider:provider,mediaUrl:official,
+      tracks:consolidateAttachedTracks(rows,'Альбом '+id)};
+  }
+  function albumsConfig(raw,def){
+    var a=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+    var rows=typeof a.entries==='undefined'?def.entries:a.entries;
+    if(!Array.isArray(rows)||rows.length>8)throw new Error('Альбомы: пока не более 8 (лимит размера публичной страницы).');
+    var used={};
+    var entries=rows.map(function(row,i){
+      var album=albumEntry(row,i+1);
+      if(used[album.id])throw new Error('Коды альбомов должны быть уникальными.');
+      used[album.id]=true;return album;
+    });
+    var view=a.view||'grid',trackView=a.trackView||'rows';
+    if(view!=='grid'&&view!=='list')throw new Error('Альбомы: вид карточек — сетка или список.');
+    if(['rows','covers','tiles'].indexOf(trackView)<0)throw new Error('Альбомы: неверный вид песен.');
+    return {heading:plain(typeof a.heading==='string'?a.heading:def.heading,'Альбомы — заголовок',160,true),
+      intro:plain(typeof a.intro==='string'?a.intro:def.intro,'Альбомы — описание',700,true),
+      view:view,trackView:trackView,entries:entries};
+  }
   function playlistCard(x,i){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Плейлист '+i+': неправильная запись.');
     var provider=x.provider==='youtube'?'youtube':'spotify';
@@ -726,18 +777,23 @@
   }
   function normalize(value){
     if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Нет данных главной страницы.');
-    var d=defaults(),hero=value.hero||{},artists=value.artists||{},releases=value.releases||{},genres=value.genres||{},about=value.about||{};
+    var d=defaults(),hero=value.hero||{},artists=value.artists||{},albums=value.albums||{},releases=value.releases||{},genres=value.genres||{},about=value.about||{};
     var result={
       hero:{
         subtitle:plain(typeof hero.subtitle==='string'?hero.subtitle:d.hero.subtitle,'Первый экран — подзаголовок',160,true),
         intro:plain(typeof hero.intro==='string'?hero.intro:d.hero.intro,'Первый экран — описание',600,true)
       },
       artists:section(artists,'Артисты',d.artists),
+      albums:albumsConfig(albums,d.albums),
       releases:section(releases,'Релизы',d.releases),
       genres:section(genres,'Жанры',d.genres),
       about:section(about,'О проекте',d.about)
     };
     result.artists.cards=cards(artists,'Артисты');
+    var featuredView=artists.featuredView||d.artists.featuredView;
+    if(['classic','covers','tiles'].indexOf(featuredView)<0)
+      throw new Error('Лучшие песни: неверный вариант отображения.');
+    result.artists.featuredView=featuredView;
     result.releases.cards=cards(releases,'Релизы');
     result.releases.radio=radioConfig(typeof releases.radio==='undefined'?d.releases.radio:releases.radio);
     result.releases.playlists=safeList(releases.playlists,8,'Плейлисты',playlistCard,d.releases.playlists);
@@ -757,6 +813,7 @@
   window.VMM_LANDING_SCHEMA={defaults:defaults,normalize:normalize,blankCard:blankCard,
     songUrl:songUrl,featuredTrack:featuredTrack,featuredTracks:featuredTracks,
     releaseMediaUrl:releaseMediaUrl,playlistUrl:playlistUrl,radioConfig:radioConfig,
+    albumsConfig:albumsConfig,albumEntry:albumEntry,
     subscriptionUrl:subscriptionUrl,playlistCard:playlistCard,subscriptionCard:subscriptionCard,
     universeConfig:universeConfig,languagesConfig:languagesConfig,
     languageTrack:languageTrack,consolidateAttachedTracks:consolidateAttachedTracks,
