@@ -9,6 +9,62 @@
  var catalogArtists=[],catalogLoaded=false,catalogLoading=false,catalogError='';
  var trackLinks={revision:0,overrides:{}},trackLinksLoaded=false;
  var trackEditorArtist='',trackChecked={},trackSearch='',trackSaving=false;
+ var pendingArtistLinks=false;
+ function offlineLinksName(){return 'pending:artist-links';}
+ function restoreArtistLinks(){
+   if(!offlineStore||!uid)return Promise.resolve();
+   return offlineStore.get(uid,offlineLinksName()).then(function(saved){
+     pendingArtistLinks=!!saved;
+     if(saved&&saved.value){
+       trackLinks={revision:Number(saved.value.baseRevision)||0,
+         overrides:window.VMM_ARTIST_TRACKS.sanitize(saved.value.overrides)};
+       trackLinksLoaded=true;
+       offlineStatus('Есть локальные назначения артистов; облачная синхронизация ожидается.');
+       updateButtons();
+     }
+   }).catch(function(err){offlineStatus('Ошибка чтения привязок: '+err.message);});
+ }
+ function syncArtistLinks(){
+   if(!pendingArtistLinks||!offlineStore||!uid||!db||navigator.onLine===false||trackSaving)return Promise.resolve();
+   var account=uid;trackSaving=true;
+   return offlineStore.get(account,offlineLinksName()).then(function(saved){
+     if(!saved||!saved.value){pendingArtistLinks=false;return;}
+     var p=saved.value,map=window.VMM_ARTIST_TRACKS.sanitize(p.overrides);
+     return authorized().then(function(auth){
+       if(auth.user.uid!==account)throw new Error('Учётная запись изменилась');
+       var ref=auth.db.collection('vmm_links').doc(window.VMM_ARTIST_TRACKS.documentId);
+       return auth.db.runTransaction(function(tx){
+         return tx.get(ref).then(function(old){
+           var d=old.exists?old.data()||{}:{},rev=Number(d.revision)||0;
+           if(rev!==Number(p.baseRevision||0))
+             throw new Error('КОНФЛИКТ: связи артистов уже изменились с другого устройства.');
+           tx.set(ref,{schemaVersion:1,revision:rev+1,overrides:map,updatedBy:account,
+             updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+           return rev+1;
+         });
+       });
+     }).then(function(version){
+       return offlineStore.acknowledge(account,offlineLinksName(),saved.nonce).then(function(ack){
+         if(ack&&uid===account){pendingArtistLinks=false;trackLinks={revision:version,overrides:map};
+           offlineStatus('Привязки артистов синхронизированы (версия '+version+').');render();}
+       });
+     });
+   }).catch(function(e){offlineStatus('Назначения артистов остаются на устройстве: '+e.message);})
+     .then(function(){trackSaving=false;updateButtons();});
+ }
+ function saveLinksOffline(artistId,selected,tracks){
+   if(!offlineStore||!uid){info('Локальное хранилище не работает. Скопируй изменения.');return;}
+   var next;try{next=window.VMM_ARTIST_TRACKS.apply(trackLinks.overrides,artistId,selected,tracks);}
+   catch(e){info('Не удалось назначить песни: '+e.message);return;}
+   var account=uid,base=trackLinks.revision;
+   offlineStore.get(account,offlineLinksName()).then(function(prior){
+     var original=prior&&prior.value?prior.value.baseRevision:base;
+     return offlineStore.put(account,offlineLinksName(),{baseRevision:original,overrides:next});
+   }).then(function(){
+     trackLinks={revision:base,overrides:next};pendingArtistLinks=true;
+     render();info('Привязки песен сохранены на этом устройстве и ожидают синхронизации.');
+   }).catch(function(e){info('Локальное сохранение связей не удалось: '+e.message);});
+ }
  var languageEditorCode='',languageCatalogSearch='',languageTrackFilter='';
  var topicEditorSlug='',topicCatalogSearch='',topicTrackFilter='';
  var faqSearch='',faqGroup='',faqPage=0;
@@ -124,7 +180,7 @@
  function updateButtons(){
    scheduleLocal();
    id('landing-save').disabled=!loaded||busy||!draftDirty();
-   id('landing-publish').disabled=!loaded||busy||!draftRev||dirty()||trackSaving;
+   id('landing-publish').disabled=!loaded||busy||!draftRev||dirty()||trackSaving||pendingArtistLinks;
    id('landing-reload').disabled=busy||trackSaving;
    id('landing-restore').disabled=!published||busy||trackSaving;
    text(id('landing-dirty'),busy?'Идёт операция…':trackSaving?'Сохраняем связи песен…':!loaded?'Данные ещё не загружены':dirty()?'Есть несохранённые изменения':'Изменения сохранены');
@@ -179,8 +235,20 @@
    if(catalogLoaded&&!force)return Promise.resolve();
    var generation=loadGeneration,account=uid;
    catalogLoading=true;catalogError='';
+   if(navigator.onLine===false&&offlineStore){
+     return offlineStore.get(uid,'cache:artist-catalog').then(function(saved){
+       if(!saved||!saved.value||!Array.isArray(saved.value.catalog))
+         throw new Error('Нет локального каталога. Открой его один раз при наличии сети.');
+       catalogArtists=saved.value.catalog;
+       trackLinks=saved.value.trackLinks||{revision:0,overrides:{}};
+       catalogLoaded=true;trackLinksLoaded=true;catalogLoading=false;
+       return restoreArtistLinks().then(function(){render();});
+     }).catch(function(err){
+       catalogLoading=false;catalogError=err.message;render();
+     });
+   }
    return Promise.all([
-     db.collection('vmm_catalog').limit(1200).get(navigator.onLine?{source:'server'}:{source:'cache'}),
+     db.collection('vmm_catalog').limit(1200).get({source:'server'}),
      window.VMM_ARTIST_TRACKS.read(db)
    ]).then(function(result){
      if(generation!==loadGeneration||account!==uid)return;
@@ -189,6 +257,11 @@
      if(rows.length>=1200)throw new Error('Каталог достиг лимита 1200 записей. Для безопасного назначения требуется загрузить полный каталог.');
      catalogArtists=rows;trackLinks=result[1];trackLinksLoaded=true;
      catalogLoaded=true;catalogLoading=false;
+     if(offlineStore)offlineStore.put(uid,'cache:artist-catalog',{
+       catalog:rows,trackLinks:result[1]}).catch(function(err){
+         offlineStatus('Не удалось сохранить каталог для офлайн: '+err.message);
+       });
+     restoreArtistLinks().then(function(){if(pendingArtistLinks)syncArtistLinks();});
      if(tab==='artists'||tab==='releases'||tab==='languages'||tab==='topics')render();
    }).catch(function(err){
      if(generation!==loadGeneration||account!==uid)return;
@@ -260,8 +333,9 @@
  }
  function saveTrackLinks(artistId){
    if(artistId!==trackEditorArtist||!catalogLoaded||!trackLinksLoaded||busy||trackSaving)return;
-   if(!navigator.onLine){info('Без сети изменения не сохраняются. Оставь галочки до подключения.');return;}
    var tracks=catalogArtists.slice(),selected=tracks.filter(function(t){return !!trackChecked[t.id];}).map(function(t){return t.id;});
+   if(!navigator.onLine){saveLinksOffline(artistId,selected,tracks);return;}
+   if(pendingArtistLinks){info('Сначала синхронизируй предыдущие назначения артистов.');syncArtistLinks();return;}
    var current=trackLinks,changes=window.VMM_ARTIST_TRACKS.conflicts(current.overrides,artistId,selected,tracks);
    if(changes.length){
      var example=changes.slice(0,3).map(function(t){return t.title;}).join('; ');
@@ -1985,7 +2059,7 @@
      info('Опубликовано! Версия '+v+'. Открой главную страницу в новой вкладке, чтобы проверить.');
    }).catch(function(e){busy=false;updateButtons();info('Публикация не выполнена: '+safeStatus(e));});
  }
- window.addEventListener('online',function(){syncOffline();});
+ window.addEventListener('online',function(){syncOffline();syncArtistLinks();});
  window.addEventListener('pagehide',function(){
    if(offlineTimer!==null){clearTimeout(offlineTimer);offlineTimer=null;snapshotLocal().catch(function(){});}
  });
@@ -2015,7 +2089,7 @@
    offlineNonce='';offlineSyncing=false;offlineSavedSignature='';
    if(offlineTimer!==null){clearTimeout(offlineTimer);offlineTimer=null;}
    catalogArtists=[];catalogLoaded=false;catalogLoading=false;catalogError='';
-   trackLinks={revision:0,overrides:{}};trackLinksLoaded=false;trackEditorArtist='';trackChecked={};trackSearch='';trackSaving=false;
+   trackLinks={revision:0,overrides:{}};trackLinksLoaded=false;pendingArtistLinks=false;trackEditorArtist='';trackChecked={};trackSearch='';trackSaving=false;
    data=API.defaults();baseline='';published=null;tab='hero';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';hide();updateButtons();
  }
  var nav=document.querySelectorAll('#landing-tabs [data-landing-tab]');
@@ -2038,5 +2112,5 @@
    info('Последняя опубликованная версия возвращена в редактор. Сохрани как черновик, если нужно продолжить работу.');
  };
  window.VMM_LANDING={open:open,hide:hide,reset:reset,canLeave:canLeave,isDirty:dirty,
-   syncOffline:syncOffline};
+   syncOffline:syncOffline,syncArtistLinks:syncArtistLinks};
 }());
