@@ -1025,9 +1025,10 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .velar-chat-line.is-assistant p{grid-column:2;grid-row:1;min-width:0;overflow-wrap:break-word;word-break:normal}
 .velar-chat-line.is-assistant .velar-chat-action{grid-column:2;grid-row:2;box-sizing:border-box;width:100%;margin-top:0}
 
+/* RUN-088: aria-expanded is set on every viewport; desktop must hide launcher too. */
+.velar-assistant-launch[aria-expanded="true"]{display:none}
 /* RUN-079 — denser mobile assistant while retaining iPhone safe-area. */
 @media(max-width:590px){
- .velar-assistant-launch[aria-expanded="true"]{display:none}
  .velar-assistant-dialog{max-height:min(390px,50vh)}
  .velar-assistant-header{flex-wrap:nowrap;gap:5px;padding:5px 8px}
  .velar-assistant-header-avatar{width:29px;height:29px;flex:0 0 29px}
