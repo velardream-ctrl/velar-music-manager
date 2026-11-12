@@ -119,7 +119,7 @@ assert.match(studio,/show\(el\('vmm-workflows'\),false\)/);
 assert.match(workflows,/show\(id\('panel-landing'\),false\)/);
 assert.match(html,/style\.css\?v=23/);
 assert.match(html,/landing-public\.js\?v=10/);
-assert.match(sw,/CACHE_PREFIX \+ 'v26'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v27'/);
 assert.match(css,/\.cms-music-play-icon::before\{/);
 assert.match(css,/border-left:10px solid currentColor/);
 assert.match(css,/\.cms-card-link::after\{/);
