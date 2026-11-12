@@ -67,9 +67,9 @@
      render();info('Привязки песен сохранены на этом устройстве и ожидают синхронизации.');
    }).catch(function(e){info('Локальное сохранение связей не удалось: '+e.message);});
  }
- var languageEditorCode='',languageCatalogSearch='',languageTrackFilter='';
- var topicEditorSlug='',topicCatalogSearch='',topicTrackFilter='';
- var albumEditorId='',albumCatalogSearch='',albumTrackFilter='';
+ var languageEditorCode='',languageCatalogSearch='',languageTrackFilter='',languageCatalogPage=0;
+ var topicEditorSlug='',topicCatalogSearch='',topicTrackFilter='',topicCatalogPage=0;
+ var albumEditorId='',albumCatalogSearch='',albumTrackFilter='',albumCatalogPage=0;
  var faqSearch='',faqGroup='',faqPage=0;
  // Offline admin: private IndexedDB outbox, no publication without explicit click.
  var offlineSyncing=false,offlineNonce='',offlineTimer=null,
@@ -977,6 +977,9 @@
    var filter=opts.getFilter||function(){return '';},setFilter=opts.setFilter||function(){};
    var getCatalogSearch=opts.getCatalogSearch||function(){return '';},
      setCatalogSearch=opts.setCatalogSearch||function(){};
+   var localCatalogPage=0;
+   var getCatalogPage=opts.getCatalogPage||function(){return localCatalogPage;};
+   var setCatalogPage=opts.setCatalogPage||function(v){localCatalogPage=v;};
    var options=attachedCatalogOptions();
    heading(parent,isLanguage?'Подтверждённые песни ('+entry.tracks.length+')':
      'Назначенные песни ('+entry.tracks.length+')',
@@ -1080,7 +1083,7 @@
    catalogSearch.className='landing-language-catalog-search';
    catalogSearch.placeholder='Найти песню во всём каталоге…';
    catalogSearch.value=getCatalogSearch();parent.appendChild(catalogSearch);
-   catalogSearch.oninput=function(){setCatalogSearch(this.value);if(catalogLoaded)drawCatalog();};
+   catalogSearch.oninput=function(){setCatalogSearch(this.value);setCatalogPage(0);if(catalogLoaded)drawCatalog();};
    if(!catalogLoaded){
      var msg=document.createElement('p');msg.className='sync-note';
      msg.textContent=catalogLoading?'Загружаем закрытый каталог песен…':catalogError?
@@ -1100,10 +1103,16 @@
    parent.appendChild(results);
    function drawCatalog(){
      clear(results);
-     var q=getCatalogSearch().toLocaleLowerCase('ru').replace(/ё/g,'е'),count=0;
-     options.forEach(function(song){
-       if(q&&(song.title+' '+song.artist).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)<0)return;
-       if(count++>=40)return;
+     var q=getCatalogSearch().toLocaleLowerCase('ru').replace(/ё/g,'е');
+     var matches=options.filter(function(song){
+       return !!(song.spotify||song.youtube)&&
+         (!q||(song.title+' '+song.artist).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)>=0);
+     });
+     var size=40,total=matches.length,pages=Math.max(1,Math.ceil(total/size));
+     var page=Math.max(0,Math.min(pages-1,Math.floor(Number(getCatalogPage())||0)));
+     if(page!==getCatalogPage())setCatalogPage(page);
+     var start=page*size;
+     matches.slice(start,start+size).forEach(function(song){
        var existing=attachedFind(entry,song),sources={spotify:song.spotify,youtube:song.youtube};
        if(existing){
          var old=attachedSongSources(existing);
@@ -1155,12 +1164,31 @@
        youtubeCheck.onchange=applySources;
        results.appendChild(row);
      });
-     if(count>40){
-       var note=document.createElement('p');note.className='sync-note';
-       note.textContent='Первые 40 из '+count+'. Уточни поиск.';
-       results.appendChild(note);
+     if(total>size){
+       var pagesNav=document.createElement('div');pagesNav.className='landing-song-pagination';
+       pagesNav.setAttribute('role','navigation');
+       pagesNav.setAttribute('aria-label','Страницы каталога песен');
+       var status=document.createElement('span');status.className='landing-song-page-status';
+       status.textContent=(start+1)+'–'+Math.min(start+size,total)+' из '+total+
+         ' · страница '+(page+1)+' из '+pages;
+       pagesNav.appendChild(status);
+       function changeCatalogPage(next){
+         setCatalogPage(next);drawCatalog();
+         // The next 40 songs must be visible without scrolling back through the form.
+         if(results.scrollIntoView){
+           try{results.scrollIntoView({block:'start'});}
+           catch(err){results.scrollIntoView();}
+         }
+       }
+       var previous=button('← Назад',function(){changeCatalogPage(page-1);},'landing-small');
+       previous.disabled=page===0;
+       pagesNav.appendChild(previous);
+       var following=button('Вперёд →',function(){changeCatalogPage(page+1);},'landing-small');
+       following.disabled=page>=pages-1;
+       pagesNav.appendChild(following);
+       results.appendChild(pagesNav);
      }
-     if(!count){
+     if(!total){
        var empty=document.createElement('p');empty.className='sync-note';
        empty.textContent='Нет песен с проверенными ссылками в каталоге.';
        results.appendChild(empty);
@@ -1187,7 +1215,7 @@
      var item=document.createElement('div');item.className='landing-language-menu-item';
      var show=button(lang.label+(lang.fictional?' · вымышленный':'')+
        ' · '+lang.tracks.length+' песен',function(){
-         languageEditorCode=lang.code;languageCatalogSearch='';languageTrackFilter='';render();
+         languageEditorCode=lang.code;languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;render();
        },'landing-small');
      if(languageEditorCode===lang.code)show.className+=' is-active';
      item.appendChild(show);
@@ -1209,7 +1237,7 @@
      if(langs.length>=20){info('Достигнут предел в 20 языковых миров.');return;}
      var i=1,code='';do{code='new-language-'+i++;}while(langs.some(function(n){return n.code===code;}));
      langs.push({code:code,label:'Новый язык',fictional:false,visible:false,tracks:[]});
-     languageEditorCode=code;languageCatalogSearch='';render();
+     languageEditorCode=code;languageCatalogSearch='';languageCatalogPage=0;render();
    },'landing-add'));
    var active=langs.filter(function(x){return x.code===languageEditorCode;})[0];
    if(!active){active=langs[0];if(active)languageEditorCode=active.code;}
@@ -1237,7 +1265,9 @@
      getFilter:function(){return languageTrackFilter;},
      setFilter:function(v){languageTrackFilter=v;},
      getCatalogSearch:function(){return languageCatalogSearch;},
-     setCatalogSearch:function(v){languageCatalogSearch=v;}
+     setCatalogSearch:function(v){languageCatalogSearch=v;},
+     getCatalogPage:function(){return languageCatalogPage;},
+     setCatalogPage:function(v){languageCatalogPage=v;}
    });
    parent.appendChild(card);
  }
@@ -1261,7 +1291,7 @@
    entries.forEach(function(album,index){
      var group=document.createElement('div');group.className='landing-language-menu-item';
      var select=button((album.title||album.id)+' · '+album.tracks.length+' песен',function(){
-       albumEditorId=album.id;albumCatalogSearch='';albumTrackFilter='';render();
+       albumEditorId=album.id;albumCatalogSearch='';albumTrackFilter='';albumCatalogPage=0;render();
      },'landing-small');
      if(albumEditorId===album.id)select.className+=' is-active';
      group.appendChild(select);
@@ -1282,7 +1312,7 @@
      var i=1,key;do{key='album-'+i++;}while(entries.some(function(a){return a.id===key;}));
      entries.push({id:key,title:'',artist:'',description:'',kind:'collection',
        mediaProvider:'spotify',mediaUrl:'',imageData:'',imageUrl:'',visible:false,tracks:[]});
-     albumEditorId=key;albumCatalogSearch='';albumTrackFilter='';render();
+     albumEditorId=key;albumCatalogSearch='';albumTrackFilter='';albumCatalogPage=0;render();
    },'landing-add'));
    var active=entries.filter(function(album){return album.id===albumEditorId;})[0];
    if(!active){active=entries[0];if(active)albumEditorId=active.id;}
@@ -1310,7 +1340,9 @@
      getFilter:function(){return albumTrackFilter;},
      setFilter:function(v){albumTrackFilter=v;},
      getCatalogSearch:function(){return albumCatalogSearch;},
-     setCatalogSearch:function(v){albumCatalogSearch=v;}
+     setCatalogSearch:function(v){albumCatalogSearch=v;},
+     getCatalogPage:function(){return albumCatalogPage;},
+     setCatalogPage:function(v){albumCatalogPage=v;}
    });
    parent.appendChild(box);
  }
@@ -1324,7 +1356,7 @@
    topics.forEach(function(topic,index){
      var tile=document.createElement('div');tile.className='landing-language-menu-item';
      var select=button(topic.label+' · '+topic.tracks.length+' песен',function(){
-       topicEditorSlug=topic.slug;topicCatalogSearch='';topicTrackFilter='';render();
+       topicEditorSlug=topic.slug;topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;render();
      },'landing-small');
      if(topicEditorSlug===topic.slug)select.className+=' is-active';
      tile.appendChild(select);
@@ -1353,7 +1385,7 @@
      var index=1,slug='';
      do{slug='new-topic-'+index++;}while(topics.some(function(t){return t.slug===slug;}));
      topics.push({slug:slug,label:'Новая тема',description:'',visible:false,tracks:[]});
-     topicEditorSlug=slug;topicCatalogSearch='';topicTrackFilter='';render();
+     topicEditorSlug=slug;topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;render();
    },'landing-add'));
    var current=topics.filter(function(x){return x.slug===topicEditorSlug;})[0];
    if(!current){current=topics[0];if(current)topicEditorSlug=current.slug;}
@@ -1376,7 +1408,9 @@
      getFilter:function(){return topicTrackFilter;},
      setFilter:function(v){topicTrackFilter=v;},
      getCatalogSearch:function(){return topicCatalogSearch;},
-     setCatalogSearch:function(v){topicCatalogSearch=v;}
+     setCatalogSearch:function(v){topicCatalogSearch=v;},
+     getCatalogPage:function(){return topicCatalogPage;},
+     setCatalogPage:function(v){topicCatalogPage=v;}
    });
    parent.appendChild(card);
  }
@@ -2087,7 +2121,7 @@
    if(busy)return Promise.resolve();
    if(loaded&&!force){render();if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();return Promise.resolve();}
    if(force&&dirty()&&!window.confirm('Есть несинхронизированные изменения. Обновление может их перезаписать в редакторе. Обновить?'))return Promise.resolve();
-   if(force){trackEditorArtist='';trackChecked={};trackSearch='';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';catalogLoaded=false;catalogLoading=false;catalogError='';trackLinksLoaded=false;}
+   if(force){trackEditorArtist='';trackChecked={};trackSearch='';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;albumCatalogPage=0;catalogLoaded=false;catalogLoading=false;catalogError='';trackLinksLoaded=false;}
    var currentLoad=++loadGeneration;
    busy=true;updateButtons();info('Проверяем права и загружаем черновик…');
    return authorized().then(function(auth){
@@ -2205,7 +2239,7 @@
    if(offlineTimer!==null){clearTimeout(offlineTimer);offlineTimer=null;}
    catalogArtists=[];catalogLoaded=false;catalogLoading=false;catalogError='';
    trackLinks={revision:0,overrides:{}};trackLinksLoaded=false;pendingArtistLinks=false;trackEditorArtist='';trackChecked={};trackSearch='';trackSaving=false;
-   data=API.defaults();baseline='';published=null;tab='hero';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';hide();updateButtons();
+   data=API.defaults();baseline='';published=null;tab='hero';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;albumCatalogPage=0;hide();updateButtons();
  }
  var nav=document.querySelectorAll('#landing-tabs [data-landing-tab]');
  for(var i=0;i<nav.length;i++)nav[i].onclick=function(){
