@@ -619,3 +619,16 @@ body.vmm-print-open{overflow:hidden}
  #panel-landing .vmm-language-review-row{grid-template-columns:minmax(0,1fr)}
  #panel-landing .vmm-language-review-row select{grid-column:1}
 }
+
+/* RUN-095: local-only drafts; clear status and backup UI on iPhone / Safari 12. */
+#landing-offline-status,#lyrics-offline-status{
+ padding:10px 12px;border:1px solid rgba(225,194,138,.38);
+ border-radius:9px;background:#111f39;color:#e5d4b0;line-height:1.5;
+}
+.vmm-offline-backup{
+ display:inline-block;margin:7px 0 12px;padding:10px 13px;
+ border-radius:9px;border:1px solid #c7a876;background:transparent;
+ color:#f2d8a9;font:600 .84rem Arial,sans-serif;min-height:44px;
+ max-width:100%;white-space:normal;text-align:left;
+}
+.vmm-offline-backup:focus-visible{outline:2px solid #ffe2a4;outline-offset:2px}

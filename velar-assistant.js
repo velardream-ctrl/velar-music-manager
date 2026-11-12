@@ -7,6 +7,7 @@
  var root=null,dialog=null,log=null,input=null,prompt=null,buttons=null,header=null;
  var config=null,published=null,opened=false,initialized=false;
  var MAX_INPUT=360,activeTyping=null,announcer=null,jokeCursor=-1;
+ var offlineBanner=false,offlineInChat=false;
  function find(id){return document.getElementById(id);}
  function el(tag,cls,t){
    var e=document.createElement(tag);
@@ -139,6 +140,11 @@
    var q=norm(raw);
    if(!q)return {text:replyText(settings,'emptyInput')};
    settings=settings||{};
+   if(typeof navigator!=='undefined'&&navigator.onLine===false&&/(?:spotify|youtube|плеер|включи|послушать|поставь|слушать|радио)/.test(q)){
+     return {text:'Сейчас нет подключения к интернету, поэтому Spotify, YouTube и радио могут не играть. Но я работаю из сохранённой базы: можно изучать артистов, темы, жанры и языки. Проверь Wi-Fi или мобильный интернет, затем попробуй включить песню снова.',
+       actions:[{action:'link',target:'#topics',label:'Темы песен'},
+                {action:'link',target:'#languages',label:'Языки песен'}]};
+   }
    // RUN-086: direct radio control overrides text-only FAQ, never the owner's OFF gate.
    if(radioCommand(q)){
      var radio=data&&data.releases&&data.releases.radio,api=window.VMM_LANDING_SCHEMA;
@@ -321,6 +327,33 @@
    else {addAction();if(role==='assistant'&&announcer)announcer.textContent=text;}
    scrollChat();
  }
+ // RUN-095: the cached public assistant continues answering locally without
+ // Spotify/YouTube or remote services. The notification never auto-plays music.
+ function notifyConnectivity(){
+   if(!initialized||!config||config.enabled===false||!root)return;
+   var offline=typeof navigator!=='undefined'&&navigator.onLine===false;
+   if(!offline){
+     if(offlineBanner&&prompt)prompt.className='velar-assistant-greeting hidden';
+     offlineBanner=false;offlineInChat=false;return;
+   }
+   var msg='Связь с интернетом пропала, но VELARDREAM и мой локальный справочник остаются с вами. Можно изучать сохранённые разделы, артистов, языки и музыкальные темы. Для Spotify и YouTube нужно восстановить соединение: проверьте Wi-Fi, мобильные данные или баланс тарифа.';
+   if(opened&&!offlineInChat){
+     offlineInChat=true;
+     itemMessage('assistant',msg,{actions:[
+       {action:'link',target:'#topics',label:'Темы песен'},
+       {action:'link',target:'#languages',label:'Языки песен'}
+     ]},'okay',false);
+   }else if(!opened&&prompt){
+     offlineBanner=true;
+     var label=prompt.querySelector&&prompt.querySelector('.velar-assistant-greeting-text');
+     if(label)label.textContent='Нет интернета? Я всё равно здесь! Сохранённые разделы и чат доступны.';
+     prompt.className='velar-assistant-greeting';
+   }
+ }
+ if(window.addEventListener){
+   window.addEventListener('offline',notifyConnectivity);
+   window.addEventListener('online',notifyConnectivity);
+ }
  function greetingSeen(){
    try{return !!(window.sessionStorage&&window.sessionStorage.getItem('velar-assistant-greeted'));}
    catch(ignore){return false;}
@@ -398,6 +431,7 @@
      prompt.className='velar-assistant-greeting hidden';markGreeting();
      if(opened){
        if(!log.children.length)itemMessage('assistant',config.welcome,null,greetingChoice(),true);
+       if(typeof navigator!=='undefined'&&navigator.onLine===false)notifyConnectivity();
        if(input&&input.focus&&(!window.matchMedia||!window.matchMedia('(max-width:590px)').matches))input.focus();
      }else{
        finishTyping();
@@ -499,9 +533,10 @@
      var span=prompt.querySelector&&prompt.querySelector('.velar-assistant-greeting-text');
      if(span)span.textContent=configLabel('greetingBubble',config.welcome);
    }
+   notifyConnectivity();
  }
  // Do not guess public visibility from schema defaults before the verified
  // published landing snapshot arrives. Respect owner opt-out without flicker.
  window.VELAR_ASSISTANT={render:render,answer:answer,norm:norm,topicFor:topicFor,
-   expressionFor:expressionFor,typingStatus:typingStatus};
+   expressionFor:expressionFor,typingStatus:typingStatus,notifyConnectivity:notifyConnectivity};
 }());

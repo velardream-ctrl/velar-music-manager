@@ -503,19 +503,29 @@
    return true;
  }
  function start(){
-   if(!window.firebase||!window.VELAR_FIREBASE_CONFIG||!window.VMM_LANDING_SCHEMA)return;
+   if(!window.VMM_LANDING_SCHEMA)return;
+   var fresh=false;
+   // Public-only IndexedDB snapshot restores every published section and the
+   // local assistant even when the Firebase SDK cannot load without network.
+   if(window.VMM_PUBLIC_OFFLINE)window.VMM_PUBLIC_OFFLINE.read().then(function(saved){
+     if(saved&&!fresh)render(saved);
+   }).catch(function(){});
+   if(!window.firebase||!window.VELAR_FIREBASE_CONFIG)return;
    try{
      if(!firebase.apps.length)firebase.initializeApp(window.VELAR_FIREBASE_CONFIG);
-     // Anonymous document listening, no login and no access to the private catalog.
+     // Anonymous public document only. Never load private drafts or catalog.
      firebase.firestore().collection('vmm_public_pages').doc('landing').onSnapshot(function(snapshot){
-       if(!snapshot.exists)return; // existing static homepage remains in place
+       if(!snapshot.exists)return;
        var d=snapshot.data()||{};
        if(d.status!=='published'||d.schemaVersion!==1)return;
-       render(d.content);
+       if(render(d.content)){
+         fresh=true;
+         if(window.VMM_PUBLIC_OFFLINE)window.VMM_PUBLIC_OFFLINE.put(d.content).catch(function(){});
+       }
      },function(){
-       // Missing staged rules or temporary network error: preserve static page.
+       // Use the last verified public snapshot on temporary network failures.
      });
-   }catch(ignore){/* Never block public landing if SDK or network fails. */}
+   }catch(ignore){/* Cached public copy still works without Firebase. */}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);
  else start();
