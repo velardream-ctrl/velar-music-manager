@@ -233,3 +233,8 @@ CI (run ID и результат):
 - В частности, письмо про Sanastoyhteisö PR #68 preflight failure соответствует публичному run 42895482087: fail в защитной проверке Auth/Drive/iPad/Mediatri, при этом Pages run 42895527475 success. Это требует отдельной диагностики gate, не немедленного изменения production.
 - **Открытая пользовательская ошибка:** внешний вид VELARDREAM различается на старом iPad и iPhone, посимвольная печать на iPhone не работает. Владелец пришлёт скриншоты. Пока нельзя заявлять, что причина установлена; проверить mobile Safari/PWA, sw cache и уменьшение анимации.
 - В рамках RUN-085 менялись только журналы/документы; исходный JS/CSS/Firebase/Drive не трогать до диагностики.
+
+
+## RUN-085 — опубликованная карта почтовых следов, 12.11.2026
+- [RUN-085 Email breadcrumb audit](EMAIL_BREADCRUMB_AUDIT_RU.md) опубликован через [PR #39](https://github.com/velardream-ctrl/velar-music-manager/pull/39), merge `19fcf4478fd161c0edaddfb7c17862428d17d60e`, CI #43152624186 SUCCESS, Pages #43152623659 SUCCESS. В Sanastoyhteisö аналогичный [PR #69](https://github.com/sanastoyhteiso/sanastoyhteiso.github.io/pull/69) merged `93474c7e5f432f87c00db28c8eb03f020e672f5a`, Pages #43153044589 SUCCESS.
+- Открыто: дальнейшая хронология писем и точная диагностика preflight Auth/Drive/iPad/Mediatri Sanastoyhteisö; скриншоты реального iPhone/iPad VELARDREAM (нет анимации печати, различается отображение). Не заявлять устранение до приёмки.
