@@ -1,0 +1,117 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedInGoogle() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+
+    function adminPath() {
+      return /databases/$(database)/documents/vmm_admins/$(request.auth.uid);
+    }
+
+    function studioAdmin() {
+      return signedInGoogle()
+        && exists(adminPath())
+        && get(adminPath()).data.enabled == true;
+    }
+
+    match /vmm_admins/{uid} {
+      allow get: if signedInGoogle()
+        && request.auth.uid == uid;
+
+      allow list, create, update, delete: if false;
+    }
+
+    // RUN-061 / RUN-062: public landing and private draft.
+    // Anonymous clients can read only the published landing document.
+    function validLandingWrite(status) {
+      return studioAdmin()
+        && request.resource.data.keys().hasOnly([
+          'schemaVersion','status','revision','content','updatedAt','updatedBy'
+        ])
+        && request.resource.data.keys().hasAll([
+          'schemaVersion','status','revision','content','updatedAt','updatedBy'
+        ])
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.status == status
+        && request.resource.data.revision is int
+        && request.resource.data.revision > 0
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.content is map
+        && request.resource.data.content.keys().hasOnly([
+          'hero','artists','releases','genres','about'
+        ])
+        && request.resource.data.content.keys().hasAll([
+          'hero','artists','releases','genres','about'
+        ])
+        && request.resource.data.content.hero is map
+        && request.resource.data.content.artists is map
+        && request.resource.data.content.releases is map
+        && request.resource.data.content.genres is map
+        && request.resource.data.content.about is map
+        && request.resource.data.content.artists.cards is list
+        && request.resource.data.content.artists.cards.size() <= 12
+        && request.resource.data.content.releases.cards is list
+        && request.resource.data.content.releases.cards.size() <= 12
+        && request.resource.data.content.genres.tags is list
+        && request.resource.data.content.genres.tags.size() <= 20;
+    }
+
+    match /vmm_public_drafts/{pageId} {
+      allow get: if pageId == 'landing' && studioAdmin();
+      allow list, delete: if false;
+      allow create, update: if pageId == 'landing' && validLandingWrite('draft');
+    }
+
+    match /vmm_public_pages/{pageId} {
+      allow get: if pageId == 'landing'
+        && (studioAdmin()
+          || (resource != null
+            && resource.data.status == 'published'
+            && resource.data.schemaVersion == 1));
+      allow list, delete: if false;
+      allow create, update: if pageId == 'landing' && validLandingWrite('published');
+    }
+
+    match /vmm_lyrics/{itemId} {
+      allow read, write: if studioAdmin();
+    }
+
+    match /vmm_catalog/{itemId} {
+      allow read, write: if studioAdmin();
+    }
+
+    match /vmm_recordings/{itemId} {
+      allow read, write: if studioAdmin();
+    }
+
+    match /vmm_platforms/{itemId} {
+      allow read, write: if studioAdmin();
+    }
+
+    match /vmm_links/{itemId} {
+      allow read, write: if studioAdmin();
+    }
+
+    match /vmm_contacts/{itemId} {
+      allow read, write: if studioAdmin();
+    }
+
+    match /vmm_outreach/{itemId} {
+      allow read, write: if studioAdmin();
+    }
+
+    match /vmm_audit/{itemId} {
+      allow read, write: if studioAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
