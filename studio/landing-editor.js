@@ -243,6 +243,8 @@
    if(catalogLoaded&&!force)return Promise.resolve();
    var generation=loadGeneration,account=uid;
    catalogLoading=true;catalogError='';
+   // Show a real loading state immediately, rather than the stale 'not loaded' label.
+   if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
    if(navigator.onLine===false&&offlineStore){
      return offlineStore.get(uid,'cache:artist-catalog').then(function(saved){
        if(!saved||!saved.value||!Array.isArray(saved.value.catalog))
@@ -980,7 +982,7 @@
      'Назначенные песни ('+entry.tracks.length+')',
      'Найди композицию по названию или выбери из списка. Галочками отметь Spotify, YouTube или оба источника. Одна песня остаётся одной строкой. Изменения сохраняются сначала в черновике.');
    var search=document.createElement('input');search.type='search';search.className='landing-release-search';
-   search.placeholder='Найти прикреплённую песню…';search.value=filter();parent.appendChild(search);
+   search.placeholder='Поиск среди назначенных песен…';search.value=filter();
    var assigned=document.createElement('div');assigned.className='landing-language-songs';
    parent.appendChild(assigned);
    function catalogFor(t){
@@ -1067,23 +1069,33 @@
      }
    }
    search.oninput=function(){setFilter(this.value);drawAssigned();};
+   // With zero attached songs this is NOT the catalog search; do not confuse users.
+   if(entry.tracks.length)parent.appendChild(search);
    drawAssigned();
    heading(parent,'Каталог песен — быстрый выбор',
      'Найди песню по названию или исполнителю и нажми на неё. Spotify и YouTube выбираются отдельными галочками; обе площадки относятся к одной песне.');
-   if(!catalogLoaded){
-     var msg=document.createElement('p');msg.className='sync-note';
-     msg.textContent=catalogLoading?'Загружаем каталог…':catalogError?
-       'Ошибка каталога: '+catalogError:'Каталог ещё не загружен.';
-     parent.appendChild(msg);
-     parent.appendChild(button('Загрузить каталог',function(){
-       catalogLoaded=false;loadCatalogArtists(true);
-     }));
-     return;
-   }
+   // Keep the MAIN song search visible even while the private catalog loads.
+   // Preserve typed text across re-renders so a delayed 4G response cannot erase it.
    var catalogSearch=document.createElement('input');catalogSearch.type='search';
    catalogSearch.className='landing-language-catalog-search';
-   catalogSearch.placeholder='Название песни или артист…';
+   catalogSearch.placeholder='Найти песню во всём каталоге…';
    catalogSearch.value=getCatalogSearch();parent.appendChild(catalogSearch);
+   catalogSearch.oninput=function(){setCatalogSearch(this.value);if(catalogLoaded)drawCatalog();};
+   if(!catalogLoaded){
+     var msg=document.createElement('p');msg.className='sync-note';
+     msg.textContent=catalogLoading?'Загружаем закрытый каталог песен…':catalogError?
+       'Ошибка каталога: '+catalogError:
+       (!db||!uid||!loaded?'Ожидаем подтверждения входа администратора и подключения к базе.':
+       'Каталог ещё не загружен. Нажми «Загрузить каталог».');
+     parent.appendChild(msg);
+     var retry=button(catalogLoading?'Каталог загружается…':'Загрузить каталог',function(){
+       if(!db||!uid||!loaded){info('Каталог доступен после подтверждённого входа администратора.');return;}
+       catalogLoaded=false;loadCatalogArtists(true);
+     });
+     retry.disabled=catalogLoading;
+     parent.appendChild(retry);
+     return;
+   }
    var results=document.createElement('div');results.className='landing-language-catalog-list';
    parent.appendChild(results);
    function drawCatalog(){
@@ -1154,7 +1166,6 @@
        results.appendChild(empty);
      }
    }
-   catalogSearch.oninput=function(){setCatalogSearch(this.value);drawCatalog();};
    drawCatalog();
  }
  function languageEditor(parent){
@@ -2076,7 +2087,7 @@
    if(busy)return Promise.resolve();
    if(loaded&&!force){render();if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();return Promise.resolve();}
    if(force&&dirty()&&!window.confirm('Есть несинхронизированные изменения. Обновление может их перезаписать в редакторе. Обновить?'))return Promise.resolve();
-   if(force){trackEditorArtist='';trackChecked={};trackSearch='';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';catalogLoaded=false;trackLinksLoaded=false;}
+   if(force){trackEditorArtist='';trackChecked={};trackSearch='';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';catalogLoaded=false;catalogLoading=false;catalogError='';trackLinksLoaded=false;}
    var currentLoad=++loadGeneration;
    busy=true;updateButtons();info('Проверяем права и загружаем черновик…');
    return authorized().then(function(auth){
