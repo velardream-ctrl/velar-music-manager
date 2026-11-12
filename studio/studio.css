@@ -525,20 +525,30 @@ body.vmm-print-open{overflow:hidden}
 #panel-landing .landing-topic-catalog-row .landing-checkbox input{
  width:22px;height:22px;flex:0 0 22px;accent-color:#e9c98f;
 }
-#panel-landing .landing-topic-catalog-row select{
- width:auto;flex:0 0 135px;min-width:118px;min-height:44px;
- font-size:16px;margin:0;
+#panel-landing .landing-song-sources{
+ display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;
+ gap:7px 13px;min-width:0;
 }
+#panel-landing .landing-source-check{
+ display:inline-flex;align-items:center;gap:7px;min-height:44px;
+ padding:0 4px;cursor:pointer;color:#f4e4c9;font-size:.94rem;
+}
+#panel-landing .landing-source-check input{
+ width:23px;height:23px;flex:0 0 23px;margin:0;
+ accent-color:#e9c98f;cursor:pointer;
+}
+#panel-landing .landing-source-check.is-disabled{opacity:.5;cursor:default}
+#panel-landing .landing-source-check.is-disabled input{cursor:default}
 #panel-landing .landing-topic-editor{margin-top:19px}
 @media(max-width:480px){
- #panel-landing .landing-topic-catalog-row select{
-   flex:1 0 100%;max-width:none;width:100%;
+ #panel-landing .landing-topic-catalog-row .landing-song-sources{
+   flex:1 1 100%;padding-left:3px;
  }
 }
 
 
-/* RUN-090 — shared editor for every attached language/topic song.
-   Inline dropdown plus editable verified URLs; keep rows legible on old iPads. */
+/* RUN-090/097 — shared editor for attached songs.
+   RUN-097 presents independent source checkboxes; verified URLs and data model stay intact. */
 #panel-landing .landing-attached-song{
  border-radius:10px;margin:7px 0;background:#132641;
  border:1px solid rgba(220,186,140,.35);overflow:hidden;
@@ -552,8 +562,9 @@ body.vmm-print-open{overflow:hidden}
  display:flex;flex-direction:column;padding:11px;gap:9px;
  border-top:1px solid rgba(226,191,140,.3);min-width:0;
 }
-#panel-landing .landing-attached-platform{
- width:100%;min-height:44px;font-size:16px;box-sizing:border-box
+#panel-landing .landing-attached-fields .landing-song-sources{
+ border:1px solid rgba(226,191,140,.35);border-radius:9px;
+ padding:3px 10px;background:#101f39;
 }
 #panel-landing .landing-attached-url{
  display:flex;flex-direction:column;gap:4px;color:#e7d1ad;
