@@ -51,7 +51,8 @@
    card.appendChild(copy);
    return card;
  }
- function musicPanel(item){
+ function musicPanel(item,view,albums){
+   view=view||'classic';
    var panel=create('aside','cms-music-panel');
    panel.setAttribute('aria-label','Лучшие песни: '+item.title);
    var title=create('div','cms-music-heading');
@@ -64,14 +65,35 @@
      panel.appendChild(create('p','cms-music-empty','Подборка композиций появится здесь после выбора в музыкальной студии.'));
      return panel;
    }
-   var list=create('div','cms-music-list');
+   var list=create('div','cms-music-list'+
+     (view==='tiles'?' cms-music-list--tiles':view==='covers'?' cms-music-list--covers':''));
    // RUN-091: player belongs to the clicked row, not after the entire list.
-   var active=null,buttons=[],players=[];
+   var active=null,buttons=[],players=[],entries=[];
    tracks.forEach(function(track,index){
-     var button=create('button','cms-music-track');
+     var button=create('button','cms-music-track'+
+       (view!=='classic'?' cms-music-track--art':''));
      button.type='button';
      button.setAttribute('aria-pressed','false');
      button.appendChild(create('span','cms-music-number',('0'+(index+1)).slice(-2)));
+     if(view!=='classic'){
+       var cover='';
+       (albums&&albums.entries||[]).forEach(function(album){
+         if(!album.visible||cover)return;
+         (album.tracks||[]).forEach(function(song){
+           if(song.url===track.url||song.alternateUrl===track.url)
+             cover=album.imageData||album.imageUrl||'';
+         });
+       });
+       if(cover){
+         var thumb=create('img','cms-music-track-thumb');
+         thumb.src=cover;thumb.alt='Обложка: '+track.title;
+         thumb.loading='lazy';thumb.decoding='async';thumb.referrerPolicy='no-referrer';
+         button.appendChild(thumb);
+       }else{
+         var note=create('span','cms-music-track-thumb cms-music-track-thumb--empty','♫');
+         note.setAttribute('aria-hidden','true');button.appendChild(note);
+       }
+     }
      var details=create('span','cms-music-track-info');
      details.appendChild(create('strong','',track.title));
      details.appendChild(create('small','',track.provider==='spotify'?'Spotify':'YouTube'));
@@ -88,7 +110,7 @@
      player.setAttribute('aria-label','Плеер: '+track.title);
      button.onclick=function(){
        if(active===index&&hasEmbed(player)){
-         empty(player);active=null;
+         empty(player);active=null;entry.className=entry.className.replace(/ is-playing/g,'');
          buttons.forEach(function(b){b.setAttribute('aria-pressed','false');});
          return; // second click stops Spotify/YouTube and collapses the row.
        }
@@ -96,6 +118,8 @@
        if(!validated)return;
        pauseOtherEmbeds();
        active=index;
+       entries.forEach(function(e){e.className=e.className.replace(/ is-playing/g,'');});
+       entry.className+=' is-playing';
        buttons.forEach(function(b,i){b.setAttribute('aria-pressed',i===index?'true':'false');});
        players.forEach(function(p){empty(p);});
        var frame=document.createElement('iframe');
@@ -112,14 +136,14 @@
        external.href=validated;external.rel='noopener noreferrer';external.target='_blank';
        player.appendChild(external);
      };
-     buttons.push(button);players.push(player);
+     buttons.push(button);players.push(player);entries.push(entry);
      entry.appendChild(button);entry.appendChild(player);
      list.appendChild(entry);
    });
    panel.appendChild(list);
    return panel;
  }
- function cards(id,rows,type){
+ function cards(id,rows,type,featuredView,albums){
    var target=byId(id);
    if(!target)return;
    var shown=rows.filter(function(x){return x.visible===true;});
@@ -139,7 +163,7 @@
      if(stories){
        var row=create('div','cms-artist-story'+(index%2?' cms-artist-story--reverse':''));
        row.appendChild(card);
-       row.appendChild(musicPanel(item));
+       row.appendChild(musicPanel(item,featuredView,albums));
        target.appendChild(row);
      }else target.appendChild(card);
    });
@@ -462,7 +486,10 @@
    var tags=byId('public-genres-tags');if(tags){empty(tags);
      value.genres.tags.forEach(function(tag){tags.appendChild(create('span','',tag));});
    }
-   cards('public-artists-cards',value.artists.cards,'artists');
+   if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.configure)
+     window.VELAR_PUBLIC_SONGS.configure(value.albums.trackView,value.albums.entries);
+   cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums);
+   if(window.VELAR_ALBUMS&&window.VELAR_ALBUMS.render)window.VELAR_ALBUMS.render(value.albums);
    releaseGallery(value.releases);
    playlistGallery(value.releases);
    renderRadio(value.releases.radio);
