@@ -47,6 +47,16 @@ assert.match(html,/name="robots" content="noindex,nofollow,noarchive"/);
 assert.match(css,/\.velar-assistant-launch/);
 assert.match(css,/\.velar-assistant-wave/);
 assert.ok(css.includes("dj-velar-expressions.jpg"));
+const spriteRule=css.match(/\.velar-expression::before\{([^}]+)\}/);
+assert.ok(spriteRule,'The DJ Velar JPEG sprite must remain attached to avatar pseudo-element');
+for(const side of ['top','right','bottom','left']){
+ assert.match(spriteRule[1],new RegExp('(?:^|;)'+side+':0(?:;|$)'),
+  'Safari 12 requires explicit '+side+':0 instead of unsupported inset shorthand');
+}
+assert.doesNotMatch(spriteRule[1],/(?:^|;)inset:/,
+ 'Old iOS Safari ignores inset, collapsing portrait and exposing the fallback V');
+assert.match(spriteRule[1],/background-image:url\('assets\/dj-velar-expressions\.jpg'\)/);
+
 const sprite=fs.readFileSync(new URL('../assets/dj-velar-expressions.jpg',import.meta.url));
 assert.ok(sprite.length<30000,'ten portraits must remain small');
 assert.equal(sprite[0],0xff);assert.equal(sprite[1],0xd8);
@@ -83,8 +93,8 @@ assert.match(css,/\.velar-assistant-suggestion\{min-height:28px;padding:2px 7px/
 assert.match(css,/\.velar-assistant-privacy\{padding:1px 7px 3px/);
 assert.match(css,/\.velar-assistant-header-note\{display:none\}/);
 assert.match(css,/\.velar-assistant-input\{height:36px;padding:6px 8px;font-size:16px\}/);
-assert.match(sw,/CACHE_PREFIX \+ 'v32'/);
-assert.match(html,/style\.css\?v=27/);
+assert.match(sw,/CACHE_PREFIX \+ 'v33'/);
+assert.match(html,/style\.css\?v=28/);
 assert.ok(code.includes("querySelector('.velar-assistant-launch')"));
 
 const customLabels={...settings,labels:{...settings.labels,
