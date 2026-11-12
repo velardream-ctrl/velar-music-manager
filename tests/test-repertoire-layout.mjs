@@ -30,11 +30,11 @@ assert.match(source,/id="vmm-r-edit-meta"/);
 assert.match(source,/id="vmm-r-download"/);
 assert.doesNotMatch(source,/data-r-action="play"/,'No duplicate Listen button in metadata card');
 assert.ok(html.includes('src="recordings.js?v=12"'));
-assert.ok(html.includes('src="studio.js?v=10"'));
+assert.ok(html.includes('src="studio.js?v=11"'));
 assert.ok(html.includes('src="workflows.js?v=7"'));
 assert.ok(html.includes('href="recordings.css?v=12"'));
 assert.match(css,/\.vmm-r-player-sync/);
-assert.ok(sw.includes("STUDIO_PREFIX+'v30'"));
+assert.ok(sw.includes("STUDIO_PREFIX+'v31'"));
 
 const els={};
 function node(tag){
