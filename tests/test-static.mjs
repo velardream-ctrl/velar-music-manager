@@ -102,3 +102,9 @@ for (const match of studioPage.matchAll(/(?:src|href)="([^"]+)"/g)) {
   const target = path.join(root,'studio',match[1].split(/[?#]/)[0]);
   assert.ok(fs.existsSync(target), 'Broken studio asset: ' + match[1]);
 }
+
+// RUN-102: the shared catalog search in topics, languages and albums uses one style.
+assert.ok(studioCss.includes('#panel-landing input.landing-language-catalog-search,'),
+  'Catalog search CSS must not be scoped only to languages');
+assert.ok(studioCss.includes('-webkit-appearance:none;appearance:none;box-sizing:border-box;'),
+  'iOS Safari must not draw a native black pill');
