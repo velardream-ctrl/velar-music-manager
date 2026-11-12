@@ -11,20 +11,23 @@
  function scrollProgress(top,height,viewport){
    return clamp(-top/Math.max(1,height-viewport));
  }
- function supportsMotion(){
+ // RUN-088: readable, read-only diagnostics for desktop Edge/Windows.
+ // Never override reduced-motion or Data Saver accessibility preferences.
+ function motionStatus(){
    if(!window.IntersectionObserver||!window.requestAnimationFrame||
-       !window.cancelAnimationFrame||!window.matchMedia)return false;
-   if(window.innerHeight<520||window.innerWidth<320)return false;
+       !window.cancelAnimationFrame||!window.matchMedia)return 'unsupported-browser';
+   if(window.innerHeight<520||window.innerWidth<320)return 'small-viewport';
    try{
      media=window.matchMedia('(prefers-reduced-motion: reduce)');
-     if(media.matches)return false;
-     if(window.navigator&&window.navigator.connection&&window.navigator.connection.saveData)return false;
-     // Sticky sections inside a body with overflow-x:hidden fail on older
-     // Safari. Clip support distinguishes devices with a reliable layout.
-     if(!window.CSS||!window.CSS.supports||!window.CSS.supports('overflow','clip'))return false;
-   }catch(ignore){return false;}
-   return true;
+     if(media.matches)return 'reduced-motion';
+     if(window.navigator&&window.navigator.connection&&window.navigator.connection.saveData)return 'data-saver';
+     // Older Safari's sticky sections require reliable clip support.
+     if(!window.CSS||!window.CSS.supports||!window.CSS.supports('overflow','clip'))
+       return 'unsupported-clip';
+   }catch(ignore){return 'unsupported-browser';}
+   return 'enabled';
  }
+ function supportsMotion(){return motionStatus()==='enabled';}
  function phaseFor(p){return p<.31?0:p<.68?1:2;}
  function apply(){
    scheduled=0;if(!active||!chapter)return;
@@ -87,7 +90,10 @@
  function init(){
    if(started)return;
    chapter=document.getElementById('crystal-journey');
-   if(!chapter||!supportsMotion())return;
+   if(!chapter)return;
+   var status=motionStatus();
+   chapter.setAttribute('data-motion-status',status);
+   if(status!=='enabled')return;
    crystal=chapter.querySelector('.crystal-journey-crystal');
    outer=chapter.querySelector('.crystal-journey-ring--outer');
    inner=chapter.querySelector('.crystal-journey-ring--inner');
@@ -121,5 +127,5 @@
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
  else init();
- window.VELAR_LIVING_ART={scrollProgress:scrollProgress,phaseFor:phaseFor};
+ window.VELAR_LIVING_ART={scrollProgress:scrollProgress,phaseFor:phaseFor,motionStatus:motionStatus};
 }());

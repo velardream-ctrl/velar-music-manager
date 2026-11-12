@@ -205,15 +205,17 @@
  function finishTyping(){
    if(activeTyping&&activeTyping.finish)activeTyping.finish();
  }
- function typingAllowed(){
-   if(!config||!config.typing||config.typing.enabled===false||
-      typeof window.setTimeout!=='function')return false;
+ // RUN-088: a read-only reason code helps diagnose Windows and Safari.
+ function typingStatus(){
+   if(!config||!config.typing||config.typing.enabled===false)return 'disabled-in-studio';
+   if(typeof window.setTimeout!=='function')return 'unsupported-browser';
    try{
      if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-       return false;
+       return 'reduced-motion';
    }catch(ignore){}
-   return true;
+   return 'enabled';
  }
+ function typingAllowed(){return typingStatus()==='enabled';}
  // ES5-safe Unicode code points: avoid drawing half of an emoji surrogate pair.
  function characters(value){
    return String(value||'').match(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\s\S]/g)||[];
@@ -500,5 +502,6 @@
  }
  // Do not guess public visibility from schema defaults before the verified
  // published landing snapshot arrives. Respect owner opt-out without flicker.
- window.VELAR_ASSISTANT={render:render,answer:answer,norm:norm,topicFor:topicFor,expressionFor:expressionFor};
+ window.VELAR_ASSISTANT={render:render,answer:answer,norm:norm,topicFor:topicFor,
+   expressionFor:expressionFor,typingStatus:typingStatus};
 }());
