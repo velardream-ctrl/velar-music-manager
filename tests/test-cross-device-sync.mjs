@@ -19,7 +19,7 @@ assert.match(offline,/indexedDB\.open\(NAME,2\)/);
 assert.ok(page.includes('src="offline-cloud-sync.js?v=1"'));
 assert.ok(page.includes('src="offline-repertoire.js?v=3"'));
 assert.ok(page.includes('src="recordings.js?v=12"'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v27'"));
+assert.ok(sw.includes("STUDIO_PREFIX+'v28'"));
 assert.ok(sw.includes('./studio/offline-cloud-sync.js?v=1'));
 assert.doesNotMatch(sw,/drive\.googleapis\.com|audio\/flac|audio\/mpeg/);
 const window={};
