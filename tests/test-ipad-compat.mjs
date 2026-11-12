@@ -34,8 +34,8 @@ assert.match(css,/\.universe-node-name\{word-wrap:break-word;overflow-wrap:break
 assert.match(css,/\.topic-planet-name\{line-height:1\.24;word-wrap:break-word;/);
 
 // Only public static assets change; Studio cache and audio remain untouched.
-assert.match(html,/href="style\.css\?v=29"/);
-assert.match(sw,/'\.\/style\.css\?v=29'/);
-assert.match(sw,/CACHE_PREFIX \+ 'v34'/);
-assert.match(sw,/STUDIO_PREFIX\+'v31'/);
+assert.match(html,/href="style\.css\?v=30"/);
+assert.match(sw,/'\.\/style\.css\?v=30'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v36'/);
+assert.match(sw,/STUDIO_PREFIX\+'v32'/);
 console.log('PASS: RUN-089 Safari12 chat fallback; stable 768/1024px language, topic and universe layouts');
