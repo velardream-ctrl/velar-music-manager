@@ -32,7 +32,7 @@ assert.equal(safe.releases.cards[0].visible,true);
 const privateObject={...def,secretToken:'abc123',lyrics:[{text:'не публиковать'}]};
 const clean=JSON.stringify(api.normalize(privateObject));
 assert.doesNotMatch(clean,/secretToken|не публиковать/);
-assert.match(html,/landing-public\.js\?v=9/);
+assert.match(html,/landing-public\.js\?v=10/);
 assert.match(html,/landing-schema\.js\?v=13/);
 assert.match(studio,/landing-editor\.js\?v=14/);
 assert.match(studio,/data-panel="landing"/);

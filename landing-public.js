@@ -12,6 +12,8 @@
    return n;
  }
  var original={};
+ // RUN-086: only visible, owner-enabled radio controls can be opened from chat.
+ var radioControls=null;
  function buildArtistCard(item,type){
    var card=create('article','cms-card');
    if(item.imageData||item.imageUrl){
@@ -323,6 +325,7 @@
  function renderRadio(config){
    var host=byId('velar-radio');
    if(!host)return;
+   radioControls=null;
    empty(host);
    if(!config.enabled||!window.VMM_LANDING_SCHEMA.playlistUrl(config.url,config.provider)){
      host.className='velar-radio hidden';return;
@@ -340,6 +343,7 @@
        renderRadio(config);
      };
      host.appendChild(restore);
+     radioControls={restore:restore,host:host};
      return;
    }
    host.className='velar-radio';
@@ -379,12 +383,29 @@
    };
    panel.appendChild(hide);
    host.appendChild(panel);
+   radioControls={toggle:toggle,start:open,host:host};
    toggle.onclick=function(){
      var shown=panel.className.indexOf(' hidden')!==-1;
      panel.className=shown?'velar-radio-panel':'velar-radio-panel hidden';
      toggle.setAttribute('aria-expanded',shown?'true':'false');
-     if(!shown)empty(player); // closing stops external playback.
+     if(!shown){
+       empty(player); // closing stops external playback.
+       host.className=host.className.replace(/\svelar-radio--chat-open/g,'');
+     }
    };
+ }
+ // Only call this synchronously from the visitor's explicit chat button click.
+ // Respect the owner's OFF switch and local hidden state; never autoplay media.
+ function openRadioFromChat(){
+   if(!radioControls)return false;
+   if(radioControls.restore)radioControls.restore.onclick();
+   if(!radioControls||!radioControls.toggle||!radioControls.start)return false;
+   var controls=radioControls;
+   if(controls.toggle.getAttribute('aria-expanded')!=='true')controls.toggle.onclick();
+   if(controls.host.className.indexOf('velar-radio--chat-open')===-1)
+     controls.host.className+=' velar-radio--chat-open';
+   controls.start.onclick(); // official iframe is created by the existing safe handler.
+   return true;
  }
  function render(content){
    if(!window.VMM_LANDING_SCHEMA)return false;
@@ -434,5 +455,6 @@
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);
  else start();
- window.VMM_PUBLIC_LANDING={render:render,stopExternalPlayers:pauseOtherEmbeds}; // public UI only, never writes
+ window.VMM_PUBLIC_LANDING={render:render,stopExternalPlayers:pauseOtherEmbeds,
+   openRadioFromChat:openRadioFromChat}; // public UI only, never writes
 }());
