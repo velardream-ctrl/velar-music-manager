@@ -1043,6 +1043,76 @@
 
  // RUN-073: editorial tagging. A public song can be assigned to any number
  // of topics, like private artist-track assignments, without copying audio.
+ // RUN-096: one shared song editor for official albums AND collections from singles.
+ function albumsEditor(parent){
+   var cfg=data.albums,entries=cfg.entries;
+   heading(parent,'Альбомы и коллекции из синглов',
+     'Официальный альбом имеет собственную страницу у дистрибьютора. Собранные на сайте синглы называются авторской коллекцией; их исходные релизы не изменяются.');
+   field(parent,'Название раздела',cfg.heading,function(v){cfg.heading=v;});
+   field(parent,'Описание раздела',cfg.intro,function(v){cfg.intro=v;},true);
+   selectField(parent,'Показ обложек альбомов',
+     [['grid','Квадратные обложки — сетка'],['list','Обложка + описание — список']],
+     cfg.view,function(v){cfg.view=v;});
+   selectField(parent,'Вид песен в альбомах, языках и темах',
+     [['rows','Обычные строки без миниатюр'],['covers','Строки с миниатюрой обложки'],['tiles','Квадратные карточки']],
+     cfg.trackView,function(v){cfg.trackView=v;});
+   var menu=document.createElement('div');menu.className='landing-language-menu';
+   entries.forEach(function(album,index){
+     var group=document.createElement('div');group.className='landing-language-menu-item';
+     var select=button((album.title||album.id)+' · '+album.tracks.length+' песен',function(){
+       albumEditorId=album.id;albumCatalogSearch='';albumTrackFilter='';render();
+     },'landing-small');
+     if(albumEditorId===album.id)select.className+=' is-active';
+     group.appendChild(select);
+     var controls=document.createElement('div');controls.className='landing-item-actions';
+     var up=button('↑',function(){if(index<1)return;var t=entries.splice(index,1)[0];entries.splice(index-1,0,t);render();});
+     var down=button('↓',function(){if(index>=entries.length-1)return;var t=entries.splice(index,1)[0];entries.splice(index+1,0,t);render();});
+     var remove=button('Удалить',function(){
+       if(!window.confirm('Удалить альбом из черновика сайта? Оригинальные синглы останутся в каталоге.'))return;
+       entries.splice(index,1);if(albumEditorId===album.id)albumEditorId='';render();
+     },'landing-danger');
+     up.disabled=index===0;down.disabled=index===entries.length-1;
+     controls.appendChild(up);controls.appendChild(down);controls.appendChild(remove);
+     group.appendChild(controls);menu.appendChild(group);
+   });
+   parent.appendChild(menu);
+   parent.appendChild(button('+ Создать альбом',function(){
+     if(entries.length>=8){info('В текущем формате страницы максимум 8 альбомов, чтобы не перегружать Firestore фотографиями.');return;}
+     var i=1,key;do{key='album-'+i++;}while(entries.some(function(a){return a.id===key;}));
+     entries.push({id:key,title:'',artist:'',description:'',kind:'collection',
+       mediaProvider:'spotify',mediaUrl:'',imageData:'',imageUrl:'',visible:false,tracks:[]});
+     albumEditorId=key;albumCatalogSearch='';albumTrackFilter='';render();
+   },'landing-add'));
+   var active=entries.filter(function(album){return album.id===albumEditorId;})[0];
+   if(!active){active=entries[0];if(active)albumEditorId=active.id;}
+   if(!active)return;
+   var box=document.createElement('section');box.className='landing-card landing-album-editor';
+   heading(box,'Альбом: '+(active.title||'Новая коллекция'),
+     'Обложка будет публичной после отдельной публикации. Песни не дублируются и сохраняют свои Spotify/YouTube ссылки.');
+   field(box,'Код альбома (латиница и дефис)',active.id,function(v){active.id=v.trim().toLowerCase();albumEditorId=active.id;});
+   field(box,'Название альбома',active.title,function(v){active.title=v;});
+   field(box,'Исполнитель',active.artist,function(v){active.artist=v;});
+   field(box,'Описание',active.description||'',function(v){active.description=v;},true);
+   selectField(box,'Тип',
+     [['collection','Авторская коллекция из синглов'],['official','Официально выпущенный альбом']],
+     active.kind,function(v){active.kind=v;if(v==='collection')active.mediaUrl='';render();});
+   if(active.kind==='official')field(box,'Ссылка на официальный альбом Spotify (не трек)',
+     active.mediaUrl||'',function(v){active.mediaUrl=v;});
+   var mark=document.createElement('label');mark.className='landing-checkbox';
+   var tick=document.createElement('input');tick.type='checkbox';tick.checked=active.visible===true;
+   tick.onchange=function(){active.visible=this.checked;updateButtons();};
+   mark.appendChild(tick);mark.appendChild(document.createTextNode(' Показывать альбом на сайте'));box.appendChild(mark);
+   field(box,'HTTPS-ссылка на публичную обложку (не Google Drive) — необязательно',
+     active.imageUrl||'',function(v){active.imageUrl=v;});
+   releaseCover(box,active);
+   attachedSongsEditor(box,active,{mode:'album',
+     getFilter:function(){return albumTrackFilter;},
+     setFilter:function(v){albumTrackFilter=v;},
+     getCatalogSearch:function(){return albumCatalogSearch;},
+     setCatalogSearch:function(v){albumCatalogSearch=v;}
+   });
+   parent.appendChild(box);
+ }
  function topicEditor(parent){
    var config=data.genres.topics,topics=config.entries;
    heading(parent,'Темы и настроения',
@@ -1722,6 +1792,7 @@
      ['Первый экран',data.hero.subtitle,data.hero.intro],
      ['Артисты',data.artists.heading,data.artists.intro],
      ['Музыка и релизы',data.releases.heading,data.releases.intro],
+     ['Альбомы',data.albums.heading,data.albums.intro],
      ['VELAR RADIO',data.releases.radio.title,data.releases.radio.enabled?'Радио включено · '+data.releases.radio.provider:'Радио выключено'],
      ['Жанры',data.genres.heading,data.genres.intro],
      ['Созвездия',data.genres.universe.heading,
