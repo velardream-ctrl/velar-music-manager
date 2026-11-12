@@ -3,6 +3,7 @@
 (function(){
  'use strict';
  var store=window.VMM_OFFLINE_ADMIN,queue=Promise.resolve(),timer=null,syncing=false;
+ var persistedKey='',persistedText='';
  function studio(){return window.VMM_STUDIO;}
  function ctx(){return studio()&&studio().offlineLyricContext&&studio().offlineLyricContext();}
  function status(s){var el=document.getElementById('lyrics-offline-status');if(el)el.textContent=s;}
@@ -33,6 +34,7 @@
      });
    });
    return queue.then(function(item){
+     persistedKey=name;persistedText=snapshot.text;
      status('Текст сохранён на этом устройстве. Синхронизация с облаком будет проверена при подключении.');
      return item;
    }).catch(function(err){
@@ -58,6 +60,7 @@
      var now=ctx();
      if(key(now)!==k||now.text!==oldText||now.baseText!==oldBase)return null;
      studio().offlineRestoreLyric(saved.value.text,saved.value.baseText);
+     persistedKey=k;persistedText=saved.value.text;
      status('Восстановлен локальный текст. Он ещё не подтверждён облаком; при конфликте останется здесь.');
      return saved;
    }).catch(function(err){status('Ошибка восстановления локального текста: '+err.message);return null;});
@@ -109,6 +112,12 @@
      });
    });
  }
+ function savedCurrent(){
+   var c=ctx();return !!(c&&key(c)===persistedKey&&c.text===persistedText);
+ }
+ function pendingCurrent(){
+   var c=ctx();return c&&store?store.get(c.uid,key(c)).then(function(v){return !!v;}):Promise.resolve(false);
+ }
  function syncAll(){
    var c=ctx();
    if(syncing||!store||!c||!c.uid||!c.db||navigator.onLine===false)return Promise.resolve();
@@ -145,5 +154,6 @@
  window.addEventListener('online',function(){syncAll();});
  window.addEventListener('pagehide',function(){if(timer!==null){clearTimeout(timer);timer=null;saveNow().catch(function(){});}});
  window.VMM_OFFLINE_LYRICS={edited:edited,saveNow:saveNow,recover:recover,
+   savedCurrent:savedCurrent,pendingCurrent:pendingCurrent,
    syncAll:syncAll,cacheDataset:cacheDataset,cachedDataset:cachedDataset};
 }());
