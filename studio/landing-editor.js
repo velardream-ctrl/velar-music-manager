@@ -693,7 +693,7 @@
      field(card,'Название созвездия',item.label,function(v){item.label=v;});
      field(card,'Подпись созвездия',item.description||'',function(v){item.description=v;},true);
      selectField(card,'При нажатии перейти в раздел',[
-       ['artists','Артисты'],['releases','Релизы и клипы'],['playlists','Плейлисты'],
+       ['artists','Артисты'],['releases','Релизы и клипы'],['albums','Альбомы'],['playlists','Плейлисты'],
        ['genres','Жанры'],['languages','Миры языков'],['topics','Темы песен'],['about','О проекте'],['radio','VELAR RADIO (плейлисты)']
      ],item.target,function(v){item.target=v;});
      var row=document.createElement('label');row.className='landing-checkbox';
