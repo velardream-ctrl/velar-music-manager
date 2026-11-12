@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
-const schema=read('landing-schema.js'),langs=read('languages-public.js'),universe=read('universe.js');
+const schema=read('landing-schema.js'),langs=read('languages-public.js'),universe=read('universe.js'),playerUI=read('public-song-ui.js');
 const html=read('index.html'),css=read('style.css'),admin=read('studio/landing-editor.js');
 const sw=read('sw.js'),rules=read('firestore.rules');
 const win={};
@@ -37,6 +37,21 @@ assert.equal(page.genres.universe.nodes[8].visible,false);
 assert.deepEqual(Object.keys(page.genres.languages.entries.find(x=>x.code==='es').tracks[0]),
  ['title','artist','provider','url']);
 assert.doesNotMatch(JSON.stringify(page),/privateRecording|DriveFile|accessToken|lyricsDocument/);
+// RUN-090: legacy Spotify + YouTube entries representing one composition
+// consolidate into a single row, preserving the FIRST provider and order.
+const bothLegacy=api.normalize({...defaults,genres:{...defaults.genres,
+ languages:{...defaults.genres.languages,entries:defaults.genres.languages.entries.map(x=>({
+  ...x,tracks:x.code==='en'?[t1,{...t1,provider:'youtube',url:t2.url}]:[]
+ }))}}});
+const merged=bothLegacy.genres.languages.entries.find(x=>x.code==='en').tracks;
+assert.equal(merged.length,1);
+assert.equal(merged[0].provider,'spotify');
+assert.equal(merged[0].alternateProvider,'youtube');
+assert.equal(merged[0].alternateUrl,'https://www.youtube.com/watch?v=ABCDEFGHIjk');
+assert.equal(api.languageTrack(merged[0],1).alternateProvider,'youtube');
+assert.throws(()=>api.languageTrack({...merged[0],alternateUrl:'https://drive.google.com/private'},1),/прямая ссылка/);
+assert.throws(()=>api.languageTrack({...merged[0],alternateProvider:'spotify'},1),/отличаться/);
+
 assert.throws(()=>api.languagesConfig({entries:[{code:'es',label:'X',visible:true,tracks:[
  {...t1,url:'https://drive.google.com/file/d/secret'}]}]},defaults.genres.languages),/прямая ссылка/);
 assert.throws(()=>api.languagesConfig({entries:[
@@ -69,6 +84,7 @@ elements['velar-universe-panel'].className='universe-panel hidden';
 const doc={readyState:'complete',getElementById:key=>elements[key]||null,createElement:node};
 let stopped=0;win.VMM_PUBLIC_LANDING={stopExternalPlayers(){stopped++;}};
 win.matchMedia=()=>({matches:false});
+vm.runInNewContext(playerUI,{window:win,document:doc,Array,String,Object,Number,Math,Error},{timeout:1000});
 vm.runInNewContext(langs,{window:win,document:doc,Array,String,Object,Number,Math,Error},{timeout:1000});
 vm.runInNewContext(universe,{window:win,document:doc,Array,String,Object,Number,Math,Error},{timeout:1000});
 win.VELAR_LANGUAGES.render(page.genres.languages);
@@ -81,20 +97,24 @@ es.onclick();
 assert.equal(es.attributes['aria-pressed'],'true');
 const detail=elements['public-language-detail'];
 assert.equal(detail.children[1].textContent.includes('2'),true);
-const list=detail.children[2],player=detail.children[3];
+const list=detail.children[2];
+assert.equal(detail.children.length,3,'No extra player at bottom of list');
 assert.equal(list.children.length,2);
-assert.equal(player.children.length,0,'No embedded player before visitor click');
-list.children[0].onclick();
+const firstRow=list.children[0],secondRow=list.children[1];
+assert.equal(firstRow.children[2].children.length,0,'No iframe before visitor clicks');
+firstRow.children[0].children[1].onclick(); // song title opens primary
 assert.equal(stopped,1,'Other external players are stopped before opening a song');
-assert.equal(player.children[0].tagName,'iframe');
-assert.equal(player.children[0].src,'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
-assert.equal(player.children[0].attributes.allow.includes('autoplay'),false);
-list.children[1].onclick();
+assert.equal(firstRow.children[2].children[0].tagName,'iframe',
+ 'Inline iframe is immediately after the first clicked song, before next row');
+assert.equal(firstRow.children[2].children[0].src,'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
+assert.equal(firstRow.children[2].children[0].attributes.allow.includes('autoplay'),false);
+secondRow.children[1].children[0].onclick();
 assert.equal(stopped,2);
-assert.equal(player.children.length,3);
-assert.equal(player.children[0].src,'https://www.youtube-nocookie.com/embed/ABCDEFGHIjk');
-player.children[2].onclick();
-assert.equal(player.children.length,0,'Close player must remove third-party iframe');
+assert.equal(firstRow.children[2].children.length,0,'Opening another song closes the previous iframe');
+assert.equal(secondRow.children[2].children.length,3);
+assert.equal(secondRow.children[2].children[0].src,'https://www.youtube-nocookie.com/embed/ABCDEFGHIjk');
+secondRow.children[2].children[2].onclick();
+assert.equal(secondRow.children[2].children.length,0,'Closing removes third-party iframe');
 const alien=elements['public-language-orbit'].children.find(n=>n.attributes['aria-label'].includes('Инопланетный'));
 alien.onclick();
 assert.equal(elements['public-language-detail'].children[0].children[0].textContent,'АВТОРСКИЙ ВЫМЫШЛЕННЫЙ ЯЗЫК');
@@ -128,10 +148,12 @@ assert.match(admin,/function languageEditor/);
 assert.match(admin,/API\.songUrl\(urls\.spotify/);
 assert.match(html,/id="languages"/);
 assert.match(html,/src="assets\/velardream-symbol.svg"/);
-assert.match(html,/languages-public\.js\?v=2/);
+assert.match(html,/languages-public\.js\?v=3/);
+assert.match(html,/public-song-ui\.js\?v=1/);
+assert.match(sw,/'\.\/public-song-ui\.js\?v=1'/);
 assert.match(css,/\.language-orbit-node\[aria-pressed=true\]/);
 assert.match(css,/\.language-song-play::before/);
-assert.match(sw,/'\.\/languages-public\.js\?v=2'/);
+assert.match(sw,/'\.\/languages-public\.js\?v=3'/);
 assert.doesNotMatch(langs,/setInterval\(|setTimeout\(|firestore\(|fetch\(/);
 assert.doesNotMatch(universe,/setInterval\(|setTimeout\(|firestore\(|fetch\(/);
 console.log('PASS: RUN-072 editable constellations and languages, genuine crystal, sanitized catalog links, one visitor-clicked player, no extra reads');

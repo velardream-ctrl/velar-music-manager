@@ -422,9 +422,48 @@
       throw new Error('Языковая песня: только Spotify и YouTube.');
     var link=songUrl(raw.url,provider);
     if(!link)throw new Error('Языковая песня: требуется прямая ссылка Spotify/YouTube на трек.');
-    return {title:plain(raw.title||'','Название песни '+i,110,true),
+    var track={title:plain(raw.title||'','Название песни '+i,110,true),
       artist:plain(raw.artist||'','Исполнитель '+i,100,false),
       provider:provider,url:link};
+    // RUN-090: one composition may have a second official source, but only
+    // one primary playback choice. Legacy 4-field entries remain unchanged.
+    if(raw.alternateUrl||raw.alternateProvider){
+      var alt=plain(raw.alternateProvider||'','Дополнительная площадка песни '+i,20,true);
+      if(alt!=='spotify'&&alt!=='youtube'||alt===provider)
+        throw new Error('Дополнительная площадка должна отличаться от основной.');
+      var altUrl=songUrl(raw.alternateUrl||'',alt);
+      if(!altUrl)throw new Error('Для дополнительной площадки нужна прямая ссылка Spotify/YouTube.');
+      track.alternateProvider=alt;track.alternateUrl=altUrl;
+    }
+    return track;
+  }
+  function consolidateAttachedTracks(rows,label){
+    var result=[],seenUrl={};
+    rows.forEach(function(raw,i){
+      var t=languageTrack(raw,i+1);
+      var urls=[t.url];if(t.alternateUrl)urls.push(t.alternateUrl);
+      urls.forEach(function(url){
+        if(seenUrl[url])throw new Error(label+': повтор одной песни.');
+        seenUrl[url]=true;
+      });
+      var key=(t.title+'\u0000'+t.artist).toLowerCase(),paired=null;
+      // Older saved lists may contain Spotify and YouTube as separate tracks.
+      // Pair ONLY complementary providers with identical title and artist,
+      // keeping their first occurrence/order; preserve same-provider versions.
+      result.forEach(function(existing){
+        if((existing.title+'\u0000'+existing.artist).toLowerCase()!==key)return;
+        var theirs=[existing.provider];
+        if(existing.alternateProvider)theirs.push(existing.alternateProvider);
+        var ours=[t.provider];
+        if(t.alternateProvider)ours.push(t.alternateProvider);
+        var overlaps=ours.some(function(p){return theirs.indexOf(p)>=0;});
+        if(!overlaps&&theirs.length+ours.length<=2&&!paired)paired=existing;
+      });
+      if(paired){
+        paired.alternateProvider=t.provider;paired.alternateUrl=t.url;
+      }else result.push(t);
+    });
+    return result;
   }
   function languagesConfig(raw,def){
     var item=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
@@ -439,12 +478,7 @@
       codes[code]=true;
       var tracks=typeof lang.tracks==='undefined'?[]:lang.tracks;
       if(!Array.isArray(tracks)||tracks.length>300)throw new Error('Язык '+code+': не более 300 публичных песен.');
-      var seen={};
-      var cleaned=tracks.map(function(track,j){
-        var t=languageTrack(track,j+1);
-        if(seen[t.url])throw new Error('Язык '+code+': повтор одной песни.');
-        seen[t.url]=true;return t;
-      });
+      var cleaned=consolidateAttachedTracks(tracks,'Язык '+code);
       return {code:code,label:plain(lang.label||'','Название языка '+(i+1),64,lang.visible===true),
         fictional:lang.fictional===true,visible:lang.visible===true,tracks:cleaned};
     });
@@ -471,12 +505,7 @@
       var tracks=typeof topic.tracks==='undefined'?[]:topic.tracks;
       if(!Array.isArray(tracks)||tracks.length>300)
         throw new Error('Тема '+slug+': максимум 300 песен.');
-      var used={};
-      var chosen=tracks.map(function(t,j){
-        var mapped=languageTrack(t,j+1); // same strict official whitelist
-        if(used[mapped.url])throw new Error('Тема '+slug+': дублирование песни.');
-        used[mapped.url]=true;return mapped;
-      });
+      var chosen=consolidateAttachedTracks(tracks,'Тема '+slug);
       return {slug:slug,label:label,description:description,
         visible:topic.visible===true,tracks:chosen};
     });
@@ -730,6 +759,7 @@
     releaseMediaUrl:releaseMediaUrl,playlistUrl:playlistUrl,radioConfig:radioConfig,
     subscriptionUrl:subscriptionUrl,playlistCard:playlistCard,subscriptionCard:subscriptionCard,
     universeConfig:universeConfig,languagesConfig:languagesConfig,
+    languageTrack:languageTrack,consolidateAttachedTracks:consolidateAttachedTracks,
     defaultUniverseNodes:defaultUniverseNodes,defaultLanguages:defaultLanguages,
     defaultTopics:defaultTopics,topicsConfig:topicsConfig,
     assistantConfig:assistantConfig,auditAssistantRules:auditAssistantRules,

@@ -14,8 +14,11 @@
      group.tracks.forEach(function(track){
        var url='';
        try{url=api&&api.songUrl&&api.songUrl(track.url,track.provider)||'';}catch(ignore){}
-       if(!url||!track.title||seen[url])return;
-       seen[url]=true;
+       // One composition is never presented twice just because another
+       // section chose YouTube instead of Spotify as its primary source.
+       var identity=norm(track.title)+'|'+norm(track.artist||'');
+       if(!url||!track.title||seen[url]||seen[identity])return;
+       seen[url]=true;seen[identity]=true;
        items.push({title:track.title,artist:track.artist||'',url:url,
          provider:track.provider,kind:kind,id:id});
      });

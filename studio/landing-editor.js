@@ -711,6 +711,261 @@
      render();
    },'landing-add'));
  }
+
+ // RUN-090: ONE attachment editor shared by language and topic constellations.
+ // A song has one row and one primary official player, optionally a second.
+ function attachedSongSources(t){
+   var result={spotify:'',youtube:''};
+   if(t&&result.hasOwnProperty(t.provider))result[t.provider]=t.url||'';
+   if(t&&t.alternateUrl&&result.hasOwnProperty(t.alternateProvider))
+     result[t.alternateProvider]=t.alternateUrl;
+   return result;
+ }
+ function attachedSongMode(t){
+   return t&&t.alternateUrl?t.provider+'+'+t.alternateProvider:t&&t.provider||'spotify';
+ }
+ function attachedCatalogOptions(){
+   var result=[];
+   (catalogArtists||[]).forEach(function(song){
+     var urls=song.links||{};
+     var spotify=API.songUrl(urls.spotify||'','spotify'),
+       youtube=API.songUrl(urls.youtube||'','youtube');
+     if(spotify||youtube)result.push({title:String(song.title||'Без названия'),
+       artist:String(song.artist||''),spotify:spotify,youtube:youtube});
+   });
+   return result;
+ }
+ function attachedSongKey(t){
+   return String(t.title||'').trim().toLocaleLowerCase('ru')+'|'+
+     String(t.artist||'').trim().toLocaleLowerCase('ru');
+ }
+ function attachedFind(target,song){
+   var key=attachedSongKey(song),urls=[song.spotify,song.youtube].filter(function(u){return !!u;});
+   for(var i=0;i<target.tracks.length;i++){
+     var row=target.tracks[i],links=attachedSongSources(row);
+     if(attachedSongKey(row)===key||(urls.some(function(url){
+       return url===links.spotify||url===links.youtube;
+     })))return row;
+   }
+   return null;
+ }
+ function attachedAvailableModes(sources){
+   var modes=[];
+   if(sources.spotify)modes.push(['spotify','Spotify']);
+   if(sources.youtube)modes.push(['youtube','YouTube']);
+   if(sources.spotify&&sources.youtube){
+     modes.push(['spotify+youtube','Spotify основной + YouTube']);
+     modes.push(['youtube+spotify','YouTube основной + Spotify']);
+   }
+   return modes;
+ }
+ function attachedModeSelect(modes,value){
+   var select=document.createElement('select');select.className='landing-release-select landing-attached-platform';
+   modes.forEach(function(mode){
+     var option=document.createElement('option');option.value=mode[0];option.textContent=mode[1];
+     select.appendChild(option);
+   });
+   select.value=value;
+   if(select.value!==value&&modes.length)select.value=modes[0][0];
+   return select;
+ }
+ function attachedBuildSong(song,mode,sources){
+   var parts=String(mode||'').split('+'),primary=parts[0],second=parts[1]||'';
+   var raw={title:song.title,artist:song.artist,provider:primary,url:sources[primary]||''};
+   if(second){raw.alternateProvider=second;raw.alternateUrl=sources[second]||'';}
+   // Never allow a Drive/Storage URL or a provider with no verified track.
+   return API.languageTrack(raw,1);
+ }
+ function attachedReplace(target,old,song,mode,sources){
+   var clean=attachedBuildSong(song,mode,sources);
+   var index=old?target.tracks.indexOf(old):-1;
+   if(old&&index<0)throw new Error('Песня уже изменена в другом списке. Обнови редактор.');
+   var links=attachedSongSources(clean),identity=attachedSongKey(clean);
+   target.tracks.forEach(function(t){
+     if(t===old)return;
+     var existing=attachedSongSources(t);
+     if(attachedSongKey(t)===identity)
+       throw new Error('Такая песня уже назначена. Измени существующую строку.');
+     if((links.spotify&&links.spotify===existing.spotify)||
+        (links.spotify&&links.spotify===existing.youtube)||
+        (links.youtube&&links.youtube===existing.youtube)||
+        (links.youtube&&links.youtube===existing.spotify))
+       throw new Error('Одна ссылка уже назначена другой композиции.');
+   });
+   if(!old&&target.tracks.length>=300)throw new Error('Максимум 300 песен на подборку.');
+   if(old){
+     // Preserve exact list position; never remove/push when switching player.
+     old.title=clean.title;old.artist=clean.artist;old.provider=clean.provider;old.url=clean.url;
+     delete old.alternateProvider;delete old.alternateUrl;
+     if(clean.alternateUrl){old.alternateProvider=clean.alternateProvider;old.alternateUrl=clean.alternateUrl;}
+   }else target.tracks.push(clean);
+   return clean;
+ }
+ function attachedSongsEditor(parent,entry,opts){
+   var mode=opts.mode||'language',isLanguage=mode==='language';
+   var filter=opts.getFilter||function(){return '';},setFilter=opts.setFilter||function(){};
+   var getCatalogSearch=opts.getCatalogSearch||function(){return '';},
+     setCatalogSearch=opts.setCatalogSearch||function(){};
+   var options=attachedCatalogOptions();
+   heading(parent,isLanguage?'Подтверждённые песни ('+entry.tracks.length+')':
+     'Назначенные песни ('+entry.tracks.length+')',
+     'Единый редактор. Одна песня — одна строка. Выбирай основной Spotify/YouTube и, если нужно, второй плеер. Изменение сохранится только в черновике.');
+   var search=document.createElement('input');search.type='search';search.className='landing-release-search';
+   search.placeholder='Найти прикреплённую песню…';search.value=filter();parent.appendChild(search);
+   var assigned=document.createElement('div');assigned.className='landing-language-songs';
+   parent.appendChild(assigned);
+   function catalogFor(t){
+     var key=attachedSongKey(t);
+     for(var i=0;i<options.length;i++){
+       if(attachedSongKey(options[i])===key)return options[i];
+     }
+     return null;
+   }
+   function drawAssigned(){
+     clear(assigned);
+     var q=filter().toLocaleLowerCase('ru').replace(/ё/g,'е');
+     var found=entry.tracks.filter(function(t){
+       return !q||(t.title+' '+t.artist).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)>=0;
+     });
+     found.slice(0,40).forEach(function(t){
+       var outer=document.createElement('div');outer.className='landing-attached-song';
+       var line=document.createElement('div');line.className='landing-language-song-row';
+       var title=document.createElement('span');
+       title.textContent=t.title+' · '+t.artist+' · '+(t.provider==='spotify'?'Spotify':'YouTube')+
+         (t.alternateUrl?' + '+(t.alternateProvider==='spotify'?'Spotify':'YouTube'):'');
+       line.appendChild(title);
+       var edit=button('Изменить плеер',function(){
+         clear(editArea);
+         if(editArea.getAttribute('data-open')==='true'){
+           editArea.setAttribute('data-open','false');return;
+         }
+         editArea.setAttribute('data-open','true');
+         var catalog=catalogFor(t),sources=attachedSongSources(t);
+         if(catalog){
+           if(!sources.spotify)sources.spotify=catalog.spotify;
+           if(!sources.youtube)sources.youtube=catalog.youtube;
+         }
+         var wrap=document.createElement('div');wrap.className='landing-attached-fields';
+         var platform=attachedModeSelect([
+           ['spotify','Spotify — основной'],['youtube','YouTube — основной'],
+           ['spotify+youtube','Spotify основной + YouTube'],
+           ['youtube+spotify','YouTube основной + Spotify']
+         ],attachedSongMode(t));
+         platform.setAttribute('aria-label','Основной и дополнительный плеер: '+t.title);
+         wrap.appendChild(platform);
+         function urlField(label,url){
+           var holder=document.createElement('label');holder.className='landing-attached-url';
+           var text=document.createElement('span');text.textContent=label;
+           var input=document.createElement('input');input.type='url';input.value=url||'';
+           input.placeholder='https://';input.setAttribute('aria-label',label+' — '+t.title);
+           holder.appendChild(text);holder.appendChild(input);wrap.appendChild(holder);return input;
+         }
+         var spotify=urlField('Spotify — прямая ссылка на песню',sources.spotify);
+         var youtube=urlField('YouTube — прямая ссылка на видео',sources.youtube);
+         var buttons=document.createElement('div');buttons.className='landing-item-actions';
+         buttons.appendChild(button('Применить',function(){
+           try{
+             attachedReplace(entry,t,t,platform.value,
+               {spotify:spotify.value.trim(),youtube:youtube.value.trim()});
+           }catch(e){info('Не удалось изменить плеер: '+e.message);return;}
+           drawAssigned();updateButtons();
+           info('Плеер обновлён в черновике. Нажми «Сохранить черновик», затем «Опубликовать».');
+         },'landing-add'));
+         buttons.appendChild(button('Отмена',function(){drawAssigned();},'landing-small'));
+         wrap.appendChild(buttons);editArea.appendChild(wrap);
+       },'landing-small');
+       line.appendChild(edit);
+       line.appendChild(button('Открепить',function(){
+         var index=entry.tracks.indexOf(t);if(index<0)return;
+         entry.tracks.splice(index,1);drawAssigned();if(catalogLoaded)drawCatalog();updateButtons();
+       },'landing-danger'));
+       outer.appendChild(line);
+       var editArea=document.createElement('div');editArea.className='landing-attached-editor';
+       editArea.setAttribute('data-open','false');outer.appendChild(editArea);
+       assigned.appendChild(outer);
+     });
+     if(found.length>40){
+       var note=document.createElement('p');note.className='sync-note';
+       note.textContent='Первые 40 из '+found.length+'. Уточни поиск, чтобы редактировать остальные.';
+       assigned.appendChild(note);
+     }
+     if(!found.length){
+       var empty=document.createElement('p');empty.className='sync-note';
+       empty.textContent='Песен пока нет. Добавь их из каталога ниже.';
+       assigned.appendChild(empty);
+     }
+   }
+   search.oninput=function(){setFilter(this.value);drawAssigned();};
+   drawAssigned();
+   heading(parent,'Каталог песен — единое управление',
+     'Поиск, выбор основного плеера и дополнительного Spotify/YouTube одинаковы для языков и тем. Существующая песня меняется на месте, без изменения порядка.');
+   if(!catalogLoaded){
+     var msg=document.createElement('p');msg.className='sync-note';
+     msg.textContent=catalogLoading?'Загружаем каталог…':catalogError?
+       'Ошибка каталога: '+catalogError:'Каталог ещё не загружен.';
+     parent.appendChild(msg);
+     parent.appendChild(button('Загрузить каталог',function(){
+       catalogLoaded=false;loadCatalogArtists(true);
+     }));
+     return;
+   }
+   var catalogSearch=document.createElement('input');catalogSearch.type='search';
+   catalogSearch.className='landing-language-catalog-search';
+   catalogSearch.placeholder='Название песни или артист…';
+   catalogSearch.value=getCatalogSearch();parent.appendChild(catalogSearch);
+   var results=document.createElement('div');results.className='landing-language-catalog-list';
+   parent.appendChild(results);
+   function drawCatalog(){
+     clear(results);
+     var q=getCatalogSearch().toLocaleLowerCase('ru').replace(/ё/g,'е'),count=0;
+     options.forEach(function(song){
+       if(q&&(song.title+' '+song.artist).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)<0)return;
+       if(count++>=40)return;
+       var existing=attachedFind(entry,song),sources={spotify:song.spotify,youtube:song.youtube};
+       if(existing){
+         var old=attachedSongSources(existing);
+         if(!sources.spotify)sources.spotify=old.spotify;
+         if(!sources.youtube)sources.youtube=old.youtube;
+       }
+       var modes=attachedAvailableModes(sources);
+       if(!modes.length)return;
+       var row=document.createElement('div');row.className='landing-topic-catalog-row';
+       var holder=document.createElement('label');holder.className='landing-checkbox';
+       var check=document.createElement('input');check.type='checkbox';check.checked=!!existing;
+       holder.appendChild(check);
+       var name=document.createElement('span');name.textContent=song.title+' · '+song.artist;
+       holder.appendChild(name);row.appendChild(holder);
+       var provider=attachedModeSelect(modes,existing?attachedSongMode(existing):modes[0][0]);
+       provider.setAttribute('aria-label','Плеер для '+song.title);row.appendChild(provider);
+       function apply(){
+         var current=attachedFind(entry,song);
+         if(!check.checked){
+           if(current){entry.tracks.splice(entry.tracks.indexOf(current),1);drawAssigned();updateButtons();}
+           drawCatalog();return;
+         }
+         try{attachedReplace(entry,current,song,provider.value,sources);}
+         catch(e){check.checked=!!current;info('Нельзя прикрепить песню: '+e.message);return;}
+         drawAssigned();updateButtons();
+         info('Привязка обновлена в черновике. Сохрани и опубликуй, чтобы изменения увидели слушатели.');
+       }
+       check.onchange=apply;
+       provider.onchange=function(){if(check.checked)apply();};
+       results.appendChild(row);
+     });
+     if(count>40){
+       var note=document.createElement('p');note.className='sync-note';
+       note.textContent='Первые 40 из '+count+'. Уточни поиск.';
+       results.appendChild(note);
+     }
+     if(!count){
+       var empty=document.createElement('p');empty.className='sync-note';
+       empty.textContent='Нет песен с проверенными ссылками в каталоге.';
+       results.appendChild(empty);
+     }
+   }
+   catalogSearch.oninput=function(){setCatalogSearch(this.value);drawCatalog();};
+   drawCatalog();
+ }
  function languageEditor(parent){
    var config=data.genres.languages,langs=config.entries;
    heading(parent,'Миры языков',
@@ -776,104 +1031,12 @@
    row.appendChild(visible);
    var visText=document.createElement('span');visText.textContent='Показывать язык на сайте';
    row.appendChild(visText);card.appendChild(row);
-   heading(card,'Подтверждённые песни ('+active.tracks.length+')','Можно добавить песни одного языка из каталога или удалить неверную привязку.');
-   var trackSearch=document.createElement('input');trackSearch.type='search';
-   trackSearch.className='landing-release-search';trackSearch.placeholder='Найти привязанную песню для удаления…';
-   trackSearch.value=languageTrackFilter;card.appendChild(trackSearch);
-   var rows=document.createElement('div');rows.className='landing-language-songs';card.appendChild(rows);
-   function drawTracks(){
-     clear(rows);
-     var query=languageTrackFilter.toLocaleLowerCase('ru').replace(/ё/g,'е');
-     var matches=active.tracks.filter(function(t){
-       return !query||(t.title+' '+t.artist).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(query)>=0;
-     });
-     matches.slice(0,40).forEach(function(t){
-       var item=document.createElement('div');item.className='landing-language-song-row';
-       var title=document.createElement('span');
-       title.textContent=t.title+' · '+t.artist+' · '+t.provider;
-       item.appendChild(title);
-       item.appendChild(button('Убрать',function(){
-         var index=active.tracks.indexOf(t);
-         if(index<0)return;
-         active.tracks.splice(index,1);render();
-       },'landing-danger'));rows.appendChild(item);
-     });
-     if(matches.length>40){
-       var note=document.createElement('p');note.className='sync-note';
-       note.textContent='Показаны первые 40 из '+matches.length+' найденных. Уточни поиск.';
-       rows.appendChild(note);
-     }
-     if(!matches.length){
-       var empty=document.createElement('p');empty.className='sync-note';
-       empty.textContent='Песни пока не выбраны.';rows.appendChild(empty);
-     }
-   }
-   trackSearch.oninput=function(){languageTrackFilter=this.value;drawTracks();};drawTracks();
-   heading(card,'Найти и добавить из каталога',
-     'Проверенная прямая ссылка Spotify/YouTube. Неизвестные языки не назначаются автоматически.');
-   if(!catalogLoaded){
-     var msg=document.createElement('p');msg.className='sync-note';
-     msg.textContent=catalogLoading?'Загружаем каталог…':catalogError?
-       'Ошибка каталога: '+catalogError:'Каталог ещё не загружен.';
-     card.appendChild(msg);
-     card.appendChild(button('Загрузить каталог',function(){
-       catalogLoaded=false;loadCatalogArtists(true);
-     }));
-   }else{
-     var search=document.createElement('input');search.type='search';
-     search.className='landing-language-catalog-search';
-     search.placeholder='Поиск по названию или артисту…';
-     search.value=languageCatalogSearch;card.appendChild(search);
-     var found=document.createElement('div');found.className='landing-language-catalog-list';
-     card.appendChild(found);
-     var options=[];
-     catalogArtists.forEach(function(song){
-       var urls=song.links||{},spotify=API.songUrl(urls.spotify||'','spotify'),
-         youtube=API.songUrl(urls.youtube||'','youtube');
-       if(spotify||youtube)options.push({
-         title:String(song.title||'Без названия'),
-         artist:String(song.artist||''),
-         spotify:spotify,youtube:youtube
-       });
-     });
-     function drawCatalog(){
-       clear(found);
-       var q=languageCatalogSearch.toLocaleLowerCase('ru').replace(/ё/g,'е');
-       var total=0;
-       options.forEach(function(song){
-         if(q&&(song.title+' '+song.artist).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)<0)return;
-         if(total++>=35)return;
-         var entry=document.createElement('div');entry.className='landing-language-song-row';
-         var title=document.createElement('span');title.textContent=song.title+' · '+song.artist;
-         entry.appendChild(title);
-         [['spotify',song.spotify],['youtube',song.youtube]].forEach(function(pair){
-           if(!pair[1])return;
-           var onList=active.tracks.some(function(t){return t.url===pair[1];});
-           var add=button(onList?'✓ '+pair[0]:'+ '+pair[0],function(){
-             if(onList)return;
-             if(active.tracks.length>=300){info('Не больше 300 песен на один язык.');return;}
-             active.tracks.push({
-               title:song.title,artist:song.artist,provider:pair[0],url:pair[1]
-             });
-             // Keep the current search and scroll position when tagging many
-             // catalog songs. Save/publish still require explicit actions.
-             add.disabled=true;add.textContent='✓ '+pair[0];
-             drawTracks();updateButtons();
-             info('Песня назначена языку '+active.label+'. Сохрани черновик перед публикацией.');
-           },'landing-small');
-           add.disabled=onList;entry.appendChild(add);
-         });
-         found.appendChild(entry);
-       });
-       if(total>35){
-         var note=document.createElement('p');note.className='sync-note';
-         note.textContent='Первые 35 из '+total+'. Уточни поиск, чтобы выбрать другую песню.';
-         found.appendChild(note);
-       }
-     }
-     search.oninput=function(){languageCatalogSearch=this.value;drawCatalog();};
-     drawCatalog();
-   }
+   attachedSongsEditor(card,active,{mode:'language',
+     getFilter:function(){return languageTrackFilter;},
+     setFilter:function(v){languageTrackFilter=v;},
+     getCatalogSearch:function(){return languageCatalogSearch;},
+     setCatalogSearch:function(v){languageCatalogSearch=v;}
+   });
    parent.appendChild(card);
  }
 
@@ -937,120 +1100,12 @@
    visibility.appendChild(check);
    var name=document.createElement('span');name.textContent='Показывать тему на сайте';
    visibility.appendChild(name);card.appendChild(visibility);
-   heading(card,'Назначенные песни ('+current.tracks.length+')',
-     'Одна песня может быть прикреплена к любви, свадьбе, верности и другим темам одновременно.');
-   var assignedSearch=document.createElement('input');assignedSearch.type='search';
-   assignedSearch.className='landing-release-search';
-   assignedSearch.placeholder='Найти уже прикреплённую песню…';
-   assignedSearch.value=topicTrackFilter;card.appendChild(assignedSearch);
-   var assigned=document.createElement('div');assigned.className='landing-language-songs';
-   card.appendChild(assigned);
-   function drawAssigned(){
-     clear(assigned);
-     var query=topicTrackFilter.toLocaleLowerCase('ru').replace(/ё/g,'е');
-     var matches=current.tracks.filter(function(t){
-       return !query||(t.title+' '+t.artist).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(query)>=0;
-     });
-     matches.slice(0,40).forEach(function(t){
-       var row=document.createElement('div');row.className='landing-language-song-row';
-       var title=document.createElement('span');
-       title.textContent=t.title+' · '+t.artist+' · '+t.provider;row.appendChild(title);
-       row.appendChild(button('Открепить',function(){
-         var position=current.tracks.indexOf(t);
-         if(position>=0){current.tracks.splice(position,1);drawAssigned();updateButtons();}
-       },'landing-danger'));assigned.appendChild(row);
-     });
-     if(matches.length>40){
-       var note=document.createElement('p');note.className='sync-note';
-       note.textContent='Показаны первые 40 из '+matches.length+'. Уточни поиск.';
-       assigned.appendChild(note);
-     }
-     if(!matches.length){
-       var empty=document.createElement('p');empty.className='sync-note';
-       empty.textContent='Песен пока нет. Отметь их галочками в каталоге ниже.';
-       assigned.appendChild(empty);
-     }
-   }
-   assignedSearch.oninput=function(){topicTrackFilter=this.value;drawAssigned();};drawAssigned();
-   heading(card,'Каталог песен — отметь галочками',
-     'Список из защищённого каталога. У каждой песни можно выбрать Spotify или YouTube; сохранится только официальная ссылка и публичное название. Поиск не сбрасывается после выбора.');
-   if(!catalogLoaded){
-     var loading=document.createElement('p');loading.className='sync-note';
-     loading.textContent=catalogLoading?'Загружаем каталог…':catalogError?
-       'Ошибка: '+catalogError:'Каталог ещё не загружен.';
-     card.appendChild(loading);
-     card.appendChild(button('Загрузить каталог',function(){catalogLoaded=false;loadCatalogArtists(true);}));
-   }else{
-     var search=document.createElement('input');search.type='search';
-     search.className='landing-language-catalog-search';
-     search.placeholder='Название песни или исполнитель…';
-     search.value=topicCatalogSearch;card.appendChild(search);
-     var results=document.createElement('div');results.className='landing-language-catalog-list';
-     card.appendChild(results);
-     var songOptions=[];
-     catalogArtists.forEach(function(t){
-       var urls=t.links||{},spotify=API.songUrl(urls.spotify||'','spotify'),
-         youtube=API.songUrl(urls.youtube||'','youtube');
-       if(spotify||youtube)songOptions.push({
-         title:String(t.title||'Без названия'),artist:String(t.artist||''),
-         spotify:spotify,youtube:youtube
-       });
-     });
-     function drawCatalog(){
-       clear(results);
-       var query=topicCatalogSearch.toLocaleLowerCase('ru').replace(/ё/g,'е'),matches=0;
-       songOptions.forEach(function(song){
-         if(query&&(song.title+' '+song.artist).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(query)<0)return;
-         if(matches++>=50)return;
-         var urls=[['spotify',song.spotify],['youtube',song.youtube]].filter(function(x){return !!x[1];});
-         var currentTrack=current.tracks.filter(function(t){
-           return urls.some(function(pair){return t.url===pair[1];});
-         })[0];
-         var row=document.createElement('div');row.className='landing-topic-catalog-row';
-         var wrap=document.createElement('label');wrap.className='landing-checkbox';
-         var checkbox=document.createElement('input');checkbox.type='checkbox';
-         checkbox.checked=!!currentTrack;
-         wrap.appendChild(checkbox);
-         var label=document.createElement('span');label.textContent=song.title+' · '+song.artist;
-         wrap.appendChild(label);row.appendChild(wrap);
-         var platform=document.createElement('select');platform.className='landing-release-select';
-         platform.setAttribute('aria-label','Плеер для '+song.title);
-         urls.forEach(function(pair){
-           var opt=document.createElement('option');opt.value=pair[0];
-           opt.textContent=pair[0]==='spotify'?'Spotify':'YouTube';platform.appendChild(opt);
-         });
-         platform.value=currentTrack?currentTrack.provider:urls[0][0];row.appendChild(platform);
-         function put(checked){
-           var provider=platform.value||urls[0][0],link='';
-           urls.forEach(function(pair){if(pair[0]===provider)link=pair[1];});
-           if(checked&&!link){info('У песни нет подтверждённой ссылки на выбранную площадку.');return;}
-           var old=current.tracks.filter(function(t){
-             return urls.some(function(pair){return t.url===pair[1];});
-           });
-           if(checked&&!old.length&&current.tracks.length>=300){
-             checkbox.checked=false;info('Максимум 300 песен на тему.');return;
-           }
-           old.forEach(function(t){var idx=current.tracks.indexOf(t);if(idx>=0)current.tracks.splice(idx,1);});
-           if(checked)current.tracks.push({title:song.title,artist:song.artist,provider:provider,url:link});
-           drawAssigned();updateButtons();
-         }
-         checkbox.onchange=function(){put(this.checked);};
-         platform.onchange=function(){if(checkbox.checked)put(true);};
-         results.appendChild(row);
-       });
-       if(matches>50){
-         var note=document.createElement('p');note.className='sync-note';
-         note.textContent='Показаны 50 из '+matches+' найденных. Уточни поиск.';
-         results.appendChild(note);
-       }
-       if(!matches){
-         var none=document.createElement('p');none.className='sync-note';
-         none.textContent='Нет песен с прямыми ссылками. Уточни название.';results.appendChild(none);
-       }
-     }
-     search.oninput=function(){topicCatalogSearch=this.value;drawCatalog();};
-     drawCatalog();
-   }
+   attachedSongsEditor(card,current,{mode:'topic',
+     getFilter:function(){return topicTrackFilter;},
+     setFilter:function(v){topicTrackFilter=v;},
+     getCatalogSearch:function(){return topicCatalogSearch;},
+     setCatalogSearch:function(v){topicCatalogSearch=v;}
+   });
    parent.appendChild(card);
  }
 

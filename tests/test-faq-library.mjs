@@ -67,6 +67,15 @@ space.tracks=[{title:'Галактика',artist:'Velar',provider:'youtube',url:
 const fi=sample.genres.languages.entries.find(t=>t.code==='fi');
 fi.tracks=[{title:'Kesäyö',artist:'Velar',provider:'spotify',url}];
 assert.equal(w.VELAR_FAQ.publishedSongs(sample).length,2,'Duplicate public track is reused, not invented');
+// RUN-090: different provider choices for the same named composition in
+// two visible worlds must not create two music recommendations.
+const sameComposition=api.defaults();
+sameComposition.genres.topics.entries.find(x=>x.slug==='love').tracks=[
+ {title:'Velar Superstar',artist:'Velar',provider:'spotify',url}];
+sameComposition.genres.languages.entries.find(x=>x.code==='fi').tracks=[
+ {title:'Velar Superstar',artist:'Velar',provider:'youtube',url:video}];
+assert.equal(w.VELAR_FAQ.publishedSongs(sameComposition).length,1,
+ 'VELAR Assistant recommends ONE song, not a separate Spotify and YouTube copy');
 const direct=answer('послушать Белая берёза',sample);
 assert.equal(direct.action,'song');
 assert.equal(direct.url,url);
@@ -131,10 +140,10 @@ noLeaks.genres.topics.entries.find(x=>x.slug==='love').tracks=[
 assert.ok(!(answer('какая твоя любимая песня',noLeaks).actions||[]).some(x=>x.action==='song'));
 const sampleSection=api.normalize({...defaults,genres:{...defaults.genres,assistant:settings}});
 assert.equal(sampleSection.genres.assistant.faq.length,113);
-assert.match(html,/velar-faq-engine\.js\?v=2/);
-assert.ok(html.indexOf('velar-faq-engine.js?v=2')<html.indexOf('velar-assistant.js?v=10'));
-assert.match(sw,/'\.\/velar-faq-engine\.js\?v=2'/);
-assert.match(sw,/CACHE_PREFIX \+ 'v29'/);
+assert.match(html,/velar-faq-engine\.js\?v=3/);
+assert.ok(html.indexOf('velar-faq-engine.js?v=3')<html.indexOf('velar-assistant.js?v=10'));
+assert.match(sw,/'\.\/velar-faq-engine\.js\?v=3'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v30'/);
 assert.match(read('style.css'),/velar-chat-actions/);
 assert.match(bot,/choice\.action==='song'/);
 assert.match(bot,/choice\.action==='ask'/);

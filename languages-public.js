@@ -12,14 +12,6 @@
    if(!dataset||!Array.isArray(dataset.entries))return [];
    return dataset.entries.filter(function(x){return x.visible===true;});
  }
- function embed(track){
-   if(!window.VMM_LANDING_SCHEMA)return '';
-   var link=window.VMM_LANDING_SCHEMA.songUrl(track.url,track.provider);
-   if(!link)return '';
-   if(track.provider==='spotify')return 'https://open.spotify.com/embed/track/'+link.split('/').pop();
-   if(track.provider==='youtube')return 'https://www.youtube-nocookie.com/embed/'+link.split('v=')[1];
-   return '';
- }
  function show(code,requestedUrl){
    var lang=null,detail=id('public-language-detail');
    entries().forEach(function(item){if(item.code===code)lang=item;});
@@ -39,62 +31,14 @@
      return;
    }
    detail.appendChild(el('p','language-total','Композиции: '+count+'. Выберите песню, чтобы открыть официальный плеер.'));
-   var list=el('div','language-song-list'),player=el('div','language-player');
-   var requestedIndex=-1;
-   if(requestedUrl&&lang.code===code)lang.tracks.forEach(function(t,i){
-     var approved='';try{approved=window.VMM_LANDING_SCHEMA.songUrl(t.url,t.provider);}catch(ignore){}
-     if(t.url===requestedUrl&&approved===requestedUrl)requestedIndex=i;
-   });
-   var limit=Math.max(moreCount,requestedIndex+1),selected=-1;
-   function draw(){
-     clear(list);
-     lang.tracks.slice(0,limit).forEach(function(track,index){
-       var song=el('button','language-song');song.type='button';
-       song.setAttribute('aria-label','Слушать: '+track.title);
-       song.setAttribute('aria-pressed',selected===index?'true':'false');
-       song.appendChild(el('span','language-song-num',('0'+(index+1)).slice(-2)));
-       var title=el('span','language-song-copy');
-       title.appendChild(el('strong','',track.title));
-       title.appendChild(el('small','',(track.artist?track.artist+' · ':'')+
-         (track.provider==='spotify'?'Spotify':'YouTube')));
-       song.appendChild(title);
-       var icon=el('span','language-song-play');icon.setAttribute('aria-hidden','true');
-       song.appendChild(icon);
-       song.onclick=function(){
-         var src=embed(track);
-         if(!src)return;
-         // Only one external player: shut down earlier embeds from releases,
-         // artist profiles, playlists or the radio before opening this one.
-         if(window.VMM_PUBLIC_LANDING&&window.VMM_PUBLIC_LANDING.stopExternalPlayers)
-           window.VMM_PUBLIC_LANDING.stopExternalPlayers();
-         clear(player);selected=index;
-         var frame=el('iframe','cms-release-iframe language-song-iframe'+
-           (track.provider==='youtube'?' cms-release-iframe--video':''));
-         frame.title=track.title+' — официальный плеер '+track.provider;
-         frame.src=src;frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
-         frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
-         frame.setAttribute('allowfullscreen','');
-         player.appendChild(frame);
-         var open=el('a','cms-card-link','Открыть в '+(track.provider==='spotify'?'Spotify':'YouTube'));
-         open.href=window.VMM_LANDING_SCHEMA.songUrl(track.url,track.provider);
-         open.rel='noopener noreferrer';open.target='_blank';player.appendChild(open);
-         var stop=el('button','cms-release-close','Закрыть плеер');
-         stop.type='button';stop.onclick=function(){clear(player);selected=-1;draw();};
-         player.appendChild(stop);draw();
-       };
-       list.appendChild(song);
-     });
-     if(limit<lang.tracks.length){
-       var more=el('button','language-more','Показать ещё ('+(lang.tracks.length-limit)+')');
-       more.type='button';more.onclick=function(){limit+=14;draw();};
-       list.appendChild(more);
-     }
+   var list=el('div','language-song-list');
+   detail.appendChild(list);
+   if(!window.VELAR_PUBLIC_SONGS){
+     detail.appendChild(el('p','language-empty','Плеер временно недоступен.'));return false;
    }
-   detail.appendChild(list);detail.appendChild(player);draw();
-   if(requestedIndex>=0&&list.children[requestedIndex]){
-     // Only a direct click on a chat recommendation calls this playback route.
-     list.children[requestedIndex].onclick();return true;
-   }
+   var player=window.VELAR_PUBLIC_SONGS.mount(list,lang.tracks,{prefix:'language',batch:14});
+   // Chat deep-links are invoked only after the listener clicks its action.
+   if(requestedUrl&&lang.code===code)return player.openByUrl(requestedUrl);
    return false;
  }
  function openFromChat(code,url){return show(code,url);}
