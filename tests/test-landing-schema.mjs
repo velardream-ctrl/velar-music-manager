@@ -45,16 +45,16 @@ for(const tab of ['hero','artists','releases','genres','about','publish'])
 // top-level field emitted by the current landing schema. No private fields.
 const expectedLandingFields=Object.keys(def).sort();
 const contentAllowlists=[...rules.matchAll(
- /request\\.resource\\.data\\.content\\.keys\\(\\)\\.has(?:Only|All)\\(\\[([\\s\\S]*?)\\]\\)/g
+ /request\.resource\.data\.content\.keys\(\)\.has(?:Only|All)\(\[([\s\S]*?)\]\)/g
 )];
 assert.equal(contentAllowlists.length,2,'Expected exactly two public landing field allowlists');
 for(const [,list] of contentAllowlists){
  const actual=[...list.matchAll(/'([^']+)'/g)].map(x=>x[1]).sort();
  assert.deepEqual(actual,expectedLandingFields,'Landing Firestore allowlist and schema must stay synchronized');
 }
-assert.match(rules,/content\\.albums is map/,'Album section must be a map');
-assert.match(rules,/content\\.albums\\.entries is list/,'Album entries must be a list');
-assert.match(rules,/content\\.albums\\.entries\\.size\\(\\) <= 8/,'Album entries limited to 8');
+assert.match(rules,/content\.albums is map/,'Album section must be a map');
+assert.match(rules,/content\.albums\.entries is list/,'Album entries must be a list');
+assert.match(rules,/content\.albums\.entries\.size\(\) <= 8/,'Album entries limited to 8');
 
 assert.match(rules,/match \/vmm_public_drafts\/\{pageId\}/);
 assert.match(rules,/match \/vmm_public_pages\/\{pageId\}/);
