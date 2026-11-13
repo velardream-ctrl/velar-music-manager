@@ -714,6 +714,37 @@
         'Любимая песня VELAR',110,true),
       contactEmail:mail,rules:cleaned,jokes:jokes,jokesEnabled:jokesEnabled,faq:faq,typing:typing,labels:labels,quickTopics:quickTopics,replies:replies,avatars:avatars};
   }
+  // RUN-115. Public artist profile links, never lyrics/private storage or embeds.
+  // Only direct HTTPS profile paths for the selected platform are accepted.
+  function socialProfile(x,i){
+    if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Соцсеть '+i+': неверная запись.');
+    var platform=plain(x.platform||'','Площадка '+i,32,true);
+    var hosts={
+      spotify:/^open\.spotify\.com\/artist\/[A-Za-z0-9]{22}\/?$/i,
+      youtube:/^(?:www\.)?youtube\.com\/(?:@[A-Za-z0-9_.-]{3,}|channel\/[A-Za-z0-9_-]{15,})\/?$/i,
+      instagram:/^(?:www\.)?instagram\.com\/[A-Za-z0-9._]{1,30}\/?$/i,
+      tiktok:/^(?:www\.)?tiktok\.com\/@[A-Za-z0-9._]{2,24}\/?$/i,
+      telegram:/^t\.me\/[A-Za-z0-9_]{5,32}\/?$/i,
+      facebook:/^(?:www\.)?facebook\.com\/[A-Za-z0-9._-]{3,}\/?$/i,
+      apple:/^music\.apple\.com\/[A-Za-z]{2}\/artist\/[A-Za-z0-9_-]+\/[0-9]+\/?$/i,
+      soundcloud:/^soundcloud\.com\/[A-Za-z0-9_-]+\/?$/i,
+      bandcamp:/^[A-Za-z0-9-]+\.bandcamp\.com\/?$/i,
+      vk:/^vk\.com\/[A-Za-z0-9_.-]{2,}\/?$/i,
+      yandex:/^music\.yandex\.(?:ru|com)\/artist\/[0-9]+\/?$/i,
+      deezer:/^(?:www\.)?deezer\.com\/(?:[A-Za-z]{2}\/)?artist\/[0-9]+\/?$/i,
+      website:/^[A-Za-z0-9.-]+(?::443)?(?:\/[^?#]*)?\/?$/i
+    };
+    if(!Object.prototype.hasOwnProperty.call(hosts,platform))throw new Error('Соцсеть '+i+': неизвестная площадка.');
+    var link=url(x.url||'','Ссылка профиля '+i);
+    if(x.visible===true&&!link)throw new Error('Соцсеть '+i+': нужна ссылка.');
+    if(link){
+      var clean=link.replace(/^https:\/\//i,'').replace(/[?#].*$/,'');
+      if(!hosts[platform].test(clean))throw new Error('Соцсеть '+i+': ссылка должна вести на профиль выбранной площадки.');
+      if(platform==='website'&&/^(?:localhost|127\.|10\.|192\.168\.|172\.(?:1[6-9]|2[0-9]|3[01])\.|[^/]*\.local(?:\/|$))/i.test(clean))
+        throw new Error('Соцсеть '+i+': нужен публичный сайт.');
+    }
+    return {platform:platform,url:link,visible:x.visible===true};
+  }
   function card(x,type,index){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Карточка '+index+': неверный формат.');
     var title=plain(x.title,'Название карточки '+index,110,!!x.visible);
@@ -742,6 +773,13 @@
       result.imageData=picture;
       result.featuredTracks=featuredTracks(x.featuredTracks);
       result.featuredSort=x.featuredSort==='manual'?'manual':'alphabetical';
+      result.biography=plain(x.biography||'','Подробная биография артиста '+index,5000,false);
+      result.socialLinks=safeList(x.socialLinks,12,'Социальные ссылки артиста '+index,socialProfile,[]);
+      var seenProfile={};
+      result.socialLinks.forEach(function(profile){
+        if(profile.url){if(seenProfile[profile.url])throw new Error('Повтор социальной ссылки: '+profile.url);
+          seenProfile[profile.url]=true;}
+      });
     }else if(type==='Релизы'){
       var kinds={single:true,album:true,video:true};
       var kind=x.kind||'single';
