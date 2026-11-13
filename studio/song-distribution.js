@@ -82,9 +82,11 @@
      row.ambiguous=!!(row.sources.spotify&&byUrl[row.sources.spotify].length!==1||
        row.sources.youtube&&byUrl[row.sources.youtube].length!==1);
      row.draft.forEach(function(group){
-       var online=row.live.some(function(old){return sameGroup(group,old);});
+       var liveGroup=row.live.filter(function(old){return sameGroup(group,old);})[0];
+       // The group may exist in both documents yet its visibility has changed.
        row.display.push({kind:group.kind,id:group.id,label:group.label,
-         visible:group.visible,stage:online&&group.visible?'published':'draft'});
+         visible:group.visible,stage:!liveGroup||liveGroup.visible!==group.visible?'draft':
+           group.visible?'published':'hidden'});
      });
      row.live.forEach(function(group){
        if(!row.draft.some(function(item){return sameGroup(item,group);}))
@@ -123,7 +125,9 @@
    var model=build(catalog,draft,null,linkData,API,artistEffective);
    var row=model.byId[action.songId];
    if(!row)throw new Error('Песня отсутствует в полном каталоге.');
-   if(!row.hasSource)throw new Error('У песни нет проверенной публичной Spotify/YouTube ссылки.');
+   // Removing an existing matched assignment must remain possible even
+   // when one provider disappeared from the private catalog.
+   if(action.enabled&&!row.hasSource)throw new Error('У песни нет проверенной публичной Spotify/YouTube ссылки.');
    if(row.ambiguous)throw new Error('Официальная ссылка встречается у нескольких записей. Назначение запрещено до устранения неоднозначности.');
    var target=model.targets.filter(function(x){return x.kind===action.kind&&x.id===action.targetId;})[0];
    if(!target)throw new Error('Подборка изменилась или удалена — обнови редактор.');
@@ -142,7 +146,8 @@
          throw new Error('Эта ссылка уже есть в лучших песнях.');
        target.tracks.push(API.featuredTrack({title:row.title,provider:provider,url:url},target.tracks.length+1));
      }else{
-       if(target.tracks.length>=300)throw new Error('В этой подборке уже 300 песен.');
+       var limit=target.kind==='album'?60:300;
+       if(target.tracks.length>=limit)throw new Error('В этой подборке уже '+limit+' песен — максимум, допустимый схемой.');
        if(target.tracks.some(function(t){
          return norm(t.title)===norm(row.title)&&norm(t.artist)===norm(row.artist);
        }))throw new Error('Такая песня уже присутствует с другой ссылкой. Проверь её в исходном разделе.');
@@ -215,8 +220,9 @@
      while(holder.firstChild)holder.removeChild(holder.firstChild);
      if(!row.display.length)holder.appendChild(el('span','landing-distribution-empty','Не назначена в подборки'));
      row.display.forEach(function(item){
-       var label=item.label+(item.stage==='draft'?' · черновик':
-         item.stage==='removed'?' · снято в черновике':!item.visible?' · скрыто':'');
+       var label=item.label+(item.stage==='draft'?' · изменение в черновике':
+         item.stage==='removed'?' · снято в черновике':item.stage==='hidden'?' · скрыто':
+         !item.visible?' · скрыто':'');
        var chip=el('span','landing-distribution-chip'+
          (item.stage==='removed'?' is-removed':item.stage==='draft'?' is-draft':''),label);
        if(item.stage!=='removed'){
