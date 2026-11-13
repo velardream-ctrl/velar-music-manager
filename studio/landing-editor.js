@@ -2197,7 +2197,7 @@
        data.genres.songViewMode||'standard',function(v){data.genres.songViewMode=v;});
    }else if(tab==='distribution'){
      if(window.VMM_SONG_DISTRIBUTION){
-       window.VMM_SONG_DISTRIBUTION.render(panel,{
+       var distributionContext={
          loaded:catalogLoaded&&trackLinksLoaded,
          catalog:catalogArtists,draft:data,published:published,links:trackLinks,
          API:API,artistEffective:function(song,overrides){
@@ -2216,12 +2216,13 @@
              trackLinks);
            if(changed){
              API.normalize(next);
-             data=next;context.draft=data;
+             data=next;distributionContext.draft=data;
              updateButtons();info('Назначение изменено в черновике. Сохрани его и отдельно опубликуй.');
            }
            return changed;
          }
-       });
+       };
+       window.VMM_SONG_DISTRIBUTION.render(panel,distributionContext);
      }else heading(panel,'Распределение песен','Модуль пока не загружен. Обнови ресурсы Studio.');
    }else if(tab==='artists'||tab==='releases'){
      heading(panel,tabs[tab],tab==='artists'?'Профили артистов публикуются только после включения галочки.':'Добавляй только ссылки на публичные релизы, без приватных фонограмм и текстов.');
