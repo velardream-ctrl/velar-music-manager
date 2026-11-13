@@ -31,7 +31,7 @@ function studioNavigation(url){
 }
 var ASSETS = [
   './', './index.html', './app/', './app/index.html',
-  './style.css', './style.css?v=33', './main.js', './landing-schema.js?v=18', './public-offline.js?v=1', './landing-public.js?v=20', './universe.js?v=5', './public-song-ui.js?v=8', './albums-public.js?v=1', './languages-public.js?v=3', './topics-public.js?v=3', './velar-faq-engine.js?v=3', './velar-assistant.js?v=11', './living-art.js?v=2', './manifest.webmanifest',
+  './style.css', './style.css?v=33', './main.js', './landing-schema.js?v=18', './public-offline.js?v=1', './landing-public.js?v=20', './universe.js?v=5', './public-song-ui.js?v=8', './albums-public.js?v=2', './languages-public.js?v=3', './topics-public.js?v=3', './velar-faq-engine.js?v=3', './velar-assistant.js?v=11', './living-art.js?v=2', './manifest.webmanifest',
   './favicon.svg', './favicon.svg?v=2', './assets/velardream-crystal.png', './assets/velardream-symbol.svg', './assets/velardream-app-icon-192.png', './assets/velardream-app-icon-512.png','./assets/dj-velar-expressions.jpg'
 ];
 function isPublicAsset(url) {
