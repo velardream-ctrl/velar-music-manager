@@ -53,12 +53,23 @@ const flush=()=>new Promise(r=>setImmediate(r));
 function all(node,fn,found=[]){if(fn(node))found.push(node);node.children.forEach(x=>all(x,fn,found));return found;}
 const find=(fn)=>all(get('landing-fields'),fn)[0];
 const rows=()=>all(get('landing-fields'),e=>e.className==='landing-topic-catalog-row');
+function hasOrder(node,first,second){
+  if(node.children.includes(first)&&node.children.includes(second))
+    return node.children.indexOf(first)<node.children.indexOf(second);
+  return node.children.some(child=>hasOrder(child,first,second));
+}
 const button=label=>find(e=>e.tagName==='button'&&e.textContent===label);
 const status=()=>find(e=>e.className==='landing-song-page-status')?.textContent||'';
 const api=window.VMM_LANDING;
 api.open();await flush();await flush();
 nav[7].onclick();await flush();
 assert.equal(rows().length,40,'First page must render 40 song choices, not all 95 in one huge DOM');
+const assignedSection=find(e=>e.className==='landing-assigned-block');
+const catalogResults=find(e=>e.className==='landing-language-catalog-list');
+assert.ok(assignedSection&&catalogResults,'Both assigned songs and catalog are present');
+assert.ok(hasOrder(get('landing-fields'),catalogResults,assignedSection),
+  'Assigned songs must follow catalog; adding a song cannot increase height above the active checkbox');
+assert.equal(assignedSection.children[0].textContent,'Назначенные песни (0)');
 assert.match(status(),/^1–40 из 95 · страница 1 из 3$/);
 assert.equal(button('← Назад').disabled,true,'Back is disabled on first page');
 assert.equal(button('Вперёд →').disabled,false);
@@ -70,6 +81,10 @@ assert.equal(rows()[0].children[0].children[1].textContent,'Песня 041 · Ve
 assert.equal(scrolls,1,'Paging should scroll the newly displayed list into view');
 const row=rows()[0],pick=row.children[0].children[0],source=row.children[1];
 pick.checked=true;pick.onchange.call(pick);
+assert.equal(row.children[2].textContent,'✓ Назначена','Inline confirmation marks the selected song');
+assert.equal(assignedSection.children[0].textContent,'Назначенные песни (1)',
+  'Assigned count updates without re-rendering the upper catalog');
+assert.equal(scrolls,1,'Checking a song must not move the catalog or scroll it');
 assert.equal(source.children[0].children[0].checked,true,'Spotify is default');
 source.children[1].children[0].checked=true;source.children[1].children[0].onchange.call(source.children[1].children[0]);
 assert.equal(api.isDirty(),true);
@@ -102,6 +117,7 @@ const love=draft.content.genres.topics.entries.find(e=>e.slug==='love');
 assert.equal(love.tracks.length,1,'Pagination never duplicates songs');
 assert.equal(love.tracks[0].alternateProvider,'youtube');
 assert.equal(records.has('vmm_public_pages/landing'),false,'Saving draft never auto-publishes');
-assert.match(read('studio/index.html'),/landing-editor\.js\?v=23/);
-assert.match(read('sw.js'),/STUDIO_PREFIX\+'v37'/);
-console.log('PASS RUN-100: catalog pagination 40/95, next/back, search, source selection, independent state and private draft');
+assert.match(read('studio/index.html'),/landing-editor\.js\?v=24/);
+assert.ok(read('studio/index.html').includes('studio.css?v=23'),'Studio CSS URL must be cache-busted');
+assert.match(read('sw.js'),/STUDIO_PREFIX\+'v38'/);
+console.log('PASS RUN-105/RUN-100: stable catalog, inline assignment state, pagination 40/95, next/back, search, source selection, independent state and private draft');

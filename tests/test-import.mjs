@@ -6,7 +6,7 @@ const read = p => fs.readFileSync(path.join(root,p),'utf8');
 const html = read('studio/index.html');
 const js = read('studio/import.js');
 const css = read('studio/studio.css');
-assert.match(html,/href="studio\.css\?v=22"/);
+assert.match(html,/href="studio\.css\?v=23"/);
 assert.match(html,/src="import\.js\?v=1"/);
 for(const id of ['data-import','import-file','inspect-import','import-confirm','execute-import','import-status','refresh-studio','records-browser','records-list','records-detail','records-filter','records-count']) {
  assert.ok(html.includes('id="'+id+'"'),'UI missing '+id);
