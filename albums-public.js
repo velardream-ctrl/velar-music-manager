@@ -15,6 +15,7 @@
    clear(active.host);
    active.button.setAttribute('aria-expanded','false');
    active.button.textContent='Показать песни';
+   if(active.card)active.card.className=active.card.className.replace(/ is-expanded/g,'');
    active=null;
  }
  function render(config){
@@ -63,13 +64,14 @@
        if(active&&active.button===open){closeCurrent();return;}
        closeCurrent();clear(songs);
        open.setAttribute('aria-expanded','true');open.textContent='Скрыть песни';
+       card.className+=' is-expanded';
        var player=null;
        if(album.tracks.length&&window.VELAR_PUBLIC_SONGS){
          player=window.VELAR_PUBLIC_SONGS.mount(songs,album.tracks,{
            prefix:'album',batch:12,view:config.trackView||'rows',cover:cover
          });
        }else songs.appendChild(el('p','cms-album-empty','Песни ещё не добавлены.'));
-       active={button:open,host:songs,player:player};
+       active={button:open,host:songs,player:player,card:card};
      };
      body.appendChild(open);
      card.appendChild(body);
