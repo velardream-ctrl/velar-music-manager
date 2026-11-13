@@ -2368,7 +2368,14 @@
        });
      });
    }).then(function(v){
-     published=clone(cleanData);publishedRev=v;busy=false;updateButtons();
+     published=clone(cleanData);publishedRev=v;busy=false;
+     // RUN-114: the distribution UI compares the draft with the LAST
+     // published snapshot. A successful publish changes that snapshot:
+     // remount this tab immediately so badges stop saying "draft" after
+     // the song is already visible to listeners. The search/page state is
+     // retained by VMM_SONG_DISTRIBUTION (no new Firestore reads/writes).
+     if(tab==='distribution')render();
+     updateButtons();
      info('Опубликовано! Версия '+v+'. Открой главную страницу в новой вкладке, чтобы проверить.');
    }).catch(function(e){busy=false;updateButtons();info('Публикация не выполнена: '+safeStatus(e));});
  }
