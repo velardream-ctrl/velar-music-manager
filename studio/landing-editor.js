@@ -244,7 +244,7 @@
      busy=false;updateButtons();return ok;
    });
  }
- var tabs={hero:'Первый экран',artists:'Артисты',releases:'Музыка и релизы',albums:'Альбомы',playlists:'Плейлисты и подписки',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',about:'О проекте',publish:'Публикация'};
+ var tabs={hero:'Первый экран',distribution:'Распределение песен',artists:'Артисты',releases:'Музыка и релизы',albums:'Альбомы',playlists:'Плейлисты и подписки',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',about:'О проекте',publish:'Публикация'};
  function id(k){return document.getElementById(k);}
  function clear(el){while(el.firstChild)el.removeChild(el.firstChild);}
  function text(el,t){if(el)el.textContent=String(t==null?'':t);}
@@ -339,7 +339,7 @@
    var generation=loadGeneration,account=uid;
    catalogLoading=true;catalogError='';
    // Show a real loading state immediately, rather than the stale 'not loaded' label.
-   if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
+   if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
    if(navigator.onLine===false&&offlineStore){
      return offlineStore.get(uid,'cache:artist-catalog').then(function(saved){
        if(!saved||!saved.value||!Array.isArray(saved.value.catalog))
@@ -367,11 +367,11 @@
          offlineStatus('Не удалось сохранить каталог для офлайн: '+err.message);
        });
      restoreArtistLinks().then(function(){if(pendingArtistLinks)syncArtistLinks();});
-     if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
+     if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
    }).catch(function(err){
      if(generation!==loadGeneration||account!==uid)return;
      catalogLoading=false;catalogError=err&&err.message||'Каталог или связи песен временно недоступны.';
-     if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
+     if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
    });
  }
  function artistPicker(parent){
@@ -2195,6 +2195,34 @@
        [['standard','Обычный показ (сохранить оформление разделов)'],
         ['carousel','Карусель с обложками: свайп на телефоне, стрелки на компьютере']],
        data.genres.songViewMode||'standard',function(v){data.genres.songViewMode=v;});
+   }else if(tab==='distribution'){
+     if(window.VMM_SONG_DISTRIBUTION){
+       window.VMM_SONG_DISTRIBUTION.render(panel,{
+         loaded:catalogLoaded&&trackLinksLoaded,
+         catalog:catalogArtists,draft:data,published:published,links:trackLinks,
+         API:API,artistEffective:function(song,overrides){
+           return window.VMM_ARTIST_TRACKS.effective(song,overrides);
+         },
+         onLoad:function(){catalogLoaded=false;loadCatalogArtists(true);},
+         blocked:function(){return busy||offlineConflict||offlineSyncing||trackSaving;},
+         onModify:function(action){
+           if(busy||offlineConflict||offlineSyncing||trackSaving)
+             throw new Error('Сначала заверши синхронизацию или разреши конфликт.');
+           // Validate on a copy FIRST: invalid or oversized landing documents
+           // must not poison the owner's real draft/offline outbox.
+           var next=clone(data);
+           var changed=window.VMM_SONG_DISTRIBUTION.modify(catalogArtists,next,action,API,
+             function(song,overrides){return window.VMM_ARTIST_TRACKS.effective(song,overrides);},
+             trackLinks);
+           if(changed){
+             API.normalize(next);
+             data=next;context.draft=data;
+             updateButtons();info('Назначение изменено в черновике. Сохрани его и отдельно опубликуй.');
+           }
+           return changed;
+         }
+       });
+     }else heading(panel,'Распределение песен','Модуль пока не загружен. Обнови ресурсы Studio.');
    }else if(tab==='artists'||tab==='releases'){
      heading(panel,tabs[tab],tab==='artists'?'Профили артистов публикуются только после включения галочки.':'Добавляй только ссылки на публичные релизы, без приватных фонограмм и текстов.');
      sectionFields(panel,tab);
@@ -2247,7 +2275,7 @@
  }
  function load(force){
    if(busy)return Promise.resolve();
-   if(loaded&&!force){render();if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();return Promise.resolve();}
+   if(loaded&&!force){render();if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();return Promise.resolve();}
    if(force&&dirty()&&!window.confirm('Есть несинхронизированные изменения. Обновление может их перезаписать в редакторе. Обновить?'))return Promise.resolve();
    if(force){trackEditorArtist='';trackChecked={};trackSearch='';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;albumCatalogPage=0;catalogLoaded=false;catalogLoading=false;catalogError='';trackLinksLoaded=false;}
    var currentLoad=++loadGeneration;
@@ -2265,7 +2293,7 @@
        data=API.normalize(draft&&draft.content?draft.content:published||API.defaults());
        baseline=JSON.stringify(data);loaded=true;busy=false;render();
        recoverLocal().then(function(){if(navigator.onLine)syncOffline();});
-       if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();
+       if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();
        info(draft?'Черновик загружен. Изменения пока не опубликованы.':
           (published?'Загружена последняя публикация. Сохрани черновик, прежде чем публиковать изменения.':
           'Публикаций пока нет. Подготовь разделы и сохрани первый черновик.'));
@@ -2376,12 +2404,13 @@
    if(offlineTimer!==null){clearTimeout(offlineTimer);offlineTimer=null;}
    catalogArtists=[];catalogLoaded=false;catalogLoading=false;catalogError='';
    trackLinks={revision:0,overrides:{}};trackLinksLoaded=false;pendingArtistLinks=false;trackEditorArtist='';trackChecked={};trackSearch='';trackSaving=false;
+   if(window.VMM_SONG_DISTRIBUTION)window.VMM_SONG_DISTRIBUTION.reset();
    data=API.defaults();baseline='';published=null;tab='hero';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;albumCatalogPage=0;hide();updateButtons();
  }
  var nav=document.querySelectorAll('#landing-tabs [data-landing-tab]');
  for(var i=0;i<nav.length;i++)nav[i].onclick=function(){
    tab=this.getAttribute('data-landing-tab');render();
-   if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();
+   if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();
  };
  id('landing-save').onclick=save;
  id('landing-merge-offline').onclick=reconcileOffline;
