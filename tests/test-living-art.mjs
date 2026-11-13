@@ -14,7 +14,7 @@ assert.doesNotMatch(html,/class="crystal-journey-crystal"[\s\S]{0,250}assets\/ve
 assert.match(html,/href="#universe" id="hero-crystal-link"/);
 assert.match(html,/living-art\.js\?v=2/);
 assert.match(html,/universe\.js\?v=5/);
-assert.match(html,/style\.css\?v=34/);
+assert.match(html,/style\.css\?v=35/);
 assert.match(universe,/crystal\.src='assets\/velardream-symbol\.svg'/);
 assert.match(universe,/var center=el\('button','universe-core'\)/);
 assert.match(universe,/universe-beam is-active/);
@@ -23,7 +23,7 @@ assert.match(css,/\.crystal-journey-ring--outer/);
 assert.match(css,/\.crystal-journey-stars--near/);
 assert.match(css,/\.has-living-art \.crystal-journey-stage\{/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
-assert.match(sw,/CACHE_PREFIX \+ 'v42'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v43'/);
 assert.match(sw,/'\.\/living-art\.js\?v=2'/);
 assert.match(sw,/'\.\/universe\.js\?v=5'/);
 assert.doesNotMatch(art,/setTimeout\(|setInterval\(|fetch\(|firebase|firestore\(|XMLHttpRequest|WebSocket|getContext\(/);
