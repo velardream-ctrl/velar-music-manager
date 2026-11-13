@@ -51,6 +51,13 @@
    card.appendChild(copy);
    return card;
  }
+ function compareSong(a,b){
+   // Russian/Latin title order, then artist; no mutation of Firestore records.
+   var x=String(a&&a.title||'').trim(),y=String(b&&b.title||'').trim();
+   var title=x.localeCompare(y,'ru');
+   return title||String(a&&a.artist||'').trim().localeCompare(
+     String(b&&b.artist||'').trim(),'ru');
+ }
  function musicPanel(item,view,albums){
    view=view||'classic';
    var panel=create('aside','cms-music-panel');
@@ -59,7 +66,9 @@
    title.appendChild(create('span','cms-music-kicker','СЛУШАТЬ АРТИСТА'));
    title.appendChild(create('h3','','Лучшие песни'));
    panel.appendChild(title);
-   var tracks=item.featuredTracks||[];
+   var tracks=(item.featuredTracks||[]).slice();
+   // Manual order remains opt-in for the artist's three featured songs.
+   if(item.featuredSort!=='manual')tracks.sort(compareSong);
    if(!tracks.length){
      panel.className+=' cms-music-panel--empty';
      panel.appendChild(create('p','cms-music-empty','Подборка композиций появится здесь после выбора в музыкальной студии.'));
@@ -316,6 +325,8 @@
      }else others.push(item);
    });
    if(features.children&&features.children.length)target.appendChild(features);
+   // Featured releases stay pinned, regular release cards default to A–Я.
+   others.sort(compareSong);
    var filters=create('div','cms-release-filters');
    filters.setAttribute('role','group');filters.setAttribute('aria-label','Фильтровать релизы');
    var grid=create('div','cms-release-grid'),more=create('button','cms-release-more','Показать ещё');

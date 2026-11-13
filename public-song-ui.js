@@ -10,6 +10,14 @@
    return node;
  }
  function clear(node){while(node&&node.firstChild)node.removeChild(node.firstChild);}
+ function compareSong(a,b){
+   // Russian/Latin title order, then artist; no mutation of Firestore records.
+   var x=String(a&&a.title||'').trim(),y=String(b&&b.title||'').trim();
+   var title=x.localeCompare(y,'ru');
+   return title||String(a&&a.artist||'').trim().localeCompare(
+     String(b&&b.artist||'').trim(),'ru');
+ }
+
  function approved(track){
    var api=window.VMM_LANDING_SCHEMA,found=[];
    if(!api||!api.songUrl)return found;
@@ -40,6 +48,10 @@
  }
  function mount(list,tracks,opts){
    opts=opts||{};
+   // Alphabetize only the view. All published track order and links stay intact.
+   tracks=(tracks||[]).map(function(track,index){return {track:track,index:index};});
+   tracks.sort(function(a,b){return compareSong(a.track,b.track)||a.index-b.index;});
+   tracks=tracks.map(function(row){return row.track;});
    var classes=opts.prefix==='language'?'language':opts.prefix==='album'?'album':'topic';
    var view=opts.view||defaultView;
    if(['rows','covers','tiles'].indexOf(view)<0)view='rows';
