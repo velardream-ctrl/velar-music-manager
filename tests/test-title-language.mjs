@@ -42,10 +42,14 @@ const sample=[
  {id:'doc-5',title:'Испанский трек',titleLanguage:'unknown-local',artist:'Velar',links:{}}
 ];
 const p=w.VMM_TITLE_LANGUAGE.proposals(sample,langs);
-assert.equal(p.length,5);assert.equal(p[0].before,'ru');
-assert.equal(p[1].code,'de');assert.equal(p[1].before,'');
-assert.equal(p[2].code,'');assert.equal(p[2].review,true);
-assert.equal(p[4].before,'unknown-local','Unknown preexisting values must not be overwritten');
+assert.equal(p.length,5);
+assert.equal(p.find(r=>r.id==='doc-1').before,'ru');
+assert.equal(p.find(r=>r.id==='doc-2').code,'de');assert.equal(p.find(r=>r.id==='doc-2').before,'');
+assert.equal(p.find(r=>r.id==='doc-3').code,'');assert.equal(p.find(r=>r.id==='doc-3').review,true);
+assert.equal(p.find(r=>r.id==='doc-5').before,'unknown-local','Unknown preexisting values must not be overwritten');
+assert.deepEqual(Array.from(p).map(r=>r.title),
+ Array.from(p).map(r=>r.title).sort((a,b)=>a.localeCompare(b,'ru',{numeric:true,sensitivity:'base'})),
+ 'Language review song list appears alphabetically, not in Firestore fetch order');
 const parent=context.document.createElement('div');
 let writes=[],commits=0,updated=0;
 const db={batch(){return {update(ref,obj){writes.push({ref,obj});},

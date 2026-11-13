@@ -26,6 +26,8 @@ const songs=Array.from({length:95},(_,i)=>({
     links:{spotify:'https://open.spotify.com/track/'+String(i+1).padStart(22,'0'),
       youtube:i===40?'https://youtu.be/abcdefghijk':''}})
 }));
+// Deliberately reverse Firestore's result order; Studio must sort before paging.
+songs.reverse();
 const records=new Map();
 function snap(key){return {exists:records.has(key),data(){return records.get(key);}};}
 const db={collection(c){return {
