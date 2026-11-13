@@ -23,7 +23,7 @@ vm.runInNewContext(player,{window,document,Array,String,Number,Math,Error},{time
 const yt='https://www.youtube.com/watch?v=ABCDEFGHIjk';
 const spotify='https://open.spotify.com/track/0123456789ABCDEFGHIJKL';
 const dual=API.languageTrack({
- title:'Velar Superstar',artist:'Velar',provider:'spotify',url:spotify,
+ title:'Аа Velar Superstar',artist:'Velar',provider:'spotify',url:spotify,
  alternateProvider:'youtube',alternateUrl:yt},1);
 const tracks=[dual];
 for(let i=1;i<28;i++)tracks.push({
@@ -35,6 +35,9 @@ const mediaFrame=host=>{
  return first&&first.tagName==='iframe'?first:first&&first.children[0];
 };
 const list=node(),app=window.VELAR_PUBLIC_SONGS.mount(list,tracks,{prefix:'topic',batch:12});
+// RUN-104: sorting does not overwrite the caller's source list.
+assert.equal(tracks[0].title,'Аа Velar Superstar');
+assert.equal(tracks[11].title,'Музыка 11');
 assert.equal(list.children.length,13,'First 12 songs plus show-more button');
 const first=list.children[0];
 assert.equal(first.children.length,3,'One song row has label, source controls, inline slot');
@@ -120,5 +123,5 @@ assert.doesNotMatch(mobileCSS,/\.public-song-platforms\{flex:1 1 100%/,
  'Mobile sources cannot turn into a full-width Spotify button');
 assert.doesNotMatch(mobileCSS,/\.public-song-source\{flex:1 1 100px/,
  'Mobile source buttons cannot grow to the entire width');
-assert.match(read('index.html'),/public-song-ui\.js\?v=5/);
+assert.match(read('index.html'),/public-song-ui\.js\?v=6/);
 console.log('PASS: RUN-090 Spotify/YouTube inline single-row player, long lists, safe deep links, one active iframe');

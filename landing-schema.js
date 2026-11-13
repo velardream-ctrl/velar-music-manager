@@ -740,6 +740,7 @@
         throw new Error('Недопустимая фотография. Нужно сжатое WebP/JPEG до 90 КБ.');
       result.imageData=picture;
       result.featuredTracks=featuredTracks(x.featuredTracks);
+      result.featuredSort=x.featuredSort==='manual'?'manual':'alphabetical';
     }else if(type==='Релизы'){
       var kinds={single:true,album:true,video:true};
       var kind=x.kind||'single';

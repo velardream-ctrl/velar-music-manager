@@ -102,6 +102,12 @@ function options(languages){
  });
  return out;
 }
+function compareSong(a,b){
+ var byTitle=String(a.title||'').localeCompare(String(b.title||''),'ru',
+   {numeric:true,sensitivity:'base'});
+ return byTitle||String(a.artist||'').localeCompare(String(b.artist||''),'ru',
+   {numeric:true,sensitivity:'base'});
+}
 function proposals(catalog,langs){
  var allowed=options(langs).map(function(x){return x[0];});
  return (catalog||[]).filter(function(r){return r&&r.id&&r.title;}).map(function(r){
@@ -116,7 +122,7 @@ function proposals(catalog,langs){
      accepted:valid,
      changed:false,
      record:r};
- });
+ }).sort(compareSong);
 }
 function el(tag,cls,t){var n=document.createElement(tag);if(cls)n.className=cls;
  if(typeof t==='string')n.textContent=t;return n;}

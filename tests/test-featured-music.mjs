@@ -139,6 +139,23 @@ assert.equal(mediaFrame(list3.children[0].children[1]).tagName,'iframe');
 assert.equal(list3.children[1].children[1].children.length,0);
 assert.equal(list3.children[2].children[1].children.length,0);
 assert.match(css,/\.cms-music-entry>\.cms-music-player:not\(:empty\)/);
+// RUN-104: existing public featured songs default to alphabetical display.
+const unsorted=api.normalize({...original,artists:{...original.artists,cards:[
+ {...profile,featuredTracks:[s2,s1]},other
+]}});
+listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:unsorted})});
+assert.equal(host.children[0].children[1].children[1].children[0].children[0].attributes['aria-label'],
+ 'Слушать: Белая берёза — Spotify');
+assert.equal(unsorted.artists.cards[0].featuredTracks[0].title,'Журавли',
+ 'Rendering must not rewrite published documents');
+assert.equal(unsorted.artists.cards[0].featuredSort,'alphabetical');
+const manual=api.normalize({...original,artists:{...original.artists,cards:[
+ {...profile,featuredTracks:[s2,s1],featuredSort:'manual'},other
+]}});
+listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:manual})});
+assert.equal(host.children[0].children[1].children[1].children[0].children[0].attributes['aria-label'],
+ 'Слушать: Журавли — YouTube','Manual override honors user-defined featured order');
+assert.equal(manual.artists.cards[0].featuredSort,'manual');
 const plain=api.normalize({...original,artists:{...original.artists,cards:[
  {...profile,featuredTracks:[]},{...other,featuredTracks:[]}
 ]}});
@@ -155,8 +172,8 @@ assert.match(editor,/markChanged\(\)/);
 assert.match(studio,/show\(el\('vmm-workflows'\),false\)/);
 assert.match(workflows,/show\(id\('panel-landing'\),false\)/);
 assert.match(html,/style\.css\?v=31/);
-assert.match(html,/landing-public\.js\?v=17/);
-assert.match(sw,/CACHE_PREFIX \+ 'v38'/);
+assert.match(html,/landing-public\.js\?v=18/);
+assert.match(sw,/CACHE_PREFIX \+ 'v39'/);
 assert.match(css,/\.cms-music-play-icon::before\{/);
 assert.match(css,/border-left:10px solid currentColor/);
 assert.match(css,/\.cms-card-link::after\{/);

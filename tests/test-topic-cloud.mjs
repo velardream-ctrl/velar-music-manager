@@ -96,13 +96,17 @@ const love=nodes['public-topic-cloud'].children.find(x=>x.textContent==='Люб�
 love.onclick();
 detail=nodes['public-topic-detail'];
 assert.equal(detail.children[2].children.length,2);
-const secondSong=detail.children[2].children[1];
-secondSong.children[1].children[0].onclick();
+// RUN-104: published order [Моя, Космос] stays intact, rendered view is A–Я.
+assert.equal(edited.genres.topics.entries.find(t=>t.slug==='love').tracks[0].title,'Моя любовь');
+assert.equal(detail.children[2].children[0].children[0].children[1].children[0].textContent,
+ 'Космос','Alphabetical topic order places Космос before Моя любовь');
+const firstSong=detail.children[2].children[0];
+firstSong.children[1].children[0].onclick();
 assert.equal(stopCalls,3);
-assert.equal(secondSong.children[2].children[0].src,
+assert.equal(firstSong.children[2].children[0].src,
  'https://www.youtube-nocookie.com/embed/ABCDEFGHIjk');
-secondSong.children[2].children[2].onclick();
-assert.equal(secondSong.children[2].children.length,0,'Closing topic player removes iframe');
+firstSong.children[2].children[2].onclick();
+assert.equal(firstSong.children[2].children.length,0,'Closing topic player removes iframe');
 assert.match(studio,/data-landing-tab="topics"/);
 assert.match(admin,/function topicEditor/);
 assert.match(admin,/checkbox\.onchange=function/);
@@ -111,12 +115,12 @@ assert.match(universe,/topics:'#topics'/);
 assert.match(html,/id="public-topic-cloud"/);
 assert.match(html,/id="public-topic-orbit"/);
 assert.match(html,/topics-public\.js\?v=3/);
-assert.match(html,/public-song-ui\.js\?v=5/);
+assert.match(html,/public-song-ui\.js\?v=6/);
 assert.match(html,/<meta name="robots" content="noindex,nofollow,noarchive">/,
  'The user explicitly wants the developing website blocked from search indexing');
 assert.match(css,/\.topic-tag\[aria-pressed=true\]/);
 assert.match(sw,/'\.\/topics-public\.js\?v=3'/);
-assert.match(sw,/CACHE_PREFIX \+ 'v38'/);
-assert.match(sw,/STUDIO_PREFIX\+'v36'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v39'/);
+assert.match(sw,/STUDIO_PREFIX\+'v37'/);
 assert.doesNotMatch(topics,/setTimeout\(|setInterval\(|fetch\(|firestore\(|autoplay=1|loop=1/);
 console.log('PASS: RUN-073 topic cloud, multiple tags per song, curator-only catalog, noindex retained and no unrequested playback');

@@ -19,7 +19,8 @@ assert.equal(defaults.genres.languages.entries.every(x=>x.tracks.length===0),tru
 assert.equal(api.normalize({...defaults}).genres.universe.nodes.length,8);
 const t1={title:'Noche de Bachata',artist:'DJ Velar',provider:'spotify',
  url:'https://open.spotify.com/track/0123456789ABCDEFGHIJKL'};
-const t2={title:'Bachata Rave',artist:'DJ Velar',provider:'youtube',url:'https://youtu.be/ABCDEFGHIjk'};
+// Keep the Spotify fixture first alphabetically while testing one inline player per row.
+const t2={title:'Zumba Rave',artist:'DJ Velar',provider:'youtube',url:'https://youtu.be/ABCDEFGHIjk'};
 const entries=defaults.genres.languages.entries.map(x=>({
  ...x,tracks:x.code==='es'?[t1,t2]:x.code==='alien'?[t2]:[]
 }));
@@ -153,8 +154,8 @@ assert.match(admin,/API\.songUrl\(urls\.spotify/);
 assert.match(html,/id="languages"/);
 assert.match(html,/src="assets\/velardream-symbol.svg"/);
 assert.match(html,/languages-public\.js\?v=3/);
-assert.match(html,/public-song-ui\.js\?v=5/);
-assert.match(sw,/'\.\/public-song-ui\.js\?v=5'/);
+assert.match(html,/public-song-ui\.js\?v=6/);
+assert.match(sw,/'\.\/public-song-ui\.js\?v=6'/);
 assert.match(css,/\.language-orbit-node\[aria-pressed=true\]/);
 assert.match(css,/\.language-song-play::before/);
 assert.match(sw,/'\.\/languages-public\.js\?v=3'/);

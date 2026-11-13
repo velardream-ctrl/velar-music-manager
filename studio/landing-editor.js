@@ -3,6 +3,14 @@
 (function(){
  'use strict';
  var API=window.VMM_LANDING_SCHEMA,root=document.getElementById('panel-landing');
+ function compareSong(a,b){
+   // Russian/Latin alphabetical titles, natural numeric order, artist tie-break.
+   var x=String(a&&a.title||'').trim(),y=String(b&&b.title||'').trim();
+   var title=x.localeCompare(y,'ru',{numeric:true,sensitivity:'base'});
+   return title||String(a&&a.artist||'').trim().localeCompare(
+     String(b&&b.artist||'').trim(),'ru',{numeric:true,sensitivity:'base'});
+ }
+
  if(!root||!API)return;
  var tab='hero',data=API.defaults(),baseline='',published=null;
  var uid='',db=null,loaded=false,busy=false,draftRev=0,publishedRev=0,loadGeneration=0;
@@ -396,7 +404,7 @@
      return catalogArtists.filter(function(t){
        if(!q)return true;
        return (String(t.title||'')+' '+String(t.artist||'')).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)>=0;
-     }).sort(function(a,b){return String(a.title||'').localeCompare(String(b.title||''),'ru');});
+     }).sort(compareSong);
    }
    function drawRows(){
      clear(rows);
@@ -504,7 +512,16 @@
        'Загружаем защищённый каталог. Выбор песен будет доступен после загрузки.';
      wrap.appendChild(wait);card.appendChild(wrap);return;
    }
-   var songUrl=API.songUrl,selected=item.featuredTracks||[];
+   var songUrl=API.songUrl,manualOrder=item.featuredSort==='manual';
+   var selected=(item.featuredTracks||[]).slice();
+   if(!manualOrder)selected.sort(compareSong);
+   selectField(wrap,'Порядок лучших песен',
+     [['alphabetical','По алфавиту А–Я (по умолчанию)'],['manual','Вручную (стрелками)']],
+     item.featuredSort||'alphabetical',function(v){
+       if(v==='manual'&&item.featuredSort!=='manual')
+         item.featuredTracks=(item.featuredTracks||[]).slice().sort(compareSong);
+       item.featuredSort=v;render();
+     });
    var options=[];
    catalogArtists.forEach(function(t){
      if(window.VMM_ARTIST_TRACKS.effective(t,trackLinks.overrides)!==item.artistId)return;
@@ -532,35 +549,36 @@
      return -1;
    }
    function markChanged(){
+     if(!manualOrder)selected.sort(compareSong);
      item.featuredTracks=selected.slice();updateButtons();
    }
    function draw(){
      clear(rows);clear(selectedHost);
-     counter.textContent='Выбрано '+selected.length+'/3 · доступны '+options.length+' композиций. Порядок списка можно изменить.';
+     counter.textContent='Выбрано '+selected.length+'/3 · доступны '+options.length+
+       ' композиций. '+(manualOrder?'Ручной порядок стрелками.':'Список по алфавиту А–Я.');
      selected.forEach(function(song,index){
        var line=document.createElement('div');line.className='landing-featured-chosen';
        var name=document.createElement('span');
        name.textContent=(index+1)+'. '+song.title+' — '+(song.provider==='spotify'?'Spotify':'YouTube');
        line.appendChild(name);
-       var up=button('↑',function(){
-         if(index<1)return;var old=selected[index-1];selected[index-1]=selected[index];selected[index]=old;markChanged();draw();
-       },'landing-small');
-       var down=button('↓',function(){
-         if(index===selected.length-1)return;
-         var old=selected[index+1];selected[index+1]=selected[index];selected[index]=old;markChanged();draw();
-       },'landing-small');
-       up.disabled=index===0;down.disabled=index===selected.length-1;
-       up.setAttribute('aria-label','Поднять песню '+song.title);
-       down.setAttribute('aria-label','Опустить песню '+song.title);
-       line.appendChild(up);line.appendChild(down);
+       if(manualOrder){
+         var up=button('↑',function(){
+           if(index<1)return;var old=selected[index-1];selected[index-1]=selected[index];selected[index]=old;markChanged();draw();
+         },'landing-small');
+         var down=button('↓',function(){
+           if(index===selected.length-1)return;
+           var old=selected[index+1];selected[index+1]=selected[index];selected[index]=old;markChanged();draw();
+         },'landing-small');
+         up.disabled=index===0;down.disabled=index===selected.length-1;
+         up.setAttribute('aria-label','Поднять песню '+song.title);
+         down.setAttribute('aria-label','Опустить песню '+song.title);
+         line.appendChild(up);line.appendChild(down);
+       }
        selectedHost.appendChild(line);
      });
      var q=String(search.value||'').toLocaleLowerCase('ru').replace(/ё/g,'е').trim();
      var found=options.filter(function(t){return !q||(t.title.toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)>=0);});
-     found.sort(function(a,b){
-       var as=chosen(a)>=0,bs=chosen(b)>=0;
-       return as===bs?a.title.localeCompare(b.title,'ru'):(as?-1:1);
-     });
+     found.sort(compareSong);
      var visible=found.slice(0,36);
      visible.forEach(function(t){
        var at=chosen(t),yes=at>=0;
@@ -691,6 +709,8 @@
      if(spotify||youtube)songs.push({title:String(song.title||''),artist:String(song.artist||''),
        spotify:spotify,youtube:youtube});
    });
+   // Alphabetize the entire protected catalog, not just the first search results.
+   songs.sort(compareSong);
    function updateSources(){
      clear(sources);var row=songs[Number(choices.value)];
      if(!row)return;
@@ -909,7 +929,7 @@
      if(spotify||youtube)result.push({title:String(song.title||'Без названия'),
        artist:String(song.artist||''),spotify:spotify,youtube:youtube});
    });
-   return result;
+   return result.sort(compareSong);
  }
  function attachedSongKey(t){
    return String(t.title||'').trim().toLocaleLowerCase('ru')+'|'+
@@ -1000,7 +1020,7 @@
      var q=filter().toLocaleLowerCase('ru').replace(/ё/g,'е');
      var found=entry.tracks.filter(function(t){
        return !q||(t.title+' '+t.artist).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)>=0;
-     });
+     }).sort(compareSong);
      found.slice(0,40).forEach(function(t){
        var outer=document.createElement('div');outer.className='landing-attached-song';
        var line=document.createElement('div');line.className='landing-language-song-row';

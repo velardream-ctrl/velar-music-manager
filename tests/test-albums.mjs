@@ -67,7 +67,12 @@ toggle.onclick();
 assert.equal(toggle.attributes['aria-expanded'],'true');
 const list=card.children[2];
 assert.equal(list.children.length,2,'Two singles under one album cover');
-const row=list.children[0],title=row.children[0];
+// RUN-104: album songs are displayed alphabetically, not in input order.
+assert.equal(list.children[0].children[0].children[2].children[0].textContent,
+ 'Журавли','First song is alphabetically first (even when saved second)');
+assert.equal(cfg.albums.entries[0].tracks[0].title,'Северный олень',
+ 'Alphabetic display must not rewrite published/source album track order');
+const row=list.children[1],title=row.children[0];
 assert.match(row.className,/public-song-entry--covers/);
 assert.equal(title.children[1].tagName,'img','Thumbnail derives from owner-curated album cover');
 const primary=row.children[1].children[0];
