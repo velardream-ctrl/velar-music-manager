@@ -1428,7 +1428,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
    horizontally inset overlay aligned to the cover. */
 .public-song-entry--carousel .public-song-inline:not(:empty){
  top:42px;left:13px;right:13px;width:auto;max-width:none;
- height:0!important;padding:0 8px 100%!important;
+ height:0!important;padding:0 8px calc(100% - 26px)!important;
  aspect-ratio:auto!important;box-sizing:border-box;
  border-radius:12px;box-shadow:none;
 }
