@@ -29,12 +29,28 @@ const safe=api.normalize({...def,releases:{...def.releases,cards:[cardWith('http
 assert.equal(safe.releases.cards[0].title,'Первый альбом');
 assert.equal(safe.releases.cards[0].url,'https://open.spotify.com/album/abc');
 assert.equal(safe.releases.cards[0].visible,true);
+const artistCard={...api.blankCard(),artistId:'velar',title:'DJ Velar',
+ visible:true,biography:'Автор музыки и творческого проекта',
+ socialLinks:[{platform:'spotify',url:'https://open.spotify.com/artist/1PNzGsDcFVuOMBN7Gw12tw',visible:true},
+  {platform:'telegram',url:'https://t.me/velarmusic',visible:false}]};
+const profiles=api.normalize({...def,artists:{...def.artists,cards:[artistCard]}});
+assert.equal(profiles.artists.cards[0].biography,'Автор музыки и творческого проекта');
+assert.equal(profiles.artists.cards[0].socialLinks.length,2);
+assert.equal(profiles.artists.cards[0].socialLinks[0].visible,true);
+assert.equal(api.normalize({...def,artists:{...def.artists,cards:[{...artistCard,biography:undefined,socialLinks:undefined}]}}).artists.cards[0].biography,'');
+assert.throws(()=>api.normalize({...def,artists:{...def.artists,cards:[{...artistCard,biography:'x'.repeat(5001)}]}}),/5000/);
+assert.throws(()=>api.normalize({...def,artists:{...def.artists,cards:[{...artistCard,
+ socialLinks:[{platform:'spotify',url:'https://evil.example/artist/not-real',visible:true}]}]}}),/профиль/);
+assert.throws(()=>api.normalize({...def,artists:{...def.artists,cards:[{...artistCard,
+ socialLinks:[{platform:'instagram',url:'javascript:alert(1)',visible:true}]}]}}),/HTTPS/);
+assert.throws(()=>api.normalize({...def,artists:{...def.artists,cards:[{...artistCard,
+ socialLinks:Array(13).fill({platform:'telegram',url:'',visible:false})}]}}),/12/);
 const privateObject={...def,secretToken:'abc123',lyrics:[{text:'не публиковать'}]};
 const clean=JSON.stringify(api.normalize(privateObject));
 assert.doesNotMatch(clean,/secretToken|не публиковать/);
-assert.match(html,/landing-public\.js\?v=20/);
-assert.match(html,/landing-schema\.js\?v=18/);
-assert.match(studio,/landing-editor\.js\?v=30/);
+assert.match(html,/landing-public\.js\?v=21/);
+assert.match(html,/landing-schema\.js\?v=19/);
+assert.match(studio,/landing-editor\.js\?v=31/);
 assert.match(studio,/data-panel="landing"/);
 assert.match(studio,/data-landing-tab="universe"/);
 assert.match(studio,/data-landing-tab="languages"/);

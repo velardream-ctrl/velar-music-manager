@@ -23,7 +23,7 @@ assert.match(css,/\.crystal-journey-ring--outer/);
 assert.match(css,/\.crystal-journey-stars--near/);
 assert.match(css,/\.has-living-art \.crystal-journey-stage\{/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
-assert.match(sw,/CACHE_PREFIX \+ 'v44'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v45'/);
 assert.match(sw,/'\.\/living-art\.js\?v=2'/);
 assert.match(sw,/'\.\/universe\.js\?v=5'/);
 assert.doesNotMatch(art,/setTimeout\(|setInterval\(|fetch\(|firebase|firestore\(|XMLHttpRequest|WebSocket|getContext\(/);

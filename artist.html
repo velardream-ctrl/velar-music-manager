@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="robots" content="noindex,nofollow,noarchive">
+ <meta name="theme-color" content="#0a1023">
+ <meta name="description" id="artist-meta-description" content="Истории артистов VELARDREAM Records. Музыка, биографии и официальные страницы.">
+ <meta property="og:type" content="profile">
+ <meta property="og:site_name" content="VELARDREAM Records">
+ <meta property="og:title" id="artist-og-title" content="Артист — VELARDREAM Records">
+ <meta property="og:description" id="artist-og-description" content="Музыка и история артиста VELARDREAM Records">
+ <meta property="og:url" id="artist-og-url" content="https://velardream.com/artist.html">
+ <link rel="icon" href="favicon.svg?v=2" type="image/svg+xml">
+ <link rel="stylesheet" href="artist-detail.css?v=1">
+ <title>Артист — VELARDREAM Records</title>
+ <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
+ <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" defer></script>
+ <script src="studio/firebase-config.js" defer></script>
+ <script src="landing-schema.js?v=19" defer></script>
+ <script src="public-offline.js?v=1" defer></script>
+ <script src="artist-detail.js?v=1" defer></script>
+</head>
+<body>
+ <header class="artist-topbar">
+  <a class="artist-brand" href="./index.html" aria-label="VELARDREAM Records — главная">VELARDREAM <span>RECORDS</span></a>
+  <a class="artist-back" href="./index.html#artists">← Все артисты</a>
+ </header>
+ <main id="artist-main">
+  <p class="artist-kicker">У КАЖДОГО ГОЛОСА — СВОЯ ИСТОРИЯ</p>
+  <div class="artist-message" id="artist-message" role="status" aria-live="polite">Загружаем опубликованный профиль артиста…</div>
+  <article id="artist-content" hidden>
+   <section class="artist-hero">
+    <div class="artist-portrait" id="artist-portrait-wrap" hidden>
+     <img id="artist-portrait" alt="" loading="eager">
+    </div>
+    <div class="artist-intro">
+     <p class="artist-eyebrow">ARTIST • VELARDREAM RECORDS</p>
+     <h1 id="artist-name"></h1>
+     <p class="artist-role" id="artist-role" hidden></p>
+     <p class="artist-description" id="artist-description" hidden></p>
+     <button class="artist-share" id="artist-share" type="button">Поделиться страницей</button>
+    </div>
+   </section>
+   <section class="artist-section" id="artist-biography-section" hidden>
+    <h2>История артиста</h2>
+    <p class="artist-biography" id="artist-biography"></p>
+   </section>
+   <section class="artist-section" id="artist-social-section" hidden>
+    <h2>Слушать и подписаться</h2>
+    <p class="artist-hint">Официальные страницы артиста на музыкальных и социальных площадках</p>
+    <div class="artist-links" id="artist-social-links"></div>
+   </section>
+   <section class="artist-section" id="artist-tracks-section" hidden>
+    <h2>Лучшие песни</h2>
+    <p class="artist-hint">Открываются на официальных музыкальных площадках</p>
+    <div class="artist-tracks" id="artist-tracks"></div>
+   </section>
+   <section class="artist-section" id="artist-albums-section" hidden>
+    <h2>Альбомы и музыкальные коллекции</h2>
+    <div class="artist-albums" id="artist-albums"></div>
+   </section>
+   <div class="artist-footer-links">
+    <a href="./index.html#artists">← Вернуться к артистам</a>
+    <a href="./index.html#releases">Все релизы VELARDREAM</a>
+   </div>
+  </article>
+ </main>
+ <footer class="artist-footer">VELARDREAM Records · Разные голоса. Одна музыкальная вселенная.</footer>
+ <script type="application/ld+json" id="artist-jsonld">{}</script>
+</body>
+</html>
