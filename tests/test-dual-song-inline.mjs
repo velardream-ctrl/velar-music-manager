@@ -123,5 +123,5 @@ assert.doesNotMatch(mobileCSS,/\.public-song-platforms\{flex:1 1 100%/,
  'Mobile sources cannot turn into a full-width Spotify button');
 assert.doesNotMatch(mobileCSS,/\.public-song-source\{flex:1 1 100px/,
  'Mobile source buttons cannot grow to the entire width');
-assert.match(read('index.html'),/public-song-ui\.js\?v=6/);
+assert.match(read('index.html'),/public-song-ui\.js\?v=7/);
 console.log('PASS: RUN-090 Spotify/YouTube inline single-row player, long lists, safe deep links, one active iframe');

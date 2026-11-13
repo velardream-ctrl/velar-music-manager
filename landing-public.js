@@ -74,6 +74,19 @@
      panel.appendChild(create('p','cms-music-empty','Подборка композиций появится здесь после выбора в музыкальной студии.'));
      return panel;
    }
+   if(view==='carousel'&&window.VELAR_PUBLIC_SONGS){
+     var carousel=create('div','cms-music-list');
+     panel.appendChild(carousel);
+     // Retain the curator's explicit manual order for an artist's best songs.
+     var curated=tracks.map(function(t){
+       return {title:t.title,artist:item.title,provider:t.provider,url:t.url,
+         alternateProvider:t.alternateProvider,alternateUrl:t.alternateUrl};
+     });
+     window.VELAR_PUBLIC_SONGS.mount(carousel,curated,{
+       prefix:'artist',view:'carousel',batch:12,keepOrder:true
+     });
+     return panel;
+   }
    var list=create('div','cms-music-list'+
      (view==='tiles'?' cms-music-list--tiles':view==='covers'?' cms-music-list--covers':''));
    // RUN-091: player belongs to the clicked row, not after the entire list.
@@ -152,7 +165,7 @@
    panel.appendChild(list);
    return panel;
  }
- function cards(id,rows,type,featuredView,albums){
+ function cards(id,rows,type,featuredView,albums,songMode){
    var target=byId(id);
    if(!target)return;
    var shown=rows.filter(function(x){return x.visible===true;});
@@ -172,7 +185,7 @@
      if(stories){
        var row=create('div','cms-artist-story'+(index%2?' cms-artist-story--reverse':''));
        row.appendChild(card);
-       row.appendChild(musicPanel(item,featuredView,albums));
+       row.appendChild(musicPanel(item,songMode==='carousel'?'carousel':featuredView,albums));
        target.appendChild(row);
      }else target.appendChild(card);
    });
@@ -516,8 +529,8 @@
      value.genres.tags.forEach(function(tag){tags.appendChild(create('span','',tag));});
    }
    if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.configure)
-     window.VELAR_PUBLIC_SONGS.configure(value.albums.trackView,value.albums.entries);
-   cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums);
+     window.VELAR_PUBLIC_SONGS.configure(value.albums.trackView,value.albums.entries,value.genres.songViewMode);
+   cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums,value.genres.songViewMode);
    if(window.VELAR_ALBUMS&&window.VELAR_ALBUMS.render)window.VELAR_ALBUMS.render(value.albums);
    releaseGallery(value.releases);
    playlistGallery(value.releases);

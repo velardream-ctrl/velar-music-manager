@@ -2102,6 +2102,12 @@
      heading(panel,'Первый экран','Эмблема, название VELARDREAM и кнопки остаются частью оформления сайта; здесь меняются подпись и вступление.');
      field(panel,'Подзаголовок',data.hero.subtitle,function(v){data.hero.subtitle=v;});
      field(panel,'Основное описание',data.hero.intro,function(v){data.hero.intro=v;},true);
+     heading(panel,'Оформление песен во всех разделах',
+       'Одна настройка для списков песен артистов, альбомов, языков и тем. Старые варианты оформления сохраняются, пока выбран обычный режим.');
+     selectField(panel,'Вид песен на сайте',
+       [['standard','Обычный показ (сохранить оформление разделов)'],
+        ['carousel','Карусель с обложками: свайп на телефоне, стрелки на компьютере']],
+       data.genres.songViewMode||'standard',function(v){data.genres.songViewMode=v;});
    }else if(tab==='artists'||tab==='releases'){
      heading(panel,tabs[tab],tab==='artists'?'Профили артистов публикуются только после включения галочки.':'Добавляй только ссылки на публичные релизы, без приватных фонограмм и текстов.');
      sectionFields(panel,tab);

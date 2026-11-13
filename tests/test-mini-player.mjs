@@ -13,7 +13,7 @@ assert.match(js,/window.addEventListener\('scroll',updateMiniPlayer,false\)/);
 assert.match(js,/viewBox="0 0 24 24" width="28" height="28"/);
 assert.ok(html.includes('recordings.js?v=12'));
 assert.ok(html.includes('recordings.css?v=12'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v38'"));
+assert.ok(sw.includes("STUDIO_PREFIX+'v39'"));
 const latest=css.slice(css.indexOf('/* RUN-057'));
 assert.match(latest,/\.vmm-r-play-button::before/);
 assert.match(latest,/inset:5px/);
