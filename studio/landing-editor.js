@@ -80,11 +80,16 @@
  var albumEditorId='',albumCatalogSearch='',albumTrackFilter='',albumCatalogPage=0;
  var faqSearch='',faqGroup='',faqPage=0;
  // Offline admin: private IndexedDB outbox, no publication without explicit click.
- var offlineSyncing=false,offlineNonce='',offlineTimer=null,
+ var offlineSyncing=false,offlineNonce='',offlineConflict=false,offlineTimer=null,
    offlineWorking=Promise.resolve(),offlineSavedSignature='';
  var offlineStore=window.VMM_OFFLINE_ADMIN;
  function pendingName(){return 'pending:landing';}
  function offlineStatus(msg){var element=id('landing-offline-status');if(element)text(element,msg);}
+ function showOfflineConflict(on){
+   offlineConflict=!!on;
+   var button=id('landing-merge-offline');
+   if(button)button.hidden=!offlineConflict;
+ }
  function snapshotLocal(){
    if(!offlineStore||!uid||!loaded||busy||!draftDirty())return Promise.resolve(null);
    var payload={content:clone(data),baseRevision:draftRev,baseBaseline:baseline};
@@ -155,6 +160,7 @@
          if(uid===account){
            if(offlineNonce===nonce){
              draftRev=revision;baseline=JSON.stringify(clean);
+             if(ack)showOfflineConflict(false);
              offlineStatus(ack?'Синхронизировано с облачным черновиком (версия '+revision+'). Для посетителей ещё не опубликовано.':
                'Облачный черновик сохранён; более свежие правки остались в очереди.');
              updateButtons();
@@ -164,8 +170,80 @@
        });
      });
    }).catch(function(err){
-     offlineStatus('Синхронизация приостановлена: '+(err&&err.message||err)+'. Изменения остались на устройстве.');
+     var message=err&&err.message||String(err);
+     if(message.indexOf('КОНФЛИКТ:')>=0)showOfflineConflict(true);
+     offlineStatus('Синхронизация приостановлена: '+message+'. Изменения остались на устройстве.');
    }).then(function(){offlineSyncing=false;});
+ }
+ // Explicit owner action only. A three-way merge compares the original base
+ // snapshot, the offline edit, and the latest server draft inside ONE
+ // revision-checked transaction. If any path overlaps, nothing is written.
+ function reconcileOffline(){
+   if(!offlineConflict||!offlineStore||!uid||!loaded||busy||offlineSyncing||
+      navigator.onLine===false)return Promise.resolve(false);
+   if(!window.VMM_LANDING_MERGE){
+     info('Модуль безопасного сравнения ещё не загружен. Сохрани локальную резервную копию.');
+     return Promise.resolve(false);
+   }
+   if(!window.confirm('Сначала скачай резервную копию несинхронизированных изменений. Безопасно объединить локальные изменения с последней облачной версией? Совпадающие правки будут проверены, а конфликтующие останутся на устройстве.'))return Promise.resolve(false);
+   var account=uid;
+   busy=true;updateButtons();
+   root.className+=' is-reconciling';
+   info('Проверяем локальную копию и сравниваем с облачным черновиком…');
+   return offlineWorking.catch(function(){}).then(function(){
+     return offlineStore.get(account,pendingName());
+   }).then(function(saved){
+     if(!saved||!saved.value||!saved.value.content||!saved.value.baseBaseline)
+       throw new Error('Нет полноценной локальной копии с исходной версией. Ничего не записано. Скачай резервную копию.');
+     var payload=saved.value,base;
+     try{base=API.normalize(JSON.parse(payload.baseBaseline));}
+     catch(e){throw new Error('Исходная версия черновика повреждена. Автоматическое объединение запрещено.');}
+     var local=API.normalize(payload.content),nonce=saved.nonce;
+     return authorized().then(function(auth){
+       if(auth.user.uid!==account)throw new Error('Аккаунт изменился; объединение отменено.');
+       return auth.db.runTransaction(function(tx){
+         var ref=auth.db.collection('vmm_public_drafts').doc('landing');
+         return tx.get(ref).then(function(snapshot){
+           var remote=snapshot.exists?API.normalize(snapshot.data().content):API.defaults();
+           var rev=snapshot.exists?Number(snapshot.data().revision)||0:0;
+           var merged=window.VMM_LANDING_MERGE.threeWay(base,local,remote);
+           if(merged.conflicts.length)
+             throw new Error('Не удалось автоматически объединить: обе версии меняли '+merged.conflicts.slice(0,4).join(', ')+'. Ничего не перезаписано. Сохрани обе копии для сравнения.');
+           var clean=API.normalize(merged.value),same=JSON.stringify(clean)===JSON.stringify(remote);
+           if(!same){
+             tx.set(ref,{schemaVersion:1,status:'draft',revision:rev+1,
+               content:clean,updatedBy:account,
+               updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+           }
+           return {revision:rev+(same?0:1),content:clean,changes:merged.changes};
+         });
+       });
+     }).then(function(merged){
+       return offlineStore.acknowledge(account,pendingName(),nonce).then(function(ack){
+         if(uid!==account)return false;
+         if(!ack||offlineNonce&&offlineNonce!==nonce){
+           // Another edit arrived while the transaction ran. Its outbox is
+           // intentionally retained; never overwrite a newer local edit.
+           throw new Error('Облачная версия объединена, но обнаружены более новые изменения на телефоне. Они не удалены. Скачай резервную копию и повтори согласование.');
+         }
+         draftRev=merged.revision;data=merged.content;
+         baseline=JSON.stringify(data);offlineNonce='';offlineSavedSignature=baseline;
+         showOfflineConflict(false);render();
+         offlineStatus('Локальные и облачные изменения безопасно объединены (черновик '+merged.revision+'). Публикация по-прежнему отдельная.');
+         info('Черновик объединён с облаком. Проверь тему и песни, затем при необходимости опубликуй.');
+         return true;
+       });
+     });
+   }).catch(function(err){
+     showOfflineConflict(true);
+     info('Объединение остановлено: '+(err&&err.message||err));
+     offlineStatus('Несинхронизированные изменения остаются на устройстве. Облачный черновик не перезаписан. Скачай резервную копию.');
+     return false;
+   }).then(function(ok){
+     root.className=root.className.replace(/ is-reconciling/g,'');
+     busy=false;updateButtons();return ok;
+   });
+ }
  }
  var tabs={hero:'Первый экран',artists:'Артисты',releases:'Музыка и релизы',albums:'Альбомы',playlists:'Плейлисты и подписки',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',about:'О проекте',publish:'Публикация'};
  function id(k){return document.getElementById(k);}
@@ -192,8 +270,8 @@
    scheduleLocal();
    id('landing-save').disabled=!loaded||busy||!draftDirty();
    id('landing-publish').disabled=!loaded||busy||!draftRev||dirty()||trackSaving||pendingArtistLinks;
-   id('landing-reload').disabled=busy||trackSaving;
-   id('landing-restore').disabled=!published||busy||trackSaving;
+   id('landing-reload').disabled=busy||trackSaving||offlineConflict;
+   id('landing-restore').disabled=!published||busy||trackSaving||offlineConflict;
    var localMatch=loaded&&offlineSavedSignature===JSON.stringify(data);
    text(id('landing-dirty'),busy?'Идёт операция…':trackSaving?'Сохраняем связи песен…':
      !loaded?'Данные ещё не загружены':
@@ -2225,7 +2303,16 @@
      draftRev=v;baseline=JSON.stringify(cleanData);busy=false;render();
      if(offlineStore&&previousNonce)offlineStore.acknowledge(account,pendingName(),previousNonce).catch(function(){});
      info('Черновик сохранён (версия '+v+'). '+(dirty()?'Есть более поздние несохранённые правки.':'Главная страница ещё не изменилась.'));
-   }).catch(function(e){busy=false;updateButtons();info('Черновик не сохранён: '+safeStatus(e));});
+   }).catch(function(e){
+     busy=false;
+     var message=safeStatus(e);
+     if(message.indexOf('Черновик изменён с другого устройства')>=0){
+       showOfflineConflict(true);
+       snapshotLocal().catch(function(){});
+       message+=' Локальная копия сохранена. Используй безопасное объединение, а не «Обновить из базы».';
+     }
+     updateButtons();info('Черновик не сохранён: '+message);
+   });
  }
  function publish(){
    if(!loaded||busy||!draftRev)return;
@@ -2286,7 +2373,7 @@
  function reset(){
    loadGeneration++;
    uid='';db=null;loaded=false;busy=false;draftRev=0;publishedRev=0;
-   offlineNonce='';offlineSyncing=false;offlineSavedSignature='';
+   offlineNonce='';offlineSyncing=false;offlineSavedSignature='';showOfflineConflict(false);
    if(offlineTimer!==null){clearTimeout(offlineTimer);offlineTimer=null;}
    catalogArtists=[];catalogLoaded=false;catalogLoading=false;catalogError='';
    trackLinks={revision:0,overrides:{}};trackLinksLoaded=false;pendingArtistLinks=false;trackEditorArtist='';trackChecked={};trackSearch='';trackSaving=false;
@@ -2298,6 +2385,7 @@
    if(tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();
  };
  id('landing-save').onclick=save;
+ id('landing-merge-offline').onclick=reconcileOffline;
  id('landing-publish').onclick=publish;
  id('landing-reload').onclick=function(){load(true);};
  id('landing-restore').onclick=function(){
