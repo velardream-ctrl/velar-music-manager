@@ -58,6 +58,15 @@ assert.equal(dist.search(index(),'','all','topic:'+topic.slug).length,1);
 assert.ok(index().byId.one.draft.some(x=>x.kind==='language'));
 assert.equal(index().byId.one.artistId,'velar');
 assert.ok(index().byId.one.display.some(x=>x.stage==='draft'),'Draft-only assignments are never marked published');
+const publishedSame=clone(draft),draftSame=clone(draft);
+publishedSame.genres.topics.entries[0].visible=true;
+draftSame.genres.topics.entries[0].visible=true;
+const publishedIndex=dist.build(catalog,draftSame,publishedSame,{overrides:{}},API,effective);
+assert.equal(publishedIndex.byId.one.display.filter(x=>x.kind==='topic')[0].stage,'published',
+ 'After publishing the matching song, its topic badge must no longer say Draft');
+const oldIndex=dist.build(catalog,draftSame,live,{overrides:{}},API,effective);
+assert.equal(oldIndex.byId.one.display.filter(x=>x.kind==='topic')[0].stage,'draft',
+ 'The old in-memory published snapshot explains the owner-reported stale Draft badge');
 assert.equal(live.genres.topics.entries[0].tracks.length,0,'Draft edits NEVER publish');
 assert.doesNotThrow(()=>API.normalize(draft),'Shared editor must produce normalized, valid landing document');
 draft.albums.entries.push({id:'test-album',title:'Заметки',kind:'collection',
@@ -134,9 +143,12 @@ assert.match(read('studio/landing-editor.js'),/tab==='distribution'/);
 assert.match(read('studio/landing-editor.js'),/var next=clone\(data\)/);
 assert.match(read('studio/landing-editor.js'),/var distributionContext=\{/,
  'Distribution context must be named so the callback can refresh its draft reference');
+assert.match(read('studio/landing-editor.js'),
+ /published=clone\(cleanData\);publishedRev=v;busy=false;[\s\S]{0,400}if\(tab==='distribution'\)render\(\)/,
+ 'Successful publish must redraw the distribution UI with updated published badges');
 assert.match(read('studio/landing-editor.js'),/distributionContext\.draft=data;/,
  'Successful Add must update the live context used to redraw topic badges');
 assert.doesNotMatch(read('studio/landing-editor.js'),/data=next;context\.draft=data;/,
  'Do not reintroduce the ReferenceError that left changes invisible');
 assert.match(read('studio/studio.css'),/\.landing-distribution-row/);
-console.log('PASS RUN-113/RUN-112: inline feedback and badges, live context, private group matrix and no implicit publish');
+console.log('PASS RUN-114/RUN-113/RUN-112: inline feedback and badges, live context, private group matrix and no implicit publish');
