@@ -38,7 +38,20 @@
  // RUN-106: Spotify's public oEmbed thumbnail, fetched only for the visible
  // carousel cards and only when no owner-curated album image exists.
  // Network failure/CORS must never block the song title or player.
+ function youtubeArtwork(track){
+   var sources=approved(track);
+   for(var i=0;i<sources.length;i++)if(sources[i].provider==='youtube'){
+     var id=sources[i].url.split('v=')[1];
+     if(/^[A-Za-z0-9_-]{11}$/.test(id))
+       return 'https://i.ytimg.com/vi/'+id+'/hqdefault.jpg';
+   }
+   return '';
+ }
  function requestArtwork(track,callback){
+   // YouTube preview is a reliable immediate fallback. The selected playback
+   // provider does not create a second card or a second cover.
+   var youtube=youtubeArtwork(track);
+   if(youtube)callback(youtube);
    var spotify=approved(track).filter(function(item){return item.provider==='spotify';})[0];
    if(!spotify||typeof window.fetch!=='function')return;
    var key=spotify.url,record=artworkCache[key];
@@ -53,7 +66,8 @@
      .then(function(response){if(!response.ok)throw new Error('Artwork unavailable');return response.json();})
      .then(function(json){
        var url=String(json&&json.thumbnail_url||'');
-       if(!/^https:\/\/i\.scdn\.co\/image\/[a-z0-9]+$/i.test(url))throw new Error('Invalid artwork host');
+       if(!/^https:\/\/(?:i\.scdn\.co|image-cdn-ak\.spotifycdn\.com)\/image\/[a-z0-9]+$/i.test(url))
+         throw new Error('Invalid artwork host');
        record.url=url;record.pending=false;
        record.callbacks.forEach(function(fn){fn(url);});record.callbacks=[];
      }).catch(function(){record.pending=false;record.callbacks=[];});
@@ -151,6 +165,7 @@
    function open(i,src){
      var link=embed(src);
      if(!link||!slots[i])return false;
+     if(coverRequests[i]){var request=coverRequests[i];delete coverRequests[i];request();}
      if(activeMount&&activeMount!==instance)activeMount.close();
      // One official external player only, shared with other public sections.
      if(window.VMM_PUBLIC_LANDING&&window.VMM_PUBLIC_LANDING.stopExternalPlayers)
@@ -203,26 +218,44 @@
      entries[i]=item;
      var title=el('div','public-song-label');
      title.appendChild(el('span','public-song-index',('0'+(i+1)).slice(-2)));
-     if(view==='covers'||view==='tiles'||isCarousel){
-       var art=opts.cover||coverMap[track.url]||coverMap[track.alternateUrl]||'';
-       var holder=isCarousel?el('div','public-song-artwork'):title;
-       function putCover(url){
-         var thumb=el('img','public-song-thumbnail');
-         thumb.src=url;thumb.alt='Обложка: '+track.title;thumb.loading='lazy';
-         thumb.decoding='async';thumb.referrerPolicy='no-referrer';
-         if(isCarousel)clear(holder);
-         holder.appendChild(thumb);
+     // One artwork box per song, for Spotify OR YouTube. Keep its dimensions
+     // when the official player opens; never append a second media card.
+     var art=opts.cover||coverMap[track.url]||coverMap[track.alternateUrl]||'';
+     var holder=isCarousel?el('div','public-song-artwork'):view==='rows'?
+       el('span','public-song-row-artwork'):title;
+     var currentCover=art||'',fallbackArtwork=youtubeArtwork(track);
+     function clearArtwork(){
+       if(holder!==title){clear(holder);return;}
+       // In row/tiles/covers modes the title also owns the song number and
+       // the click-to-play button. Never erase those when artwork is refreshed.
+       var children=title.children;
+       for(var k=children.length-1;k>=0;k--){
+         var child=children[k],cls=child.className||'';
+         if((' '+cls+' ').indexOf(' public-song-thumbnail ')>=0||
+            cls.indexOf('public-song-thumbnail--empty')>=0)
+           title.removeChild(child);
        }
-       if(art)putCover(art);
-       else{
-         var placeholder=el('span','public-song-thumbnail public-song-thumbnail--empty','♫');
-         placeholder.setAttribute('aria-hidden','true');holder.appendChild(placeholder);
-         if(isCarousel)coverRequests[i]=function(){
-           requestArtwork(track,function(url){putCover(url);});
-         };
-       }
-       if(isCarousel)title.appendChild(holder);
      }
+     function putCover(url){
+       if(!url||currentCover===url&&holder.firstChild&&holder.firstChild.tagName==='img')return;
+       var thumb=el('img','public-song-thumbnail');
+       thumb.alt='Обложка: '+track.title;thumb.loading='lazy';
+       thumb.decoding='async';thumb.referrerPolicy='no-referrer';
+       thumb.onerror=function(){
+         if(fallbackArtwork&&url!==fallbackArtwork){putCover(fallbackArtwork);return;}
+         clearArtwork();
+         var music=el('span','public-song-thumbnail public-song-thumbnail--empty','♫');
+         music.setAttribute('aria-hidden','true');holder.appendChild(music);
+       };
+       thumb.src=url;currentCover=url;clearArtwork();holder.appendChild(thumb);
+     }
+     if(art)putCover(art);
+     else {
+       var placeholder=el('span','public-song-thumbnail public-song-thumbnail--empty','♫');
+       placeholder.setAttribute('aria-hidden','true');holder.appendChild(placeholder);
+       coverRequests[i]=function(){requestArtwork(track,putCover);};
+     }
+     if(isCarousel)title.appendChild(holder);
      var copy=el('button','public-song-copy public-song-title-button');
      copy.type='button';copy.setAttribute('aria-label','Открыть или закрыть плеер: '+track.title);
      copy.setAttribute('aria-pressed','false');titles[i]=copy;
@@ -230,7 +263,9 @@
      copy.appendChild(el('strong','',track.title));
      copy.appendChild(el('small','',(track.artist?track.artist+' · ':'')+
        (sources[0].provider==='spotify'?'Spotify':'YouTube')));
-     title.appendChild(copy);item.appendChild(title);
+     title.appendChild(copy);
+     if(view==='rows')title.appendChild(holder); // CSS orders image before song name.
+     item.appendChild(title);
      var controls=el('div','public-song-platforms');
      buttons[i]=[];
      sources.forEach(function(src,j){
@@ -248,12 +283,22 @@
      var player=el('div','public-song-inline '+classes+'-inline-player');
      slots[i]=player;item.appendChild(player);
      container.appendChild(item);
+     // The clicked song must have artwork even when it is not near the
+     // beginning of a long list. Lazy lookup is still limited to one song.
+     copy.onfocus=function(){if(coverRequests[i]){var fn=coverRequests[i];delete coverRequests[i];fn();}};
    }
    function appendBatch(){
      if(more&&more.parentNode===container)container.removeChild(more);
      var next=Math.min(tracks.length,count+amount);
      for(var i=count;i<next;i++)addRow(i);
      count=next;
+     if(!isCarousel){
+       // Avoid a bulk request for hundreds of songs at once. The first few
+       // rows of each batch are warmed, the rest load when focused or played.
+       for(var k=Math.max(0,count-amount);k<Math.min(count,Math.max(0,count-amount)+4);k++){
+         if(coverRequests[k]){var request=coverRequests[k];delete coverRequests[k];request();}
+       }
+     }
      if(count<tracks.length){
        more=el('button',classes==='language'?'language-more':'topic-show-more',
          'Показать ещё ('+(tracks.length-count)+')');
@@ -277,5 +322,6 @@
    updateCarousel();
    return instance;
  }
- window.VELAR_PUBLIC_SONGS={mount:mount,approved:approved,configure:configure};
+ window.VELAR_PUBLIC_SONGS={mount:mount,approved:approved,configure:configure,
+   requestArtwork:requestArtwork};
 }());

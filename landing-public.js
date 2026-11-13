@@ -97,25 +97,32 @@
      button.type='button';
      button.setAttribute('aria-pressed','false');
      button.appendChild(create('span','cms-music-number',('0'+(index+1)).slice(-2)));
-     if(view!=='classic'){
-       var cover='';
-       (albums&&albums.entries||[]).forEach(function(album){
-         if(!album.visible||cover)return;
-         (album.tracks||[]).forEach(function(song){
-           if(song.url===track.url||song.alternateUrl===track.url)
-             cover=album.imageData||album.imageUrl||'';
-         });
+     var cover='';
+     (albums&&albums.entries||[]).forEach(function(album){
+       if(!album.visible||cover)return;
+       (album.tracks||[]).forEach(function(song){
+         if(song.url===track.url||song.alternateUrl===track.url)
+           cover=album.imageData||album.imageUrl||'';
        });
-       if(cover){
-         var thumb=create('img','cms-music-track-thumb');
-         thumb.src=cover;thumb.alt='Обложка: '+track.title;
-         thumb.loading='lazy';thumb.decoding='async';thumb.referrerPolicy='no-referrer';
-         button.appendChild(thumb);
-       }else{
-         var note=create('span','cms-music-track-thumb cms-music-track-thumb--empty','♫');
-         note.setAttribute('aria-hidden','true');button.appendChild(note);
-       }
+     });
+     var artwork=cover?create('img','cms-music-track-thumb'):
+       create('span','cms-music-track-thumb cms-music-track-thumb--empty','♫');
+     if(cover){
+       artwork.src=cover;artwork.alt='Обложка: '+track.title;
+       artwork.loading='lazy';artwork.decoding='async';artwork.referrerPolicy='no-referrer';
+     }else{
+       artwork.setAttribute('aria-hidden','true');
+       if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.requestArtwork)
+         window.VELAR_PUBLIC_SONGS.requestArtwork(track,function(src){
+           artwork.className='cms-music-track-thumb cms-music-track-thumb--loaded';
+           artwork.textContent='';artwork.style.backgroundImage='url("'+src+'")';
+           artwork.style.backgroundSize='cover';artwork.style.backgroundPosition='center';
+           artwork.setAttribute('aria-hidden','false');
+           artwork.setAttribute('role','img');
+           artwork.setAttribute('aria-label','Обложка: '+track.title);
+         });
      }
+     if(view!=='classic')button.appendChild(artwork);
      var details=create('span','cms-music-track-info');
      details.appendChild(create('strong','',track.title));
      details.appendChild(create('small','',track.provider==='spotify'?'Spotify':'YouTube'));
@@ -125,6 +132,7 @@
      var playIcon=create('span','cms-music-play-icon');
      playIcon.setAttribute('aria-hidden','true');
      button.appendChild(playIcon);
+     if(view==='classic')button.appendChild(artwork);
      button.setAttribute('aria-label','Слушать: '+track.title+' — '+(track.provider==='spotify'?'Spotify':'YouTube'));
      var entry=create('div','cms-music-entry');
      var player=create('div','cms-music-player cms-music-player--inline');
@@ -157,6 +165,14 @@
        var external=create('a','cms-music-external','Открыть в '+(track.provider==='spotify'?'Spotify':'YouTube'));
        external.href=validated;external.rel='noopener noreferrer';external.target='_blank';
        player.appendChild(external);
+       var dismiss=create('button','cms-music-close','Закрыть');
+       dismiss.type='button';
+       dismiss.onclick=function(){
+         empty(player);active=null;
+         entry.className=entry.className.replace(/ is-playing/g,'');
+         button.setAttribute('aria-pressed','false');
+       };
+       player.appendChild(dismiss);
      };
      buttons.push(button);players.push(player);entries.push(entry);
      entry.appendChild(button);entry.appendChild(player);
@@ -256,6 +272,20 @@
      var placeholder=create('div','cms-release-placeholder');
      var emblem=create('span','cms-release-disc');emblem.setAttribute('aria-hidden','true');
      placeholder.appendChild(emblem);art.appendChild(placeholder);
+     // Missing single cover: reuse the approved Spotify public metadata,
+     // never a private library, Drive, artist profile or an extra image card.
+     if(item.mediaProvider==='spotify'&&item.mediaUrl&&
+        window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.requestArtwork){
+       window.VELAR_PUBLIC_SONGS.requestArtwork({
+         title:item.title,provider:'spotify',url:item.mediaUrl
+       },function(url){
+         var coverImage=create('img','cms-release-cover');
+         coverImage.src=url;coverImage.alt='Обложка: '+item.title;
+         coverImage.loading='lazy';coverImage.decoding='async';
+         coverImage.referrerPolicy='no-referrer';
+         art.appendChild(coverImage);
+       });
+     }
    }
    if(item.spotlight!=='none'&&feature)
      art.appendChild(create('span','cms-release-ribbon',isVideo?'ВИДЕОПРЕМЬЕРА':'ИЗБРАННЫЙ РЕЛИЗ'));
@@ -267,6 +297,9 @@
    if(item.description)copy.appendChild(create('p','cms-release-description',item.description));
    var actions=create('div','cms-release-actions'),media=officialEmbed(item.mediaUrl,item.mediaProvider,'release');
    var player=create('div','cms-release-player');
+   // The existing cover is the video/player stage: do not add another
+   // expanding row after the text of the release.
+   art.appendChild(player);
    if(media){
      var listen=create('button','cms-release-listen');
      listen.type='button';
@@ -314,7 +347,7 @@
      var link=create('a','cms-card-link','На музыкальной площадке');
      link.href=external;link.rel='noopener noreferrer';link.target='_blank';actions.appendChild(link);
    }
-   copy.appendChild(actions);card.appendChild(copy);card.appendChild(player);
+   copy.appendChild(actions);card.appendChild(copy);
    return card;
  }
  function releaseGallery(value){

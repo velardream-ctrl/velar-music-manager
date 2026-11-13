@@ -89,10 +89,26 @@ engine.configure('rows',[{visible:true,imageUrl:'https://example.com/owner-cover
 const owned=node();engine.mount(owned,[songs[1]],{prefix:'album'});
 assert.equal(owned.children[1].children[0].children[0].children[1].children[0].src,
  'https://example.com/owner-cover.jpg','Curated album art has priority over Spotify oEmbed');
+engine.configure('rows',[],'carousel');
+const youtubeOnly=node();
+engine.mount(youtubeOnly,[{title:'Видео',artist:'Velar',provider:'youtube',url:yt}],{prefix:'topic'});
+const onlyArtwork=youtubeOnly.children[1].children[0].children[0].children[1];
+assert.equal(onlyArtwork.children.length,1,'YouTube-only song has exactly one cover');
+assert.equal(onlyArtwork.children[0].src,'https://i.ytimg.com/vi/ABCDEFGHIjk/hqdefault.jpg',
+ 'YouTube songs use a verified official video thumbnail without Spotify');
+assert.equal(read('public-song-ui.js').includes('requestArtwork:requestArtwork'),true);
 assert.match(read('studio/landing-editor.js'),/Оформление песен во всех разделах/);
 assert.match(read('landing-public.js'),/value.genres.songViewMode/);
 const css=read('style.css');
 assert.match(css,/\.public-song-carousel-track\{/);
 assert.match(css,/scroll-snap-type:x mandatory/);
 assert.match(css,/-webkit-overflow-scrolling:touch/);
+assert.match(css,/\.public-song-entry--carousel \.public-song-inline:not\(:empty\)/,
+ 'The visible carousel iframe must overlay its original cover');
+assert.match(css,/\.public-song-entry--carousel \.public-song-inline\{/,
+ 'An empty media slot must not fill a vertical flex card');
+assert.match(css,/\.cms-music-entry>\.cms-music-player:not\(:empty\)/);
+assert.match(css,/\.cms-release-art>\.cms-release-player:not\(:empty\)/);
+assert.match(read('studio/studio.css'),/caret-color:#f5d6a3/);
+assert.match(read('studio/landing-editor.js'),/vmm-landing-text-focus/);
 console.log('PASS RUN-106: global carousel, accessible arrows, native swipe, lazy artwork, curated covers, official click-to-play and legacy rows');

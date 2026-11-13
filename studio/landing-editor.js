@@ -228,6 +228,16 @@
    if(!multiline)input.type='text';
    else input.rows=3;
    input.value=value||'';input.autocomplete='off';
+   // RUN-107: on iOS the fixed mobile navigation must not cover Safari's
+   // native caret and paste controls while the admin is editing a long form.
+   input.addEventListener('focus',function(){
+     if(document.body&&document.body.classList)
+       document.body.classList.add('vmm-landing-text-focus');
+   });
+   input.addEventListener('blur',function(){
+     if(document.body&&document.body.classList)
+       document.body.classList.remove('vmm-landing-text-focus');
+   });
    input.addEventListener('input',function(){onInput(this.value);updateButtons();});
    wrap.appendChild(input);parent.appendChild(wrap);return input;
  }

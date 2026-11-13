@@ -1359,3 +1359,142 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 @media(prefers-reduced-motion:reduce){
  .public-song-carousel-track{scroll-behavior:auto}
 }
+
+
+/* RUN-107 — a playing song is ONE card, never a second flow block.
+   The player overlays the existing artwork on carousel/tiles and stays
+   anchored to the selected row in classic view without moving any rows.
+   Safari 12-compatible properties; no :has(), fixed modal or transforms. */
+.public-song-entry{position:relative}
+.public-song-entry.is-playing{z-index:10}
+.public-song-inline:not(:empty){
+ position:absolute;z-index:12;
+ top:0;right:0;left:auto;
+ width:100%;max-width:340px;height:225px;
+ min-width:0;overflow:hidden;box-sizing:border-box;
+ padding:8px;margin:0!important;border:1px solid #d8b97e;
+ border-radius:12px;background:#12223e;
+ box-shadow:0 12px 30px #0009;
+ display:block;
+}
+.public-song-inline:not(:empty) .spotify-embed-viewport{
+ width:100%;height:calc(100% - 43px);min-height:0;
+ border-radius:9px;
+}
+.public-song-inline:not(:empty) .cms-release-iframe--video{
+ display:block;width:100%;height:calc(100% - 43px);
+ max-height:none;min-height:0;aspect-ratio:auto;
+ object-fit:contain;border-radius:9px;
+}
+.public-song-inline:not(:empty) .cms-card-link{
+ position:absolute;left:8px;bottom:7px;
+ display:inline-flex;align-items:center;min-height:32px;
+ padding:4px 6px!important;margin:0!important;
+ font-size:.71rem;line-height:1.2;color:#f4d29a;
+ border:0;background:#12223e;white-space:nowrap;
+}
+.public-song-inline:not(:empty) .cms-release-close{
+ position:absolute;right:8px;bottom:7px;
+ display:inline-flex;align-items:center;justify-content:center;min-height:32px;
+ padding:5px 8px;margin:0!important;font-size:.71rem;
+ background:#21395e;color:#f5dcac;border:1px solid #cba76e;
+ border-radius:8px;white-space:nowrap;cursor:pointer;
+}
+.public-song-row-artwork{
+ display:flex;order:1;flex:0 0 43px;width:43px;height:43px;
+ overflow:hidden;border-radius:8px;background:#182a47;
+ margin:0 7px 0 3px;align-items:center;justify-content:center;
+}
+.public-song-row-artwork .public-song-thumbnail{
+ width:100%;height:100%;max-width:none;object-fit:cover;margin:0;
+ border-radius:8px;border:0;
+}
+.public-song-row-artwork .public-song-thumbnail--empty{
+ font-size:1.2rem;width:100%;height:100%;
+}
+.public-song-label>.public-song-index{order:0}
+.public-song-label>.public-song-copy{order:2}
+.public-song-entry--carousel .public-song-inline:not(:empty){
+ top:42px;left:13px;right:13px;width:auto;max-width:none;
+ height:235px;border-radius:12px;box-shadow:none;
+}
+.public-song-list--tiles .public-song-entry.is-playing{grid-column:auto}
+.public-song-entry--tiles .public-song-inline:not(:empty){
+ top:38px;left:10px;right:10px;width:auto;height:210px;
+ max-width:none;box-shadow:none;
+}
+@media(max-width:590px){
+ .public-song-entry--carousel .public-song-inline:not(:empty){height:218px}
+ .public-song-entry--tiles .public-song-inline:not(:empty){height:185px}
+ .public-song-inline:not(:empty) .cms-card-link,
+ .public-song-inline:not(:empty) .cms-release-close{font-size:.68rem}
+}
+
+/* An empty player must never inherit the old flex-basis:100% in vertical
+   carousel cards: that was the second source of the 1000px-tall card. */
+.public-song-entry--carousel .public-song-inline,
+.public-song-entry--tiles .public-song-inline{
+ flex:none;height:0;min-height:0;margin:0;padding:0;
+}
+
+
+/* RUN-107 — artist featured songs and release cards share the same
+   non-expanding media treatment as the topic/language/album widget. */
+.cms-music-entry{position:relative}
+.cms-music-entry.is-playing{z-index:9}
+.cms-music-entry>.cms-music-player:not(:empty){
+ position:absolute;top:0;left:0;right:0;z-index:10;
+ width:100%;height:225px;box-sizing:border-box;overflow:hidden;
+ margin:0!important;padding:8px;border:1px solid #d9bd88;border-radius:12px;
+ background:#152641;box-shadow:0 12px 32px rgba(0,0,0,.55);
+}
+.cms-music-entry>.cms-music-player:not(:empty) .spotify-embed-viewport{
+ height:calc(100% - 44px);min-height:0;
+}
+.cms-music-entry>.cms-music-player:not(:empty) .cms-music-iframe--video{
+ height:calc(100% - 44px);min-height:0;aspect-ratio:auto;
+}
+.cms-music-entry>.cms-music-player:not(:empty) .cms-music-external{
+ position:absolute;left:8px;bottom:7px;font-size:.73rem;line-height:1.2;
+ margin:0;padding:7px 5px;
+}
+.cms-music-close{
+ position:absolute;right:8px;bottom:7px;min-height:32px;
+ padding:5px 8px;border:1px solid #d4b17d;border-radius:9px;
+ color:#efd6aa;background:#203555;font:600 .72rem -apple-system,Arial,sans-serif;
+ cursor:pointer;
+}
+.cms-release-art>.cms-release-player:not(:empty){
+ position:absolute;top:0;right:0;bottom:0;left:0;
+ display:block;z-index:5;overflow:hidden;box-sizing:border-box;
+ margin:0;padding:8px;background:#13223d;
+}
+.cms-release-art>.cms-release-player:not(:empty) .spotify-embed-viewport{
+ height:calc(100% - 44px);min-height:0;
+}
+.cms-release-art>.cms-release-player:not(:empty) .cms-release-iframe--video{
+ width:100%;height:calc(100% - 44px);min-height:0;aspect-ratio:auto;
+}
+.cms-release-art>.cms-release-player:not(:empty) .cms-release-close{
+ position:absolute;right:8px;bottom:7px;
+ padding:6px 10px;min-height:33px;margin:0;
+ font-size:.74rem;
+}
+
+ 
+/* RUN-107 — preserve the classic text-first dimensions while showing an
+   actual cover thumbnail. Markup order keeps the legacy play button contract. */
+.cms-music-track:not(.cms-music-track--art) .cms-music-number{order:0}
+.cms-music-track:not(.cms-music-track--art) .cms-music-track-thumb{
+ order:1;flex:0 0 44px;width:44px;height:44px;margin:0 1px;
+}
+.cms-music-track:not(.cms-music-track--art) .cms-music-track-info{order:2}
+.cms-music-track:not(.cms-music-track--art) .cms-music-play-icon{order:3}
+
+
+/* RUN-107: opening an album's song list must not clip a floating player
+   from the final song. Only the expanded album permits overflow. */
+.cms-album-card.is-expanded{overflow:visible}
+.cms-album-card.is-expanded>.cms-album-cover{
+ border-top-left-radius:17px;border-top-right-radius:17px;
+}
