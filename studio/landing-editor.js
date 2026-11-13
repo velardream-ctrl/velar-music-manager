@@ -244,6 +244,7 @@
      busy=false;updateButtons();return ok;
    });
  }
+ var openedArtistDetails={};
  var tabs={hero:'Первый экран',distribution:'Распределение песен',artists:'Артисты',releases:'Музыка и релизы',albums:'Альбомы',playlists:'Плейлисты и подписки',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',about:'О проекте',publish:'Публикация'};
  function id(k){return document.getElementById(k);}
  function clear(el){while(el.firstChild)el.removeChild(el.firstChild);}
@@ -2086,6 +2087,69 @@
      render();
    },'landing-add'));
  }
+
+ // RUN-115: the same owner-only artist editor, not a second admin panel.
+ function artistDetailControls(card,item,index){
+   var identity=item.artistId||('legacy-'+index);
+   var details=document.createElement('details');
+   details.className='landing-featured';
+   details.open=!!openedArtistDetails[identity];
+   details.addEventListener('toggle',function(){openedArtistDetails[identity]=details.open;});
+   var summary=document.createElement('summary');
+   summary.textContent='Персональная страница — биография и социальные сети';
+   details.appendChild(summary);
+   var infoLine=document.createElement('p');infoLine.className='sync-note';
+   infoLine.textContent='Это публичная страница артиста, не личный кабинет. Данные редактируешь только ты; изменения появятся после сохранения черновика и отдельной публикации.';
+   details.appendChild(infoLine);
+   var bio=field(details,'Подробная биография / история творчества (до 5000 символов)',
+     item.biography||'',function(v){item.biography=v;},true);
+   bio.rows=7;
+   var live=document.createElement('a');
+   live.className='landing-small';
+   live.href='../artist.html?'+(item.artistId?'id='+encodeURIComponent(item.artistId):
+     'name='+encodeURIComponent(item.title||''));
+   live.target='_blank';live.rel='noopener noreferrer';
+   live.textContent='Посмотреть опубликованную страницу артиста';
+   details.appendChild(live);
+   var platforms=[
+     ['spotify','Spotify'],['youtube','YouTube'],['instagram','Instagram'],
+     ['tiktok','TikTok'],['telegram','Telegram'],['facebook','Facebook'],
+     ['apple','Apple Music'],['soundcloud','SoundCloud'],['bandcamp','Bandcamp'],
+     ['vk','ВКонтакте'],['yandex','Яндекс Музыка'],['deezer','Deezer'],['website','Сайт артиста']
+   ];
+   heading(details,'Официальные площадки',
+     'Добавляй только принадлежащие этому артисту публичные страницы. Скрытые ссылки не увидят посетители. Прямая ссылка на песню здесь не подходит — нужен профиль исполнителя.');
+   if(!Array.isArray(item.socialLinks))item.socialLinks=[];
+   item.socialLinks.forEach(function(link,i){
+     var row=document.createElement('div');row.className='landing-card';
+     var platform=document.createElement('label');platform.className='landing-field';
+     var caption=document.createElement('span');caption.textContent='Площадка '+(i+1);platform.appendChild(caption);
+     var select=document.createElement('select');
+     platforms.forEach(function(pair){
+       var option=document.createElement('option');option.value=pair[0];option.textContent=pair[1];select.appendChild(option);
+     });
+     select.value=link.platform||'spotify';
+     select.onchange=function(){link.platform=this.value;updateButtons();};
+     platform.appendChild(select);row.appendChild(platform);
+     field(row,'Полная HTTPS-ссылка на профиль',link.url||'',function(v){link.url=v;});
+     var check=document.createElement('label');check.className='landing-checkbox';
+     var tick=document.createElement('input');tick.type='checkbox';tick.checked=link.visible===true;
+     tick.onchange=function(){link.visible=this.checked;updateButtons();};
+     var words=document.createElement('span');words.textContent='Показывать ссылку посетителям';
+     check.appendChild(tick);check.appendChild(words);row.appendChild(check);
+     row.appendChild(button('Удалить ссылку',function(){
+       item.socialLinks.splice(i,1);openedArtistDetails[identity]=true;render();
+     },'landing-danger'));
+     details.appendChild(row);
+   });
+   var add=button('+ Добавить социальную сеть',function(){
+     if(item.socialLinks.length>=12){info('На одного артиста допускается до 12 официальных ссылок.');return;}
+     item.socialLinks.push({platform:'spotify',url:'',visible:false});
+     openedArtistDetails[identity]=true;render();
+   },'landing-add');
+   details.appendChild(add);
+   card.appendChild(details);
+ }
  function cardFields(parent,key){
    var list=data[key].cards,wrap=document.createElement('div');wrap.className='landing-cards';parent.appendChild(wrap);
    list.forEach(function(item,index){
@@ -2116,8 +2180,10 @@
      field(card,key==='artists'?'Роль / стиль':'Исполнитель',item.subtitle,function(v){item.subtitle=v;});
      field(card,'Краткое публичное описание',item.description,function(v){item.description=v;},true);
      field(card,'Публичная HTTPS-ссылка (профиль, Spotify, YouTube…) — необязательно',item.url,function(v){item.url=v;});
-     if(key==='artists')artistPhotoControls(card,item);
-     else {field(card,'HTTPS-ссылка на публичную обложку — необязательно',item.imageUrl,function(v){item.imageUrl=v;});releaseExtras(card,item);}
+     if(key==='artists'){
+       artistPhotoControls(card,item);
+       artistDetailControls(card,item,index);
+     }else {field(card,'HTTPS-ссылка на публичную обложку — необязательно',item.imageUrl,function(v){item.imageUrl=v;});releaseExtras(card,item);}
      var check=document.createElement('label');check.className='landing-checkbox';
      var checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=item.visible===true;
      checkbox.onchange=function(){item.visible=this.checked;updateButtons();};
