@@ -54,9 +54,9 @@
  function compareSong(a,b){
    // Russian/Latin title order, then artist; no mutation of Firestore records.
    var x=String(a&&a.title||'').trim(),y=String(b&&b.title||'').trim();
-   var title=x.localeCompare(y,'ru');
+   var title=x.localeCompare(y,'ru',{numeric:true,sensitivity:'base'});
    return title||String(a&&a.artist||'').trim().localeCompare(
-     String(b&&b.artist||'').trim(),'ru');
+     String(b&&b.artist||'').trim(),'ru',{numeric:true,sensitivity:'base'});
  }
  function musicPanel(item,view,albums){
    view=view||'classic';
