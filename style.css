@@ -1370,7 +1370,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .public-song-inline:not(:empty){
  position:absolute;z-index:12;
  top:0;right:0;left:auto;
- width:min(100%,340px);max-width:100%;height:225px;
+ width:100%;max-width:340px;height:225px;
  min-width:0;overflow:hidden;box-sizing:border-box;
  padding:8px;margin:0!important;border:1px solid #d8b97e;
  border-radius:12px;background:#12223e;
@@ -1428,4 +1428,11 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .public-song-entry--tiles .public-song-inline:not(:empty){height:185px}
  .public-song-inline:not(:empty) .cms-card-link,
  .public-song-inline:not(:empty) .cms-release-close{font-size:.68rem}
+}
+
+/* An empty player must never inherit the old flex-basis:100% in vertical
+   carousel cards: that was the second source of the 1000px-tall card. */
+.public-song-entry--carousel .public-song-inline,
+.public-song-entry--tiles .public-song-inline{
+ flex:none;height:0;min-height:0;margin:0;padding:0;
 }
