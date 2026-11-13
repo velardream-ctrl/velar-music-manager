@@ -129,7 +129,7 @@ assert.equal(live.genres.topics.entries[0].tracks.length,0);
 const noUrl=rows.find(r=>r.children[0].textContent.includes('Без ссылок'));
 assert.ok(descend(noUrl,n=>n.className==='landing-distribution-add')[0].disabled);
 assert.match(read('studio/index.html'),/data-landing-tab="distribution"/);
-assert.match(read('studio/index.html'),/song-distribution\.js\?v=1/);
+assert.match(read('studio/index.html'),/song-distribution\.js\?v=2/);
 assert.match(read('studio/landing-editor.js'),/tab==='distribution'/);
 assert.match(read('studio/landing-editor.js'),/var next=clone\(data\)/);
 assert.match(read('studio/landing-editor.js'),/var distributionContext=\{/,
