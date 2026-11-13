@@ -122,8 +122,9 @@
             <p id="landing-dirty" class="sync-note"></p>
             <p id="landing-offline-status" class="sync-note" role="status" aria-live="polite">Локальная копия черновика готова после входа. Offline-данные остаются только на этом устройстве.</p>
             <button type="button" id="landing-export-offline" class="vmm-offline-backup">Скачать резервную копию несинхронизированных изменений</button>
+            <button type="button" id="landing-merge-offline" class="vmm-offline-merge" hidden>Безопасно объединить с облачным черновиком</button>
             <p id="landing-status" class="sync-note" role="status" aria-live="polite">Открой раздел, чтобы проверить права и загрузить черновик.</p>
-            <p class="sync-note">Важно: для публикации нужно установить правила Firestore для публичного документа. Оригинальные фонограммы, тексты и закрытый каталог сюда не выгружаются.</p>
+            <p class="sync-note">Публикация использует защищённый облачный документ. При конфликте версий не меняй правила Firestore: сначала скачай локальную резервную копию и сравни черновики. Оригинальные фонограммы, тексты и закрытый каталог сюда не выгружаются.</p>
           </section>
           <section id="panel-data" class="panel hidden" aria-labelledby="data-title">
             <p class="eyebrow">VELARDREAM / DATA MANAGEMENT</p>
@@ -170,7 +171,8 @@
   <script src="artist-track-links.js?v=1"></script>
   <script src="artist-image-editor.js?v=1"></script>
   <script src="title-language.js?v=2"></script>
-  <script src="landing-editor.js?v=26"></script>
+  <script src="landing-merge.js?v=1"></script>
+  <script src="landing-editor.js?v=27"></script>
   <script src="import.js?v=1"></script>
   <script src="workflows.js?v=7"></script>
   <script src="print-export.js?v=1"></script>
