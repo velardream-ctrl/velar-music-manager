@@ -790,3 +790,22 @@ body.vmm-print-open{overflow:hidden}
  #panel-landing .landing-distribution-target,
  #panel-landing .landing-distribution-add{width:100%;flex:auto}
 }
+
+/* RUN-113 — show success/failure beside the song, not after 25 catalog rows.
+   A successful assignment immediately appears as a chip above the picker. */
+#panel-landing .landing-distribution-feedback,
+#panel-landing .landing-distribution-item-status{
+ margin:8px 0;padding:9px 11px;border-radius:8px;
+ color:#cde8d3;background:#173b36;
+ border:1px solid #5b9f83;line-height:1.45;font-size:.87rem;
+ overflow-wrap:anywhere;
+}
+#panel-landing .landing-distribution-feedback:empty,
+#panel-landing .landing-distribution-item-status:empty{display:none}
+#panel-landing .landing-distribution-feedback.is-error,
+#panel-landing .landing-distribution-item-status.is-error{
+ background:#402b35;color:#ffe1cd;border-color:#d9a27e;
+}
+#panel-landing .landing-distribution-add:disabled{
+ opacity:.76;
+}
