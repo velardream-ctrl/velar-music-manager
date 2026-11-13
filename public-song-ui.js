@@ -244,7 +244,6 @@
        coverRequests[i]=function(){requestArtwork(track,putCover);};
      }
      if(isCarousel)title.appendChild(holder);
-     else if(view!=='rows'){} // The cover thumbnail uses the existing title layout.
      var copy=el('button','public-song-copy public-song-title-button');
      copy.type='button';copy.setAttribute('aria-label','Открыть или закрыть плеер: '+track.title);
      copy.setAttribute('aria-pressed','false');titles[i]=copy;
@@ -311,5 +310,6 @@
    updateCarousel();
    return instance;
  }
- window.VELAR_PUBLIC_SONGS={mount:mount,approved:approved,configure:configure};
+ window.VELAR_PUBLIC_SONGS={mount:mount,approved:approved,configure:configure,
+   requestArtwork:requestArtwork};
 }());
