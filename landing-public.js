@@ -272,6 +272,20 @@
      var placeholder=create('div','cms-release-placeholder');
      var emblem=create('span','cms-release-disc');emblem.setAttribute('aria-hidden','true');
      placeholder.appendChild(emblem);art.appendChild(placeholder);
+     // Missing single cover: reuse the approved Spotify public metadata,
+     // never a private library, Drive, artist profile or an extra image card.
+     if(item.mediaProvider==='spotify'&&item.mediaUrl&&
+        window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.requestArtwork){
+       window.VELAR_PUBLIC_SONGS.requestArtwork({
+         title:item.title,provider:'spotify',url:item.mediaUrl
+       },function(url){
+         var coverImage=create('img','cms-release-cover');
+         coverImage.src=url;coverImage.alt='Обложка: '+item.title;
+         coverImage.loading='lazy';coverImage.decoding='async';
+         coverImage.referrerPolicy='no-referrer';
+         art.appendChild(coverImage);
+       });
+     }
    }
    if(item.spotlight!=='none'&&feature)
      art.appendChild(create('span','cms-release-ribbon',isVideo?'ВИДЕОПРЕМЬЕРА':'ИЗБРАННЫЙ РЕЛИЗ'));
