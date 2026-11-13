@@ -157,6 +157,14 @@
        var external=create('a','cms-music-external','Открыть в '+(track.provider==='spotify'?'Spotify':'YouTube'));
        external.href=validated;external.rel='noopener noreferrer';external.target='_blank';
        player.appendChild(external);
+       var dismiss=create('button','cms-music-close','Закрыть');
+       dismiss.type='button';
+       dismiss.onclick=function(){
+         empty(player);active=null;
+         entry.className=entry.className.replace(/ is-playing/g,'');
+         button.setAttribute('aria-pressed','false');
+       };
+       player.appendChild(dismiss);
      };
      buttons.push(button);players.push(player);entries.push(entry);
      entry.appendChild(button);entry.appendChild(player);
@@ -267,6 +275,9 @@
    if(item.description)copy.appendChild(create('p','cms-release-description',item.description));
    var actions=create('div','cms-release-actions'),media=officialEmbed(item.mediaUrl,item.mediaProvider,'release');
    var player=create('div','cms-release-player');
+   // The existing cover is the video/player stage: do not add another
+   // expanding row after the text of the release.
+   art.appendChild(player);
    if(media){
      var listen=create('button','cms-release-listen');
      listen.type='button';
@@ -314,7 +325,7 @@
      var link=create('a','cms-card-link','На музыкальной площадке');
      link.href=external;link.rel='noopener noreferrer';link.target='_blank';actions.appendChild(link);
    }
-   copy.appendChild(actions);card.appendChild(copy);card.appendChild(player);
+   copy.appendChild(actions);card.appendChild(copy);
    return card;
  }
  function releaseGallery(value){
