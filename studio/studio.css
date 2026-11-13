@@ -660,3 +660,26 @@ body.vmm-print-open{overflow:hidden}
 #panel-landing .landing-song-pagination button:disabled{
  opacity:.45;cursor:default;
 }
+
+
+/* RUN-107 — iOS caret/paste stability in long Studio editing forms.
+   A fixed navigation bar is removed from the active keyboard viewport,
+   and text selection stays enabled for native Paste/Select controls.
+   iOS 26/27 also has a native WebKit caret-position regression; this is
+   a conservative layout mitigation, not a custom clipboard interception. */
+#panel-landing .landing-field input,
+#panel-landing .landing-field textarea{
+ -webkit-user-select:text;user-select:text;
+ -webkit-touch-callout:default;caret-color:#f5d6a3;
+ position:relative;max-width:100%;transform:none;
+}
+#panel-landing .landing-field input:focus,
+#panel-landing .landing-field textarea:focus{
+ caret-color:#f5d6a3;outline:2px solid #f0d299;
+ outline-offset:1px;z-index:1;
+}
+@media(max-width:800px){
+ body.vmm-landing-text-focus #workspace .sidebar{
+   visibility:hidden;pointer-events:none;
+ }
+}
