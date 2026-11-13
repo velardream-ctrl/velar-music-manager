@@ -102,6 +102,20 @@ assert.match(read('landing-public.js'),/value.genres.songViewMode/);
 const css=read('style.css');
 assert.match(css,/\.public-song-carousel-track\{/);
 assert.match(css,/scroll-snap-type:x mandatory/);
+const coverRule=css.match(/\.public-song-entry--carousel \.public-song-artwork\{([^}]*)\}/)[1];
+assert.match(coverRule,/width:100%;height:auto;aspect-ratio:1 \/ 1/,
+ 'Album artwork always uses the same square height and width');
+assert.match(css,/\.public-song-entry--carousel \.public-song-artwork::before\{[^}]*padding-top:100%/,
+ 'Square cover has a Safari 12-compatible ratio fallback');
+const overlayRule=css.match(/\.public-song-entry--carousel \.public-song-inline:not\(:empty\)\{([^}]*)\}/)[1];
+assert.match(overlayRule,/height:auto;aspect-ratio:1 \/ 1/,
+ 'Active Spotify/YouTube overlay must match the square artwork');
+assert.match(css,/\.public-song-entry--carousel \.public-song-inline:not\(:empty\)::before\{[^}]*padding-top:100%/,
+ 'Square player overlay also has a Safari 12 fallback');
+assert.doesNotMatch(css,/\.public-song-entry--carousel \.public-song-artwork\{height:218px\}/,
+ 'Mobile CSS must not crop the square cover');
+assert.doesNotMatch(css,/\.public-song-entry--carousel \.public-song-inline:not\(:empty\)\{height:218px\}/,
+ 'Mobile CSS must not crop the square player');
 assert.match(css,/-webkit-overflow-scrolling:touch/);
 assert.match(css,/\.public-song-entry--carousel \.public-song-inline:not\(:empty\)/,
  'The visible carousel iframe must overlay its original cover');
@@ -111,4 +125,4 @@ assert.match(css,/\.cms-music-entry>\.cms-music-player:not\(:empty\)/);
 assert.match(css,/\.cms-release-art>\.cms-release-player:not\(:empty\)/);
 assert.match(read('studio/studio.css'),/caret-color:#f5d6a3/);
 assert.match(read('studio/landing-editor.js'),/vmm-landing-text-focus/);
-console.log('PASS RUN-106: global carousel, accessible arrows, native swipe, lazy artwork, curated covers, official click-to-play and legacy rows');
+console.log('PASS RUN-109/RUN-106: square cover and overlay, global carousel, accessible arrows, native swipe, lazy artwork, curated covers, official click-to-play and legacy rows');
