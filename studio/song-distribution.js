@@ -171,7 +171,9 @@
      return node;
    };
    function option(select,val,label){
-     var opt=el('option','',label);opt.value=val;select.appendChild(opt);return opt;
+     var opt=el('option','',label);opt.value=val;select.appendChild(opt);
+     if(!select.value)select.value=val;
+     return opt;
    }
    var h=el('h3','','Распределение песен');host.appendChild(h);
    host.appendChild(el('p','sync-note',
