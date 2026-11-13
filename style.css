@@ -1436,3 +1436,47 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .public-song-entry--tiles .public-song-inline{
  flex:none;height:0;min-height:0;margin:0;padding:0;
 }
+
+
+/* RUN-107 — artist featured songs and release cards share the same
+   non-expanding media treatment as the topic/language/album widget. */
+.cms-music-entry{position:relative}
+.cms-music-entry.is-playing{z-index:9}
+.cms-music-entry>.cms-music-player:not(:empty){
+ position:absolute;top:0;left:0;right:0;z-index:10;
+ width:100%;height:225px;box-sizing:border-box;overflow:hidden;
+ margin:0!important;padding:8px;border:1px solid #d9bd88;border-radius:12px;
+ background:#152641;box-shadow:0 12px 32px rgba(0,0,0,.55);
+}
+.cms-music-entry>.cms-music-player:not(:empty) .spotify-embed-viewport{
+ height:calc(100% - 44px);min-height:0;
+}
+.cms-music-entry>.cms-music-player:not(:empty) .cms-music-iframe--video{
+ height:calc(100% - 44px);min-height:0;aspect-ratio:auto;
+}
+.cms-music-entry>.cms-music-player:not(:empty) .cms-music-external{
+ position:absolute;left:8px;bottom:7px;font-size:.73rem;line-height:1.2;
+ margin:0;padding:7px 5px;
+}
+.cms-music-close{
+ position:absolute;right:8px;bottom:7px;min-height:32px;
+ padding:5px 8px;border:1px solid #d4b17d;border-radius:9px;
+ color:#efd6aa;background:#203555;font:600 .72rem -apple-system,Arial,sans-serif;
+ cursor:pointer;
+}
+.cms-release-art>.cms-release-player:not(:empty){
+ position:absolute;top:0;right:0;bottom:0;left:0;
+ display:block;z-index:5;overflow:hidden;box-sizing:border-box;
+ margin:0;padding:8px;background:#13223d;
+}
+.cms-release-art>.cms-release-player:not(:empty) .spotify-embed-viewport{
+ height:calc(100% - 44px);min-height:0;
+}
+.cms-release-art>.cms-release-player:not(:empty) .cms-release-iframe--video{
+ width:100%;height:calc(100% - 44px);min-height:0;aspect-ratio:auto;
+}
+.cms-release-art>.cms-release-player:not(:empty) .cms-release-close{
+ position:absolute;right:8px;bottom:7px;
+ padding:6px 10px;min-height:33px;margin:0;
+ font-size:.74rem;
+}
