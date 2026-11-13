@@ -143,7 +143,7 @@ assert.equal(sampleSection.genres.assistant.faq.length,113);
 assert.match(html,/velar-faq-engine\.js\?v=3/);
 assert.ok(html.indexOf('velar-faq-engine.js?v=3')<html.indexOf('velar-assistant.js?v=11'));
 assert.match(sw,/'\.\/velar-faq-engine\.js\?v=3'/);
-assert.match(sw,/CACHE_PREFIX \+ 'v39'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v40'/);
 assert.match(read('style.css'),/velar-chat-actions/);
 assert.match(bot,/choice\.action==='song'/);
 assert.match(bot,/choice\.action==='ask'/);
