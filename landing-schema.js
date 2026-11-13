@@ -176,6 +176,7 @@
         heading:'От оперы до новых звуков',
         intro:'Ищите музыку по настроению, жанру, артисту или тематической подборке. Жанры и плейлисты будут дополнять друг друга, а не смешивать песни в один список.',
         tags:['Опера','Поп','Рок','Этно','Кроссовер','Юмор','Авторские подборки'],
+        songViewMode:'standard', // RUN-106: global option, preserve existing section layouts by default.
         universe:{heading:'Вселенная, которую можно услышать',
           intro:'Исследуйте созвездия артистов, клипов и релизов. Каждое движение открывает новый маршрут к музыке.',
           nodes:defaultUniverseNodes()},
@@ -802,6 +803,10 @@
     var tags=typeof genres.tags==='undefined'?d.genres.tags:genres.tags;
     if(!Array.isArray(tags)||tags.length>20)throw new Error('Жанры: максимум 20 меток.');
     result.genres.tags=tags.map(function(tag,i){return plain(tag,'Жанр '+(i+1),35,true);});
+    var songViewMode=typeof genres.songViewMode==='undefined'?'standard':genres.songViewMode;
+    if(songViewMode!=='standard'&&songViewMode!=='carousel')
+      throw new Error('Оформление песен: выбери обычный показ или карусель.');
+    result.genres.songViewMode=songViewMode;
     result.genres.universe=universeConfig(genres.universe,d.genres.universe);
     result.genres.languages=languagesConfig(genres.languages,d.genres.languages);
     result.genres.topics=topicsConfig(genres.topics,d.genres.topics);
