@@ -102,19 +102,19 @@ assert.match(read('landing-public.js'),/value.genres.songViewMode/);
 const css=read('style.css');
 assert.match(css,/\.public-song-carousel-track\{/);
 assert.match(css,/scroll-snap-type:x mandatory/);
-const coverRule=css.match(/\\.public-song-entry--carousel \\.public-song-artwork\\{([^}]*)\\}/)[1];
+const coverRule=css.match(/\.public-song-entry--carousel \.public-song-artwork\{([^}]*)\}/)[1];
 assert.match(coverRule,/width:100%;height:0!important;padding:0 0 100%!important/,
  'Cover box itself must be square via Safari-compatible 100% padding');
 assert.match(coverRule,/aspect-ratio:auto!important/,
  'Do not combine intrinsic aspect ratio with a padding fallback');
-assert.match(css,/\\.public-song-entry--carousel \\.public-song-artwork::before\\{content:none\\}/,
+assert.match(css,/\.public-song-entry--carousel \.public-song-artwork::before\{content:none\}/,
  'No extra pseudo-element may shrink or double the iPhone cover');
-assert.match(css,/\\.public-song-entry--carousel \\.public-song-thumbnail\\{[^}]*object-fit:contain/,
+assert.match(css,/\.public-song-entry--carousel \.public-song-thumbnail\{[^}]*object-fit:contain/,
  'Entire album cover must fit inside the square without cropping');
-const overlayRule=css.match(/\\.public-song-entry--carousel \\.public-song-inline:not\\(:empty\\)\\{([^}]*)\\}/)[1];
-assert.match(overlayRule,/height:0!important;padding:0 8px calc\\(100% - 26px\\)!important/,
+const overlayRule=css.match(/\.public-song-entry--carousel \.public-song-inline:not\(:empty\)\{([^}]*)\}/)[1];
+assert.match(overlayRule,/height:0!important;padding:0 8px calc\(100% - 26px\)!important/,
  'Active Spotify/YouTube player keeps the same square ratio');
-assert.match(css,/\\.public-song-entry--carousel \\.public-song-inline:not\\(:empty\\)::before\\{content:none\\}/,
+assert.match(css,/\.public-song-entry--carousel \.public-song-inline:not\(:empty\)::before\{content:none\}/,
  'The player must not inherit the old pseudo-element ratio');
 assert.doesNotMatch(css,/\.public-song-entry--carousel \.public-song-artwork\{height:218px\}/,
  'Mobile CSS must not crop the square cover');
