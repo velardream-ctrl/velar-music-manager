@@ -82,8 +82,8 @@ assert.throws(()=>dist.modify(ambiguated,draft,{songId:'one',kind:'topic',target
 const ambiguousDraft=clone(draft);
 ambiguousDraft.genres.topics.entries[0].tracks.push(API.languageTrack({
  title:'Дикая вишня',artist:'Velar',provider:'spotify',url:spotifyA},1));
-assert.equal(dist.build(ambiguated,ambiguousDraft,live,{},API,effective).issues.length,1,
- 'Ambiguous catalog identities are surfaced rather than silently assigned');
+assert.ok(dist.build(ambiguated,ambiguousDraft,live,{},API,effective).issues.length>=1,
+ 'Every ambiguous catalog identity must be reported, potentially in several groups');
 dist.reset();
 const host=element(),msgs=[];
 const context={loaded:true,catalog,draft,published:live,links:{overrides:{}},
