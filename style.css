@@ -1318,13 +1318,20 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  min-width:0;gap:8px;
 }
 .public-song-entry--carousel .public-song-index{font-size:.8rem;flex:0 0 auto}
+/* RUN-109: cover artwork is square at every card width, including narrow
+   iPhone screens. The padding-ratio fallback also supports older Safari. */
 .public-song-entry--carousel .public-song-artwork{
- width:100%;height:235px;min-width:0;overflow:hidden;
+ position:relative;width:100%;height:auto;aspect-ratio:1 / 1;
+ box-sizing:border-box;min-width:0;overflow:hidden;
  border:1px solid rgba(227,190,134,.45);border-radius:12px;
  background:radial-gradient(circle at 40% 30%,#43557a,#13223d 74%);
 }
+.public-song-entry--carousel .public-song-artwork::before{
+ content:"";display:block;padding-top:100%;
+}
 .public-song-entry--carousel .public-song-thumbnail{
- display:block;width:100%;height:100%;max-width:none;object-fit:cover;
+ display:block;position:absolute;top:0;left:0;
+ width:100%;height:100%;max-width:none;object-fit:cover;
  border:0;border-radius:0;margin:0;
 }
 .public-song-entry--carousel .public-song-thumbnail--empty{
@@ -1353,7 +1360,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .public-song-carousel-track>.public-song-entry--carousel{
    flex-basis:290px;width:290px;max-width:calc(100% - 4px);
  }
- .public-song-entry--carousel .public-song-artwork{height:218px}
+ /* Square ratio is retained on mobile; no cropped 218px viewport. */
  .public-song-carousel-controls{justify-content:space-between}
 }
 @media(prefers-reduced-motion:reduce){
@@ -1414,9 +1421,14 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 }
 .public-song-label>.public-song-index{order:0}
 .public-song-label>.public-song-copy{order:2}
+/* The active Spotify/YouTube overlay occupies the same square as its
+   original cover; the pseudo-element is the Safari 12 ratio fallback. */
 .public-song-entry--carousel .public-song-inline:not(:empty){
  top:42px;left:13px;right:13px;width:auto;max-width:none;
- height:235px;border-radius:12px;box-shadow:none;
+ height:auto;aspect-ratio:1 / 1;border-radius:12px;box-shadow:none;
+}
+.public-song-entry--carousel .public-song-inline:not(:empty)::before{
+ content:"";display:block;padding-top:100%;
 }
 .public-song-list--tiles .public-song-entry.is-playing{grid-column:auto}
 .public-song-entry--tiles .public-song-inline:not(:empty){
@@ -1424,7 +1436,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  max-width:none;box-shadow:none;
 }
 @media(max-width:590px){
- .public-song-entry--carousel .public-song-inline:not(:empty){height:218px}
+ /* The active player keeps the square ratio on narrow screens too. */
  .public-song-entry--tiles .public-song-inline:not(:empty){height:185px}
  .public-song-inline:not(:empty) .cms-card-link,
  .public-song-inline:not(:empty) .cms-release-close{font-size:.68rem}
