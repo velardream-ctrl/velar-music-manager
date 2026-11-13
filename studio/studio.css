@@ -542,6 +542,12 @@ body.vmm-print-open{overflow:hidden}
 }
 #panel-landing .landing-source-check.is-disabled{opacity:.5;cursor:default}
 #panel-landing .landing-source-check.is-disabled input{cursor:default}
+/* RUN-105: the confirmation stays in its catalog row; assigned entries render
+   below the picker and cannot push its search/checkboxes while selecting. */
+#panel-landing .landing-assignment-state{
+ color:#b7e0b9;font-size:.84rem;white-space:nowrap;
+}
+#panel-landing .landing-assigned-block{margin-top:18px}
 #panel-landing .landing-topic-editor{margin-top:19px}
 @media(max-width:480px){
  #panel-landing .landing-topic-catalog-row .landing-song-sources{
