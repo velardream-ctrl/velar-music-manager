@@ -1490,3 +1490,11 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 }
 .cms-music-track:not(.cms-music-track--art) .cms-music-track-info{order:2}
 .cms-music-track:not(.cms-music-track--art) .cms-music-play-icon{order:3}
+
+
+/* RUN-107: opening an album's song list must not clip a floating player
+   from the final song. Only the expanded album permits overflow. */
+.cms-album-card.is-expanded{overflow:visible}
+.cms-album-card.is-expanded>.cms-album-cover{
+ border-top-left-radius:17px;border-top-right-radius:17px;
+}
