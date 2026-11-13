@@ -224,6 +224,18 @@
      var holder=isCarousel?el('div','public-song-artwork'):view==='rows'?
        el('span','public-song-row-artwork'):title;
      var currentCover=art||'',fallbackArtwork=youtubeArtwork(track);
+     function clearArtwork(){
+       if(holder!==title){clear(holder);return;}
+       // In row/tiles/covers modes the title also owns the song number and
+       // the click-to-play button. Never erase those when artwork is refreshed.
+       var children=title.children;
+       for(var k=children.length-1;k>=0;k--){
+         var child=children[k],cls=child.className||'';
+         if((' '+cls+' ').indexOf(' public-song-thumbnail ')>=0||
+            cls.indexOf('public-song-thumbnail--empty')>=0)
+           title.removeChild(child);
+       }
+     }
      function putCover(url){
        if(!url||currentCover===url&&holder.firstChild&&holder.firstChild.tagName==='img')return;
        var thumb=el('img','public-song-thumbnail');
@@ -231,11 +243,11 @@
        thumb.decoding='async';thumb.referrerPolicy='no-referrer';
        thumb.onerror=function(){
          if(fallbackArtwork&&url!==fallbackArtwork){putCover(fallbackArtwork);return;}
-         clear(holder);
+         clearArtwork();
          var music=el('span','public-song-thumbnail public-song-thumbnail--empty','♫');
          music.setAttribute('aria-hidden','true');holder.appendChild(music);
        };
-       thumb.src=url;currentCover=url;clear(holder);holder.appendChild(thumb);
+       thumb.src=url;currentCover=url;clearArtwork();holder.appendChild(thumb);
      }
      if(art)putCover(art);
      else {
