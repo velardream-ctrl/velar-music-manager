@@ -177,7 +177,7 @@
    }
    var h=el('h3','','Распределение песен');host.appendChild(h);
    host.appendChild(el('p','sync-note',
-     'Все назначения в одном месте. Изменения затрагивают только текущий черновик; публикация выполняется отдельно. Артист показан для справки, его привязка меняется в разделе «Артисты».'));
+     'Выбери уже существующую тему, язык или альбом напротив песни, затем нажми «+ Прикрепить». Новая отметка появится прямо у песни. Для создания совершенно новой темы используй раздел «Темы песен». Изменения остаются в черновике до отдельной публикации.'));
    if(!context.loaded){
      host.appendChild(el('p','sync-note','Загружаем защищённый каталог…'));
      var load=el('button','landing-add','Загрузить каталог');
@@ -214,11 +214,20 @@
    option(group,'all','Все разделы');
    model.targets.forEach(function(target){option(group,target.kind+':'+target.id,target.label);});
    group.value=state.group;toolbar.appendChild(group);host.appendChild(toolbar);
+   var hint=el('p','landing-distribution-feedback','');
+   hint.setAttribute('role','status');hint.setAttribute('aria-live','polite');
+   host.appendChild(hint);
    var list=el('div','landing-distribution-results');host.appendChild(list);
    var pager=el('div','landing-distribution-pagination');host.appendChild(pager);
-   var hint=el('p','sync-note','');host.appendChild(hint);
-   function putStatus(text){hint.textContent=text;}
-   function assignmentChips(holder,row){
+   function putStatus(message,local,isError){
+     hint.textContent=message;
+     hint.className='landing-distribution-feedback'+(isError?' is-error':'');
+     if(local){
+       local.textContent=message;
+       local.className='landing-distribution-item-status'+(isError?' is-error':'');
+     }
+   }
+   function assignmentChips(holder,row,local,afterChange){
      while(holder.firstChild)holder.removeChild(holder.firstChild);
      if(!row.display.length)holder.appendChild(el('span','landing-distribution-empty','Не назначена в подборки'));
      row.display.forEach(function(item){
@@ -230,25 +239,33 @@
        if(item.stage!=='removed'){
          var x=el('button','landing-distribution-remove','×');
          x.type='button';x.setAttribute('aria-label','Убрать '+row.title+' из '+item.label);
-         x.onclick=function(){apply(row,{songId:row.id,kind:item.kind,targetId:item.id,enabled:false},holder);};
+         x.onclick=function(){apply(row,{songId:row.id,kind:item.kind,targetId:item.id,enabled:false},holder,local,afterChange);};
          chip.appendChild(x);
        }
        holder.appendChild(chip);
      });
    }
-   function apply(row,action,holder){
+   function apply(row,action,holder,local,afterChange){
      if(context.blocked&&context.blocked()){
-       putStatus('Запись остановлена: сначала разреши конфликт черновика или дождись завершения сохранения.');
+       putStatus('Не удалось назначить песню: сначала разреши конфликт черновика или дождись завершения сохранения.',local,true);
        return;
      }
      try{
        var changed=context.onModify(action);
-       if(!changed){putStatus('Это назначение уже в нужном состоянии.');return;}
        refreshSummary();
        var next=model.byId[row.id];
-       assignmentChips(holder,next);
-       putStatus('Изменено только в черновике: '+row.title+'. Чтобы увидеть на сайте, сохрани и отдельно опубликуй.');
-     }catch(err){putStatus('Не удалось изменить назначение: '+err.message);}
+       assignmentChips(holder,next,local,afterChange);
+       if(afterChange)afterChange();
+       var target=model.targets.filter(function(t){
+         return t.kind===action.kind&&t.id===action.targetId;
+       })[0];
+       var label=target?target.label:'выбранный раздел';
+       putStatus(!changed?'Уже назначена: '+row.title+' — '+label:
+         action.enabled?'Добавлено в черновик: '+row.title+' → '+label+'. Нажми «Сохранить черновик», затем отдельно «Опубликовать».':
+         'Убрано из черновика: '+row.title+' ← '+label+'. Сохрани черновик, чтобы закрепить изменение.',local,false);
+     }catch(err){
+       putStatus('Не удалось изменить назначение: '+(err&&err.message||String(err)),local,true);
+     }
    }
    function drawPage(){
      while(list.firstChild)list.removeChild(list.firstChild);
@@ -267,7 +284,9 @@
          ' · Spotify: '+(row.sources.spotify?'есть':'нет')+
          ' · YouTube: '+(row.sources.youtube?'есть':'нет')+
          (row.ambiguous?' · ⚠ Совпадающая ссылка у нескольких песен':'')));
-       var chips=el('div','landing-distribution-chips');assignmentChips(chips,row);
+       var rowFeedback=el('p','landing-distribution-item-status','');
+       rowFeedback.setAttribute('role','status');rowFeedback.setAttribute('aria-live','polite');
+       var chips=el('div','landing-distribution-chips');
        card.appendChild(chips);
        var controls=el('div','landing-distribution-controls');
        var select=el('select','landing-distribution-target');
@@ -277,14 +296,30 @@
        });
        targets.forEach(function(t){option(select,t.kind+':'+t.id,t.label);});
        controls.appendChild(select);
-       var add=el('button','landing-distribution-add','+ Добавить');
-       add.type='button';add.disabled=!row.hasSource||row.ambiguous||!targets.length;
+       var add=el('button','landing-distribution-add','+ Прикрепить');
+       add.type='button';
+       function refreshAddButton(){
+         var val=select.value,pos=val.indexOf(':'),kind=val.slice(0,pos),targetId=val.slice(pos+1);
+         var current=model.byId[row.id],already=current&&current.draft.some(function(item){
+           return item.kind===kind&&item.id===targetId;
+         });
+         add.disabled=!row.hasSource||row.ambiguous||!targets.length||pos<0||!!already;
+         add.textContent=already?'✓ Уже назначена':!row.hasSource?'Нет публичной ссылки':
+           row.ambiguous?'Проверить дубликаты':'+ Прикрепить';
+       }
+       select.onchange=refreshAddButton;
        add.onclick=function(){
-         var val=select.value,pos=val.indexOf(':');if(pos<0)return;
-         apply(row,{songId:row.id,kind:val.slice(0,pos),targetId:val.slice(pos+1),enabled:true},chips);
+         var val=select.value,pos=val.indexOf(':');
+         if(pos<0){putStatus('Сначала выбери раздел в выпадающем списке.',rowFeedback,true);return;}
+         apply(row,{songId:row.id,kind:val.slice(0,pos),targetId:val.slice(pos+1),enabled:true},
+           chips,rowFeedback,refreshAddButton);
        };
        controls.appendChild(add);
-       card.appendChild(controls);list.appendChild(card);
+       card.appendChild(controls);
+       card.appendChild(rowFeedback);
+       assignmentChips(chips,row,rowFeedback,refreshAddButton);
+       refreshAddButton();
+       list.appendChild(card);
      });
      if(!matched.length)list.appendChild(el('p','sync-note',
        'Песни с таким поиском и фильтром не найдены.'));

@@ -110,17 +110,33 @@ add.onclick();
 assert.equal(descend(host,n=>n.className==='landing-distribution-row').length,oldCount,'No scroll-jumping full redraw after assigning');
 assert.equal(topic.tracks.length,1);
 assert.equal(msgs.length,1);
+const feedback=descend(first,n=>n.className==='landing-distribution-item-status')[0];
+assert.match(feedback.textContent,/Добавлено в черновик: Дикая вишня/,
+ 'Successful add is confirmed beside the song, not far below the catalog');
+assert.equal(add.disabled,true,'Already assigned target is disabled to avoid repeat clicks');
+assert.equal(add.textContent,'✓ Уже назначена');
+assert.ok(descend(first,n=>n.className.indexOf('landing-distribution-chip')===0).some(
+ n=>n.textContent.includes(topic.label)),'New topic chip appears immediately');
 const remove=descend(first,n=>n.className==='landing-distribution-remove')[0];
 assert.ok(remove);
 remove.onclick();
 assert.equal(topic.tracks.length,0);
+assert.match(feedback.textContent,/Убрано из черновика/,
+ 'Removing a tag confirms the change directly under the song');
+assert.equal(add.disabled,false,'Removing a topic makes +Attach available again');
 assert.equal(language.tracks.length,1);
 assert.equal(live.genres.topics.entries[0].tracks.length,0);
 const noUrl=rows.find(r=>r.children[0].textContent.includes('Без ссылок'));
 assert.ok(descend(noUrl,n=>n.className==='landing-distribution-add')[0].disabled);
 assert.match(read('studio/index.html'),/data-landing-tab="distribution"/);
-assert.match(read('studio/index.html'),/song-distribution\.js\?v=1/);
+assert.match(read('studio/index.html'),/song-distribution\.js\?v=2/);
 assert.match(read('studio/landing-editor.js'),/tab==='distribution'/);
 assert.match(read('studio/landing-editor.js'),/var next=clone\(data\)/);
+assert.match(read('studio/landing-editor.js'),/var distributionContext=\{/,
+ 'Distribution context must be named so the callback can refresh its draft reference');
+assert.match(read('studio/landing-editor.js'),/distributionContext\.draft=data;/,
+ 'Successful Add must update the live context used to redraw topic badges');
+assert.doesNotMatch(read('studio/landing-editor.js'),/data=next;context\.draft=data;/,
+ 'Do not reintroduce the ReferenceError that left changes invisible');
 assert.match(read('studio/studio.css'),/\.landing-distribution-row/);
-console.log('PASS RUN-112: all-catalog index, private group matrix, in-row edits, pagination-independent layout, ambiguity guards, normalized draft and no implicit publish');
+console.log('PASS RUN-113/RUN-112: inline feedback and badges, live context, private group matrix and no implicit publish');
