@@ -65,6 +65,7 @@ assert.ok(toggle,'Album has expand/collapse button');
 assert.equal(card.children[2].children.length,0,'No song/player before visitor click');
 toggle.onclick();
 assert.equal(toggle.attributes['aria-expanded'],'true');
+assert.ok(card.className.includes('is-expanded'),'Expanded album must allow non-flowing player');
 const list=card.children[2];
 assert.equal(list.children.length,2,'Two singles under one album cover');
 // RUN-104: album songs are displayed alphabetically, not in input order.
@@ -84,11 +85,12 @@ assert.equal(row.children[2].children.length,0,'Click second time unloads Spotif
 toggle.onclick();
 assert.equal(card.children[2].children.length,0);
 assert.equal(toggle.attributes['aria-expanded'],'false');
+assert.ok(!card.className.includes('is-expanded'),'Closing album restores normal clipping');
 window.VELAR_ALBUMS.render({...cfg.albums,view:'list',entries:[official]});
 assert.match(nodes['public-albums-cards'].className,/cms-album-gallery--list/);
 assert.ok(nodes['public-albums-cards'].children[0].children[1].children.some(n=>n.tagName==='a'),
  'Officially released album has direct verified Spotify album link');
 assert.match(read('index.html'),/id="albums"/);
 assert.match(read('studio/index.html'),/data-landing-tab="albums"/);
-assert.match(read('sw.js'),/\.\/albums-public\.js\?v=1/);
+assert.match(read('sw.js'),/\.\/albums-public\.js\?v=2/);
 console.log('PASS: RUN-096 curated singles album, official release distinction, thumbnails, playback and draft-safe UI');
