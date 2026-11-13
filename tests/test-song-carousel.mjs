@@ -112,7 +112,7 @@ assert.match(css,/\\.public-song-entry--carousel \\.public-song-artwork::before\
 assert.match(css,/\\.public-song-entry--carousel \\.public-song-thumbnail\\{[^}]*object-fit:contain/,
  'Entire album cover must fit inside the square without cropping');
 const overlayRule=css.match(/\\.public-song-entry--carousel \\.public-song-inline:not\\(:empty\\)\\{([^}]*)\\}/)[1];
-assert.match(overlayRule,/height:0!important;padding:0 8px 100%!important/,
+assert.match(overlayRule,/height:0!important;padding:0 8px calc\\(100% - 26px\\)!important/,
  'Active Spotify/YouTube player keeps the same square ratio');
 assert.match(css,/\\.public-song-entry--carousel \\.public-song-inline:not\\(:empty\\)::before\\{content:none\\}/,
  'The player must not inherit the old pseudo-element ratio');
