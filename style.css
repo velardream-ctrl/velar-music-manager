@@ -1498,3 +1498,56 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .cms-album-card.is-expanded>.cms-album-cover{
  border-top-left-radius:17px;border-top-right-radius:17px;
 }
+
+
+/* RUN-108: compact controls occupy a slim top strip INSIDE each card's
+   artwork; the official player fills only its own media stage. On Spotify,
+   request the supported compact 152px presentation rather than a nonstandard
+   ~175px iframe which can paint an extra pale bottom band on iOS. */
+.public-song-inline:not(:empty) .cms-card-link{
+ top:5px;bottom:auto;left:8px;max-width:57%;
+ overflow:hidden;text-overflow:ellipsis;
+}
+.public-song-inline:not(:empty) .cms-release-close{
+ top:4px;bottom:auto;right:7px;
+ z-index:5;min-height:31px;max-width:42%;
+ padding:4px 7px;font-size:.68rem;
+}
+.public-song-inline:not(:empty) .spotify-embed-viewport{
+ position:absolute;top:39px;left:8px;right:8px;
+ width:calc(100% - 16px);height:152px;min-height:0;
+ margin:0;
+}
+.public-song-inline:not(:empty) .cms-release-iframe--video{
+ position:absolute;top:39px;left:8px;right:8px;
+ width:calc(100% - 16px);height:calc(100% - 47px);
+ min-height:0;max-height:none;
+}
+.cms-music-entry>.cms-music-player:not(:empty) .cms-music-external{
+ top:5px;bottom:auto;left:8px;max-width:57%;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.cms-music-entry>.cms-music-player:not(:empty) .cms-music-close{
+ top:4px;bottom:auto;right:7px;z-index:5;
+}
+.cms-music-entry>.cms-music-player:not(:empty) .spotify-embed-viewport{
+ position:absolute;top:39px;left:8px;
+ width:calc(100% - 16px);height:152px;min-height:0;
+}
+.cms-music-entry>.cms-music-player:not(:empty) .cms-music-iframe--video{
+ position:absolute;top:39px;left:8px;
+ width:calc(100% - 16px);height:calc(100% - 47px);min-height:0;
+}
+.cms-release-art>.cms-release-player:not(:empty) .cms-release-close{
+ top:8px;bottom:auto;right:8px;z-index:5;
+ background:#142544ee;color:#f2d5a1;
+ border:1px solid #d6b980;
+}
+.cms-release-art>.cms-release-player:not(:empty) .cms-release-iframe--video{
+ height:100%;min-height:0;
+}
+.cms-release-art>.cms-release-player:not(:empty) .spotify-embed-viewport{
+ position:absolute;top:50%;left:8px;right:8px;
+ width:calc(100% - 16px);height:152px;max-height:calc(100% - 20px);
+ transform:translateY(-50%);margin:0;
+}
