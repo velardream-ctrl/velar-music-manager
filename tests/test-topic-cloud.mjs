@@ -111,12 +111,12 @@ assert.match(universe,/topics:'#topics'/);
 assert.match(html,/id="public-topic-cloud"/);
 assert.match(html,/id="public-topic-orbit"/);
 assert.match(html,/topics-public\.js\?v=3/);
-assert.match(html,/public-song-ui\.js\?v=5/);
+assert.match(html,/public-song-ui\.js\?v=6/);
 assert.match(html,/<meta name="robots" content="noindex,nofollow,noarchive">/,
  'The user explicitly wants the developing website blocked from search indexing');
 assert.match(css,/\.topic-tag\[aria-pressed=true\]/);
 assert.match(sw,/'\.\/topics-public\.js\?v=3'/);
-assert.match(sw,/CACHE_PREFIX \+ 'v38'/);
-assert.match(sw,/STUDIO_PREFIX\+'v36'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v39'/);
+assert.match(sw,/STUDIO_PREFIX\+'v37'/);
 assert.doesNotMatch(topics,/setTimeout\(|setInterval\(|fetch\(|firestore\(|autoplay=1|loop=1/);
 console.log('PASS: RUN-073 topic cloud, multiple tags per song, curator-only catalog, noindex retained and no unrequested playback');

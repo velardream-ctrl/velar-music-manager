@@ -102,6 +102,6 @@ const love=draft.content.genres.topics.entries.find(e=>e.slug==='love');
 assert.equal(love.tracks.length,1,'Pagination never duplicates songs');
 assert.equal(love.tracks[0].alternateProvider,'youtube');
 assert.equal(records.has('vmm_public_pages/landing'),false,'Saving draft never auto-publishes');
-assert.match(read('studio/index.html'),/landing-editor\.js\?v=22/);
-assert.match(read('sw.js'),/STUDIO_PREFIX\+'v36'/);
+assert.match(read('studio/index.html'),/landing-editor\.js\?v=23/);
+assert.match(read('sw.js'),/STUDIO_PREFIX\+'v37'/);
 console.log('PASS RUN-100: catalog pagination 40/95, next/back, search, source selection, independent state and private draft');

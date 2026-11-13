@@ -88,9 +88,9 @@ const sync2=walk(parent,x=>(x.textContent||'').startsWith('Подключить 
 sync2.onclick();
 assert.equal(langs.entries.find(t=>t.code==='de').tracks.length,1);
 assert.ok(!langs.entries.some(t=>t.tracks.some(song=>song.url.includes('example.com'))));
-assert.match(studio,/title-language\.js\?v=1/);
+assert.match(studio,/title-language\.js\?v=2/);
 assert.match(editor,/VMM_TITLE_LANGUAGE\.attach/);
-assert.match(sw,/'\.\/studio\/title-language\.js\?v=1'/);
+assert.match(sw,/'\.\/studio\/title-language\.js\?v=2'/);
 assert.match(rules,/match \/vmm_catalog\/\{itemId\} \{ allow read, write: if studioAdmin\(\); \}/);
 assert.doesNotMatch(source,/fetch\(|XMLHttpRequest|setInterval\(|setTimeout\(|getUserMedia|autoplay|WebSocket/);
 assert.match(read('index.html'),/name="robots" content="noindex,nofollow,noarchive"/);
