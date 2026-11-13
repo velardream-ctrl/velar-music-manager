@@ -2208,10 +2208,17 @@
          onModify:function(action){
            if(busy||offlineConflict||offlineSyncing||trackSaving)
              throw new Error('Сначала заверши синхронизацию или разреши конфликт.');
-           var changed=window.VMM_SONG_DISTRIBUTION.modify(catalogArtists,data,action,API,
+           // Validate on a copy FIRST: invalid or oversized landing documents
+           // must not poison the owner's real draft/offline outbox.
+           var next=clone(data);
+           var changed=window.VMM_SONG_DISTRIBUTION.modify(catalogArtists,next,action,API,
              function(song,overrides){return window.VMM_ARTIST_TRACKS.effective(song,overrides);},
              trackLinks);
-           if(changed){updateButtons();info('Назначение изменено в черновике. Сохрани его и отдельно опубликуй.');}
+           if(changed){
+             API.normalize(next);
+             data=next;context.draft=data;
+             updateButtons();info('Назначение изменено в черновике. Сохрани его и отдельно опубликуй.');
+           }
            return changed;
          }
        });
