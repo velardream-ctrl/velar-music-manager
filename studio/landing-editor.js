@@ -404,7 +404,7 @@
      return catalogArtists.filter(function(t){
        if(!q)return true;
        return (String(t.title||'')+' '+String(t.artist||'')).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)>=0;
-     }).sort(function(a,b){return String(a.title||'').localeCompare(String(b.title||''),'ru');});
+     }).sort(compareSong);
    }
    function drawRows(){
      clear(rows);
