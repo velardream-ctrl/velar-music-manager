@@ -119,5 +119,5 @@ assert.equal(love.tracks[0].alternateProvider,'youtube');
 assert.equal(records.has('vmm_public_pages/landing'),false,'Saving draft never auto-publishes');
 assert.match(read('studio/index.html'),/landing-editor\.js\?v=30/);
 assert.ok(read('studio/index.html').includes('studio.css?v=27'),'Studio CSS URL must be cache-busted');
-assert.match(read('sw.js'),/STUDIO_PREFIX\+'v44'/);
+assert.match(read('sw.js'),/STUDIO_PREFIX\+'v45'/);
 console.log('PASS RUN-105/RUN-100: stable catalog, inline assignment state, pagination 40/95, next/back, search, source selection, independent state and private draft');
