@@ -1480,3 +1480,13 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  padding:6px 10px;min-height:33px;margin:0;
  font-size:.74rem;
 }
+
+ 
+/* RUN-107 — preserve the classic text-first dimensions while showing an
+   actual cover thumbnail. Markup order keeps the legacy play button contract. */
+.cms-music-track:not(.cms-music-track--art) .cms-music-number{order:0}
+.cms-music-track:not(.cms-music-track--art) .cms-music-track-thumb{
+ order:1;flex:0 0 44px;width:44px;height:44px;margin:0 1px;
+}
+.cms-music-track:not(.cms-music-track--art) .cms-music-track-info{order:2}
+.cms-music-track:not(.cms-music-track--art) .cms-music-play-icon{order:3}
