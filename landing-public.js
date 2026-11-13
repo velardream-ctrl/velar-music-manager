@@ -43,8 +43,17 @@
    copy.appendChild(create('h3','',item.title));
    if(item.subtitle)copy.appendChild(create('p','cms-card-subtitle',item.subtitle));
    if(item.description)copy.appendChild(create('p','',item.description));
+   if(type==='artists'){
+     // Open a same-site, read-only detail page for every published artist.
+     // Legacy cards without artistId are linked by their public title.
+     var detail=create('a','cms-card-link cms-card-link--detail','Подробнее об артисте');
+     detail.href='artist.html?'+(item.artistId?
+       'id='+encodeURIComponent(item.artistId):
+       'name='+encodeURIComponent(item.title));
+     copy.appendChild(detail);
+   }
    if(item.url){
-     var link=create('a','cms-card-link',type==='artists'?'Профиль артиста':'Открыть релиз');
+     var link=create('a','cms-card-link',type==='artists'?'Слушать на площадке':'Открыть релиз');
      link.href=item.url;link.rel='noopener noreferrer';link.target='_blank';
      copy.appendChild(link);
    }
