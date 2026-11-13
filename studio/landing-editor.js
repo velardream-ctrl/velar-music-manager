@@ -1001,13 +1001,16 @@
    var getCatalogPage=opts.getCatalogPage||function(){return localCatalogPage;};
    var setCatalogPage=opts.setCatalogPage||function(v){localCatalogPage=v;};
    var options=attachedCatalogOptions();
-   heading(parent,isLanguage?'Подтверждённые песни ('+entry.tracks.length+')':
+   // RUN-105: the assigned list lives BELOW the catalog so its growing height
+   // cannot shift the search field/checkboxes while the editor is in use.
+   var assignedSection=document.createElement('section');
+   assignedSection.className='landing-assigned-block';
+   heading(assignedSection,isLanguage?'Подтверждённые песни ('+entry.tracks.length+')':
      'Назначенные песни ('+entry.tracks.length+')',
      'Найди композицию по названию или выбери из списка. Галочками отметь Spotify, YouTube или оба источника. Одна песня остаётся одной строкой. Изменения сохраняются сначала в черновике.');
    var search=document.createElement('input');search.type='search';search.className='landing-release-search';
    search.placeholder='Поиск среди назначенных песен…';search.value=filter();
    var assigned=document.createElement('div');assigned.className='landing-language-songs';
-   parent.appendChild(assigned);
    function catalogFor(t){
      var key=attachedSongKey(t);
      for(var i=0;i<options.length;i++){
@@ -1016,6 +1019,8 @@
      return null;
    }
    function drawAssigned(){
+     assignedSection.children[0].textContent=(isLanguage?'Подтверждённые песни (':
+       'Назначенные песни (')+entry.tracks.length+')';
      clear(assigned);
      var q=filter().toLocaleLowerCase('ru').replace(/ё/g,'е');
      var found=entry.tracks.filter(function(t){
@@ -1093,7 +1098,8 @@
    }
    search.oninput=function(){setFilter(this.value);drawAssigned();};
    // With zero attached songs this is NOT the catalog search; do not confuse users.
-   if(entry.tracks.length)parent.appendChild(search);
+   if(entry.tracks.length)assignedSection.appendChild(search);
+   assignedSection.appendChild(assigned);
    drawAssigned();
    heading(parent,'Каталог песен — быстрый выбор',
      'Найди песню по названию или исполнителю и нажми на неё. Spotify и YouTube выбираются отдельными галочками; обе площадки относятся к одной песне.');
@@ -1117,10 +1123,12 @@
      });
      retry.disabled=catalogLoading;
      parent.appendChild(retry);
+     parent.appendChild(assignedSection);
      return;
    }
    var results=document.createElement('div');results.className='landing-language-catalog-list';
    parent.appendChild(results);
+   parent.appendChild(assignedSection);
    function drawCatalog(){
      clear(results);
      var q=getCatalogSearch().toLocaleLowerCase('ru').replace(/ё/g,'е');
@@ -1152,12 +1160,18 @@
        var spotifyCheck=attachedSourceCheckbox(choices,'spotify',!!currentSources.spotify,!sources.spotify);
        var youtubeCheck=attachedSourceCheckbox(choices,'youtube',!!currentSources.youtube,!sources.youtube);
        row.appendChild(choices);
+       // Local feedback: the checkbox and this text change without redrawing the catalog.
+       var assignmentState=document.createElement('span');
+       assignmentState.className='landing-assignment-state';
+       assignmentState.textContent=existing?'✓ Назначена':'';
+       row.appendChild(assignmentState);
        function applySources(){
          var current=attachedFind(entry,song);
          var mode=attachedCheckMode(current&&current.provider,spotifyCheck.checked,youtubeCheck.checked);
          if(!mode){
            if(current)entry.tracks.splice(entry.tracks.indexOf(current),1);
-           check.checked=false;drawAssigned();updateButtons();
+           check.checked=false;assignmentState.textContent='';
+           drawAssigned();updateButtons();
            info('Песня откреплена от этой подборки только в черновике.');
            return;
          }
@@ -1169,7 +1183,8 @@
            check.checked=!!current;
            info('Нельзя прикрепить песню: '+e.message);return;
          }
-         check.checked=true;drawAssigned();updateButtons();
+         check.checked=true;assignmentState.textContent='✓ Назначена';
+         drawAssigned();updateButtons();
          info('Привязка обновлена в черновике. Сохрани и опубликуй, чтобы изменения увидели слушатели.');
        }
        check.onchange=function(){
