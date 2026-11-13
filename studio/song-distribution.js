@@ -79,6 +79,8 @@
    }
    ingest(draft,'draft');ingest(publicPage,'live');
    all.forEach(function(row){
+     row.ambiguous=!!(row.sources.spotify&&byUrl[row.sources.spotify].length!==1||
+       row.sources.youtube&&byUrl[row.sources.youtube].length!==1);
      row.draft.forEach(function(group){
        var online=row.live.some(function(old){return sameGroup(group,old);});
        row.display.push({kind:group.kind,id:group.id,label:group.label,
@@ -122,6 +124,7 @@
    var row=model.byId[action.songId];
    if(!row)throw new Error('Песня отсутствует в полном каталоге.');
    if(!row.hasSource)throw new Error('У песни нет проверенной публичной Spotify/YouTube ссылки.');
+   if(row.ambiguous)throw new Error('Официальная ссылка встречается у нескольких записей. Назначение запрещено до устранения неоднозначности.');
    var target=model.targets.filter(function(x){return x.kind===action.kind&&x.id===action.targetId;})[0];
    if(!target)throw new Error('Подборка изменилась или удалена — обнови редактор.');
    var current=[];
@@ -254,7 +257,8 @@
        card.appendChild(el('div','landing-distribution-artist',
          'Артист: '+(row.artistId||'не определён')+
          ' · Spotify: '+(row.sources.spotify?'есть':'нет')+
-         ' · YouTube: '+(row.sources.youtube?'есть':'нет')));
+         ' · YouTube: '+(row.sources.youtube?'есть':'нет')+
+         (row.ambiguous?' · ⚠ Совпадающая ссылка у нескольких песен':'')));
        var chips=el('div','landing-distribution-chips');assignmentChips(chips,row);
        card.appendChild(chips);
        var controls=el('div','landing-distribution-controls');
@@ -266,7 +270,7 @@
        targets.forEach(function(t){option(select,t.kind+':'+t.id,t.label);});
        controls.appendChild(select);
        var add=el('button','landing-distribution-add','+ Добавить');
-       add.type='button';add.disabled=!row.hasSource||!targets.length;
+       add.type='button';add.disabled=!row.hasSource||row.ambiguous||!targets.length;
        add.onclick=function(){
          var val=select.value,pos=val.indexOf(':');if(pos<0)return;
          apply(row,{songId:row.id,kind:val.slice(0,pos),targetId:val.slice(pos+1),enabled:true},chips);
