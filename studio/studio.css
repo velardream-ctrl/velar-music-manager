@@ -844,3 +844,20 @@ body.vmm-print-open{overflow:hidden}
   padding:12px 10px;
  }
 }
+
+/* RUN-122: independent Spotify/YouTube checkboxes in artist cards.
+   Keep both touch targets usable and prevent overflow on narrow iPhones. */
+#panel-landing .landing-featured-row{flex-wrap:wrap}
+#panel-landing .landing-featured-row .landing-featured-track-title{
+ flex:1 1 160px;min-width:100px
+}
+#panel-landing .landing-featured-row .landing-featured-sources{
+ flex:1 1 210px;min-width:0;justify-content:flex-start;
+}
+#panel-landing .landing-featured-row .landing-featured-sources .landing-source-check{
+ flex:0 0 auto;min-height:44px
+}
+#panel-landing .landing-featured-row .landing-featured-sources span{flex:0 1 auto}
+@media(max-width:520px){
+ #panel-landing .landing-featured-row .landing-featured-sources{flex-basis:100%;padding-left:29px}
+}
