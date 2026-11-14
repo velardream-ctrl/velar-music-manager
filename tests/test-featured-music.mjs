@@ -80,6 +80,12 @@ assert.equal(host.className,'cms-artist-stories');
 assert.equal(host.children.length,2);
 const first=host.children[0];
 assert.equal(first.children[0].tagName,'article');
+assert.equal(first.children[0].children[0].children[0].loading,'eager',
+ 'First artist portrait should load eagerly for initial gallery');
+assert.equal(first.children[0].children[0].children[0].attributes.fetchpriority,'high',
+ 'First portrait has high fetch priority');
+assert.equal(host.children[1].children[0].children[0].children[0].loading,'eager',
+ 'Second artist portrait should not be deferred behind horizontal carousels');
 assert.match(first.children[1].className,/cms-music-panel/);
 assert.match(host.children[1].className,/cms-artist-story--reverse/);
 const mediaFrame=holder=>{
