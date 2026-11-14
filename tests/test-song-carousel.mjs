@@ -126,6 +126,16 @@ assert.match(read('landing-public.js'),/value.genres.songViewMode/);
 const css=read('style.css');
 assert.match(css,/\.public-song-carousel-track\{/);
 assert.match(css,/scroll-snap-type:x mandatory/);
+assert.ok(css.includes('.public-song-entry--carousel .public-song-index{display:none}'),
+ 'Carousel 01/02/03 numbers must be removed from visual layout');
+assert.ok(css.includes('justify-content:space-between;gap:10px;'),
+ 'Carousel arrow controls should reclaim the available width');
+const hiddenCounter=(css.split('.public-song-carousel-count{')[1]||'').split('}')[0];
+assert.ok(hiddenCounter.includes('clip:rect(0,0,0,0)'),
+ 'The carousel count should not be visible but remain in aria-live for accessibility');
+const alignedOverlay=(css.split('.public-song-entry--carousel .public-song-inline:not(:empty){')[1]||'').split('}')[0];
+assert.ok(alignedOverlay.includes('top:13px'),
+ 'Active inline player must move up to align with artwork without 01 row');
 const coverRule=css.match(/\.public-song-entry--carousel \.public-song-artwork\{([^}]*)\}/)[1];
 assert.match(coverRule,/width:100%;height:auto!important;padding:0!important/,
  'The cover box must not use percentages measured against the entire flex rail');
