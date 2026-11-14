@@ -126,6 +126,15 @@ assert.match(read('landing-public.js'),/value.genres.songViewMode/);
 const css=read('style.css');
 assert.match(css,/\.public-song-carousel-track\{/);
 assert.match(css,/scroll-snap-type:x mandatory/);
+assert.match(css,/\.public-song-entry--carousel \.public-song-index\{display:none\}/,
+  'No 01/02/03 labels visible on carousel cards');
+assert.match(css,/\.public-song-carousel-controls\{[\s\S]*?justify-content:space-between/,
+  'The navigation arrows reclaim the width of the hidden counter');
+assert.match(css,/\.public-song-carousel-count\{[\s\S]*?clip:rect\(0,0,0,0\)/,
+  'The 1 / 3 count remains available to screen readers but is not visible');
+assert.match(css,/\.public-song-entry--carousel \.public-song-inline:not\(:empty\)\{[\s\S]*?top:13px/,
+  'The click-to-play overlay aligns with the cover after removing the visible number');
+
 const coverRule=css.match(/\.public-song-entry--carousel \.public-song-artwork\{([^}]*)\}/)[1];
 assert.match(coverRule,/width:100%;height:auto!important;padding:0!important/,
  'The cover box must not use percentages measured against the entire flex rail');
