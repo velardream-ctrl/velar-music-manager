@@ -55,8 +55,8 @@ assert.equal(renderer.render({...data,artists:{...data.artists,cards:[{...profil
 assert.equal(elements['artist-content'].hidden,true);
 assert.match(elements['artist-message'].textContent,/не опубликован/);
 assert.match(html,/noindex,nofollow/);
-assert.match(html,/artist-detail\.js\?v=1/);
-assert.match(sw,/artist-detail\.js\?v=1/);
+assert.match(html,/artist-detail\.js\?v=2/);
+assert.match(sw,/artist-detail\.js\?v=2/);
 assert.doesNotMatch(src,/\.collection\(['"]vmm_(?:lyrics|catalog|recordings|public_drafts)['"]\)/);
 assert.doesNotMatch(src,/\.set\(|\.add\(|\.update\(|\.delete\(/);
 console.log('PASS: individual artist pages render only published allowed profile information, with safe external links');
