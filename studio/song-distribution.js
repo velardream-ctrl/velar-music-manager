@@ -141,10 +141,15 @@
      var provider=row.sources.spotify?'spotify':'youtube',url=row.sources[provider];
      if(target.kind==='featured'){
        if(row.artistId!==target.id)throw new Error('Для «Лучших песен» сначала назначь композицию нужному артисту в разделе «Артисты».');
-       if(target.tracks.length>=3)throw new Error('Для артиста допускаются только три лучшие песни.');
+       if(target.tracks.length>=30)throw new Error('Для артиста допускается не более 30 лучших песен.');
        if(target.tracks.some(function(t){return sameTrack(t,{url:url});}))
          throw new Error('Эта ссылка уже есть в лучших песнях.');
-       target.tracks.push(API.featuredTrack({title:row.title,provider:provider,url:url},target.tracks.length+1));
+       var featured={title:row.title,provider:provider,url:url};
+        var secondary=provider==='spotify'?'youtube':'spotify';
+        if(row.sources[secondary]){
+          featured.alternateProvider=secondary;featured.alternateUrl=row.sources[secondary];
+        }
+        target.tracks.push(API.featuredTrack(featured,target.tracks.length+1));
      }else{
        var limit=target.kind==='album'?60:300;
        if(target.tracks.length>=limit)throw new Error('В этой подборке уже '+limit+' песен — максимум, допустимый схемой.');

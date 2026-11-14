@@ -83,6 +83,11 @@ assert.equal(dist.search(index(),'','many','all').length,0);
 draft.artists.cards.push({artistId:'velar',title:'Velar',visible:false,featuredTracks:[]});
 assert.equal(dist.modify(catalog,draft,{songId:'one',kind:'featured',targetId:'velar',enabled:true},API,effective,{}),true);
 assert.equal(draft.artists.cards[0].featuredTracks.length,1);
+assert.equal(draft.artists.cards[0].featuredTracks[0].alternateProvider,'youtube',
+ 'Unified distribution must retain both sources on featured artist songs');
+assert.equal(draft.artists.cards[0].featuredTracks[0].alternateUrl,youtubeA);
+assert.match(read('studio/song-distribution.js'),/target\.tracks\.length>=30/,
+ 'All assignment paths must use the new 30-song limit');
 assert.throws(()=>dist.modify(catalog,draft,{songId:'two',kind:'featured',targetId:'velar',enabled:true},API,effective,{}),/сначала назначь/);
 assert.doesNotThrow(()=>API.normalize(draft));
 const ambiguated=catalog.concat([{id:'four',title:'Другой трек',artist:'Velar',links:{spotify:spotifyA}}]);
@@ -138,7 +143,7 @@ assert.equal(live.genres.topics.entries[0].tracks.length,0);
 const noUrl=rows.find(r=>r.children[0].textContent.includes('Без ссылок'));
 assert.ok(descend(noUrl,n=>n.className==='landing-distribution-add')[0].disabled);
 assert.match(read('studio/index.html'),/data-landing-tab="distribution"/);
-assert.match(read('studio/index.html'),/song-distribution\.js\?v=2/);
+assert.match(read('studio/index.html'),/song-distribution\.js\?v=3/);
 assert.match(read('studio/landing-editor.js'),/tab==='distribution'/);
 assert.match(read('studio/landing-editor.js'),/var next=clone\(data\)/);
 assert.match(read('studio/landing-editor.js'),/var distributionContext=\{/,

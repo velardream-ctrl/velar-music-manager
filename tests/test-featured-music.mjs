@@ -40,9 +40,28 @@ assert.throws(()=>invalid({...s1,title:''}),/обязательно/);
 assert.throws(()=>api.normalize({...original,artists:{...original.artists,cards:[
   {...profile,featuredTracks:[s1,s1]}
 ]}}),/повторов/);
+// RUN-122: the carousel can hold 30 distinct songs, but no 31st.
+const thirty=Array.from({length:30},(_,i)=>({
+  title:'Трек '+(i+1),provider:'spotify',
+  url:'https://open.spotify.com/track/'+String(i+1).padStart(22,'A')
+}));
+assert.equal(api.normalize({...original,artists:{...original.artists,cards:[
+  {...profile,featuredTracks:thirty}
+]}}).artists.cards[0].featuredTracks.length,30);
 assert.throws(()=>api.normalize({...original,artists:{...original.artists,cards:[
-  {...profile,featuredTracks:[s1,s2,s1,s2]}
-]}}),/не более трёх/);
+  {...profile,featuredTracks:thirty.concat({...s2})}
+]}}),/не более 30/);
+const both={...s1,alternateProvider:'youtube',alternateUrl:'https://youtu.be/ABCDEFGHIjk'};
+const normalizedBoth=invalid(both).artists.cards[0].featuredTracks[0];
+assert.equal(normalizedBoth.provider,'spotify');
+assert.equal(normalizedBoth.alternateProvider,'youtube');
+assert.equal(normalizedBoth.alternateUrl,'https://www.youtube.com/watch?v=ABCDEFGHIjk');
+assert.throws(()=>invalid({...both,alternateProvider:'spotify'}),/отличаться/);
+assert.throws(()=>invalid({...both,alternateUrl:'https://drive.google.com/private'}),/прямая ссылка/);
+assert.throws(()=>api.normalize({...original,artists:{...original.artists,cards:[
+  {...profile,featuredTracks:[s2,both]}
+]}}),/повторов/);
+
 assert.deepEqual(Array.from(api.normalize({...original,artists:{...original.artists,cards:[{
   ...profile,featuredTracks:undefined
 }]}}).artists.cards[0].featuredTracks),[]);
@@ -163,6 +182,24 @@ listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:manu
 assert.equal(host.children[0].children[1].children[1].children[0].children[0].attributes['aria-label'],
  'Слушать: Журавли — YouTube','Manual override honors user-defined featured order');
 assert.equal(manual.artists.cards[0].featuredSort,'manual');
+// RUN-122: even if owner switches off the carousel, both official
+// services stay selectable within the same published artist song.
+const dualPage=api.normalize({...original,artists:{...original.artists,cards:[
+  {...profile,featuredTracks:[both]},other
+]}});
+listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:dualPage})});
+const classicTracks=host.children[0].children[1].children[1];
+const dualEntry=classicTracks.children[0];
+assert.equal(dualEntry.children.length,3,'One song row, two platform controls');
+const youtubeButton=dualEntry.children[2];
+assert.match(youtubeButton.className,/cms-music-alt-source/);
+youtubeButton.onclick();
+assert.equal(mediaFrame(dualEntry.children[1]).src,'https://www.youtube-nocookie.com/embed/ABCDEFGHIjk');
+assert.equal(youtubeButton.attributes['aria-pressed'],'true');
+dualEntry.children[0].onclick();
+assert.equal(mediaFrame(dualEntry.children[1]).src,
+  'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
+assert.equal(youtubeButton.attributes['aria-pressed'],'false');
 const plain=api.normalize({...original,artists:{...original.artists,cards:[
  {...profile,featuredTracks:[]},{...other,featuredTracks:[]}
 ]}});
@@ -174,13 +211,15 @@ assert.match(css,/cms-artist-story--reverse/);
 assert.match(css,/@media\(max-width:800px\)/);
 assert.match(editor,/function artistMusicControls/);
 assert.match(editor,/effective\(t,trackLinks\.overrides\)/);
-assert.match(editor,/selected\.length>=3/);
+assert.match(editor,/selected\.length>=30/);
+assert.match(editor,/attachedSourceCheckbox\(sources,'spotify'/);
+assert.match(editor,/attachedSourceCheckbox\(sources,'youtube'/);
 assert.match(editor,/markChanged\(\)/);
 assert.match(studio,/show\(el\('vmm-workflows'\),false\)/);
 assert.match(workflows,/show\(id\('panel-landing'\),false\)/);
-assert.match(html,/style\.css\?v=39/);
-assert.match(html,/landing-public\.js\?v=23/);
-assert.match(sw,/CACHE_PREFIX \+ 'v49'/);
+assert.match(html,/style\.css\?v=40/);
+assert.match(html,/landing-public\.js\?v=24/);
+assert.match(sw,/CACHE_PREFIX \+ 'v50'/);
 assert.match(css,/\.cms-music-play-icon::before\{/);
 assert.match(css,/border-left:10px solid currentColor/);
 assert.match(css,/\.cms-card-link::after\{/);

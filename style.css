@@ -1609,3 +1609,15 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .velar-assistant.is-browsing .velar-assistant-symbol{
  width:34px;height:34px;flex:0 0 34px;
 }
+
+/* RUN-122: in classic artist playlists the second official service remains
+   available, even when carousel mode is switched off in Studio. */
+.cms-music-alt-source{
+ display:inline-flex;align-items:center;justify-content:center;gap:6px;
+ box-sizing:border-box;margin:8px 10px 10px 0;padding:9px 14px;
+ min-height:44px;max-width:100%;border:1px solid #d6b77c;
+ border-radius:12px;background:#1c2c49;color:#f1d8a6;
+ font:inherit;font-size:.9rem;white-space:normal;overflow-wrap:anywhere;
+ cursor:pointer;
+}
+.cms-music-alt-source[aria-pressed="true"]{background:#314970;border-color:#f8dca5}

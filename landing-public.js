@@ -81,7 +81,7 @@
    title.appendChild(create('h3','','Лучшие песни'));
    panel.appendChild(title);
    var tracks=(item.featuredTracks||[]).slice();
-   // Manual order remains opt-in for the artist's three featured songs.
+   // Manual order remains opt-in for up to 30 featured songs per artist.
    if(item.featuredSort!=='manual')tracks.sort(compareSong);
    if(!tracks.length){
      panel.className+=' cms-music-panel--empty';
@@ -97,14 +97,14 @@
          alternateProvider:t.alternateProvider,alternateUrl:t.alternateUrl};
      });
      window.VELAR_PUBLIC_SONGS.mount(carousel,curated,{
-       prefix:'artist',view:'carousel',batch:12,keepOrder:true
+       prefix:'artist',view:'carousel',batch:30,keepOrder:true
      });
      return panel;
    }
    var list=create('div','cms-music-list'+
      (view==='tiles'?' cms-music-list--tiles':view==='covers'?' cms-music-list--covers':''));
    // RUN-091: player belongs to the clicked row, not after the entire list.
-   var active=null,buttons=[],players=[],entries=[];
+   var active=null,activeProvider='',buttons=[],altButtons=[],players=[],entries=[];
    tracks.forEach(function(track,index){
      var button=create('button','cms-music-track'+
        (view!=='classic'?' cms-music-track--art':''));
@@ -152,44 +152,60 @@
      var player=create('div','cms-music-player cms-music-player--inline');
      player.setAttribute('role','region');
      player.setAttribute('aria-label','Плеер: '+track.title);
-     button.onclick=function(){
-       if(active===index&&hasEmbed(player)){
-         empty(player);active=null;entry.className=entry.className.replace(/ is-playing/g,'');
-         buttons.forEach(function(b){b.setAttribute('aria-pressed','false');});
-         return; // second click stops Spotify/YouTube and collapses the row.
-       }
-       var validated=window.VMM_LANDING_SCHEMA.songUrl(track.url,track.provider);
+     var alternateButton=null;
+     function playFor(provider,link){
+       var validated=window.VMM_LANDING_SCHEMA.songUrl(link,provider);
        if(!validated)return;
+       if(active===index&&activeProvider===provider&&hasEmbed(player)){
+         empty(player);active=null;activeProvider='';
+         entry.className=entry.className.replace(/ is-playing/g,'');
+         buttons.forEach(function(b){b.setAttribute('aria-pressed','false');});
+         altButtons.forEach(function(b){if(b)b.setAttribute('aria-pressed','false');});
+         return;
+       }
        pauseOtherEmbeds();
-       active=index;
+       active=index;activeProvider=provider;
        entries.forEach(function(e){e.className=e.className.replace(/ is-playing/g,'');});
        entry.className+=' is-playing';
-       buttons.forEach(function(b,i){b.setAttribute('aria-pressed',i===index?'true':'false');});
+       buttons.forEach(function(b,i){b.setAttribute('aria-pressed',i===index&&provider===track.provider?'true':'false');});
+       altButtons.forEach(function(b,i){if(b)b.setAttribute('aria-pressed',i===index&&provider===track.alternateProvider?'true':'false');});
        players.forEach(function(p){empty(p);});
        var frame=document.createElement('iframe');
-       frame.className='cms-music-iframe'+(track.provider==='youtube'?' cms-music-iframe--video':'');
-       frame.title=track.title+' — '+(track.provider==='spotify'?'плеер Spotify':'видео YouTube');
-       frame.src=track.provider==='spotify'?
+       frame.className='cms-music-iframe'+(provider==='youtube'?' cms-music-iframe--video':'');
+       frame.title=track.title+' — '+(provider==='spotify'?'плеер Spotify':'видео YouTube');
+       frame.src=provider==='spotify'?
          'https://open.spotify.com/embed/track/'+validated.split('/').pop():
          'https://www.youtube-nocookie.com/embed/'+validated.split('v=')[1];
        frame.loading='lazy';frame.setAttribute('allow','clipboard-write; encrypted-media; fullscreen; picture-in-picture');
        frame.setAttribute('allowfullscreen','');
        frame.referrerPolicy='strict-origin-when-cross-origin';
-       appendOfficialFrame(player,frame,track.provider,true);
-       var external=create('a','cms-music-external','Открыть в '+(track.provider==='spotify'?'Spotify':'YouTube'));
+       appendOfficialFrame(player,frame,provider,true);
+       var external=create('a','cms-music-external','Открыть в '+(provider==='spotify'?'Spotify':'YouTube'));
        external.href=validated;external.rel='noopener noreferrer';external.target='_blank';
        player.appendChild(external);
        var dismiss=create('button','cms-music-close','Закрыть');
        dismiss.type='button';
        dismiss.onclick=function(){
-         empty(player);active=null;
+         empty(player);active=null;activeProvider='';
          entry.className=entry.className.replace(/ is-playing/g,'');
          button.setAttribute('aria-pressed','false');
+         if(alternateButton)alternateButton.setAttribute('aria-pressed','false');
        };
        player.appendChild(dismiss);
-     };
-     buttons.push(button);players.push(player);entries.push(entry);
+     }
+     button.onclick=function(){playFor(track.provider,track.url);};
+     if(track.alternateUrl&&track.alternateProvider){
+       alternateButton=create('button','cms-music-alt-source',
+         'Слушать в '+(track.alternateProvider==='spotify'?'Spotify':'YouTube'));
+       alternateButton.type='button';
+       alternateButton.setAttribute('aria-pressed','false');
+       alternateButton.setAttribute('aria-label','Слушать '+track.title+' в '+
+         (track.alternateProvider==='spotify'?'Spotify':'YouTube'));
+       alternateButton.onclick=function(){playFor(track.alternateProvider,track.alternateUrl);};
+     }
+     buttons.push(button);altButtons.push(alternateButton);players.push(player);entries.push(entry);
      entry.appendChild(button);entry.appendChild(player);
+     if(alternateButton)entry.appendChild(alternateButton);
      list.appendChild(entry);
    });
    panel.appendChild(list);

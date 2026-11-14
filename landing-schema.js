@@ -287,6 +287,8 @@
     }
     return '';
   }
+  // RUN-122: add a second official provider without changing old records.
+  var MAX_ARTIST_FEATURED=30;
   function featuredTrack(x,index){
     if(!x||typeof x!=='object'||Array.isArray(x))
       throw new Error('Лучшая песня '+index+': неверная запись.');
@@ -296,17 +298,27 @@
     var track={title:plain(x.title||'','Название песни '+index,110,true),
       provider:provider,url:songUrl(x.url,provider)};
     if(!track.url)throw new Error('Для песни '+index+' нужна прямая ссылка на трек '+provider+'.');
+    if(x.alternateUrl||x.alternateProvider){
+      var secondary=plain(x.alternateProvider||'','Вторая площадка песни '+index,20,true);
+      if((secondary!=='spotify'&&secondary!=='youtube')||secondary===provider)
+        throw new Error('У песни '+index+' вторая площадка должна отличаться от первой: Spotify или YouTube.');
+      var secondaryUrl=songUrl(x.alternateUrl,secondary);
+      if(!secondaryUrl)throw new Error('Для песни '+index+' нужна прямая ссылка на трек '+secondary+'.');
+      track.alternateProvider=secondary;track.alternateUrl=secondaryUrl;
+    }
     return track;
   }
   function featuredTracks(value){
     var rows=typeof value==='undefined'?[]:value;
-    if(!Array.isArray(rows)||rows.length>3)
-      throw new Error('Для артиста можно выбрать не более трёх лучших песен.');
+    if(!Array.isArray(rows)||rows.length>MAX_ARTIST_FEATURED)
+      throw new Error('Для артиста можно выбрать не более '+MAX_ARTIST_FEATURED+' лучших песен.');
     var seen={};
     return rows.map(function(row,i){
       var selected=featuredTrack(row,i+1);
-      if(seen[selected.url])throw new Error('В подборке не должно быть повторов одной ссылки.');
-      seen[selected.url]=true;
+      [selected.url,selected.alternateUrl].filter(function(x){return !!x;}).forEach(function(link){
+        if(seen[link])throw new Error('В подборке не должно быть повторов одной ссылки.');
+        seen[link]=true;
+      });
       return selected;
     });
   }
