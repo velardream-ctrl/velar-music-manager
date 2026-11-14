@@ -270,7 +270,7 @@
    if(item.imageData||item.imageUrl){
      var image=create('img','cms-release-cover');
      image.src=item.imageData||item.imageUrl;image.alt='Обложка: '+item.title;
-     image.loading='lazy';image.decoding='async';image.referrerPolicy='no-referrer';
+     image.loading=feature?'eager':'lazy';image.decoding='async';image.referrerPolicy='no-referrer';
      art.appendChild(image);
    }else if(isVideo&&item.mediaProvider==='youtube'&&item.mediaUrl){
      var video=window.VMM_LANDING_SCHEMA.releaseMediaUrl(item.mediaUrl,'youtube');
@@ -278,7 +278,7 @@
        var thumb=create('img','cms-release-cover');
        thumb.src='https://i.ytimg.com/vi/'+video.split('v=')[1]+'/hqdefault.jpg';
        thumb.alt='Обложка видеоклипа: '+item.title;
-       thumb.loading='lazy';thumb.decoding='async';
+       thumb.loading=feature?'eager':'lazy';thumb.decoding='async';
        art.appendChild(thumb);
      }
    }
@@ -295,7 +295,7 @@
        },function(url){
          var coverImage=create('img','cms-release-cover');
          coverImage.src=url;coverImage.alt='Обложка: '+item.title;
-         coverImage.loading='lazy';coverImage.decoding='async';
+         coverImage.loading=feature?'eager':'lazy';coverImage.decoding='async';
          coverImage.referrerPolicy='no-referrer';
          art.appendChild(coverImage);
        });
