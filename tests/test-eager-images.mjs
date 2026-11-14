@@ -1,0 +1,80 @@
+/* RUN-121: every rendered image starts immediately; music iframes remain click-only. */
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const publicFiles=[
+  'index.html','landing-public.js','public-song-ui.js',
+  'albums-public.js','universe.js','artist-detail.js'
+];
+for(const file of publicFiles){
+  const source=read(file);
+  if(file.endsWith('.html')){
+    assert.doesNotMatch(source,/<img\b[^>]*loading=["']lazy["']/is,file+' contains lazy image markup');
+  }else{
+    assert.doesNotMatch(source,/\b(?:img|image|artwork|thumb|coverImage|crystal)\.loading\s*=\s*["']lazy["']/,
+      file+' still lazily loads its rendered images');
+  }
+}
+const songSource=read('public-song-ui.js');
+assert.doesNotMatch(songSource,/coverRequests|function loadNear\(/,
+  'All published cover lookups should start when cards render, not on swipe/focus');
+assert.match(songSource,/thumb\.loading='eager'/);
+const landing=read('landing-public.js');
+assert.match(landing,/img\.loading='eager'/);
+assert.match(read('albums-public.js'),/img\.loading='eager'/);
+assert.match(read('universe.js'),/crystal\.loading='eager'/);
+assert.match(read('artist-detail.js'),/img\.loading='eager'/);
+const index=read('index.html'),artist=read('artist.html'),sw=read('sw.js');
+for(const versioned of [
+  'landing-public.js?v=23','universe.js?v=6','public-song-ui.js?v=10','albums-public.js?v=3'
+]){
+  assert.ok(index.includes(versioned),'Homepage must load '+versioned);
+  assert.ok(sw.includes('./'+versioned),'Service worker should precache '+versioned);
+}
+assert.ok(artist.includes('artist-detail.js?v=2'));
+assert.ok(sw.includes('./artist-detail.js?v=2'));
+assert.ok(sw.includes("CACHE_PREFIX + 'v49'"));
+assert.match(read('public-song-ui.js'),/frame\.loading='lazy'/,
+  'Music players remain click-to-open without preloading');
+const window={};const promises=[],requests=[];
+window.fetch=url=>{
+  requests.push(url);
+  return new Promise(resolve=>promises.push(resolve));
+};
+function node(tag='div'){
+  return {tagName:tag,className:'',textContent:'',children:[],attributes:{},style:{},
+    scrollLeft:0,clientWidth:320,scrollWidth:1300,offsetLeft:0,
+    appendChild(child){this.children.push(child);child.parentNode=this;return child;},
+    removeChild(child){const i=this.children.indexOf(child);if(i>=0)this.children.splice(i,1);return child;},
+    setAttribute(k,v){this.attributes[k]=v;},
+    get firstChild(){return this.children[0]||null;},
+    getAttribute(k){return this.attributes[k];}};
+}
+const document={createElement:node};
+vm.runInNewContext(read('landing-schema.js'),{window,Array,String,Object,JSON,Number,Error},{timeout:1200});
+vm.runInNewContext(songSource,{window,document,Array,String,Object,Number,Math,Error},{timeout:1200});
+const tracks=Array.from({length:6},(_,i)=>({
+  title:'Песня '+(i+1),artist:'Velar',provider:'spotify',
+  url:'https://open.spotify.com/track/'+String(i+1).padStart(22,'A')
+}));
+const host=node();
+window.VELAR_PUBLIC_SONGS.configure('rows',[],'standard');
+window.VELAR_PUBLIC_SONGS.mount(host,tracks,{prefix:'language',batch:6});
+assert.equal(host.children.length,6);
+assert.equal(requests.length,6,
+  'All six visible song cards must immediately request artwork, including item 5 and 6');
+for(const item of host.children){
+  assert.equal(item.children[1].children.length,0,'No Spotify iframe before playback');
+}
+for(const complete of promises)
+  complete({ok:true,json:()=>Promise.resolve({thumbnail_url:'https://i.scdn.co/image/abc123123'})});
+await Promise.resolve();await Promise.resolve();await Promise.resolve();await Promise.resolve();
+for(const item of host.children){
+  const label=item.children[0];
+  const img=label.children.find(x=>x.tagName==='span'&&x.className==='public-song-row-artwork');
+  assert.ok(img&&img.children.length===1,'Each row should have its cover');
+  assert.equal(img.children[0].tagName,'img');
+  assert.equal(img.children[0].loading,'eager');
+}
+console.log('PASS RUN-121: no lazy images, all rendered covers requested immediately, audio embeds still click-only');
