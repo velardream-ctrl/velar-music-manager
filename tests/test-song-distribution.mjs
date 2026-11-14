@@ -83,6 +83,11 @@ assert.equal(dist.search(index(),'','many','all').length,0);
 draft.artists.cards.push({artistId:'velar',title:'Velar',visible:false,featuredTracks:[]});
 assert.equal(dist.modify(catalog,draft,{songId:'one',kind:'featured',targetId:'velar',enabled:true},API,effective,{}),true);
 assert.equal(draft.artists.cards[0].featuredTracks.length,1);
+assert.equal(draft.artists.cards[0].featuredTracks[0].alternateProvider,'youtube',
+ 'Unified distribution must retain both sources on featured artist songs');
+assert.equal(draft.artists.cards[0].featuredTracks[0].alternateUrl,youtubeA);
+assert.match(read('studio/song-distribution.js'),/target\.tracks\.length>=30/,
+ 'All assignment paths must use the new 30-song limit');
 assert.throws(()=>dist.modify(catalog,draft,{songId:'two',kind:'featured',targetId:'velar',enabled:true},API,effective,{}),/сначала назначь/);
 assert.doesNotThrow(()=>API.normalize(draft));
 const ambiguated=catalog.concat([{id:'four',title:'Другой трек',artist:'Velar',links:{spotify:spotifyA}}]);
