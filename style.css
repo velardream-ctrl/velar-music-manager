@@ -1304,23 +1304,27 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .public-song-carousel-arrow:disabled{opacity:.35;cursor:default}
 .public-song-carousel-arrow:focus-visible{outline:2px solid #fff1d1;outline-offset:3px}
 .public-song-carousel-track{
- display:flex;position:relative;align-items:stretch;gap:14px;
+ display:flex;position:relative;align-items:flex-start;gap:14px;
  max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;
- padding:2px 0 20px;-webkit-overflow-scrolling:touch;
+ padding:2px 0 26px;-webkit-overflow-scrolling:touch;
  scroll-snap-type:x mandatory;scroll-padding-left:1px;
 }
 .public-song-carousel-track>.public-song-entry--carousel{
  display:flex;flex:0 0 330px;width:330px;max-width:calc(100% - 4px);
- margin:0;padding:13px;box-sizing:border-box;min-width:0;
- flex-direction:column;align-items:stretch;align-self:stretch;
+ margin:0;padding:13px 13px 19px;box-sizing:border-box;min-width:0;
+ /* RUN-120: override flex-wrap:wrap from the classic horizontal song rows.
+    A vertical flexbox must never wrap its title/buttons into a second column,
+    or iOS Safari clips the bottom inside an overflow-scrolling rail. */
+ flex-direction:column;flex-wrap:nowrap;align-items:stretch;align-self:flex-start;
+ height:auto;min-height:0;
  scroll-snap-align:start;border-radius:17px;
  background:linear-gradient(160deg,#23395c,#101d37 90%);
  border:1px solid rgba(230,193,137,.55);
  box-shadow:0 9px 23px rgba(0,0,0,.2);
 }
 .public-song-entry--carousel .public-song-label{
- display:flex;flex-direction:column;align-items:stretch;flex:0 0 auto;
- min-width:0;gap:8px;
+ display:flex;flex-direction:column;flex-wrap:nowrap;
+ align-items:stretch;flex:0 0 auto;width:100%;min-width:0;gap:8px;
 }
 /* RUN-118: no visible 01/02/03 on carousel cards. */
 .public-song-entry--carousel .public-song-index{display:none}
@@ -1351,8 +1355,9 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  color:#dec28f;font:400 5rem Georgia,serif;
 }
 .public-song-entry--carousel .public-song-copy{
- display:flex;flex:0 0 auto;width:100%;min-width:0;
- box-sizing:border-box;min-height:54px;padding:8px 2px 5px;
+ display:flex;flex-direction:column;flex-wrap:nowrap;
+ flex:0 0 auto;width:100%;min-width:0;
+ box-sizing:border-box;min-height:66px;padding:10px 2px 9px;
  white-space:normal;overflow-wrap:anywhere;
 }
 .public-song-entry--carousel .public-song-copy strong{
@@ -1364,7 +1369,9 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  white-space:normal;overflow-wrap:anywhere;
 }
 .public-song-entry--carousel .public-song-platforms{
- display:flex;margin:10px 0 0;justify-content:flex-start;gap:7px;
+ display:flex;flex:0 0 auto;flex-wrap:wrap;align-items:center;
+ width:100%;min-height:42px;margin:9px 0 0;
+ justify-content:flex-start;gap:7px;
 }
 .public-song-entry--carousel .public-song-source{margin-left:0}
 .public-song-entry--carousel .public-song-inline{width:100%;min-width:0;margin-top:6px}
@@ -1585,4 +1592,20 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  position:absolute;top:50%;left:8px;right:8px;
  width:calc(100% - 16px);height:152px;max-height:calc(100% - 20px);
  transform:translateY(-50%);margin:0;
+}
+
+/* RUN-120: once a visitor scrolls into the music collections, the welcome
+   bubble must not obscure song titles and the closed launcher takes only
+   one accessible 48px icon. Open conversations remain full size. */
+.velar-assistant.is-browsing{
+ width:56px;max-width:56px;
+}
+.velar-assistant.is-browsing .velar-assistant-launch{
+ width:48px;height:48px;min-height:48px;max-width:48px;
+ padding:5px;margin-left:auto;
+ border-radius:50%;gap:0;
+}
+.velar-assistant.is-browsing .velar-assistant-launch-label{display:none}
+.velar-assistant.is-browsing .velar-assistant-symbol{
+ width:34px;height:34px;flex:0 0 34px;
 }

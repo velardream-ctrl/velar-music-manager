@@ -334,7 +334,9 @@
    var offline=typeof navigator!=='undefined'&&navigator.onLine===false;
    if(!offline){
      if(offlineBanner&&prompt)prompt.className='velar-assistant-greeting hidden';
-     offlineBanner=false;offlineInChat=false;return;
+     offlineBanner=false;offlineInChat=false;
+     updateBrowsingState();
+     return;
    }
    var msg='Связь с интернетом пропала, но VELARDREAM и мой локальный справочник остаются с вами. Можно изучать сохранённые разделы, артистов, языки и музыкальные темы. Для Spotify и YouTube нужно восстановить соединение: проверьте Wi-Fi, мобильные данные или баланс тарифа.';
    if(opened&&!offlineInChat){
@@ -348,6 +350,7 @@
      var label=prompt.querySelector&&prompt.querySelector('.velar-assistant-greeting-text');
      if(label)label.textContent='Нет интернета? Я всё равно здесь! Сохранённые разделы и чат доступны.';
      prompt.className='velar-assistant-greeting';
+     if(root)root.className='velar-assistant';
    }
  }
  if(window.addEventListener){
@@ -361,6 +364,20 @@
  function markGreeting(){
    try{if(window.sessionStorage)window.sessionStorage.setItem('velar-assistant-greeted','1');}
    catch(ignore){}
+ }
+ // RUN-120: after a visitor scrolls to the songs, a closed helper becomes
+ // a compact avatar instead of covering the card title and playback controls.
+ // The full chat (when opened) and offline greeting remain unchanged.
+ function updateBrowsingState(){
+   if(!root||!config||config.enabled===false||opened)return;
+   var y=typeof window.pageYOffset==='number'?window.pageYOffset:
+     document.documentElement&&document.documentElement.scrollTop||0;
+   var browsing=y>160&&!offlineBanner;
+   root.className=browsing?'velar-assistant is-browsing':'velar-assistant';
+   if(browsing&&prompt){
+     prompt.className='velar-assistant-greeting hidden';
+     markGreeting();
+   }
  }
  function say(query){
    var t=String(query||'').trim().slice(0,MAX_INPUT);
@@ -424,8 +441,10 @@
    dialog.appendChild(el('p','velar-assistant-privacy',
      'Не сохраняем и не отправляем автору'));
    root.appendChild(dialog);
+   if(window.addEventListener)window.addEventListener('scroll',updateBrowsingState,false);
    function toggle(open){
      opened=!!open;
+     if(opened)root.className='velar-assistant';
      dialog.className=opened?'velar-assistant-dialog':'velar-assistant-dialog hidden';
      launcher.setAttribute('aria-expanded',opened?'true':'false');
      prompt.className='velar-assistant-greeting hidden';markGreeting();
@@ -436,6 +455,7 @@
      }else{
        finishTyping();
        if(launcher.focus)launcher.focus();
+       updateBrowsingState();
      }
    }
    launcher.onclick=function(){toggle(!opened);};
@@ -479,6 +499,8 @@
    setAvatar(root.querySelector&&root.querySelector('.velar-assistant-greeting-avatar'),
      greetingChoice());
    setText('.velar-assistant-launch-label',configLabel('launcher','Помощник VELAR'));
+   var launcher=root.querySelector&&root.querySelector('.velar-assistant-launch');
+   if(launcher)launcher.setAttribute('aria-label',configLabel('launcher','Помощник VELAR'));
    setText('.velar-assistant-header-note',configLabel('headerNote','Локальный бот · без платного ИИ'));
    setText('.velar-assistant-greeting-text',configLabel('greetingBubble',config.welcome));
    setText('.velar-assistant-greeting-close',configLabel('greetingCloseText','×'));
@@ -524,6 +546,7 @@
      opened=false;return;
    }
    root.className='velar-assistant';
+   updateBrowsingState();
    if(header&&header.querySelector){
      var title=header.querySelector('.velar-assistant-title');
      if(title)title.textContent=config.title;

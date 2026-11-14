@@ -136,6 +136,24 @@ assert.ok(hiddenCounter.includes('clip:rect(0,0,0,0)'),
 const alignedOverlay=(css.split('.public-song-entry--carousel .public-song-inline:not(:empty){')[1]||'').split('}')[0];
 assert.ok(alignedOverlay.includes('top:13px'),
  'Active inline player must move up to align with artwork without 01 row');
+// RUN-120 — Safari must not wrap a vertical flex song card into
+// a second column and crop its title/artist inside the horizontal rail.
+const trackRule=(css.split('.public-song-carousel-track{')[1]||'').split('}')[0];
+assert.match(trackRule,/align-items:flex-start/,
+  'Horizontal scroller height follows the intrinsically sized song cards');
+const cardRule=(css.split('.public-song-carousel-track>.public-song-entry--carousel{')[1]||'').split('}')[0];
+assert.match(cardRule,/flex-wrap:nowrap/,
+  'Column carousel cards must override the wrap inherited from classic song rows');
+assert.match(cardRule,/align-self:flex-start/,
+  'Song cards must not be stretched into a clipped fixed-height viewport');
+assert.match(cardRule,/height:auto/,
+  'Song title and platform controls must participate in card height');
+const titleRule=(css.split('.public-song-entry--carousel .public-song-label{')[1]||'').split('}')[0];
+assert.match(titleRule,/flex-wrap:nowrap/,
+  'Artwork and title must remain vertically stacked, not wrap as columns');
+const platformsRule=(css.split('.public-song-entry--carousel .public-song-platforms{')[1]||'').split('}')[0];
+assert.match(platformsRule,/min-height:42px/,
+  'Playback controls reserve room at the bottom of the card');
 const coverRule=css.match(/\.public-song-entry--carousel \.public-song-artwork\{([^}]*)\}/)[1];
 assert.match(coverRule,/width:100%;height:auto!important;padding:0!important/,
  'The cover box must not use percentages measured against the entire flex rail');

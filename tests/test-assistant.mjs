@@ -42,7 +42,7 @@ assert.equal(answer('песня на немецком').target,'#languages');
 const custom={...settings,rules:[{keywords:'эксклюзив',answer:'У нас есть особая подборка.'}]};
 assert.equal(answer('эксклюзив',custom).text,'У нас есть особая подборка.');
 assert.match(html,/id="velar-assistant"/);
-assert.match(html,/velar-assistant\.js\?v=11/);
+assert.match(html,/velar-assistant\.js\?v=12/);
 assert.match(html,/name="robots" content="noindex,nofollow,noarchive"/);
 assert.match(css,/\.velar-assistant-launch/);
 assert.match(css,/\.velar-assistant-wave/);
@@ -68,7 +68,7 @@ assert.equal(w.VELAR_ASSISTANT.expressionFor('OK'),'okay');
 assert.ok(css.includes("max-height:min(390px,50vh)"));
 assert.ok(!code.includes("dj-velar-assistant.webp"));
 assert.match(code,/sessionStorage/);
-assert.match(sw,/'\.\/velar-assistant\.js\?v=11'/);
+assert.match(sw,/'\.\/velar-assistant\.js\?v=12'/);
 assert.match(publicCode,/velar-radio-hidden/);
 assert.match(publicCode,/VELAR_ASSISTANT\.render\(value\)/);
 assert.doesNotMatch(code,/fetch\(|firebase|XMLHttpRequest|setInterval\(|WebSocket|autoplay=|\.play\(/);
@@ -93,8 +93,8 @@ assert.match(css,/\.velar-assistant-suggestion\{min-height:28px;padding:2px 7px/
 assert.match(css,/\.velar-assistant-privacy\{padding:1px 7px 3px/);
 assert.match(css,/\.velar-assistant-header-note\{display:none\}/);
 assert.match(css,/\.velar-assistant-input\{height:36px;padding:6px 8px;font-size:16px\}/);
-assert.match(sw,/CACHE_PREFIX \+ 'v47'/);
-assert.match(html,/style\.css\?v=38/);
+assert.match(sw,/CACHE_PREFIX \+ 'v48'/);
+assert.match(html,/style\.css\?v=39/);
 assert.ok(code.includes("querySelector('.velar-assistant-launch')"));
 
 const customLabels={...settings,labels:{...settings.labels,
@@ -140,7 +140,8 @@ function node(tag){
 }
 const host=node('div'),deviceDoc={readyState:'loading',createElement:node,
  addEventListener(){},getElementById:id=>id==='velar-assistant'?host:null};
-const deviceWindow={};
+const deviceEvents={};
+const deviceWindow={pageYOffset:0,addEventListener(name,callback){deviceEvents[name]=callback;}};
 vm.runInNewContext(schema,{window:deviceWindow,Array,String,Math,Number,Object,JSON,Error},{timeout:1000});
 vm.runInNewContext(code,{window:deviceWindow,document:deviceDoc,
  Array,String,Number,Math,Object,JSON,Error,Date},{timeout:1000});
@@ -153,6 +154,13 @@ config.genres.assistant={...config.genres.assistant,...customLabels,
   keywordRules:[{keywords:'любовь',source:'question',expression:'okay'}]}};
 deviceWindow.VELAR_ASSISTANT.render(config);
 assert.equal(host.querySelector('.velar-assistant-launch-label').textContent,'Мой VELAR');
+assert.equal(host.querySelector('.velar-assistant-launch').attributes['aria-label'],'Мой VELAR',
+ 'Collapsed scroll launcher retains an accessible label');
+assert.ok(css.includes('.velar-assistant.is-browsing .velar-assistant-launch-label{display:none}'),
+ 'Only the visible text collapses after scrolling, not access to the chat');
+assert.ok(css.includes('.velar-assistant.is-browsing .velar-assistant-launch{'),
+ 'On scroll the helper becomes a compact icon rather than covering song titles');
+assert.equal(typeof deviceEvents.scroll,'function','Browsing state reacts to native scroll');
 assert.equal(host.querySelector('.velar-assistant-submit').textContent,'Отправить');
 assert.equal(host.querySelector('.velar-assistant-input').placeholder,'Выбери музыку');
 assert.equal(host.querySelector('.velar-assistant-privacy').style.display,'none');
@@ -186,7 +194,15 @@ function tickAll(){
 config.genres.assistant.quickTopics=[{label:'Любовь',query:'любовь'}];
 deviceWindow.VELAR_ASSISTANT.render(config);
 const control=host.querySelector('.velar-assistant-launch');
+deviceWindow.pageYOffset=500;
+deviceEvents.scroll();
+assert.equal(host.className,'velar-assistant is-browsing',
+ 'After scrolling to songs, the closed assistant no longer covers titles');
+assert.match(host.querySelector('.velar-assistant-greeting').className,/hidden/,
+ 'Welcome balloon disappears once the visitor browses songs');
 control.onclick();
+assert.equal(host.className,'velar-assistant',
+ 'Opening the assistant restores the full-width conversation');
 const conversation=host.querySelector('.velar-assistant-log');
 assert.equal(conversation.children.length,1);
 const greetingRow=conversation.children[0];
@@ -221,6 +237,11 @@ assert.ok(pendingParagraph.textContent.length>5,'Previous answer completes befor
 assert.equal(scheduled.size,1,'Only one typing timer can be active');
 const close=host.querySelector('.velar-assistant-close');
 close.onclick();
+assert.equal(host.className,'velar-assistant is-browsing',
+ 'After closing the chat on a long page, return to a small icon');
+deviceWindow.pageYOffset=0;deviceEvents.scroll();
+assert.equal(host.className,'velar-assistant',
+ 'Near the top of the page the launcher returns to its original width');
 assert.equal(scheduled.size,0,'Closing chat cancels animation');
 assert.equal(deviceWindow.VELAR_ASSISTANT.typingStatus(),'enabled');
 assert.equal(pendingParagraph.className.includes('velar-chat-typing'),false);
