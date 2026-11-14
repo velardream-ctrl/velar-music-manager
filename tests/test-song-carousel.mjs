@@ -89,6 +89,30 @@ engine.configure('rows',[{visible:true,imageUrl:'https://example.com/owner-cover
 const owned=node();engine.mount(owned,[songs[1]],{prefix:'album'});
 assert.equal(owned.children[1].children[0].children[0].children[1].children[0].src,
  'https://example.com/owner-cover.jpg','Curated album art has priority over Spotify oEmbed');
+
+engine.configure('rows',[],'carousel',[
+ {visible:true,title:'Альфа',mediaProvider:'spotify',mediaUrl:spotify,
+  imageUrl:'https://example.com/approved-single-cover.jpg'}
+]);
+const released=node();engine.mount(released,[songs[1]],{prefix:'artist'});
+const releasedThumb=released.children[1].children[0].children[0].children[1].children[0];
+assert.equal(releasedThumb.src,'https://example.com/approved-single-cover.jpg',
+ 'Published single artwork must appear without waiting for Spotify oEmbed');
+assert.equal(releasedThumb.loading,'eager',
+ 'The first carousel cover must not be lazy in a horizontal rail');
+assert.equal(releasedThumb.attributes.fetchpriority,'high',
+ 'The first carousel cover should have high fetch priority');
+assert.equal(released.children[1].children[0].children[0].children[2].children[0].textContent,
+ 'Альфа','Artist song name stays in its own card below the cover');
+engine.configure('rows',[],'carousel',[
+ {visible:false,mediaProvider:'spotify',mediaUrl:spotify,
+  imageUrl:'https://example.com/private-draft-cover.jpg'}
+]);
+const unreleased=node();engine.mount(unreleased,[songs[1]],{prefix:'artist'});
+assert.notEqual(unreleased.children[1].children[0].children[0].children[1].children[0].src,
+ 'https://example.com/private-draft-cover.jpg',
+ 'Hidden release images cannot appear on public song cards');
+
 engine.configure('rows',[],'carousel');
 const youtubeOnly=node();
 engine.mount(youtubeOnly,[{title:'Видео',artist:'Velar',provider:'youtube',url:yt}],{prefix:'topic'});
@@ -103,12 +127,16 @@ const css=read('style.css');
 assert.match(css,/\.public-song-carousel-track\{/);
 assert.match(css,/scroll-snap-type:x mandatory/);
 const coverRule=css.match(/\.public-song-entry--carousel \.public-song-artwork\{([^}]*)\}/)[1];
-assert.match(coverRule,/width:100%;height:0!important;padding:0 0 100%!important/,
- 'Cover box itself must be square via Safari-compatible 100% padding');
+assert.match(coverRule,/width:100%;height:auto!important;padding:0!important/,
+ 'The cover box must not use percentages measured against the entire flex rail');
 assert.match(coverRule,/aspect-ratio:auto!important/,
- 'Do not combine intrinsic aspect ratio with a padding fallback');
-assert.match(css,/\.public-song-entry--carousel \.public-song-artwork::before\{content:none\}/,
- 'No extra pseudo-element may shrink or double the iPhone cover');
+ 'Avoid reliance on CSS aspect-ratio for Safari 12');
+assert.match(css,/\.public-song-entry--carousel \.public-song-artwork::before\{[\s\S]*?content:"";display:block;width:100%;padding-top:100%/,
+ 'The cover pseudo-element must be square relative to its own width in old Safari');
+assert.match(css,/\.public-song-entry--carousel \.public-song-copy strong\{[^}]*white-space:normal/,
+ 'Full track title must wrap inside the carousel card');
+assert.match(css,/\.cms-artist-story>\.cms-music-panel\{height:auto/,
+ 'Artist music panels must grow to fit title rows');
 assert.match(css,/\.public-song-entry--carousel \.public-song-thumbnail\{[^}]*object-fit:contain/,
  'Entire album cover must fit inside the square without cropping');
 const overlayRule=css.match(/\.public-song-entry--carousel \.public-song-inline:not\(:empty\)\{([^}]*)\}/)[1];

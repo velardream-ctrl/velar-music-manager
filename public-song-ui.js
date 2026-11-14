@@ -72,17 +72,33 @@
        record.callbacks.forEach(function(fn){fn(url);});record.callbacks=[];
      }).catch(function(){record.pending=false;record.callbacks=[];});
  }
- function configure(view,albums,mode){
+ function configure(view,albums,mode,releases){
    defaultView=['rows','covers','tiles'].indexOf(view)>=0?view:'rows';
    globalMode=mode==='carousel'?'carousel':'standard';
    coverMap={};
+   var api=window.VMM_LANDING_SCHEMA;
+   function remember(verifiedUrl,picture){
+     if(!picture||!verifiedUrl||!api||!api.songUrl)return;
+     // Match a published recording by its exact official track/video URL.
+     // Never guess by a similar title or load the private studio catalog.
+     var url=api.songUrl(verifiedUrl,'spotify')||api.songUrl(verifiedUrl,'youtube');
+     if(url&&!coverMap[url])coverMap[url]=picture;
+   }
    (albums||[]).filter(function(a){return a.visible;}).forEach(function(album){
      var picture=album.imageData||album.imageUrl||'';
      if(!picture)return;
      (album.tracks||[]).forEach(function(t){
-       if(t.url&&!coverMap[t.url])coverMap[t.url]=picture;
-       if(t.alternateUrl&&!coverMap[t.alternateUrl])coverMap[t.alternateUrl]=picture;
+       remember(t.url,picture);
+       remember(t.alternateUrl,picture);
      });
+   });
+   // RUN-117: released singles can already have approved cover art even
+   // before the artist publishes an album collecting those singles.
+   (releases||[]).filter(function(r){return r.visible;}).forEach(function(r){
+     var picture=r.imageData||r.imageUrl||'';
+     if(!picture)return;
+     remember(r.mediaUrl,picture);
+     remember(r.url,picture);
    });
  }
  function mount(list,tracks,opts){
@@ -239,7 +255,11 @@
      function putCover(url){
        if(!url||currentCover===url&&holder.firstChild&&holder.firstChild.tagName==='img')return;
        var thumb=el('img','public-song-thumbnail');
-       thumb.alt='Обложка: '+track.title;thumb.loading='lazy';
+       thumb.alt='Обложка: '+track.title;
+       // The first visible slide and its neighbours must paint immediately
+       // even when the browser considers the horizontal rail offscreen.
+       thumb.loading=isCarousel&&i<=position+2?'eager':'lazy';
+       if(isCarousel&&i===0)thumb.setAttribute('fetchpriority','high');
        thumb.decoding='async';thumb.referrerPolicy='no-referrer';
        thumb.onerror=function(){
          if(fallbackArtwork&&url!==fallbackArtwork){putCover(fallbackArtwork);return;}

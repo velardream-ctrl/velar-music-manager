@@ -80,6 +80,12 @@ assert.equal(host.className,'cms-artist-stories');
 assert.equal(host.children.length,2);
 const first=host.children[0];
 assert.equal(first.children[0].tagName,'article');
+assert.equal(first.children[0].children[0].children[0].loading,'eager',
+ 'First artist portrait should load eagerly for initial gallery');
+assert.equal(first.children[0].children[0].children[0].attributes.fetchpriority,'high',
+ 'First portrait has high fetch priority');
+assert.equal(host.children[1].children[0].children[0].children[0].loading,'eager',
+ 'Second artist portrait should not be deferred behind horizontal carousels');
 assert.match(first.children[1].className,/cms-music-panel/);
 assert.match(host.children[1].className,/cms-artist-story--reverse/);
 const mediaFrame=holder=>{
@@ -172,9 +178,9 @@ assert.match(editor,/selected\.length>=3/);
 assert.match(editor,/markChanged\(\)/);
 assert.match(studio,/show\(el\('vmm-workflows'\),false\)/);
 assert.match(workflows,/show\(id\('panel-landing'\),false\)/);
-assert.match(html,/style\.css\?v=36/);
-assert.match(html,/landing-public\.js\?v=21/);
-assert.match(sw,/CACHE_PREFIX \+ 'v45'/);
+assert.match(html,/style\.css\?v=37/);
+assert.match(html,/landing-public\.js\?v=22/);
+assert.match(sw,/CACHE_PREFIX \+ 'v46'/);
 assert.match(css,/\.cms-music-play-icon::before\{/);
 assert.match(css,/border-left:10px solid currentColor/);
 assert.match(css,/\.cms-card-link::after\{/);
