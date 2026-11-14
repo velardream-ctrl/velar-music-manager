@@ -118,9 +118,17 @@ findInput('Публичная HTTPS-ссылка (профиль, Spotify, YouTu
  .input('https://example.com/velar');
 const bestRow=traverse(get('landing-fields'),node=>node.className==='landing-featured-row');
 assert.ok(bestRow,'Artist with a direct Spotify/YouTube track should offer a best-song checkbox');
-assert.equal(bestRow.children[2].value,'spotify');
+assert.match(bestRow.children[2].className,/landing-featured-sources/);
+assert.equal(bestRow.children[2].children.length,2,'Each artist song offers Spotify and YouTube');
+assert.equal(bestRow.children[2].children[0].children[0].disabled,false);
+assert.equal(bestRow.children[2].children[1].children[0].disabled,false);
 bestRow.children[0].checked=true;
 bestRow.children[0].onchange.call(bestRow.children[0]);
+const checkedRow=traverse(get('landing-fields'),node=>node.className==='landing-featured-row');
+assert.equal(checkedRow.children[2].children[0].children[0].checked,true);
+assert.equal(checkedRow.children[2].children[1].children[0].checked,false);
+const youtubeTick=checkedRow.children[2].children[1].children[0];
+youtubeTick.checked=true;youtubeTick.onchange.call(youtubeTick);
 assert.equal(api.isDirty(),true);
 const checkbox=traverse(get('landing-fields'),n=>n.type==='checkbox');
 assert.ok(checkbox);checkbox.checked=true;checkbox.onchange.call(checkbox);
@@ -130,6 +138,9 @@ assert.equal(records.get('vmm_public_drafts/landing').content.artists.cards.leng
 assert.equal(records.get('vmm_public_drafts/landing').content.artists.cards[0].featuredTracks.length,1);
 assert.equal(records.get('vmm_public_drafts/landing').content.artists.cards[0].featuredTracks[0].url,
  'https://open.spotify.com/track/0123456789ABCDEFGHIJKL');
+assert.equal(records.get('vmm_public_drafts/landing').content.artists.cards[0].featuredTracks[0].alternateProvider,'youtube');
+assert.equal(records.get('vmm_public_drafts/landing').content.artists.cards[0].featuredTracks[0].alternateUrl,
+ 'https://www.youtube.com/watch?v=ABCDEFGHIjk');
 assert.equal(records.get('vmm_public_pages/landing').content.artists.cards.length,0);
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.artists.cards[0].title,'DJ Velar');
