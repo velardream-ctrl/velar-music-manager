@@ -1,7 +1,7 @@
 /* VELAR public shell only. NEVER cache authenticated API responses or personal lyrics here. ES5 compatible. */
 'use strict';
 var CACHE_PREFIX = 'velar-public-shell-';
-var CACHE_NAME = CACHE_PREFIX + 'v48';
+var CACHE_NAME = CACHE_PREFIX + 'v49';
 /* Only private studio SOURCE FILES are cached. Never cache Firestore, Drive files,
    authenticated responses, user lyrics or audio through this Service Worker. */
 var STUDIO_PREFIX='velar-studio-shell-';
@@ -31,8 +31,8 @@ function studioNavigation(url){
   return url.origin===base.origin&&(url.pathname===base.pathname||url.pathname===base.pathname+'index.html');
 }
 var ASSETS = [
-  './', './index.html', './artist.html', './artist-detail.css?v=1', './artist-detail.js?v=1', './app/', './app/index.html',
-  './style.css', './style.css?v=39', './main.js', './landing-schema.js?v=19', './public-offline.js?v=1', './landing-public.js?v=22', './universe.js?v=5', './public-song-ui.js?v=9', './albums-public.js?v=2', './languages-public.js?v=3', './topics-public.js?v=3', './velar-faq-engine.js?v=3', './velar-assistant.js?v=12', './living-art.js?v=2', './manifest.webmanifest',
+  './', './index.html', './artist.html', './artist-detail.css?v=1', './artist-detail.js?v=2', './app/', './app/index.html',
+  './style.css', './style.css?v=39', './main.js', './landing-schema.js?v=19', './public-offline.js?v=1', './landing-public.js?v=23', './universe.js?v=6', './public-song-ui.js?v=10', './albums-public.js?v=3', './languages-public.js?v=3', './topics-public.js?v=3', './velar-faq-engine.js?v=3', './velar-assistant.js?v=12', './living-art.js?v=2', './manifest.webmanifest',
   './favicon.svg', './favicon.svg?v=2', './assets/velardream-crystal.png', './assets/velardream-symbol.svg', './assets/velardream-app-icon-192.png', './assets/velardream-app-icon-512.png','./assets/dj-velar-expressions.jpg'
 ];
 function isPublicAsset(url) {
