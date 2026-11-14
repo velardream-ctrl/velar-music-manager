@@ -1287,11 +1287,14 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
    preserves touch gestures on iPhone/iPad, with explicit keyboard-accessible arrows. */
 .public-song-carousel{max-width:100%;min-width:0}
 .public-song-carousel-controls{
- display:flex;align-items:center;justify-content:flex-end;gap:10px;
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
  margin:0 0 12px;min-height:44px;
 }
+/* RUN-118: Numbers are hidden visually, but the carousel position remains
+   announced to screen-reader users through its existing aria-live region. */
 .public-song-carousel-count{
- color:#efd6a6;font:600 .86rem Arial,sans-serif;min-width:72px;text-align:center;
+ position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+ overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
 }
 .public-song-carousel-arrow{
  width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;
@@ -1319,7 +1322,8 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  display:flex;flex-direction:column;align-items:stretch;flex:0 0 auto;
  min-width:0;gap:8px;
 }
-.public-song-entry--carousel .public-song-index{font-size:.8rem;flex:0 0 auto}
+/* RUN-118: no visible 01/02/03 on carousel cards. */
+.public-song-entry--carousel .public-song-index{display:none}
 /* RUN-117: one Safari 12-safe pseudo-element measures 100% of the
    artwork's OWN width. Unlike padding-bottom:100% on a flex child, this
    does not inherit the width of the full horizontal rail. Non-square covers
@@ -1440,8 +1444,10 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 /* Match the overlay to the same 1:1 box as the artwork. Absolute padding
    percentages are based on the containing card's inline size, so keep the
    horizontally inset overlay aligned to the cover. */
+/* RUN-118: the player starts at the new raised artwork position,
+   because the numbered header row is no longer displayed. */
 .public-song-entry--carousel .public-song-inline:not(:empty){
- top:42px;left:13px;right:13px;width:auto;max-width:none;
+ top:13px;left:13px;right:13px;width:auto;max-width:none;
  height:0!important;padding:0 8px calc(100% - 26px)!important;
  aspect-ratio:auto!important;box-sizing:border-box;
  border-radius:12px;box-shadow:none;
