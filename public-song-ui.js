@@ -35,9 +35,9 @@
  }
  var activeMount=null,defaultView='rows',coverMap={},globalMode='standard';
  var artworkCache={};
- // RUN-106: Spotify's public oEmbed thumbnail, fetched only for the visible
- // carousel cards and only when no owner-curated album image exists.
- // Network failure/CORS must never block the song title or player.
+ // RUN-121: every rendered song card requests its cover immediately.
+ // Owner-approved artwork still takes precedence over official oEmbed.
+ // Network failure/CORS must never block song titles or players.
  function youtubeArtwork(track){
    var sources=approved(track);
    for(var i=0;i<sources.length;i++)if(sources[i].provider==='youtube'){
@@ -70,7 +70,11 @@
          throw new Error('Invalid artwork host');
        record.url=url;record.pending=false;
        record.callbacks.forEach(function(fn){fn(url);});record.callbacks=[];
-     }).catch(function(){record.pending=false;record.callbacks=[];});
+     }).catch(function(){
+       record.pending=false;record.callbacks=[];
+       // Failed metadata should not poison every subsequent visit.
+       if(artworkCache[key]===record)delete artworkCache[key];
+     });
  }
  function configure(view,albums,mode,releases){
    defaultView=['rows','covers','tiles'].indexOf(view)>=0?view:'rows';
@@ -114,20 +118,13 @@
    var isCarousel=view==='carousel';
    var amount=opts.batch||12,index=-1,source='',slots=[],buttons=[],titles=[],entries=[],
      count=0,more=null,instance=null,container=list,rail=null,
-     position=0,previous=null,following=null,counter=null,coverRequests={};
+     position=0,previous=null,following=null,counter=null;
    clear(list);
-   function loadNear(i){
-     if(!isCarousel)return;
-     for(var j=Math.max(0,i-1);j<=Math.min(count-1,i+2);j++){
-       if(coverRequests[j]){var fn=coverRequests[j];delete coverRequests[j];fn();}
-     }
-   }
    function updateCarousel(){
      if(!isCarousel)return;
      if(counter)counter.textContent=(tracks.length?position+1:0)+' / '+tracks.length;
      if(previous)previous.disabled=position===0;
      if(following)following.disabled=position>=tracks.length-1;
-     loadNear(position);
    }
    function showAt(n){
      if(!isCarousel)return;
@@ -181,7 +178,6 @@
    function open(i,src){
      var link=embed(src);
      if(!link||!slots[i])return false;
-     if(coverRequests[i]){var request=coverRequests[i];delete coverRequests[i];request();}
      if(activeMount&&activeMount!==instance)activeMount.close();
      // One official external player only, shared with other public sections.
      if(window.VMM_PUBLIC_LANDING&&window.VMM_PUBLIC_LANDING.stopExternalPlayers)
@@ -256,9 +252,9 @@
        if(!url||currentCover===url&&holder.firstChild&&holder.firstChild.tagName==='img')return;
        var thumb=el('img','public-song-thumbnail');
        thumb.alt='Обложка: '+track.title;
-       // The first visible slide and its neighbours must paint immediately
-       // even when the browser considers the horizontal rail offscreen.
-       thumb.loading=isCarousel&&i<=position+2?'eager':'lazy';
+       // RUN-121: every rendered song image is eager, independent of its
+       // position in a horizontal carousel or standard song list.
+       thumb.loading='eager';
        if(isCarousel&&i===0)thumb.setAttribute('fetchpriority','high');
        thumb.decoding='async';thumb.referrerPolicy='no-referrer';
        thumb.onerror=function(){
@@ -273,7 +269,7 @@
      else {
        var placeholder=el('span','public-song-thumbnail public-song-thumbnail--empty','♫');
        placeholder.setAttribute('aria-hidden','true');holder.appendChild(placeholder);
-       coverRequests[i]=function(){requestArtwork(track,putCover);};
+       requestArtwork(track,putCover);
      }
      if(isCarousel)title.appendChild(holder);
      var copy=el('button','public-song-copy public-song-title-button');
@@ -303,22 +299,14 @@
      var player=el('div','public-song-inline '+classes+'-inline-player');
      slots[i]=player;item.appendChild(player);
      container.appendChild(item);
-     // The clicked song must have artwork even when it is not near the
-     // beginning of a long list. Lazy lookup is still limited to one song.
-     copy.onfocus=function(){if(coverRequests[i]){var fn=coverRequests[i];delete coverRequests[i];fn();}};
+     // No focus, swipe, scrolling or playback is needed to load the artwork.
    }
    function appendBatch(){
      if(more&&more.parentNode===container)container.removeChild(more);
      var next=Math.min(tracks.length,count+amount);
      for(var i=count;i<next;i++)addRow(i);
      count=next;
-     if(!isCarousel){
-       // Avoid a bulk request for hundreds of songs at once. The first few
-       // rows of each batch are warmed, the rest load when focused or played.
-       for(var k=Math.max(0,count-amount);k<Math.min(count,Math.max(0,count-amount)+4);k++){
-         if(coverRequests[k]){var request=coverRequests[k];delete coverRequests[k];request();}
-       }
-     }
+     // Every rendered card in this batch has already requested its image.
      if(count<tracks.length){
        more=el('button',classes==='language'?'language-more':'topic-show-more',
          'Показать ещё ('+(tracks.length-count)+')');

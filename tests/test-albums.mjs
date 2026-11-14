@@ -58,7 +58,7 @@ window.VELAR_ALBUMS.render(cfg.albums);
 assert.equal(nodes['public-albums-cards'].children.length,1);
 const card=nodes['public-albums-cards'].children[0];
 assert.equal(card.children[0].children[0].tagName,'img');
-assert.equal(card.children[0].children[0].loading,'lazy');
+assert.equal(card.children[0].children[0].loading,'eager');
 assert.match(card.children[1].children[0].textContent,/КОЛЛЕКЦИЯ ИЗ СИНГЛОВ/);
 const toggle=card.children[1].children.find(n=>n.tagName==='button');
 assert.ok(toggle,'Album has expand/collapse button');
@@ -92,5 +92,5 @@ assert.ok(nodes['public-albums-cards'].children[0].children[1].children.some(n=>
  'Officially released album has direct verified Spotify album link');
 assert.match(read('index.html'),/id="albums"/);
 assert.match(read('studio/index.html'),/data-landing-tab="albums"/);
-assert.match(read('sw.js'),/\.\/albums-public\.js\?v=2/);
+assert.match(read('sw.js'),/\.\/albums-public\.js\?v=3/);
 console.log('PASS: RUN-096 curated singles album, official release distinction, thumbnails, playback and draft-safe UI');

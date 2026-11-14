@@ -137,7 +137,7 @@
      var tile=make('div','artist-album');
      if(album.imageData||album.imageUrl){
        var img=make('img');img.src=album.imageData||album.imageUrl;
-       img.alt='Обложка: '+album.title;img.loading='lazy';tile.appendChild(img);
+       img.alt='Обложка: '+album.title;img.loading='eager';tile.appendChild(img);
      }
      tile.appendChild(make('strong','',album.title));
      if(album.description)tile.appendChild(make('small','',album.description));

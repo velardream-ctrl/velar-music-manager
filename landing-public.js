@@ -28,7 +28,7 @@
      img.src=item.imageData||item.imageUrl;img.alt=item.title;
      // RUN-117: do not defer the first publicly visible artist photos.
      // Later portraits still load lazily to protect the initial network budget.
-     img.loading=type==='artists'&&index<2?'eager':'lazy';
+     img.loading='eager';
      if(type==='artists'&&index===0)img.setAttribute('fetchpriority','high');
      img.decoding='async';
      img.referrerPolicy='no-referrer';
@@ -123,7 +123,7 @@
        create('span','cms-music-track-thumb cms-music-track-thumb--empty','♫');
      if(cover){
        artwork.src=cover;artwork.alt='Обложка: '+track.title;
-       artwork.loading='lazy';artwork.decoding='async';artwork.referrerPolicy='no-referrer';
+       artwork.loading='eager';artwork.decoding='async';artwork.referrerPolicy='no-referrer';
      }else{
        artwork.setAttribute('aria-hidden','true');
        if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.requestArtwork)
@@ -270,7 +270,7 @@
    if(item.imageData||item.imageUrl){
      var image=create('img','cms-release-cover');
      image.src=item.imageData||item.imageUrl;image.alt='Обложка: '+item.title;
-     image.loading='lazy';image.decoding='async';image.referrerPolicy='no-referrer';
+     image.loading='eager';image.decoding='async';image.referrerPolicy='no-referrer';
      art.appendChild(image);
    }else if(isVideo&&item.mediaProvider==='youtube'&&item.mediaUrl){
      var video=window.VMM_LANDING_SCHEMA.releaseMediaUrl(item.mediaUrl,'youtube');
@@ -278,7 +278,7 @@
        var thumb=create('img','cms-release-cover');
        thumb.src='https://i.ytimg.com/vi/'+video.split('v=')[1]+'/hqdefault.jpg';
        thumb.alt='Обложка видеоклипа: '+item.title;
-       thumb.loading='lazy';thumb.decoding='async';
+       thumb.loading='eager';thumb.decoding='async';
        art.appendChild(thumb);
      }
    }
@@ -295,7 +295,7 @@
        },function(url){
          var coverImage=create('img','cms-release-cover');
          coverImage.src=url;coverImage.alt='Обложка: '+item.title;
-         coverImage.loading='lazy';coverImage.decoding='async';
+         coverImage.loading='eager';coverImage.decoding='async';
          coverImage.referrerPolicy='no-referrer';
          art.appendChild(coverImage);
        });

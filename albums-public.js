@@ -38,7 +38,7 @@
      if(cover){
        var img=el('img','cms-album-cover-image');
        img.src=cover;img.alt='Обложка альбома «'+album.title+'»';
-       img.loading='lazy';img.decoding='async';img.referrerPolicy='no-referrer';
+       img.loading='eager';img.decoding='async';img.referrerPolicy='no-referrer';
        visual.appendChild(img);
      }else{
        var symbol=el('span','cms-album-cover-placeholder','♫');
