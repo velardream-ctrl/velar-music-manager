@@ -21,11 +21,16 @@
  var original={};
  // RUN-086: only visible, owner-enabled radio controls can be opened from chat.
  var radioControls=null;
- function buildArtistCard(item,type){
+ function buildArtistCard(item,type,index){
    var card=create('article','cms-card');
    if(item.imageData||item.imageUrl){
      var img=document.createElement('img');
-     img.src=item.imageData||item.imageUrl;img.alt=item.title;img.loading='lazy';img.decoding='async';
+     img.src=item.imageData||item.imageUrl;img.alt=item.title;
+     // RUN-117: do not defer the first publicly visible artist photos.
+     // Later portraits still load lazily to protect the initial network budget.
+     img.loading=type==='artists'&&index<2?'eager':'lazy';
+     if(type==='artists'&&index===0)img.setAttribute('fetchpriority','high');
+     img.decoding='async';
      img.referrerPolicy='no-referrer';
      if(type==='artists'){
        var portraitShape=item.imageShape==='circle'?'circle':'square';
@@ -206,7 +211,7 @@
    var stories=type==='artists'&&shown.some(function(x){return !!(x.featuredTracks&&x.featuredTracks.length);});
    target.className=type==='artists'?(stories?'cms-artist-stories':'cms-card-grid cms-artist-tiles'):'cms-card-grid';
    shown.forEach(function(item,index){
-     var card=buildArtistCard(item,type);
+     var card=buildArtistCard(item,type,index);
      if(stories){
        var row=create('div','cms-artist-story'+(index%2?' cms-artist-story--reverse':''));
        row.appendChild(card);
@@ -571,7 +576,8 @@
      value.genres.tags.forEach(function(tag){tags.appendChild(create('span','',tag));});
    }
    if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.configure)
-     window.VELAR_PUBLIC_SONGS.configure(value.albums.trackView,value.albums.entries,value.genres.songViewMode);
+     window.VELAR_PUBLIC_SONGS.configure(
+       value.albums.trackView,value.albums.entries,value.genres.songViewMode,value.releases.cards);
    cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums,value.genres.songViewMode);
    if(window.VELAR_ALBUMS&&window.VELAR_ALBUMS.render)window.VELAR_ALBUMS.render(value.albums);
    releaseGallery(value.releases);
