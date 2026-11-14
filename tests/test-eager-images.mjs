@@ -65,7 +65,7 @@ assert.equal(host.children.length,6);
 assert.equal(requests.length,6,
   'All six visible song cards must immediately request artwork, including item 5 and 6');
 for(const item of host.children){
-  assert.equal(item.children[1].children.length,0,'No Spotify iframe before playback');
+  assert.equal(item.children[2].children.length,0,'No Spotify iframe before playback');
 }
 for(const complete of promises)
   complete({ok:true,json:()=>Promise.resolve({thumbnail_url:'https://i.scdn.co/image/abc123123'})});
