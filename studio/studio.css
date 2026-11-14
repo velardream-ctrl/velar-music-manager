@@ -809,3 +809,38 @@ body.vmm-print-open{overflow:hidden}
 #panel-landing .landing-distribution-add:disabled{
  opacity:.76;
 }
+
+/* RUN-116 — preview link is an entire mobile tap target, never inline boxes.
+   A long inline anchor with padding previously wrapped its border over itself
+   on narrow iPhones; keep this scoped to the artist detail editor only. */
+#panel-landing a.landing-artist-profile-link{
+ display:block;
+ box-sizing:border-box;
+ width:100%;
+ max-width:100%;
+ min-width:0;
+ min-height:44px;
+ margin:14px 0 12px;
+ padding:12px 14px;
+ border:1px solid #d6b77c;
+ border-radius:12px;
+ background:#24385c;
+ color:#f0d8a8;
+ text-decoration:none;
+ text-align:center;
+ line-height:1.4;
+ white-space:normal;
+ overflow-wrap:break-word;
+ word-break:normal;
+}
+#panel-landing a.landing-artist-profile-link:hover,
+#panel-landing a.landing-artist-profile-link:focus-visible{
+ background:#334c74;
+ border-color:#ffe0a2;
+}
+@media(max-width:520px){
+ #panel-landing a.landing-artist-profile-link{
+  font-size:16px;
+  padding:12px 10px;
+ }
+}
