@@ -1320,10 +1320,10 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  min-width:0;gap:8px;
 }
 .public-song-entry--carousel .public-song-index{font-size:.8rem;flex:0 0 auto}
-/* RUN-110: use the padding-ratio BOX itself, not a pseudo-element plus
-   aspect-ratio. This establishes a real 1:1 layout even on older iPhone Safari.
-   The entire original cover remains visible; non-square sources get discreet
-   navy letterboxing instead of cropping. */
+/* RUN-117: one Safari 12-safe pseudo-element measures 100% of the
+   artwork's OWN width. Unlike padding-bottom:100% on a flex child, this
+   does not inherit the width of the full horizontal rail. Non-square covers
+   remain fully visible with subtle navy letterboxing. */
 .public-song-entry--carousel .public-song-artwork{
  display:block;position:relative;flex:0 0 auto;
  width:100%;height:auto!important;padding:0!important;
