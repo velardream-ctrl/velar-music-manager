@@ -2105,11 +2105,11 @@
      item.biography||'',function(v){item.biography=v;},true);
    bio.rows=7;
    var live=document.createElement('a');
-   live.className='landing-small';
+   live.className='landing-small landing-artist-profile-link';
    live.href='../artist.html?'+(item.artistId?'id='+encodeURIComponent(item.artistId):
      'name='+encodeURIComponent(item.title||''));
    live.target='_blank';live.rel='noopener noreferrer';
-   live.textContent='Посмотреть опубликованную страницу артиста';
+   live.textContent='Открыть страницу артиста';
    details.appendChild(live);
    var platforms=[
      ['spotify','Spotify'],['youtube','YouTube'],['instagram','Instagram'],
