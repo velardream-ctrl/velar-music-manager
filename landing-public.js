@@ -81,7 +81,7 @@
    title.appendChild(create('h3','','Лучшие песни'));
    panel.appendChild(title);
    var tracks=(item.featuredTracks||[]).slice();
-   // Manual order remains opt-in for the artist's three featured songs.
+   // Manual order remains opt-in for up to 30 featured songs per artist.
    if(item.featuredSort!=='manual')tracks.sort(compareSong);
    if(!tracks.length){
      panel.className+=' cms-music-panel--empty';
@@ -97,7 +97,7 @@
          alternateProvider:t.alternateProvider,alternateUrl:t.alternateUrl};
      });
      window.VELAR_PUBLIC_SONGS.mount(carousel,curated,{
-       prefix:'artist',view:'carousel',batch:12,keepOrder:true
+       prefix:'artist',view:'carousel',batch:30,keepOrder:true
      });
      return panel;
    }
