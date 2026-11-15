@@ -60,7 +60,7 @@ for(const [p,text] of [['studio/workflows.js',workflows],['studio/lyrics-tools.j
 assert.ok(!/google\.script\.run/.test(workflows+lyrics),'new modules must only use Firebase');
 console.log('PASS: VMM workflows, auth gate, link review, lyric print, mobile menu and safe source checks');
 // RUN-128: canonical public name and stable artist identity.
-const artistChoicesSource=readFileSync(new URL('../studio/artist-choices.js',import.meta.url),'utf8');
+const artistChoicesSource=read('studio/artist-choices.js');
 assert.match(artistChoicesSource,/id:'velar',label:'Velar',aliases:\['Velar','DJ Velar'\]/);
 assert.match(workflows,/function canonicalArtistName\(name\)/);
 assert.match(workflows,/var match=choices\.filter\(function\(x\)\{return x\.label===siteArtist;/);
