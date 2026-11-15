@@ -35,7 +35,7 @@ assert.deepEqual(Object.keys(page.artists.cards[0].featuredTracks[0]),['title','
 assert.doesNotMatch(JSON.stringify(page),/privateRecording|sourceRow|accessToken/);
 const invalid=(track)=>api.normalize({...original,artists:{...original.artists,cards:[{...profile,featuredTracks:[track]}]}});
 assert.throws(()=>invalid({...s1,url:'https://open.spotify.com/artist/0123456789ABCDEFGHIJKL'}),/прямая ссылка/);
-assert.throws(()=>invalid({...s1,provider:'vk'}),/Spotify или YouTube/);
+assert.throws(()=>invalid({...s1,provider:'vk'}),/Spotify, YouTube или Apple Music/);
 assert.throws(()=>invalid({...s1,title:''}),/обязательно/);
 assert.throws(()=>api.normalize({...original,artists:{...original.artists,cards:[
   {...profile,featuredTracks:[s1,s1]}
