@@ -170,17 +170,16 @@
     return canonicalArtistName(t&&t.artist||'');
   }
   function artistList(){
-    var map={};if(window.VMM_ARTIST_CHOICES)window.VMM_ARTIST_CHOICES.choices(catalog).forEach(function(a){var n=canonicalArtistName(a.label);map[n.toLowerCase()]=n;});
-    registry.forEach(function(a){var n=canonicalArtistName(a.name);map[n.toLowerCase()]=n;});
-    return Object.keys(map).sort().map(function(k){return map[k];});
+    // RUN-130: exactly three canonical stage names in Studio.
+    return ['Velar','Илья Дмитриев','Crazy Bobr'];
   }
   function artistOptions(value){return artistList().map(function(n){return '<option value="'+esc(n)+'"'+(n===value?' selected':'')+'>'+esc(n)+'</option>';}).join('');}
   function loadRegistry(done){
     db.collection('vmm_links').doc('artist_registry_v1').get({source:'server'}).then(function(s){
       var d=s.exists?s.data()||{}:{};
       registry=Array.isArray(d.artists)?d.artists:[];registryRevision=Number(d.revision)||0;
-      if(window.VMM_ARTIST_TRACKS)window.VMM_ARTIST_TRACKS.read(db).then(function(v){artistOverrides=v.overrides;done();}).catch(function(e){tell('Ошибка привязок: '+e.message);done();});else done();
-    }).catch(function(e){tell('Ошибка загрузки артистов: '+e.message);done();});
+      if(window.VMM_ARTIST_TRACKS)window.VMM_ARTIST_TRACKS.read(db).then(function(v){artistOverrides=v.overrides;done();}).catch(function(e){pane.innerHTML='<h2>Ошибка привязок артистов</h2><p>'+esc(e.message)+'</p><button data-act="retry">Повторить</button>';});else done();
+    }).catch(function(e){pane.innerHTML='<h2>Ошибка загрузки артистов</h2><p>'+esc(e.message)+'</p><button data-act="retry">Повторить</button>';});
   }
   function artistManager(){
     pane.innerHTML=heading('Управление артистами','Создавай новых исполнителей и назначай им песни без изменения официальных кредитов')+
