@@ -288,7 +288,7 @@
          // published priority; a failed official cover tries the other source.
          if(currentCover!==url)return;
          if(isCarousel)
-           holder.className=holder.className.replace(/\\s*public-song-artwork--loaded/g,'');
+           holder.className=holder.className.replace(/\s*public-song-artwork--loaded/g,'');
          failedCovers[url]=true;
          clearArtwork();
          var next=el('span','public-song-thumbnail public-song-thumbnail--empty','♫');
@@ -308,7 +308,7 @@
        };
  
        if(isCarousel)
-         holder.className=holder.className.replace(/\\s*public-song-artwork--loaded/g,'');
+         holder.className=holder.className.replace(/\s*public-song-artwork--loaded/g,'');
        currentCover=url;clearArtwork();holder.appendChild(thumb);thumb.src=url;
      }
      if(art)putCover(art);
