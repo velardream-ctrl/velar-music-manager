@@ -1378,3 +1378,8 @@
 - Дополнительный CI run 43758222337 выявил устаревшие версии в `tests/test-artist-photo.mjs` (ожидался `landing-public.js?v=26`). Исправлены ссылки в тесте.
 - Выявлено, что `sw.js` продолжал предкешировать старые JS (v22/v26/v35): обновлены до v23/v27/v36, увеличены public shell v54→v55 и Studio cache v48→v49, без очистки данных Firestore или пользовательского localStorage.
 - Коммиты `8b613ca`, `7918d07`. Новый полный CI ожидает результат. Публикация RUN-128 не выполнена.
+
+### RUN-128 — CI SUCCESS, 15.11.2026
+- Исправлены оставшиеся проверки версий public shell v55, Studio cache v49, landing-schema v23, landing-public v27, landing-editor v36 во множестве регрессионных тестов. Уточнены DOM-тесты новой группировки кнопок и тесты трёх платформ.
+- **Подтверждено GitHub Actions:** run `43759871626`, commit `e9da81864ea90b766eab2e8bd23c2951200dd9eb`, job `static-safety` **SUCCESS**, `npm test` **SUCCESS**, `node --check main.js && node --check sw.js` **SUCCESS**.
+- На момент записи изменения RUN-128 остаются в feature-ветке; PR #88 был слит ранее, до RUN-128. Требуется отдельный PR, merge и проверка main. Браузерное E2E не выполнялось.
