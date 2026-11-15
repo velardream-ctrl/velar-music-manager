@@ -123,7 +123,7 @@
     var q=tr(filter).toLocaleLowerCase('ru').replace(/ё/g,'е');
     return catalog.filter(function(t){
       if(q && [t.title,t.artist,t.siteArtist,t.album,t.upc,t.isrc].join(' ').toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)<0)return false;
-      if(artist!=='all'&&(t.siteArtist||t.artist)!==artist)return false;
+      if(artist!=='all'&&siteArtist(t)!==artist)return false;
       if(mode==='missing')return !direct('spotify',urlValue(t,'spotify'))||!direct('appleMusic',urlValue(t,'appleMusic'))||!direct('youtube',urlValue(t,'youtube'));
       if(mode==='ready')return ['spotify','appleMusic','youtube'].every(function(k){return direct(k,urlValue(t,k));});
       if(mode==='spotify'||mode==='appleMusic'||mode==='youtube')return !direct(mode,urlValue(t,mode));
@@ -163,7 +163,11 @@
 
 
   /* RUN-NEW: owner-only artist registry and manual release editor. */
-  var registry=[],registryRevision=0;
+  var registry=[],registryRevision=0,artistOverrides={};
+  function siteArtist(t){
+    if(t&&window.VMM_ARTIST_TRACKS&&window.VMM_ARTIST_CHOICES){var artistId=window.VMM_ARTIST_TRACKS.effective(t,artistOverrides);var choice=window.VMM_ARTIST_CHOICES.byId(window.VMM_ARTIST_CHOICES.choices(catalog),artistId);if(choice)return choice.label;var custom=registry.filter(function(a){return a.id===artistId;})[0];if(custom)return custom.name;}
+    return t&&t.artist||'';
+  }
   function artistList(){
     var map={};catalog.forEach(function(t){if(t.artist)map[tr(t.artist).toLowerCase()]=tr(t.artist);});
     registry.forEach(function(a){map[tr(a.name).toLowerCase()]=a.name;});
@@ -173,7 +177,8 @@
   function loadRegistry(done){
     db.collection('vmm_links').doc('artist_registry_v1').get({source:'server'}).then(function(s){
       var d=s.exists?s.data()||{}:{};
-      registry=Array.isArray(d.artists)?d.artists:[];registryRevision=Number(d.revision)||0;done();
+      registry=Array.isArray(d.artists)?d.artists:[];registryRevision=Number(d.revision)||0;
+      if(window.VMM_ARTIST_TRACKS)window.VMM_ARTIST_TRACKS.read(db).then(function(v){artistOverrides=v.overrides;done();}).catch(function(e){tell('Ошибка привязок: '+e.message);done();});else done();
     }).catch(function(e){tell('Ошибка загрузки артистов: '+e.message);done();});
   }
   function artistManager(){
@@ -200,7 +205,7 @@
   function releaseEditor(docId){
     var t=docId?catalog.filter(function(x){return x.id===docId;})[0]:null;
     if(docId&&!t)return catalogPage();
-    var currentArtist=t?(t.siteArtist||t.artist||''):'';
+    var currentArtist=t?siteArtist(t):'';
     pane.innerHTML=heading(t?'Редактировать композицию':'Новая композиция','Сохранение только в приватном каталоге; публикация на главной выполняется отдельно')+
       '<form id="vmm-release-editor" class="vmm-card"><label>Название песни<input name="title" required maxlength="220" value="'+esc(t?t.title:'')+'"></label>'+
       '<label>Исполнитель на сайте<select name="siteArtist" required><option value="">Выбери исполнителя</option>'+artistOptions(currentArtist)+'</select></label>'+
@@ -220,13 +225,13 @@
       if(catalog.some(function(x){return x.id!==docId&&tr(x.title).toLowerCase()===title.toLowerCase()&&tr(x.artist).toLowerCase()===official.toLowerCase()&&(!upc||tr(x.upc)===upc)}))return tell('Похожая песня уже есть в каталоге. Проверь дубликат.');
       if(!docId&&!window.confirm('Добавить новую запись в приватный каталог?'))return;
       busy=true;authenticated(function(){
-        var target=db.collection('vmm_catalog').doc(docId||undefined),audit=db.collection('vmm_audit').doc();
+        var target=docId?db.collection('vmm_catalog').doc(docId):db.collection('vmm_catalog').doc(),audit=db.collection('vmm_audit').doc();
         var max=catalog.reduce(function(n,x){return Math.max(n,row(x.sourceRow));},1);
         var counter=db.collection('vmm_links').doc('manual_catalog_sequence_v1');
         db.runTransaction(function(tx){
           return tx.get(counter).then(function(c){
             var sequence=Math.max(max,Number(c.exists&&c.data().lastRow)||1)+1;
-            var data={title:title,artist:official,siteArtist:siteArtist,upc:upc,isrc:isrc,releaseStatus:status,releaseDate:date,updatedBy:user.uid,updatedAt:ts()};
+            var data={title:title,artist:official,upc:upc,isrc:isrc,releaseStatus:status,releaseDate:date,updatedBy:user.uid,updatedAt:ts()};
             if(!docId){data.sourceRow=sequence;data.createdAt=ts();data.origin='studio-manual';data.links={};tx.set(counter,{lastRow:sequence,updatedAt:ts()});tx.set(target,data);}
             else tx.update(target,data);
             tx.set(audit,{time:ts(),operation:docId?'Композиция изменена':'Композиция добавлена',subject:title,result:siteArtist+' · '+status,referenceId:target.id,actor:user.uid});
@@ -239,7 +244,7 @@
   function catalogPage(){
     if(!catalog.length){pane.innerHTML=heading('Каталог релизов','Защищённая база данных')+'<div class="vmm-actions"><button data-act="new-release">+ Добавить песню</button><button data-act="artist-manager">Управление артистами</button></div><div class="vmm-card"><h3>В Firebase пока нет композиций</h3><p>Для заполнения используй прежний файл импорта. Не создавай дубликаты вручную.</p><button data-act="open-import">Открыть безопасный импорт</button></div>';return;}
     var a=searchRows(),begin=page*30;if(begin>=a.length&&page>0){page=0;begin=0;}
-    var allArtists=Object.create(null);catalog.forEach(function(t){if(t.siteArtist||t.artist)allArtists[t.siteArtist||t.artist]=true;});
+    var allArtists=Object.create(null);catalog.forEach(function(t){if(siteArtist(t))allArtists[siteArtist(t)]=true;});
     var actorOptions=Object.keys(allArtists).sort().map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>';}).join('');
     var picked=Object.keys(chosen).filter(function(k){return chosen[k];}).length;
     pane.innerHTML=heading('Каталог релизов','Поиск по названию, артисту, UPC и ISRC')+
@@ -270,10 +275,22 @@
       if(!artistList().some(function(n){return n===name;}))return tell('Выбери исполнителя из списка.');
       if(!window.confirm('Назначить '+tracks.length+' песен артисту «'+name+'»? Официальные сведения останутся прежними.'))return;
       busy=true;authenticated(function(){
-        var batch=db.batch();
-        tracks.forEach(function(t){batch.update(db.collection('vmm_catalog').doc(t.id),{siteArtist:name,updatedBy:user.uid,updatedAt:ts()});});
-        batch.set(db.collection('vmm_audit').doc(),{time:ts(),operation:'Массовое назначение артиста',subject:name,result:'Композиций: '+tracks.length,actor:user.uid});
-        batch.commit().then(function(){busy=false;chosen=Object.create(null);open('catalog');}).catch(function(err){busy=false;tell('Ошибка переноса: '+err.message);});
+        var choices=window.VMM_ARTIST_CHOICES&&window.VMM_ARTIST_CHOICES.choices(catalog)||[];
+        var match=choices.filter(function(a){return a.label===name;})[0]||registry.filter(function(a){return a.name===name;})[0];
+        if(!match||!window.VMM_ARTIST_TRACKS){busy=false;return tell('Модуль привязки артистов недоступен.');}
+        window.VMM_ARTIST_TRACKS.read(db).then(function(snapshot){
+          var ids=tracks.map(function(t){return t.id;}),map=Object.assign({},snapshot.overrides);
+          ids.forEach(function(id){map[id]=match.id;});
+          var ref=db.collection('vmm_links').doc('artist_track_assignments_v1');
+          return db.runTransaction(function(tx){return tx.get(ref).then(function(s){
+            var d=s.exists?s.data()||{}:{},rev=Number(d.revision)||0;
+            if(rev!==snapshot.revision)throw new Error('Назначения изменились, обнови страницу.');
+            var next=Object.assign({},d.overrides||{});
+            ids.forEach(function(id){next[id]=match.id;});
+            tx.set(ref,{schemaVersion:1,revision:rev+1,overrides:next,updatedBy:user.uid,updatedAt:ts()});
+            tx.set(db.collection('vmm_audit').doc(),{time:ts(),operation:'Массовое назначение артиста',subject:name,result:'Композиций: '+tracks.length,actor:user.uid});
+          });});
+        }).then(function(){busy=false;chosen=Object.create(null);open('catalog');}).catch(function(err){busy=false;tell('Ошибка переноса: '+err.message);});
       });
     };
   }
