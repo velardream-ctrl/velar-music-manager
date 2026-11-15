@@ -1383,3 +1383,8 @@
 - Исправлены оставшиеся проверки версий public shell v55, Studio cache v49, landing-schema v23, landing-public v27, landing-editor v36 во множестве регрессионных тестов. Уточнены DOM-тесты новой группировки кнопок и тесты трёх платформ.
 - **Подтверждено GitHub Actions:** run `43759871626`, commit `e9da81864ea90b766eab2e8bd23c2951200dd9eb`, job `static-safety` **SUCCESS**, `npm test` **SUCCESS**, `node --check main.js && node --check sw.js` **SUCCESS**.
 - На момент записи изменения RUN-128 остаются в feature-ветке; PR #88 был слит ранее, до RUN-128. Требуется отдельный PR, merge и проверка main. Браузерное E2E не выполнялось.
+
+### RUN-128 — блокировка слияния PR #89
+- Открыт PR #89 `RUN-128: Apple Music in artist cards and complete artist song picker` после подтверждённого зелёного CI.
+- Проверка GitHub REST: `mergeable=false`, `mergeable_state=dirty`. Сравнение `main...feature/studio-manual-catalog-artists-20261115`: ветки разошлись, feature на **72 коммита впереди и 53 позади main**; изменены 36 файлов. Автоматическое слияние опасно: требуется перенос RUN-128 на свежую ветку от main с разрешением конфликтов, повторным CI и проверкой деплоя.
+- PR #89 **не слит**, main **не обновлён**, публикация **не выполнена**. Не подменять зелёный CI feature подтверждением совместимости с текущим main.
