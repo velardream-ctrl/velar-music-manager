@@ -19,12 +19,12 @@ for(const file of publicFiles){
 const songSource=read('public-song-ui.js');
 assert.doesNotMatch(songSource,/coverRequests|function loadNear\(/,
   'All published cover lookups should start when cards render, not on swipe/focus');
-assert.match(songSource,/window\\.VELAR_IMAGE_LOADING\\.apply/);
+assert.ok(songSource.includes('window.VELAR_IMAGE_LOADING.apply'));
 const landing=read('landing-public.js');
-assert.match(landing,/setImageLoading\\(img,index\\)/);
-assert.match(read('albums-public.js'),/window\\.VELAR_IMAGE_LOADING\\.apply/);
-assert.match(read('universe.js'),/window\\.VELAR_IMAGE_LOADING\\.apply/);
-assert.match(read('artist-detail.js'),/window\\.VELAR_IMAGE_LOADING\\.apply/);
+assert.ok(landing.includes('setImageLoading(img,index)'));
+assert.ok(read('albums-public.js').includes('window.VELAR_IMAGE_LOADING.apply'));
+assert.ok(read('universe.js').includes('window.VELAR_IMAGE_LOADING.apply'));
+assert.ok(read('artist-detail.js').includes('window.VELAR_IMAGE_LOADING.apply'));
 const index=read('index.html'),artist=read('artist.html'),sw=read('sw.js');
 for(const versioned of [
   'landing-public.js?v=25','universe.js?v=7','public-song-ui.js?v=11','albums-public.js?v=4'
