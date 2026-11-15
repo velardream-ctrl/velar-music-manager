@@ -261,7 +261,7 @@
      var primarySource=create('button','cms-music-alt-source');
      primarySource.type='button';
      primarySource.setAttribute('aria-pressed','false');
-     primarySource.onclick=function(){button.click();};
+     primarySource.onclick=function(){playFor(track.provider,track.url);};
      compactSource(primarySource,track.provider);
      if(alternateButton)compactSource(alternateButton,track.alternateProvider);
      if(thirdButton)compactSource(thirdButton,track.thirdProvider);
