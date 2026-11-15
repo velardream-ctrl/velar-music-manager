@@ -19,6 +19,17 @@
    mask.appendChild(frame);host.appendChild(mask);
  }
  var original={};
+ function imagePolicy(){return window.VELAR_IMAGE_LOADING;}
+ function setImageLoading(img,index){
+   var policy=imagePolicy();
+   if(policy&&policy.apply)policy.apply(img,index);
+   else img.loading='eager';
+ }
+ function imageNear(element,index,fn){
+   var policy=imagePolicy();
+   if(policy&&policy.near)policy.near(element,fn,index);
+   else fn();
+ }
  // RUN-086: only visible, owner-enabled radio controls can be opened from chat.
  var radioControls=null;
  function buildArtistCard(item,type,index){
@@ -28,7 +39,7 @@
      img.src=item.imageData||item.imageUrl;img.alt=item.title;
      // RUN-117: do not defer the first publicly visible artist photos.
      // Later portraits still load lazily to protect the initial network budget.
-     img.loading='eager';
+     setImageLoading(img,index);
      if(type==='artists'&&index===0)img.setAttribute('fetchpriority','high');
      img.decoding='async';
      img.referrerPolicy='no-referrer';
@@ -123,18 +134,18 @@
        create('span','cms-music-track-thumb cms-music-track-thumb--empty','♫');
      if(cover){
        artwork.src=cover;artwork.alt='Обложка: '+track.title;
-       artwork.loading='eager';artwork.decoding='async';artwork.referrerPolicy='no-referrer';
+       setImageLoading(artwork,index);artwork.decoding='async';artwork.referrerPolicy='no-referrer';
      }else{
        artwork.setAttribute('aria-hidden','true');
        if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.requestArtwork)
-         window.VELAR_PUBLIC_SONGS.requestArtwork(track,function(src){
+         imageNear(button,index,function(){window.VELAR_PUBLIC_SONGS.requestArtwork(track,function(src){
            artwork.className='cms-music-track-thumb cms-music-track-thumb--loaded';
            artwork.textContent='';artwork.style.backgroundImage='url("'+src+'")';
            artwork.style.backgroundSize='cover';artwork.style.backgroundPosition='center';
            artwork.setAttribute('aria-hidden','false');
            artwork.setAttribute('role','img');
            artwork.setAttribute('aria-label','Обложка: '+track.title);
-         });
+         });});
      }
      if(view!=='classic')button.appendChild(artwork);
      var details=create('span','cms-music-track-info');
@@ -279,14 +290,15 @@
      else parent.removeChild(frames[i]);
    }
  }
- function releaseCard(item,feature){
+ function releaseCard(item,feature,index){
+   index=typeof index==='number'?index:0;
    var isVideo=item.kind==='video';
    var card=create('article','cms-release-card'+(feature?' cms-release-card--featured':''));
    var art=create('div','cms-release-art'+(isVideo?' cms-release-art--video':''));
    if(item.imageData||item.imageUrl){
      var image=create('img','cms-release-cover');
      image.src=item.imageData||item.imageUrl;image.alt='Обложка: '+item.title;
-     image.loading='eager';image.decoding='async';image.referrerPolicy='no-referrer';
+     setImageLoading(image,index);image.decoding='async';image.referrerPolicy='no-referrer';
      art.appendChild(image);
    }else if(isVideo&&item.mediaProvider==='youtube'&&item.mediaUrl){
      var video=window.VMM_LANDING_SCHEMA.releaseMediaUrl(item.mediaUrl,'youtube');
@@ -294,7 +306,7 @@
        var thumb=create('img','cms-release-cover');
        thumb.src='https://i.ytimg.com/vi/'+video.split('v=')[1]+'/hqdefault.jpg';
        thumb.alt='Обложка видеоклипа: '+item.title;
-       thumb.loading='eager';thumb.decoding='async';
+       setImageLoading(thumb,index);thumb.decoding='async';
        art.appendChild(thumb);
      }
    }
@@ -306,15 +318,15 @@
      // never a private library, Drive, artist profile or an extra image card.
      if(item.mediaProvider==='spotify'&&item.mediaUrl&&
         window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.requestArtwork){
-       window.VELAR_PUBLIC_SONGS.requestArtwork({
+       imageNear(art,index,function(){window.VELAR_PUBLIC_SONGS.requestArtwork({
          title:item.title,provider:'spotify',url:item.mediaUrl
        },function(url){
          var coverImage=create('img','cms-release-cover');
          coverImage.src=url;coverImage.alt='Обложка: '+item.title;
-         coverImage.loading='eager';coverImage.decoding='async';
+         setImageLoading(coverImage,index);coverImage.decoding='async';
          coverImage.referrerPolicy='no-referrer';
          art.appendChild(coverImage);
-       });
+       });});
      }
    }
    if(item.spotlight!=='none'&&feature)
@@ -420,7 +432,7 @@
      buttons.forEach(function(b){b.setAttribute('aria-pressed',b.value===mode?'true':'false');});
      empty(grid);
      var matches=others.filter(function(item){return mode==='all'||item.kind===mode;});
-     matches.slice(0,limit).forEach(function(item){grid.appendChild(releaseCard(item,false));});
+     matches.slice(0,limit).forEach(function(item,index){grid.appendChild(releaseCard(item,false,index));});
      more.textContent='Показать ещё ('+(matches.length-limit)+')';
      more.className='cms-release-more'+(matches.length>limit?'':' hidden');
      if(!matches.length)
@@ -577,6 +589,7 @@
    if(!window.VMM_LANDING_SCHEMA)return false;
    var value;
    try{value=window.VMM_LANDING_SCHEMA.normalize(content);}catch(e){return false;}
+   if(imagePolicy()&&imagePolicy().configure)imagePolicy().configure(value.hero.imageLoadingLevel);
    assign('public-hero-subtitle',value.hero.subtitle);
    assign('public-hero-intro',value.hero.intro);
    assign('artists-title',value.artists.heading);
