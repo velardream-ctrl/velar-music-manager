@@ -214,8 +214,9 @@
        alternateButton.onclick=function(){playFor(track.alternateProvider,track.alternateUrl);};
      }
      buttons.push(button);altButtons.push(alternateButton);players.push(player);entries.push(entry);
-     entry.appendChild(button);entry.appendChild(player);
+     entry.appendChild(button);
      if(alternateButton)entry.appendChild(alternateButton);
+     entry.appendChild(player);
      list.appendChild(entry);
    });
    panel.appendChild(list);
