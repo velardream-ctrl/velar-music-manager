@@ -1,4 +1,4 @@
-/* RUN-121: every rendered image starts immediately; music iframes remain click-only. */
+/* RUN-121/123: images still load eagerly by default; lazy modes are opt-in. */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -19,25 +19,25 @@ for(const file of publicFiles){
 const songSource=read('public-song-ui.js');
 assert.doesNotMatch(songSource,/coverRequests|function loadNear\(/,
   'All published cover lookups should start when cards render, not on swipe/focus');
-assert.match(songSource,/thumb\.loading='eager'/);
+assert.match(songSource,/window\\.VELAR_IMAGE_LOADING\\.apply/);
 const landing=read('landing-public.js');
-assert.match(landing,/img\.loading='eager'/);
-assert.match(read('albums-public.js'),/img\.loading='eager'/);
-assert.match(read('universe.js'),/crystal\.loading='eager'/);
-assert.match(read('artist-detail.js'),/img\.loading='eager'/);
+assert.match(landing,/setImageLoading\\(img,index\\)/);
+assert.match(read('albums-public.js'),/window\\.VELAR_IMAGE_LOADING\\.apply/);
+assert.match(read('universe.js'),/window\\.VELAR_IMAGE_LOADING\\.apply/);
+assert.match(read('artist-detail.js'),/window\\.VELAR_IMAGE_LOADING\\.apply/);
 const index=read('index.html'),artist=read('artist.html'),sw=read('sw.js');
 for(const versioned of [
-  'landing-public.js?v=24','universe.js?v=6','public-song-ui.js?v=10','albums-public.js?v=3'
+  'landing-public.js?v=25','universe.js?v=7','public-song-ui.js?v=11','albums-public.js?v=4'
 ]){
   assert.ok(index.includes(versioned),'Homepage must load '+versioned);
   assert.ok(sw.includes('./'+versioned),'Service worker should precache '+versioned);
 }
-assert.ok(artist.includes('artist-detail.js?v=2'));
-assert.ok(sw.includes('./artist-detail.js?v=2'));
-assert.ok(sw.includes("CACHE_PREFIX + 'v50'"));
+assert.ok(artist.includes('artist-detail.js?v=3'));
+assert.ok(sw.includes('./artist-detail.js?v=3'));
+assert.ok(sw.includes("CACHE_PREFIX + 'v51'"));
 assert.match(read('public-song-ui.js'),/frame\.loading='lazy'/,
   'Music players remain click-to-open without preloading');
-const window={};const promises=[],requests=[];
+const window={location:{search:''}};const promises=[],requests=[];
 window.fetch=url=>{
   requests.push(url);
   return new Promise(resolve=>promises.push(resolve));
@@ -53,6 +53,8 @@ function node(tag='div'){
 }
 const document={createElement:node};
 vm.runInNewContext(read('landing-schema.js'),{window,Array,String,Object,JSON,Number,Error},{timeout:1200});
+vm.runInNewContext(read('image-loading.js'),{window,Array,Number,Math,Error},{timeout:1200});
+window.VELAR_IMAGE_LOADING.configure(0);
 vm.runInNewContext(songSource,{window,document,Array,String,Object,Number,Math,Error},{timeout:1200});
 const tracks=Array.from({length:6},(_,i)=>({
   title:'Песня '+(i+1),artist:'Velar',provider:'spotify',
@@ -77,4 +79,4 @@ for(const item of host.children){
   assert.equal(img.children[0].tagName,'img');
   assert.equal(img.children[0].loading,'eager');
 }
-console.log('PASS RUN-121: no lazy images, all rendered covers requested immediately, audio embeds still click-only');
+console.log('PASS RUN-121/123: default eager mode fetches all displayed covers, audio embeds remain click-only');
