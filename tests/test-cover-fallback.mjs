@@ -102,7 +102,8 @@ slowImg.onload();
 assert.ok(slowHolder.className.includes('public-song-artwork--loaded'),
  'Only successful image load should hide the CSS fallback note');
 const css=read('style.css');
-assert.match(css,/\\.public-song-entry--carousel \\.public-song-artwork::after\\s*\\{/,
+assert.ok(css.includes('.public-song-entry--carousel .public-song-artwork::after{'),
  'Fallback note must be embedded locally in CSS');
-assert.match(css,/\\.public-song-entry--carousel \\.public-song-artwork--loaded::after\\s*\\{/);
+assert.ok(css.includes('.public-song-entry--carousel .public-song-artwork--loaded::after{'),
+ 'Success state must hide the locally drawn fallback note');
 console.log('PASS RUN-124/125/126: stable covers and offline-visible carousel placeholder');
