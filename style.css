@@ -1354,6 +1354,19 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  display:flex;align-items:center;justify-content:center;
  color:#dec28f;font:400 5rem Georgia,serif;
 }
+/* RUN-126: the note lives in CSS rather than an external image.
+   Keep it above an unfinished IMG, including slow/offline mobile networks.
+   Hide it only after img.onload; preserve the existing 1:1 Safari layout. */
+.public-song-entry--carousel .public-song-artwork::after{
+ content:"♫";position:absolute;inset:0;z-index:2;
+ display:flex;align-items:center;justify-content:center;
+ color:#dec28f;font:400 5rem Georgia,serif;
+ background:radial-gradient(circle at 40% 30%,#43557a,#13223d 74%);
+ pointer-events:none;
+}
+.public-song-entry--carousel .public-song-artwork--loaded::after{
+ display:none;
+}
 .public-song-entry--carousel .public-song-copy{
  display:flex;flex-direction:column;flex-wrap:nowrap;
  flex:0 0 auto;width:100%;min-width:0;
