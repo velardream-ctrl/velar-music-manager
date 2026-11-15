@@ -157,7 +157,7 @@
      playIcon.setAttribute('aria-hidden','true');
      button.appendChild(playIcon);
      if(view==='classic')button.appendChild(artwork);
-     button.setAttribute('aria-label','Слушать: '+track.title+' — '+(track.provider==='spotify'?'Spotify':'YouTube'));
+     button.setAttribute('aria-label','Слушать: '+track.title+' — '+(track.provider==='spotify'?'Spotify':track.provider==='appleMusic'?'Apple Music':'YouTube'));
      var entry=create('div','cms-music-entry');
      var player=create('div','cms-music-player cms-music-player--inline');
      player.setAttribute('role','region');
@@ -178,7 +178,7 @@
        active=index;activeProvider=provider;
        entries.forEach(function(e){e.className=e.className.replace(/ is-playing/g,'');});
        entry.className+=' is-playing';
-       buttons.forEach(function(b,i){b.setAttribute('aria-pressed',i===index&&provider===track.provider?'true':'false');});
+       buttons.forEach(function(b,i){b.setAttribute('aria-pressed',i===index&&provider===tracks[i].provider?'true':'false');});
        altButtons.forEach(function(b,i){if(b)b.setAttribute('aria-pressed',i===index&&provider===tracks[i].alternateProvider?'true':'false');});
        thirdButtons.forEach(function(b,i){if(b)b.setAttribute('aria-pressed',i===index&&provider===tracks[i].thirdProvider?'true':'false');});
        players.forEach(function(p){empty(p);});
