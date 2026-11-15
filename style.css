@@ -1643,3 +1643,10 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .cms-music-alt-source--youtube{display:inline-flex;align-items:center;justify-content:center;min-width:38px;min-height:32px;padding:5px 9px;background:#d82020;color:white;border-radius:9px;font-size:0;line-height:1}
 .cms-music-alt-source--youtube::before{content:"";display:block;width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:11px solid white}
 .cms-music-alt-source--youtube:focus-visible{outline:2px solid white;outline-offset:3px}
+
+/* RUN-132: desktop crystal journey grows with content instead of clipping the last action. */
+@media (min-width:851px){
+ .crystal-journey-stage{min-height:0;height:auto;padding-top:510px;padding-bottom:36px;box-sizing:border-box}
+ .crystal-journey-ring,.crystal-journey-crystal,.crystal-journey-beam{top:270px}
+ .crystal-journey-copy{position:relative;top:auto;left:auto;right:auto;max-width:min(850px,calc(100% - 44px));margin:0 auto}
+}
