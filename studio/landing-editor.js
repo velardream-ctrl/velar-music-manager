@@ -2306,7 +2306,16 @@
      loadPanel.appendChild(loadLabel);loadPanel.appendChild(loadHelp);loadPanel.appendChild(loadTest);
      var loadNotice=document.createElement('p');loadNotice.className='sync-note';
      loadNotice.textContent='Тестовая ссылка меняет загрузку только в открывшейся вкладке, без публикации. Для всех посетителей сохрани черновик и отдельно опубликуй. Эмблемы и музыкальные плееры не затрагиваются.';
-     loadPanel.appendChild(loadNotice);panel.appendChild(loadPanel);
+     loadPanel.appendChild(loadNotice);
+     // RUN-125: independent of all four lazy-loading modes.
+     selectField(loadPanel,'Приоритет источников обложек',
+       [['spotify-first','Spotify → YouTube (по умолчанию)'],
+        ['youtube-first','YouTube → Spotify']],
+       data.hero.coverSourcePriority||'spotify-first',
+       function(choice){data.hero.coverSourcePriority=choice;});
+     var coverNotice=document.createElement('p');coverNotice.className='sync-note';
+     coverNotice.textContent='Обложка, загруженная вручную, имеет высший приоритет. При отказе источника используется второй, затем значок ♫. Сохрани черновик и опубликуй, чтобы изменить настройки для посетителей.';
+     loadPanel.appendChild(coverNotice);panel.appendChild(loadPanel);
      updateLoadLabel();
      heading(panel,'Оформление песен во всех разделах',
        'Одна настройка для списков песен артистов, альбомов, языков и тем. Старые варианты оформления сохраняются, пока выбран обычный режим.');
