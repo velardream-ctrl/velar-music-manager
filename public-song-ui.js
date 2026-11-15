@@ -254,7 +254,9 @@
        thumb.alt='Обложка: '+track.title;
        // RUN-121: every rendered song image is eager, independent of its
        // position in a horizontal carousel or standard song list.
-       thumb.loading='eager';
+       if(window.VELAR_IMAGE_LOADING&&window.VELAR_IMAGE_LOADING.apply)
+         window.VELAR_IMAGE_LOADING.apply(thumb,i);
+       else thumb.loading='eager';
        if(isCarousel&&i===0)thumb.setAttribute('fetchpriority','high');
        thumb.decoding='async';thumb.referrerPolicy='no-referrer';
        thumb.onerror=function(){
@@ -269,7 +271,7 @@
      else {
        var placeholder=el('span','public-song-thumbnail public-song-thumbnail--empty','♫');
        placeholder.setAttribute('aria-hidden','true');holder.appendChild(placeholder);
-       requestArtwork(track,putCover);
+       // External metadata is scheduled after the card is appended.
      }
      if(isCarousel)title.appendChild(holder);
      var copy=el('button','public-song-copy public-song-title-button');
@@ -299,7 +301,14 @@
      var player=el('div','public-song-inline '+classes+'-inline-player');
      slots[i]=player;item.appendChild(player);
      container.appendChild(item);
-     // No focus, swipe, scrolling or playback is needed to load the artwork.
+     if(!art){
+       var images=window.VELAR_IMAGE_LOADING;
+       if(images&&images.near)
+         images.near(item,function(){requestArtwork(track,putCover);},i);
+       else requestArtwork(track,putCover);
+     }
+     // Moderate/strong modes delay oEmbed until near the viewport, not
+     // until user focus or a playback click. Legacy mode remains eager.
    }
    function appendBatch(){
      if(more&&more.parentNode===container)container.removeChild(more);
