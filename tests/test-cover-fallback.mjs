@@ -86,4 +86,23 @@ assert.equal(manualSpotifyHolder.children[0].src,'https://i.scdn.co/image/abc123
  'Manual cover failure should choose the published Spotify-first source');
 manualSpotifyHolder.children[0].onerror();
 assert.equal(manualSpotifyHolder.children[0].src,yt,'Spotify failure should still reach YouTube');
-console.log('PASS RUN-124/125: stable ordered covers, manual overrides and finite two-way fallback');
+// RUN-126: the carousel's local note must stay visible while IMG is pending.
+api.configure('rows',[],'carousel',[],'youtube-first');
+const slowHost=element('div');
+api.mount(slowHost,[track],{prefix:'language',batch:1});
+const slowRail=slowHost.children.find(x=>x.className==='public-song-carousel-track');
+assert.ok(slowRail,'Carousel should mount its rail');
+const slowHolder=slowRail.children[0].children[0].children.find(x=>x.className==='public-song-artwork');
+assert.ok(slowHolder,'Carousel must include the local artwork background');
+assert.ok(!slowHolder.className.includes('public-song-artwork--loaded'),
+ 'Pending image must leave CSS note visible');
+const slowImg=slowHolder.children[0];
+assert.equal(slowImg.src,yt);
+slowImg.onload();
+assert.ok(slowHolder.className.includes('public-song-artwork--loaded'),
+ 'Only successful image load should hide the CSS fallback note');
+const css=read('style.css');
+assert.match(css,/\\.public-song-entry--carousel \\.public-song-artwork::after\\s*\\{/,
+ 'Fallback note must be embedded locally in CSS');
+assert.match(css,/\\.public-song-entry--carousel \\.public-song-artwork--loaded::after\\s*\\{/);
+console.log('PASS RUN-124/125/126: stable covers and offline-visible carousel placeholder');
