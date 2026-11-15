@@ -27,7 +27,7 @@ assert.ok(read('universe.js').includes('window.VELAR_IMAGE_LOADING.apply'));
 assert.ok(read('artist-detail.js').includes('window.VELAR_IMAGE_LOADING.apply'));
 const index=read('index.html'),artist=read('artist.html'),sw=read('sw.js');
 for(const versioned of [
-  'landing-public.js?v=26','universe.js?v=7','public-song-ui.js?v=14','albums-public.js?v=4'
+  'landing-public.js?v=27','universe.js?v=7','public-song-ui.js?v=14','albums-public.js?v=4'
 ]){
   assert.ok(index.includes(versioned),'Homepage must load '+versioned);
   assert.ok(sw.includes('./'+versioned),'Service worker should precache '+versioned);
