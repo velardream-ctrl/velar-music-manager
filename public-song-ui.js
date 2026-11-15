@@ -73,7 +73,7 @@
      if(!url&&artworkCache[key]===record)delete artworkCache[key];
    }
    if(typeof window.setTimeout==='function')
-     timer=window.setTimeout(function(){settle('');},3000);
+     timer=window.setTimeout(function(){settle('');},8000);
    try{
      window.fetch('https://open.spotify.com/oembed?url='+encodeURIComponent(key))
        .then(function(response){if(!response.ok)throw new Error('Artwork unavailable');return response.json();})
