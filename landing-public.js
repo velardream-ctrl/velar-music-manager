@@ -103,7 +103,8 @@
      // Retain the curator's explicit manual order for an artist's best songs.
      var curated=tracks.map(function(t){
        return {title:t.title,artist:item.title,provider:t.provider,url:t.url,
-         alternateProvider:t.alternateProvider,alternateUrl:t.alternateUrl};
+         alternateProvider:t.alternateProvider,alternateUrl:t.alternateUrl,
+         thirdProvider:t.thirdProvider,thirdUrl:t.thirdUrl};
      });
      window.VELAR_PUBLIC_SONGS.mount(carousel,curated,{
        prefix:'artist',view:'carousel',batch:30,keepOrder:true
@@ -113,7 +114,7 @@
    var list=create('div','cms-music-list'+
      (view==='tiles'?' cms-music-list--tiles':view==='covers'?' cms-music-list--covers':''));
    // RUN-091: player belongs to the clicked row, not after the entire list.
-   var active=null,activeProvider='',buttons=[],altButtons=[],players=[],entries=[];
+   var active=null,activeProvider='',buttons=[],altButtons=[],thirdButtons=[],players=[],entries=[];
    tracks.forEach(function(track,index){
      var button=create('button','cms-music-track'+
        (view!=='classic'?' cms-music-track--art':''));
@@ -148,7 +149,7 @@
      if(view!=='classic')button.appendChild(artwork);
      var details=create('span','cms-music-track-info');
      details.appendChild(create('strong','',track.title));
-     details.appendChild(create('small','',track.provider==='spotify'?'Spotify':'YouTube'));
+     details.appendChild(create('small','',track.provider==='spotify'?'Spotify':track.provider==='appleMusic'?'Apple Music':'YouTube'));
      button.appendChild(details);
      // Icon is an empty, decorative CSS vector, not a text triangle that
      // Android/Samsung may replace with a blue system emoji.
@@ -156,12 +157,12 @@
      playIcon.setAttribute('aria-hidden','true');
      button.appendChild(playIcon);
      if(view==='classic')button.appendChild(artwork);
-     button.setAttribute('aria-label','Слушать: '+track.title+' — '+(track.provider==='spotify'?'Spotify':'YouTube'));
+     button.setAttribute('aria-label','Слушать: '+track.title+' — '+(track.provider==='spotify'?'Spotify':track.provider==='appleMusic'?'Apple Music':'YouTube'));
      var entry=create('div','cms-music-entry');
      var player=create('div','cms-music-player cms-music-player--inline');
      player.setAttribute('role','region');
      player.setAttribute('aria-label','Плеер: '+track.title);
-     var alternateButton=null;
+     var alternateButton=null,thirdButton=null;
      function playFor(provider,link){
        var validated=window.VMM_LANDING_SCHEMA.songUrl(link,provider);
        if(!validated)return;
@@ -170,26 +171,29 @@
          entry.className=entry.className.replace(/ is-playing/g,'');
          buttons.forEach(function(b){b.setAttribute('aria-pressed','false');});
          altButtons.forEach(function(b){if(b)b.setAttribute('aria-pressed','false');});
+         thirdButtons.forEach(function(b){if(b)b.setAttribute('aria-pressed','false');});
          return;
        }
        pauseOtherEmbeds();
        active=index;activeProvider=provider;
        entries.forEach(function(e){e.className=e.className.replace(/ is-playing/g,'');});
        entry.className+=' is-playing';
-       buttons.forEach(function(b,i){b.setAttribute('aria-pressed',i===index&&provider===track.provider?'true':'false');});
-       altButtons.forEach(function(b,i){if(b)b.setAttribute('aria-pressed',i===index&&provider===track.alternateProvider?'true':'false');});
+       buttons.forEach(function(b,i){b.setAttribute('aria-pressed',i===index&&provider===tracks[i].provider?'true':'false');});
+       altButtons.forEach(function(b,i){if(b)b.setAttribute('aria-pressed',i===index&&provider===tracks[i].alternateProvider?'true':'false');});
+       thirdButtons.forEach(function(b,i){if(b)b.setAttribute('aria-pressed',i===index&&provider===tracks[i].thirdProvider?'true':'false');});
        players.forEach(function(p){empty(p);});
        var frame=document.createElement('iframe');
        frame.className='cms-music-iframe'+(provider==='youtube'?' cms-music-iframe--video':'');
-       frame.title=track.title+' — '+(provider==='spotify'?'плеер Spotify':'видео YouTube');
+       frame.title=track.title+' — '+(provider==='spotify'?'плеер Spotify':provider==='appleMusic'?'Apple Music':'видео YouTube');
        frame.src=provider==='spotify'?
-         'https://open.spotify.com/embed/track/'+validated.split('/').pop():
+         'https://open.spotify.com/embed/track/'+validated.split('/').pop():provider==='appleMusic'?
+         validated.replace('https://music.apple.com/','https://embed.music.apple.com/'):
          'https://www.youtube-nocookie.com/embed/'+validated.split('v=')[1];
        frame.loading='lazy';frame.setAttribute('allow','clipboard-write; encrypted-media; fullscreen; picture-in-picture');
        frame.setAttribute('allowfullscreen','');
        frame.referrerPolicy='strict-origin-when-cross-origin';
        appendOfficialFrame(player,frame,provider,true);
-       var external=create('a','cms-music-external','Открыть в '+(provider==='spotify'?'Spotify':'YouTube'));
+       var external=create('a','cms-music-external','Открыть в '+(provider==='spotify'?'Spotify':provider==='appleMusic'?'Apple Music':'YouTube'));
        external.href=validated;external.rel='noopener noreferrer';external.target='_blank';
        player.appendChild(external);
        var dismiss=create('button','cms-music-close','Закрыть');
@@ -199,38 +203,34 @@
          entry.className=entry.className.replace(/ is-playing/g,'');
          button.setAttribute('aria-pressed','false');
          if(alternateButton)alternateButton.setAttribute('aria-pressed','false');
+         if(thirdButton)thirdButton.setAttribute('aria-pressed','false');
        };
        player.appendChild(dismiss);
      }
      button.onclick=function(){playFor(track.provider,track.url);};
      if(track.alternateUrl&&track.alternateProvider){
        alternateButton=create('button','cms-music-alt-source',
-         'Слушать в '+(track.alternateProvider==='spotify'?'Spotify':'YouTube'));
+         'Слушать в '+(track.alternateProvider==='spotify'?'Spotify':track.alternateProvider==='appleMusic'?'Apple Music':'YouTube'));
        alternateButton.type='button';
-       if(track.alternateProvider==='youtube'){alternateButton.className+=' cms-music-alt-source--youtube';alternateButton.textContent='';alternateButton.title='Открыть YouTube: '+track.title;}
        alternateButton.setAttribute('aria-pressed','false');
        alternateButton.setAttribute('aria-label','Слушать '+track.title+' в '+
          (track.alternateProvider==='spotify'?'Spotify':'YouTube'));
        alternateButton.onclick=function(){playFor(track.alternateProvider,track.alternateUrl);};
      }
-     buttons.push(button);altButtons.push(alternateButton);players.push(player);entries.push(entry);
-     var trackRow=create('div','cms-music-track-row');
-     trackRow.appendChild(button);
-     // Dedicated platform buttons, while the round Play keeps the configured default.
-     var services=['spotify','youtube'];
-     services.forEach(function(service){
-       var link=track.provider===service?track.url:
-         (track.alternateProvider===service?track.alternateUrl:'');
-       if(!link)return;
-       var serviceButton=create('button','cms-music-service cms-music-service--'+service);
-       serviceButton.type='button';
-       serviceButton.title='Слушать в '+(service==='spotify'?'Spotify':'YouTube');
-       serviceButton.setAttribute('aria-label',serviceButton.title+': '+track.title);
-       serviceButton.onclick=function(){playFor(service,link);};
-       trackRow.appendChild(serviceButton);
-     });
-     entry.appendChild(trackRow);
-     entry.appendChild(player);
+     if(track.thirdUrl&&track.thirdProvider){
+       thirdButton=create('button','cms-music-alt-source','Apple Music');
+       thirdButton.type='button';thirdButton.setAttribute('aria-pressed','false');
+       thirdButton.setAttribute('aria-label','Слушать '+track.title+' в Apple Music');
+       thirdButton.onclick=function(){playFor(track.thirdProvider,track.thirdUrl);};
+     }
+     buttons.push(button);altButtons.push(alternateButton);thirdButtons.push(thirdButton);players.push(player);entries.push(entry);
+     var sourceRow=create('div','cms-music-source-row');
+     sourceRow.style.display='flex';sourceRow.style.alignItems='center';sourceRow.style.gap='6px';
+     button.style.flex='1';button.style.minWidth='0';
+     sourceRow.appendChild(button);
+     if(alternateButton)sourceRow.appendChild(alternateButton);
+     if(thirdButton)sourceRow.appendChild(thirdButton);
+     entry.appendChild(sourceRow);entry.appendChild(player);
      list.appendChild(entry);
    });
    panel.appendChild(list);

@@ -588,7 +588,7 @@
  function artistMusicControls(card,item){
    var wrap=document.createElement('section');wrap.className='landing-featured';
    heading(wrap,'Лучшие песни на главной',
-     'Выбери до 30 композиций для карусели. Отметь Spotify, YouTube или обе площадки у одной песни. Ссылки берутся только из проверенного музыкального каталога.');
+     'Выбери до 30 композиций для карусели. Отметь Spotify, YouTube и Apple Music — одну, две или все три площадки. Ссылки берутся только из проверенного музыкального каталога.');
    if(!item.artistId){
      var missing=document.createElement('p');missing.className='sync-note';
      missing.textContent='Для выбора песен нужен артист из справочника.';wrap.appendChild(missing);
@@ -614,13 +614,13 @@
    catalogArtists.forEach(function(t){
      if(window.VMM_ARTIST_TRACKS.effective(t,trackLinks.overrides)!==item.artistId)return;
      var links=t.links||{},spotify=songUrl(links.spotify||'','spotify'),
-       youtube=songUrl(links.youtube||'','youtube');
-     if(spotify||youtube)options.push({title:String(t.title||'Без названия'),
-       id:t.id,spotify:spotify,youtube:youtube});
+       youtube=songUrl(links.youtube||'','youtube'),appleMusic=songUrl(links.appleMusic||links.apple||'','appleMusic');
+     if(spotify||youtube||appleMusic)options.push({title:String(t.title||'Без названия'),
+       id:t.id,spotify:spotify,youtube:youtube,appleMusic:appleMusic});
    });
    if(!options.length){
      var empty=document.createElement('p');empty.className='sync-note';
-     empty.textContent='У артиста пока нет привязанных песен с прямой ссылкой Spotify или YouTube. Сначала проверь ссылки в «Каталог релизов» и, если нужно, назначь песни артисту.';
+     empty.textContent='У артиста пока нет привязанных песен с прямой ссылкой Spotify, YouTube или Apple Music. Сначала проверь ссылки в «Каталог релизов» и, если нужно, назначь песни артисту.';
      wrap.appendChild(empty);card.appendChild(wrap);return;
    }
    var search=document.createElement('input');search.type='search';
@@ -631,10 +631,14 @@
    var selectedHost=document.createElement('div');selectedHost.className='landing-featured-selection';
    wrap.appendChild(selectedHost);
    var rows=document.createElement('div');rows.className='landing-featured-list';wrap.appendChild(rows);
+   var allSongsNote=document.createElement('p');allSongsNote.className='sync-note';
+   allSongsNote.textContent='Все доступные песни этого артиста: '+options.length+'. Прокручивай список или используй поиск; ограничение 36 снято.';
+   wrap.appendChild(allSongsNote);
    function chosen(t){
      for(var k=0;k<selected.length;k++)
-       if(t.spotify&&[selected[k].url,selected[k].alternateUrl].indexOf(t.spotify)>=0||
-         t.youtube&&[selected[k].url,selected[k].alternateUrl].indexOf(t.youtube)>=0)return k;
+       if(t.spotify&&[selected[k].url,selected[k].alternateUrl,selected[k].thirdUrl].indexOf(t.spotify)>=0||
+         t.youtube&&[selected[k].url,selected[k].alternateUrl,selected[k].thirdUrl].indexOf(t.youtube)>=0||
+         t.appleMusic&&[selected[k].url,selected[k].alternateUrl,selected[k].thirdUrl].indexOf(t.appleMusic)>=0)return k;
      return -1;
    }
    function markChanged(){
@@ -648,8 +652,8 @@
      selected.forEach(function(song,index){
        var line=document.createElement('div');line.className='landing-featured-chosen';
        var name=document.createElement('span');
-       name.textContent=(index+1)+'. '+song.title+' — '+(song.provider==='spotify'?'Spotify':'YouTube')+
-         (song.alternateUrl?' + '+(song.alternateProvider==='spotify'?'Spotify':'YouTube'):'');
+       var platformLabel=function(p){return p==='spotify'?'Spotify':p==='appleMusic'?'Apple Music':'YouTube';};
+       name.textContent=(index+1)+'. '+song.title+' — '+[song.provider,song.alternateProvider,song.thirdProvider].filter(Boolean).map(platformLabel).join(' + ');
        line.appendChild(name);
        if(manualOrder){
          var up=button('↑',function(){
@@ -672,7 +676,7 @@
      var q=String(search.value||'').toLocaleLowerCase('ru').replace(/ё/g,'е').trim();
      var found=options.filter(function(t){return !q||(t.title.toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)>=0);});
      found.sort(compareSong);
-     var visible=found.slice(0,36);
+     var visible=found;
      visible.forEach(function(t){
        var at=chosen(t),yes=at>=0;
        var row=document.createElement('div');row.className='landing-featured-row';
@@ -683,28 +687,29 @@
        function checked(provider){
          if(!yes)return false;
          return selected[at].provider===provider||
-           !!selected[at].alternateUrl&&selected[at].alternateProvider===provider;
+           !!selected[at].alternateUrl&&selected[at].alternateProvider===provider||
+           !!selected[at].thirdUrl&&selected[at].thirdProvider===provider;
        }
        var spotify=attachedSourceCheckbox(sources,'spotify',checked('spotify'),!t.spotify);
        var youtube=attachedSourceCheckbox(sources,'youtube',checked('youtube'),!t.youtube);
+       var apple=attachedSourceCheckbox(sources,'appleMusic',checked('appleMusic'),!t.appleMusic);
        row.appendChild(sources);
-       function changeSelection(sOn,yOn){
-         sOn=!!(sOn&&t.spotify);yOn=!!(yOn&&t.youtube);
+       function changeSelection(sOn,yOn,aOn){
+         sOn=!!(sOn&&t.spotify);yOn=!!(yOn&&t.youtube);aOn=!!(aOn&&t.appleMusic);
          var foundAt=chosen(t),old=foundAt>=0?selected[foundAt]:null;
-         if(!sOn&&!yOn){
+         if(!sOn&&!yOn&&!aOn){
            if(foundAt>=0){selected.splice(foundAt,1);markChanged();}
            draw();return;
          }
          if(foundAt<0&&selected.length>=30){
            info('Выбери не более 30 лучших песен для артиста.');draw();return;
          }
-         var primary=old&&old.provider==='youtube'&&yOn?'youtube':
-           old&&old.provider==='spotify'&&sOn?'spotify':sOn?'spotify':'youtube';
-         var other=primary==='spotify'?'youtube':'spotify';
+         var enabled=['spotify','youtube','appleMusic'].filter(function(k){return k==='spotify'?sOn:k==='youtube'?yOn:aOn;});
+         var primary=old&&enabled.indexOf(old.provider)>=0?old.provider:enabled[0];
+         var rest=enabled.filter(function(k){return k!==primary;});
          var raw={title:old?old.title:t.title,provider:primary,url:t[primary]};
-         if(other==='spotify'&&sOn||other==='youtube'&&yOn){
-           raw.alternateProvider=other;raw.alternateUrl=t[other];
-         }
+         if(rest[0]){raw.alternateProvider=rest[0];raw.alternateUrl=t[rest[0]];}
+         if(rest[1]){raw.thirdProvider=rest[1];raw.thirdUrl=t[rest[1]];}
          var clean=API.featuredTrack(raw,foundAt<0?selected.length+1:foundAt+1);
          if(foundAt<0)selected.push(clean);else selected[foundAt]=clean;
          markChanged();draw();
@@ -712,17 +717,14 @@
        tick.onchange=function(){
          if(!this.checked){changeSelection(false,false);return;}
          if(yes){draw();return;}
-         changeSelection(!!t.spotify,!t.spotify&&!!t.youtube);
+         changeSelection(!!t.spotify,!t.spotify&&!!t.youtube,!t.spotify&&!t.youtube&&!!t.appleMusic);
        };
-       spotify.onchange=function(){changeSelection(spotify.checked,youtube.checked);};
-       youtube.onchange=function(){changeSelection(spotify.checked,youtube.checked);};
+       spotify.onchange=function(){changeSelection(spotify.checked,youtube.checked,apple.checked);};
+       youtube.onchange=function(){changeSelection(spotify.checked,youtube.checked,apple.checked);};
+       apple.onchange=function(){changeSelection(spotify.checked,youtube.checked,apple.checked);};
        rows.appendChild(row);
      });
-     if(found.length>visible.length){
-       var note=document.createElement('p');note.className='sync-note';
-       note.textContent='Показаны первые '+visible.length+' из '+found.length+'. Уточни название в поиске.';
-       rows.appendChild(note);
-     }else if(!found.length){
+     if(!found.length){
        var noResult=document.createElement('p');noResult.className='sync-note';
        noResult.textContent='Нет песен с подтверждёнными прямыми ссылками по этому запросу.';
        rows.appendChild(noResult);
@@ -731,7 +733,7 @@
    search.oninput=draw;
    draw();
    var note=document.createElement('p');note.className='sync-note';
-   note.textContent='Посетитель сам выбирает Spotify или YouTube в одной карточке. Никакого автозапуска. Сохрани черновик и отдельно опубликуй изменения.';
+   note.textContent='Посетитель сам выбирает Spotify, YouTube или Apple Music в одной карточке. Никакого автозапуска. Сохрани черновик и отдельно опубликуй изменения.';
    wrap.appendChild(note);card.appendChild(wrap);
  }
 
@@ -1055,9 +1057,9 @@
  function attachedSourceCheckbox(parent,provider,checked,disabled){
    var label=document.createElement('label');label.className='landing-source-check'+(disabled?' is-disabled':'');
    var box=document.createElement('input');box.type='checkbox';box.checked=!!checked;
-   box.disabled=!!disabled;box.setAttribute('aria-label',provider==='spotify'?'Spotify':'YouTube');
+   box.disabled=!!disabled;box.setAttribute('aria-label',provider==='spotify'?'Spotify':provider==='appleMusic'?'Apple Music':'YouTube');
    label.appendChild(box);
-   var title=document.createElement('span');title.textContent=provider==='spotify'?'Spotify':'YouTube';
+   var title=document.createElement('span');title.textContent=provider==='spotify'?'Spotify':provider==='appleMusic'?'Apple Music':'YouTube';
    label.appendChild(title);parent.appendChild(label);return box;
  }
  function attachedBuildSong(song,mode,sources){

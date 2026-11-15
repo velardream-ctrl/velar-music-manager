@@ -140,7 +140,7 @@ findInput('Публичная HTTPS-ссылка (профиль, Spotify, YouTu
 const bestRow=traverse(get('landing-fields'),node=>node.className==='landing-featured-row');
 assert.ok(bestRow,'Artist with a direct Spotify/YouTube track should offer a best-song checkbox');
 assert.match(bestRow.children[2].className,/landing-featured-sources/);
-assert.equal(bestRow.children[2].children.length,2,'Each artist song offers Spotify and YouTube');
+assert.equal(bestRow.children[2].children.length,3,'Each artist song offers Spotify, YouTube and Apple Music');
 assert.equal(bestRow.children[2].children[0].children[0].disabled,false);
 assert.equal(bestRow.children[2].children[1].children[0].disabled,false);
 bestRow.children[0].checked=true;

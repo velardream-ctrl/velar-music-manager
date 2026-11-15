@@ -21,16 +21,18 @@
  function approved(track){
    var api=window.VMM_LANDING_SCHEMA,found=[];
    if(!api||!api.songUrl)return found;
-   [['provider','url'],['alternateProvider','alternateUrl']].forEach(function(keys){
+   [['provider','url'],['alternateProvider','alternateUrl'],['thirdProvider','thirdUrl']].forEach(function(keys){
      var provider=track[keys[0]],url=api.songUrl(track[keys[1]],provider);
      if(url&&found.every(function(item){return item.provider!==provider;}))
        found.push({provider:provider,url:url});
    });
    return found;
  }
+ function platformName(p){return p==='spotify'?'Spotify':p==='appleMusic'?'Apple Music':'YouTube';}
  function embed(src){
    if(src.provider==='spotify')return 'https://open.spotify.com/embed/track/'+src.url.split('/').pop();
    if(src.provider==='youtube')return 'https://www.youtube-nocookie.com/embed/'+src.url.split('v=')[1];
+   if(src.provider==='appleMusic')return src.url.replace('https://music.apple.com/','https://embed.music.apple.com/');
    return '';
  }
  var activeMount=null,defaultView='rows',coverMap={},globalMode='standard',coverPriority='spotify-first';
@@ -109,7 +111,7 @@
      if(!picture||!verifiedUrl||!api||!api.songUrl)return;
      // Match a published recording by its exact official track/video URL.
      // Never guess by a similar title or load the private studio catalog.
-     var url=api.songUrl(verifiedUrl,'spotify')||api.songUrl(verifiedUrl,'youtube');
+     var url=api.songUrl(verifiedUrl,'spotify')||api.songUrl(verifiedUrl,'youtube')||api.songUrl(verifiedUrl,'appleMusic');
      if(url&&!coverMap[url])coverMap[url]=picture;
    }
    (albums||[]).filter(function(a){return a.visible;}).forEach(function(album){
@@ -118,6 +120,7 @@
      (album.tracks||[]).forEach(function(t){
        remember(t.url,picture);
        remember(t.alternateUrl,picture);
+       remember(t.thirdUrl,picture);
      });
    });
    // RUN-117: released singles can already have approved cover art even
@@ -212,7 +215,7 @@
      if(isCarousel)showAt(i);
      var host=slots[i],frame=el('iframe','cms-release-iframe '+classes+'-song-iframe'+
        (src.provider==='youtube'?' cms-release-iframe--video':''));
-     frame.title=tracks[i].title+' — официальный плеер '+(src.provider==='spotify'?'Spotify':'YouTube');
+     frame.title=tracks[i].title+' — официальный плеер '+platformName(src.provider);
      frame.src=link;frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
      frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
      frame.setAttribute('allowfullscreen','');
@@ -220,7 +223,7 @@
        var viewport=el('div','spotify-embed-viewport');
        viewport.appendChild(frame);host.appendChild(viewport);
      }else host.appendChild(frame);
-     var external=el('a','cms-card-link','Открыть в '+(src.provider==='spotify'?'Spotify':'YouTube'));
+     var external=el('a','cms-card-link','Открыть в '+platformName(src.provider));
      external.href=src.url;external.rel='noopener noreferrer';external.target='_blank';
      host.appendChild(external);
      var close=el('button','cms-release-close','Закрыть плеер');
@@ -256,7 +259,7 @@
      title.appendChild(el('span','public-song-index',('0'+(i+1)).slice(-2)));
      // One artwork box per song, for Spotify OR YouTube. Keep its dimensions
      // when the official player opens; never append a second media card.
-     var art=opts.cover||coverMap[track.url]||coverMap[track.alternateUrl]||'';
+     var art=opts.cover||coverMap[track.url]||coverMap[track.alternateUrl]||coverMap[track.thirdUrl]||'';
      var holder=isCarousel?el('div','public-song-artwork'):view==='rows'?
        el('span','public-song-row-artwork'):title;
      var currentCover=art||'',fallbackArtwork=youtubeArtwork(track),failedCovers={};
@@ -330,7 +333,7 @@
      copy.onclick=function(){toggle(i,sources[0],true);};
      copy.appendChild(el('strong','',track.title));
      copy.appendChild(el('small','',(track.artist?track.artist+' · ':'')+
-       (sources[0].provider==='spotify'?'Spotify':'YouTube')));
+       platformName(sources[0].provider)));
      title.appendChild(copy);
      if(view==='rows')title.appendChild(holder); // CSS orders image before song name.
      item.appendChild(title);
@@ -340,10 +343,10 @@
        // Preserve the original compact round Play glyph instead of a
        // wide emoji/text button. The optional second service is a small pill.
        var choice=el('button','public-song-source'+(j===0?' is-primary':''),
-         j===0?'':(src.provider==='spotify'?'Spotify':'YouTube'));
+         j===0?'':platformName(src.provider));
        choice.type='button';choice.setAttribute('aria-pressed','false');
        choice.setAttribute('data-provider',src.provider);
-       choice.setAttribute('aria-label','Слушать '+track.title+' в '+(src.provider==='spotify'?'Spotify':'YouTube'));
+       choice.setAttribute('aria-label','Слушать '+track.title+' в '+platformName(src.provider));
        choice.onclick=function(){toggle(i,src,false);};
        controls.appendChild(choice);buttons[i].push(choice);
      });
