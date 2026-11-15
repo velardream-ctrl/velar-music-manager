@@ -1776,3 +1776,21 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
   flex:0 0 min(70vw,216px);width:min(70vw,216px);max-width:min(70vw,216px)
  }
 }
+
+/* RUN-135: fit four complete song covers in the wide language/topic carousel;
+   artist carousel keeps its separate 216px layout. */
+@media(min-width:700px){
+ .public-song-carousel-track>.public-song-entry--carousel{
+  flex:0 0 216px;width:216px;max-width:216px;
+ }
+}
+@media(max-width:699px){
+ .public-song-carousel-track>.public-song-entry--carousel{
+  flex:0 0 min(70vw,216px);width:min(70vw,216px);max-width:min(70vw,216px);
+ }
+}
+/* Apple Music: white square with dark musical note, matching the restrained
+   Spotify/YouTube platform button proportions and existing hover highlight. */
+.public-song-source--appleMusic{
+ background:#fff;border-color:#d7d7dd;color:#171923;
+}
