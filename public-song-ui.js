@@ -272,34 +272,50 @@
            title.removeChild(child);
        }
      }
+     function note(){
+       var music=el('span','public-song-thumbnail public-song-thumbnail--empty','♫');
+       music.setAttribute('aria-hidden','true');
+       return music;
+     }
      function putCover(url){
-       if(!url||failedCovers[url]||currentCover===url&&holder.firstChild&&holder.firstChild.tagName==='img')return;
+       if(!url||failedCovers[url]||
+         currentCover===url&&holder.firstChild&&holder.firstChild.tagName==='img')return;
        var thumb=el('img','public-song-thumbnail');
        thumb.alt='Обложка: '+track.title;
-       // RUN-121: every rendered song image is eager, independent of its
-       // position in a horizontal carousel or standard song list.
+       // Keep RUN-123 loading levels unchanged; show a local note when the
+       // connection stalls instead of an unpainted image rectangle.
        if(window.VELAR_IMAGE_LOADING&&window.VELAR_IMAGE_LOADING.apply)
          window.VELAR_IMAGE_LOADING.apply(thumb,i);
        else thumb.loading='eager';
        if(isCarousel&&i===0)thumb.setAttribute('fetchpriority','high');
        thumb.decoding='async';thumb.referrerPolicy='no-referrer';
+       if(isCarousel)thumb.style.visibility='hidden';
        thumb.onerror=function(){
-         // At most one attempt per URL. A missing manual cover tries the
-         // published priority; a failed official cover tries the other source.
          if(currentCover!==url)return;
          failedCovers[url]=true;
          clearArtwork();
-         var next=el('span','public-song-thumbnail public-song-thumbnail--empty','♫');
-         next.setAttribute('aria-hidden','true');holder.appendChild(next);
+         holder.appendChild(note());
          var youtubeFailed=url===fallbackArtwork;
          var spotifyFailed=/^https:\/\/(?:i\.scdn\.co|image-cdn-ak\.spotifycdn\.com)\//.test(url);
          var only=youtubeFailed?'spotify':spotifyFailed?'youtube':null;
          requestArtwork(track,function(candidate){putCover(candidate);},only);
-         return;
        };
-       thumb.onload=function(){thumb.onerror=null;};
- 
-       thumb.src=url;currentCover=url;clearArtwork();holder.appendChild(thumb);
+       thumb.onload=function(){
+         if(currentCover!==url)return;
+         thumb.onerror=null;
+         if(isCarousel){
+           thumb.style.visibility='visible';
+           for(var j=holder.children.length-1;j>=0;j--){
+             var child=holder.children[j];
+             if(child!==thumb&&String(child.className||'').indexOf('public-song-thumbnail--empty')>=0)
+               holder.removeChild(child);
+           }
+         }
+       };
+       currentCover=url;clearArtwork();
+       holder.appendChild(thumb);
+       if(isCarousel)holder.appendChild(note());
+       thumb.src=url; // The fallback is already attached before network starts.
      }
      if(art)putCover(art);
      else {
