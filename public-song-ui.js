@@ -33,7 +33,7 @@
    if(src.provider==='youtube')return 'https://www.youtube-nocookie.com/embed/'+src.url.split('v=')[1];
    return '';
  }
- var activeMount=null,defaultView='rows',coverMap={},globalMode='standard';
+ var activeMount=null,defaultView='rows',coverMap={},globalMode='standard',coverPriority='spotify-first';
  var artworkCache={};
  // RUN-121: every rendered song card requests its cover immediately.
  // Owner-approved artwork still takes precedence over official oEmbed.
@@ -47,15 +47,23 @@
    }
    return '';
  }
- function requestArtwork(track,callback){
+ function requestArtwork(track,callback,only){
    // RUN-124: choose ONE source per request. Previously YouTube was shown
    // immediately and Spotify later replaced it, causing cover flicker.
    var youtube=youtubeArtwork(track);
    var spotify=approved(track).filter(function(item){return item.provider==='spotify';})[0];
-   if(!spotify||typeof window.fetch!=='function'){
+   // User's published preference never changes the loading schedule.
+   // Explicit 'only' is used for a broken image: never retry that URL.
+   if(only==='youtube'||(!only&&coverPriority==='youtube-first'&&youtube)){
      if(youtube)callback(youtube);
      return;
    }
+   if(!spotify||typeof window.fetch!=='function'){
+     if(only==='spotify')return;
+     if(youtube)callback(youtube);
+     return;
+   }
+   if(only==='spotify')youtube='';
    var key=spotify.url,record=artworkCache[key];
    if(record){
      if(record.url)callback(record.url);
@@ -91,7 +99,8 @@
        }).catch(function(){settle('');});
    }catch(e){settle('');}
  }
- function configure(view,albums,mode,releases){
+ function configure(view,albums,mode,releases,priority){
+   coverPriority=priority==='youtube-first'?'youtube-first':'spotify-first';
    defaultView=['rows','covers','tiles'].indexOf(view)>=0?view:'rows';
    globalMode=mode==='carousel'?'carousel':'standard';
    coverMap={};
@@ -275,16 +284,21 @@
        if(isCarousel&&i===0)thumb.setAttribute('fetchpriority','high');
        thumb.decoding='async';thumb.referrerPolicy='no-referrer';
        thumb.onerror=function(){
-         // At most two distinct network images per card: source, then YouTube.
-         // Never retry a failed URL or let a late metadata response revive it.
+         // At most one attempt per URL. A missing manual cover tries the
+         // published priority; a failed official cover tries the other source.
+         if(currentCover!==url)return;
          failedCovers[url]=true;
-         if(fallbackArtwork&&url!==fallbackArtwork&&!failedCovers[fallbackArtwork]){
-           putCover(fallbackArtwork);return;
-         }
          clearArtwork();
-         var music=el('span','public-song-thumbnail public-song-thumbnail--empty','♫');
-         music.setAttribute('aria-hidden','true');holder.appendChild(music);
+         var next=el('span','public-song-thumbnail public-song-thumbnail--empty','♫');
+         next.setAttribute('aria-hidden','true');holder.appendChild(next);
+         var youtubeFailed=url===fallbackArtwork;
+         var spotifyFailed=/^https:\/\/(?:i\.scdn\.co|image-cdn-ak\.spotifycdn\.com)\//.test(url);
+         var only=youtubeFailed?'spotify':spotifyFailed?'youtube':null;
+         requestArtwork(track,function(candidate){putCover(candidate);},only);
+         return;
        };
+       thumb.onload=function(){thumb.onerror=null;};
+ 
        thumb.src=url;currentCover=url;clearArtwork();holder.appendChild(thumb);
      }
      if(art)putCover(art);
