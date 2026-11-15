@@ -92,11 +92,11 @@
    center.onclick=function(){var list=visibleNodes();if(list.length)choose(list[0].id);};
    center.appendChild(el('span','universe-core-light'));
    var crystal=el('img','universe-core-crystal');
-   crystal.src='assets/velardream-symbol.svg';crystal.alt='';
    if(window.VELAR_IMAGE_LOADING&&window.VELAR_IMAGE_LOADING.apply)
      window.VELAR_IMAGE_LOADING.apply(crystal,0);
    else crystal.loading='eager';
-   crystal.decoding='async';
+   crystal.decoding='async';crystal.alt='';
+   crystal.src='assets/velardream-symbol.svg';
    center.appendChild(crystal);stage.appendChild(center);
    nodes.forEach(function(n,i){
      // Orbit is visitor-driven (next/previous), never a costly idle loop.
