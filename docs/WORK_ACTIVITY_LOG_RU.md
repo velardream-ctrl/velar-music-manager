@@ -1463,3 +1463,8 @@
 - Статус: разработка, PR и CI ожидаются. После CI нужен браузерный smoke-check реальных Spotify обложек.
 
 - RUN-133 CI: после синхронизации проверок версий CSS v50 и SW v56 полный `Verify safe VELAR shell` run `43769518593` — SUCCESS, коммит `fbf5a43aad550dda6b6481d1fc0a26a81812c42a`. Готово к PR #93 merge. Нерешённая проблема Spotify oEmbed/thumbnail: пользовательские скриншоты показывают нотки; внешний endpoint в этой среде не удалось проверить из-за DNS. Не заявлять исправления сетевой загрузки, пока не получены Browser Network/CORS данные или рабочая серверная стратегия.
+
+### RUN-134 — 2026-11-16 — Spotify CDN host fix
+- Начато: по скриншотам Firefox Network Spotify oEmbed `200` для «Отчий дом» вернул `thumbnail_url` с `image-cdn-fa.spotifycdn.com`, тогда как `public-song-ui.js` разрешал только `image-cdn-ak.spotifycdn.com` и `i.scdn.co`; это воспроизводимая причина резервной нотки.
+- Исправлено: строгий regex официальных `image-cdn-[a-z]{2}.spotifycdn.com`, приоритет Spotify сохранён; `public-song-ui.js?v=18`, SW cache `v57`; PR #94 https://github.com/velardream-ctrl/velar-music-manager/pull/94.
+- Проверки CI и выпуск: в процессе; не утверждать, что опубликовано, до merge и подтверждения.
