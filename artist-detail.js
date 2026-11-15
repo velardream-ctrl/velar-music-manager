@@ -106,8 +106,8 @@
      var image=node('artist-portrait');
      if(window.VELAR_IMAGE_LOADING&&window.VELAR_IMAGE_LOADING.apply)
        window.VELAR_IMAGE_LOADING.apply(image,0);
-     image.src=pic;image.alt='Портрет артиста '+artist.title;
      image.referrerPolicy='no-referrer';
+     image.alt='Портрет артиста '+artist.title;image.src=pic;
    }
    text('artist-biography',artist.biography);
    show('artist-biography-section',!!artist.biography);
@@ -140,11 +140,11 @@
      if(!album.visible||!album.artist||album.artist.toLocaleLowerCase('ru')!==artist.title.toLocaleLowerCase('ru'))return;
      var tile=make('div','artist-album');
      if(album.imageData||album.imageUrl){
-       var img=make('img');img.src=album.imageData||album.imageUrl;
-       img.alt='Обложка: '+album.title;
+       var img=make('img');
        if(window.VELAR_IMAGE_LOADING&&window.VELAR_IMAGE_LOADING.apply)
          window.VELAR_IMAGE_LOADING.apply(img,index);
        else img.loading='eager';
+       img.alt='Обложка: '+album.title;img.src=album.imageData||album.imageUrl;
        tile.appendChild(img);
      }
      tile.appendChild(make('strong','',album.title));
