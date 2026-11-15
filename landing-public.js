@@ -214,8 +214,10 @@
        alternateButton.onclick=function(){playFor(track.alternateProvider,track.alternateUrl);};
      }
      buttons.push(button);altButtons.push(alternateButton);players.push(player);entries.push(entry);
-     entry.appendChild(button);
-     if(alternateButton)entry.appendChild(alternateButton);
+     var trackRow=create('div','cms-music-track-row');
+     trackRow.appendChild(button);
+     if(alternateButton)trackRow.appendChild(alternateButton);
+     entry.appendChild(trackRow);
      entry.appendChild(player);
      list.appendChild(entry);
    });
