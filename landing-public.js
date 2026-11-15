@@ -255,18 +255,11 @@
        control.setAttribute('aria-label','Слушать '+track.title+' в '+control.title);
        sourceRow.appendChild(control);
      }
-     // Preserve the familiar song title/cover row, with a separate compact
-     // source icon for the primary provider (not a generic Play button).
+     // Preserve RUN-122/131 DOM positions and the original primary song row.
+     // Only secondary and third official providers become compact icons.
      sourceRow.appendChild(button);
-     var primarySource=create('button','cms-music-alt-source');
-     primarySource.type='button';
-     primarySource.setAttribute('aria-pressed','false');
-     primarySource.onclick=function(){playFor(track.provider,track.url);};
-     compactSource(primarySource,track.provider);
      if(alternateButton)compactSource(alternateButton,track.alternateProvider);
      if(thirdButton)compactSource(thirdButton,track.thirdProvider);
-     var genericPlay=button.querySelector&&button.querySelector('.cms-music-play-icon');
-     if(genericPlay)genericPlay.style.display='none';
      entry.appendChild(sourceRow);entry.appendChild(player);
      list.appendChild(entry);
    });
