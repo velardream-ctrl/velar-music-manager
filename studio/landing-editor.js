@@ -631,6 +631,9 @@
    var selectedHost=document.createElement('div');selectedHost.className='landing-featured-selection';
    wrap.appendChild(selectedHost);
    var rows=document.createElement('div');rows.className='landing-featured-list';wrap.appendChild(rows);
+   var allSongsNote=document.createElement('p');allSongsNote.className='sync-note';
+   allSongsNote.textContent='Все доступные песни этого артиста: '+options.length+'. Прокручивай список или используй поиск; ограничение 36 снято.';
+   wrap.appendChild(allSongsNote);
    function chosen(t){
      for(var k=0;k<selected.length;k++)
        if(t.spotify&&[selected[k].url,selected[k].alternateUrl,selected[k].thirdUrl].indexOf(t.spotify)>=0||
@@ -673,7 +676,7 @@
      var q=String(search.value||'').toLocaleLowerCase('ru').replace(/ё/g,'е').trim();
      var found=options.filter(function(t){return !q||(t.title.toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)>=0);});
      found.sort(compareSong);
-     var visible=found.slice(0,36);
+     var visible=found;
      visible.forEach(function(t){
        var at=chosen(t),yes=at>=0;
        var row=document.createElement('div');row.className='landing-featured-row';
@@ -721,11 +724,7 @@
        apple.onchange=function(){changeSelection(spotify.checked,youtube.checked,apple.checked);};
        rows.appendChild(row);
      });
-     if(found.length>visible.length){
-       var note=document.createElement('p');note.className='sync-note';
-       note.textContent='Показаны первые '+visible.length+' из '+found.length+'. Уточни название в поиске.';
-       rows.appendChild(note);
-     }else if(!found.length){
+     if(!found.length){
        var noResult=document.createElement('p');noResult.className='sync-note';
        noResult.textContent='Нет песен с подтверждёнными прямыми ссылками по этому запросу.';
        rows.appendChild(noResult);
@@ -734,7 +733,7 @@
    search.oninput=draw;
    draw();
    var note=document.createElement('p');note.className='sync-note';
-   note.textContent='Посетитель сам выбирает Spotify или YouTube в одной карточке. Никакого автозапуска. Сохрани черновик и отдельно опубликуй изменения.';
+   note.textContent='Посетитель сам выбирает Spotify, YouTube или Apple Music в одной карточке. Никакого автозапуска. Сохрани черновик и отдельно опубликуй изменения.';
    wrap.appendChild(note);card.appendChild(wrap);
  }
 
