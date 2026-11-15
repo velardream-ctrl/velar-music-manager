@@ -1621,3 +1621,25 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  cursor:pointer;
 }
 .cms-music-alt-source[aria-pressed="true"]{background:#314970;border-color:#f8dca5}
+
+/* RUN-131: desktop 100% zoom — keep crystal rings and all copy within their own stage. */
+@media (min-width:851px){
+ .crystal-journey-stage{min-height:790px}
+ .crystal-journey-ring--outer{width:min(570px,75vw);height:min(570px,75vw)}
+ .crystal-journey-ring--inner{width:min(405px,55vw);height:min(405px,55vw)}
+ .crystal-journey-copy{top:67%;max-width:min(850px,calc(100% - 44px))}
+ .crystal-journey-copy h2{font-size:clamp(1.7rem,3.2vw,2.6rem);overflow-wrap:break-word}
+}
+/* RUN-131: carousel always presents complete cards rather than a clipped half-card. */
+@media (min-width:700px){
+ .public-song-carousel-track>.public-song-entry--carousel{
+  flex:0 0 calc((100% - 14px)/2);width:calc((100% - 14px)/2);max-width:calc((100% - 14px)/2);
+ }
+}
+@media (max-width:699px){
+ .public-song-carousel-track>.public-song-entry--carousel{flex:0 0 100%;width:100%;max-width:100%}
+}
+/* RUN-131: compact alternate YouTube play action in classic song rows. */
+.cms-music-alt-source--youtube{display:inline-flex;align-items:center;justify-content:center;min-width:38px;min-height:32px;padding:5px 9px;background:#d82020;color:white;border-radius:9px;font-size:0;line-height:1}
+.cms-music-alt-source--youtube::before{content:"";display:block;width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:11px solid white}
+.cms-music-alt-source--youtube:focus-visible{outline:2px solid white;outline-offset:3px}
