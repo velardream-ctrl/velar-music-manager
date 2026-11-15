@@ -149,7 +149,7 @@
      if(view!=='classic')button.appendChild(artwork);
      var details=create('span','cms-music-track-info');
      details.appendChild(create('strong','',track.title));
-     details.appendChild(create('small','',track.provider==='spotify'?'Spotify':'YouTube'));
+     details.appendChild(create('small','',track.provider==='spotify'?'Spotify':track.provider==='appleMusic'?'Apple Music':'YouTube'));
      button.appendChild(details);
      // Icon is an empty, decorative CSS vector, not a text triangle that
      // Android/Samsung may replace with a blue system emoji.
@@ -210,7 +210,7 @@
      button.onclick=function(){playFor(track.provider,track.url);};
      if(track.alternateUrl&&track.alternateProvider){
        alternateButton=create('button','cms-music-alt-source',
-         'Слушать в '+(track.alternateProvider==='spotify'?'Spotify':'YouTube'));
+         'Слушать в '+(track.alternateProvider==='spotify'?'Spotify':track.alternateProvider==='appleMusic'?'Apple Music':'YouTube'));
        alternateButton.type='button';
        alternateButton.setAttribute('aria-pressed','false');
        alternateButton.setAttribute('aria-label','Слушать '+track.title+' в '+
