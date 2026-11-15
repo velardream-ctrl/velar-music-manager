@@ -2362,6 +2362,12 @@
        selectField(panel,'Вид лучших песен',
          [['classic','Обычные строки (как сейчас)'],['covers','Строки с маленькими обложками'],['tiles','Квадратные карточки']],
          data.artists.featuredView||'classic',function(v){data.artists.featuredView=v;});
+       heading(panel,'Общий вид песен на сайте',
+         'Один и тот же выбор действует для артистов, альбомов, языков и тем. Обычный список не удаляется при включении карусели.');
+       selectField(panel,'Вид песен на сайте',
+         [['standard','Обычный список песен'],
+          ['carousel','Карусель с обложками']],
+         data.genres.songViewMode||'standard',function(v){data.genres.songViewMode=v;});
      }
      cardFields(panel,tab);
    }else if(tab==='albums'){

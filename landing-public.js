@@ -227,9 +227,39 @@
      var sourceRow=create('div','cms-music-source-row');
      sourceRow.style.display='flex';sourceRow.style.alignItems='center';sourceRow.style.gap='6px';
      button.style.flex='1';button.style.minWidth='0';
+     // Keep the existing song row and inline player; only render compact provider controls.
+     // A provider icon is visible only when that song has a verified official URL.
+     function providerIcon(provider){
+       var icon=create('span','cms-platform-symbol');
+       icon.setAttribute('aria-hidden','true');
+       if(provider==='spotify'){
+         icon.textContent='♫';icon.style.background='#1db954';icon.style.color='#fff';
+       }else if(provider==='youtube'){
+         icon.textContent='▶';icon.style.background='#d71920';icon.style.color='#fff';
+       }else{
+         icon.textContent='♪';icon.style.background='#f5f5f7';icon.style.color='#242428';
+       }
+       icon.style.display='inline-flex';icon.style.alignItems='center';icon.style.justifyContent='center';
+       icon.style.width='30px';icon.style.height='30px';icon.style.borderRadius='9px';
+       icon.style.fontWeight='700';icon.style.fontSize='17px';icon.style.flexShrink='0';
+       return icon;
+     }
+     function compactSource(control,provider){
+       if(!control)return;
+       control.textContent='';
+       control.appendChild(providerIcon(provider));
+       control.style.flex='0 0 auto';control.style.width='36px';control.style.minWidth='36px';
+       control.style.padding='3px';control.style.border='0';control.style.background='transparent';
+       control.style.display='inline-flex';control.style.justifyContent='center';
+       control.title=provider==='spotify'?'Spotify':provider==='youtube'?'YouTube':'Apple Music';
+       control.setAttribute('aria-label','Слушать '+track.title+' в '+control.title);
+       sourceRow.appendChild(control);
+     }
+     // Preserve RUN-122/131 DOM positions and the original primary song row.
+     // Only secondary and third official providers become compact icons.
      sourceRow.appendChild(button);
-     if(alternateButton)sourceRow.appendChild(alternateButton);
-     if(thirdButton)sourceRow.appendChild(thirdButton);
+     if(alternateButton)compactSource(alternateButton,track.alternateProvider);
+     if(thirdButton)compactSource(thirdButton,track.thirdProvider);
      entry.appendChild(sourceRow);entry.appendChild(player);
      list.appendChild(entry);
    });
