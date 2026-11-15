@@ -1715,3 +1715,14 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .public-song-entry--carousel{padding:9px 9px 12px}
 .public-song-entry--carousel .public-song-artwork::before{padding-top:100%}
 .public-song-entry--carousel .public-song-copy strong{font-size:.88rem}
+
+/* RUN-132: each verified provider has its own recognizable compact control. */
+.public-song-source--spotify,.public-song-source--youtube,.public-song-source--appleMusic{
+ width:36px;min-width:36px;height:36px;min-height:36px;padding:0;
+ margin-left:4px;border-radius:9px;font-size:18px;font-weight:700;line-height:1;
+}
+.public-song-source--spotify{background:#168b45;color:#fff;border-color:#168b45}
+.public-song-source--youtube{background:#cc2027;color:#fff;border-color:#cc2027}
+.public-song-source--appleMusic{background:#f5f5f7;color:#23232b;border-color:#bfc0c7}
+.public-song-source.is-primary::before{display:none}
+.public-song-source.is-primary{border-radius:9px}
