@@ -342,8 +342,8 @@
      sources.forEach(function(src,j){
        // Preserve the original compact round Play glyph instead of a
        // wide emoji/text button. The optional second service is a small pill.
-       var choice=el('button','public-song-source'+(j===0?' is-primary':''),
-         j===0?'':platformName(src.provider));
+       var choice=el('button','public-song-source'+(j===0?' is-primary':'')+' public-song-source--'+src.provider,
+         src.provider==='spotify'?'♫':src.provider==='youtube'?'▶':'♪');
        choice.type='button';choice.setAttribute('aria-pressed','false');
        choice.setAttribute('data-provider',src.provider);
        choice.setAttribute('aria-label','Слушать '+track.title+' в '+platformName(src.provider));
