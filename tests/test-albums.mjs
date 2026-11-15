@@ -75,7 +75,8 @@ assert.equal(cfg.albums.entries[0].tracks[0].title,'Северный олень'
  'Alphabetic display must not rewrite published/source album track order');
 const row=list.children[1],title=row.children[0];
 assert.match(row.className,/public-song-entry--covers/);
-assert.equal(title.children[1].tagName,'img','Thumbnail derives from owner-curated album cover');
+assert.equal(title.children[1].className.includes('--empty'),true,
+ 'YouTube-only album track uses local note, never the album or video thumbnail');
 const primary=row.children[1].children[0];
 primary.onclick();
 assert.equal(row.children[2].children[0].className,'spotify-embed-viewport');

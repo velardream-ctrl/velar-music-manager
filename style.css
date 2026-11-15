@@ -1699,3 +1699,30 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .cms-music-track-row>.cms-music-service:last-of-type{margin-right:10px}
 .cms-music-service:focus-visible{outline:2px solid #fff;outline-offset:2px}
 @media(max-width:420px){.cms-music-track-row>.cms-music-service{flex-basis:27px;width:27px;height:27px}.cms-music-track-row>.cms-music-service:last-of-type{margin-right:7px}}
+
+/* RUN-132: compact carousel cards in language/theme/artist song collections.
+   Do not modify the classic list or the lazy-loading/fallback image pipeline. */
+@media (min-width:700px){
+ .public-song-carousel-track>.public-song-entry--carousel{
+  flex:0 0 236px;width:236px;max-width:236px;
+ }
+}
+@media (max-width:699px){
+ .public-song-carousel-track>.public-song-entry--carousel{
+  flex:0 0 min(72vw,236px);width:min(72vw,236px);max-width:min(72vw,236px);
+ }
+}
+.public-song-entry--carousel{padding:9px 9px 12px}
+.public-song-entry--carousel .public-song-artwork::before{padding-top:100%}
+.public-song-entry--carousel .public-song-copy strong{font-size:.88rem}
+
+/* RUN-132: each verified provider has its own recognizable compact control. */
+.public-song-source--spotify,.public-song-source--youtube,.public-song-source--appleMusic{
+ width:36px;min-width:36px;height:36px;min-height:36px;padding:0;
+ margin-left:4px;border-radius:9px;font-size:18px;font-weight:700;line-height:1;
+}
+.public-song-source--spotify{background:#168b45;color:#fff;border-color:#168b45}
+.public-song-source--youtube{background:#cc2027;color:#fff;border-color:#cc2027}
+.public-song-source--appleMusic{background:#f5f5f7;color:#23232b;border-color:#bfc0c7}
+.public-song-source.is-primary::before{display:none}
+.public-song-source.is-primary{border-radius:9px}

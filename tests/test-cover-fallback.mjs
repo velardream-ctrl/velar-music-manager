@@ -43,49 +43,24 @@ const holder=label.children.find(x=>x.className==='public-song-row-artwork');
 assert.equal(holder.children[0].tagName,'img');
 assert.equal(holder.children[0].src,'https://i.scdn.co/image/abc123');
 holder.children[0].onerror();
-assert.equal(holder.children[0].src,yt,'broken Spotify image should use YouTube');
-holder.children[0].onerror();
-assert.equal(holder.children[0].className.includes('--empty'),true,'broken YouTube cover must stop and use placeholder');
+assert.equal(holder.children[0].className.includes('--empty'),true,
+ 'Spotify image failure must show the local note, never a YouTube image');
 assert.equal(host.children[0].children[2].children.length,0,'never pre-open player');
-// RUN-125: when YouTube is preferred, avoid Spotify metadata until a broken image.
+// Spotify-only artwork policy is independent of legacy stored priority.
 api.configure('rows',[],'standard',[],'youtube-first');
 const host2=element('div');
 api.mount(host2,[track],{prefix:'language',batch:1});
-const label2=host2.children[0].children[0];
-const holder2=label2.children.find(x=>x.className==='public-song-row-artwork');
-assert.equal(holder2.children[0].src,yt,'owner priority uses YouTube immediately');
-holder2.children[0].onerror();
+const holder2=host2.children[0].children[0].children.find(x=>x.className==='public-song-row-artwork');
 assert.equal(holder2.children[0].src,'https://i.scdn.co/image/abc123',
- 'broken YouTube image must try Spotify before a placeholder');
+ 'YouTube-first setting must not replace Spotify artwork');
 holder2.children[0].onerror();
-assert.equal(holder2.children[0].className.includes('--empty'),true,
- 'both sources failing must not enter a retry loop');
-// A manually uploaded cover must always take precedence, even when YouTube is first.
+assert.equal(holder2.children[0].className.includes('--empty'),true);
 const manual='https://example.com/published-cover.jpg';
-api.configure('rows',[],'standard',[],'youtube-first');
 const manualHost=element('div');
 api.mount(manualHost,[track],{prefix:'language',cover:manual,batch:1});
 const manualHolder=manualHost.children[0].children[0].children.find(x=>x.className==='public-song-row-artwork');
-assert.equal(manualHolder.children[0].src,manual,'Published manual cover wins over platform priority');
-manualHolder.children[0].onerror();
-assert.equal(manualHolder.children[0].src,yt,'Broken manual cover follows YouTube-first priority');
-manualHolder.children[0].onerror();
 assert.equal(manualHolder.children[0].src,'https://i.scdn.co/image/abc123',
- 'Broken YouTube preview falls back to Spotify metadata after failed manual cover');
-manualHolder.children[0].onerror();
-assert.ok(manualHolder.children[0].className.includes('--empty'),
- 'Three failed cover sources end in a stable placeholder');
-
-// Existing Spotify-first behavior also honors a broken manually uploaded cover.
-api.configure('rows',[],'standard',[],'spotify-first');
-const manualSpotifyHost=element('div');
-api.mount(manualSpotifyHost,[track],{prefix:'language',cover:manual,batch:1});
-const manualSpotifyHolder=manualSpotifyHost.children[0].children[0].children.find(x=>x.className==='public-song-row-artwork');
-manualSpotifyHolder.children[0].onerror();
-assert.equal(manualSpotifyHolder.children[0].src,'https://i.scdn.co/image/abc123',
- 'Manual cover failure should choose the published Spotify-first source');
-manualSpotifyHolder.children[0].onerror();
-assert.equal(manualSpotifyHolder.children[0].src,yt,'Spotify failure should still reach YouTube');
+ 'Manual art cannot override the Spotify-only policy');
 // RUN-126: on poor mobile networks a pending image must leave a local note
 // visible in the same square. Only actual onload may remove the note.
 api.configure('rows',[],'carousel',[],'youtube-first');
@@ -108,8 +83,8 @@ api.mount(brokenHost,[track],{prefix:'language',batch:1});
 const brokenArtwork=brokenHost.children[1].children[0].children[0].children.find(x=>x.className==='public-song-artwork');
 assert.equal(brokenArtwork.children[1].textContent,'♫');
 brokenArtwork.children[0].onerror();
-assert.equal(brokenArtwork.children[1].textContent,'♫','note persists through first source failure');
-brokenArtwork.children[0].onerror();
-assert.equal(brokenArtwork.children[0].className.includes('--empty'),true,
- 'note remains after all image sources fail');
-console.log('PASS RUN-124/125/126: ordered covers and visible note during stalled network');
+assert.equal(brokenArtwork.children.length,1,
+ 'Failed Spotify image must leave one stable local note, not another network image');
+assert.equal(brokenArtwork.children[0].textContent,'♫',
+ 'Spotify-only fallback remains a local note');
+console.log('PASS RUN-132: Spotify-only covers and visible note during stalled network');

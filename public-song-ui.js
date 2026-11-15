@@ -50,29 +50,17 @@
    return '';
  }
  function requestArtwork(track,callback,only){
-   // RUN-124: choose ONE source per request. Previously YouTube was shown
-   // immediately and Spotify later replaced it, causing cover flicker.
-   var youtube=youtubeArtwork(track);
+   // RUN-132: artwork is Spotify-only. YouTube/Apple Music remain playable
+   // sources, but never provide an image or replace a failed Spotify cover.
    var spotify=approved(track).filter(function(item){return item.provider==='spotify';})[0];
-   // User's published preference never changes the loading schedule.
-   // Explicit 'only' is used for a broken image: never retry that URL.
-   if(only==='youtube'||(!only&&coverPriority==='youtube-first'&&youtube)){
-     if(youtube)callback(youtube);
-     return;
-   }
-   if(!spotify||typeof window.fetch!=='function'){
-     if(only==='spotify')return;
-     if(youtube)callback(youtube);
-     return;
-   }
-   if(only==='spotify')youtube='';
+   if(!spotify||typeof window.fetch!=='function')return;
    var key=spotify.url,record=artworkCache[key];
    if(record){
      if(record.url)callback(record.url);
-     else if(record.pending)record.callbacks.push({callback:callback,fallback:youtube});
+     else if(record.pending)record.callbacks.push(callback);
      return;
    }
-   record={url:'',pending:true,callbacks:[{callback:callback,fallback:youtube}]};
+   record={url:'',pending:true,callbacks:[callback]};
    artworkCache[key]=record;
    var finished=false,timer=null;
    function settle(url){
@@ -81,15 +69,11 @@
      if(timer!==null)window.clearTimeout(timer);
      record.url=url;record.pending=false;
      var listeners=record.callbacks.slice();record.callbacks=[];
-     listeners.forEach(function(listener){
-       var chosen=url||listener.fallback;
-       if(chosen)listener.callback(chosen);
-     });
+     listeners.forEach(function(fn){if(url)fn(url);});
      if(!url&&artworkCache[key]===record)delete artworkCache[key];
    }
-   // A stalled oEmbed service must not leave the cover blank forever.
    if(typeof window.setTimeout==='function')
-     timer=window.setTimeout(function(){settle('');},3000);
+     timer=window.setTimeout(function(){settle('');},8000);
    try{
      window.fetch('https://open.spotify.com/oembed?url='+encodeURIComponent(key))
        .then(function(response){if(!response.ok)throw new Error('Artwork unavailable');return response.json();})
@@ -259,10 +243,10 @@
      title.appendChild(el('span','public-song-index',('0'+(i+1)).slice(-2)));
      // One artwork box per song, for Spotify OR YouTube. Keep its dimensions
      // when the official player opens; never append a second media card.
-     var art=opts.cover||coverMap[track.url]||coverMap[track.alternateUrl]||coverMap[track.thirdUrl]||'';
+     var art=''; // Spotify artwork only; published album/release and video art do not override it.
      var holder=isCarousel?el('div','public-song-artwork'):view==='rows'?
        el('span','public-song-row-artwork'):title;
-     var currentCover=art||'',fallbackArtwork=youtubeArtwork(track),failedCovers={};
+     var currentCover=art||'',failedCovers={};
      function clearArtwork(){
        if(holder!==title){clear(holder);return;}
        // In row/tiles/covers modes the title also owns the song number and
@@ -298,10 +282,7 @@
          failedCovers[url]=true;
          clearArtwork();
          holder.appendChild(note());
-         var youtubeFailed=url===fallbackArtwork;
-         var spotifyFailed=/^https:\/\/(?:i\.scdn\.co|image-cdn-ak\.spotifycdn\.com)\//.test(url);
-         var only=youtubeFailed?'spotify':spotifyFailed?'youtube':null;
-         requestArtwork(track,function(candidate){putCover(candidate);},only);
+         // Keep the local note; never fall back to YouTube or Apple artwork.
        };
        thumb.onload=function(){
          if(currentCover!==url)return;
@@ -342,8 +323,8 @@
      sources.forEach(function(src,j){
        // Preserve the original compact round Play glyph instead of a
        // wide emoji/text button. The optional second service is a small pill.
-       var choice=el('button','public-song-source'+(j===0?' is-primary':''),
-         j===0?'':platformName(src.provider));
+       var choice=el('button','public-song-source'+(j===0?' is-primary':'')+' public-song-source--'+src.provider,
+         src.provider==='spotify'?'♫':src.provider==='youtube'?'▶':'♪');
        choice.type='button';choice.setAttribute('aria-pressed','false');
        choice.setAttribute('data-provider',src.provider);
        choice.setAttribute('aria-label','Слушать '+track.title+' в '+platformName(src.provider));
