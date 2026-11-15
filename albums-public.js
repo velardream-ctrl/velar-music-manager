@@ -37,11 +37,11 @@
      var cover=album.imageData||album.imageUrl;
      if(cover){
        var img=el('img','cms-album-cover-image');
-       img.src=cover;img.alt='Обложка альбома «'+album.title+'»';
        if(window.VELAR_IMAGE_LOADING&&window.VELAR_IMAGE_LOADING.apply)
          window.VELAR_IMAGE_LOADING.apply(img,index);
        else img.loading='eager';
        img.decoding='async';img.referrerPolicy='no-referrer';
+       img.alt='Обложка альбома «'+album.title+'»';img.src=cover;
        visual.appendChild(img);
      }else{
        var symbol=el('span','cms-album-cover-placeholder','♫');
