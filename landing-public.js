@@ -103,7 +103,8 @@
      // Retain the curator's explicit manual order for an artist's best songs.
      var curated=tracks.map(function(t){
        return {title:t.title,artist:item.title,provider:t.provider,url:t.url,
-         alternateProvider:t.alternateProvider,alternateUrl:t.alternateUrl};
+         alternateProvider:t.alternateProvider,alternateUrl:t.alternateUrl,
+         thirdProvider:t.thirdProvider,thirdUrl:t.thirdUrl};
      });
      window.VELAR_PUBLIC_SONGS.mount(carousel,curated,{
        prefix:'artist',view:'carousel',batch:30,keepOrder:true
@@ -113,7 +114,7 @@
    var list=create('div','cms-music-list'+
      (view==='tiles'?' cms-music-list--tiles':view==='covers'?' cms-music-list--covers':''));
    // RUN-091: player belongs to the clicked row, not after the entire list.
-   var active=null,activeProvider='',buttons=[],altButtons=[],players=[],entries=[];
+   var active=null,activeProvider='',buttons=[],altButtons=[],thirdButtons=[],players=[],entries=[];
    tracks.forEach(function(track,index){
      var button=create('button','cms-music-track'+
        (view!=='classic'?' cms-music-track--art':''));
@@ -161,7 +162,7 @@
      var player=create('div','cms-music-player cms-music-player--inline');
      player.setAttribute('role','region');
      player.setAttribute('aria-label','Плеер: '+track.title);
-     var alternateButton=null;
+     var alternateButton=null,thirdButton=null;
      function playFor(provider,link){
        var validated=window.VMM_LANDING_SCHEMA.songUrl(link,provider);
        if(!validated)return;
@@ -170,6 +171,7 @@
          entry.className=entry.className.replace(/ is-playing/g,'');
          buttons.forEach(function(b){b.setAttribute('aria-pressed','false');});
          altButtons.forEach(function(b){if(b)b.setAttribute('aria-pressed','false');});
+         thirdButtons.forEach(function(b){if(b)b.setAttribute('aria-pressed','false');});
          return;
        }
        pauseOtherEmbeds();
@@ -177,19 +179,21 @@
        entries.forEach(function(e){e.className=e.className.replace(/ is-playing/g,'');});
        entry.className+=' is-playing';
        buttons.forEach(function(b,i){b.setAttribute('aria-pressed',i===index&&provider===track.provider?'true':'false');});
-       altButtons.forEach(function(b,i){if(b)b.setAttribute('aria-pressed',i===index&&provider===track.alternateProvider?'true':'false');});
+       altButtons.forEach(function(b,i){if(b)b.setAttribute('aria-pressed',i===index&&provider===tracks[i].alternateProvider?'true':'false');});
+       thirdButtons.forEach(function(b,i){if(b)b.setAttribute('aria-pressed',i===index&&provider===tracks[i].thirdProvider?'true':'false');});
        players.forEach(function(p){empty(p);});
        var frame=document.createElement('iframe');
        frame.className='cms-music-iframe'+(provider==='youtube'?' cms-music-iframe--video':'');
-       frame.title=track.title+' — '+(provider==='spotify'?'плеер Spotify':'видео YouTube');
+       frame.title=track.title+' — '+(provider==='spotify'?'плеер Spotify':provider==='appleMusic'?'Apple Music':'видео YouTube');
        frame.src=provider==='spotify'?
-         'https://open.spotify.com/embed/track/'+validated.split('/').pop():
+         'https://open.spotify.com/embed/track/'+validated.split('/').pop():provider==='appleMusic'?
+         validated.replace('https://music.apple.com/','https://embed.music.apple.com/'):
          'https://www.youtube-nocookie.com/embed/'+validated.split('v=')[1];
        frame.loading='lazy';frame.setAttribute('allow','clipboard-write; encrypted-media; fullscreen; picture-in-picture');
        frame.setAttribute('allowfullscreen','');
        frame.referrerPolicy='strict-origin-when-cross-origin';
        appendOfficialFrame(player,frame,provider,true);
-       var external=create('a','cms-music-external','Открыть в '+(provider==='spotify'?'Spotify':'YouTube'));
+       var external=create('a','cms-music-external','Открыть в '+(provider==='spotify'?'Spotify':provider==='appleMusic'?'Apple Music':'YouTube'));
        external.href=validated;external.rel='noopener noreferrer';external.target='_blank';
        player.appendChild(external);
        var dismiss=create('button','cms-music-close','Закрыть');
@@ -199,6 +203,7 @@
          entry.className=entry.className.replace(/ is-playing/g,'');
          button.setAttribute('aria-pressed','false');
          if(alternateButton)alternateButton.setAttribute('aria-pressed','false');
+         if(thirdButton)thirdButton.setAttribute('aria-pressed','false');
        };
        player.appendChild(dismiss);
      }
@@ -212,9 +217,16 @@
          (track.alternateProvider==='spotify'?'Spotify':'YouTube'));
        alternateButton.onclick=function(){playFor(track.alternateProvider,track.alternateUrl);};
      }
-     buttons.push(button);altButtons.push(alternateButton);players.push(player);entries.push(entry);
+     if(track.thirdUrl&&track.thirdProvider){
+       thirdButton=create('button','cms-music-alt-source','Apple Music');
+       thirdButton.type='button';thirdButton.setAttribute('aria-pressed','false');
+       thirdButton.setAttribute('aria-label','Слушать '+track.title+' в Apple Music');
+       thirdButton.onclick=function(){playFor(track.thirdProvider,track.thirdUrl);};
+     }
+     buttons.push(button);altButtons.push(alternateButton);thirdButtons.push(thirdButton);players.push(player);entries.push(entry);
      entry.appendChild(button);entry.appendChild(player);
      if(alternateButton)entry.appendChild(alternateButton);
+     if(thirdButton)entry.appendChild(thirdButton);
      list.appendChild(entry);
    });
    panel.appendChild(list);
