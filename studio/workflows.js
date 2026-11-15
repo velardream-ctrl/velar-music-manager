@@ -122,8 +122,8 @@
   function searchRows(){
     var q=tr(filter).toLocaleLowerCase('ru').replace(/ё/g,'е');
     return catalog.filter(function(t){
-      if(q && [t.title,t.artist,t.album,t.upc,t.isrc].join(' ').toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)<0)return false;
-      if(artist!=='all'&&t.artist!==artist)return false;
+      if(q && [t.title,t.artist,t.siteArtist,t.album,t.upc,t.isrc].join(' ').toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)<0)return false;
+      if(artist!=='all'&&(t.siteArtist||t.artist)!==artist)return false;
       if(mode==='missing')return !direct('spotify',urlValue(t,'spotify'))||!direct('appleMusic',urlValue(t,'appleMusic'))||!direct('youtube',urlValue(t,'youtube'));
       if(mode==='ready')return ['spotify','appleMusic','youtube'].every(function(k){return direct(k,urlValue(t,k));});
       if(mode==='spotify'||mode==='appleMusic'||mode==='youtube')return !direct(mode,urlValue(t,mode));
@@ -239,14 +239,14 @@
   function catalogPage(){
     if(!catalog.length){pane.innerHTML=heading('Каталог релизов','Защищённая база данных')+'<div class="vmm-actions"><button data-act="new-release">+ Добавить песню</button><button data-act="artist-manager">Управление артистами</button></div><div class="vmm-card"><h3>В Firebase пока нет композиций</h3><p>Для заполнения используй прежний файл импорта. Не создавай дубликаты вручную.</p><button data-act="open-import">Открыть безопасный импорт</button></div>';return;}
     var a=searchRows(),begin=page*30;if(begin>=a.length&&page>0){page=0;begin=0;}
-    var allArtists=Object.create(null);catalog.forEach(function(t){if(t.artist)allArtists[t.artist]=true;});
+    var allArtists=Object.create(null);catalog.forEach(function(t){if(t.siteArtist||t.artist)allArtists[t.siteArtist||t.artist]=true;});
     var actorOptions=Object.keys(allArtists).sort().map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>';}).join('');
     var picked=Object.keys(chosen).filter(function(k){return chosen[k];}).length;
     pane.innerHTML=heading('Каталог релизов','Поиск по названию, артисту, UPC и ISRC')+
       '<div class="vmm-actions"><button data-act="new-release">+ Добавить песню</button><button data-act="artist-manager">Управление артистами</button></div><div class="vmm-filter"><input id="vmm-search" type="search" placeholder="Поиск композиции, UPC, ISRC" value="'+esc(filter)+'">'+
       '<select id="vmm-mode"><option value="all">Все</option><option value="missing">Недостающие ссылки</option><option value="ready">Все три площадки</option><option value="spotify">Без Spotify</option><option value="appleMusic">Без Apple Music</option><option value="youtube">Без YouTube</option></select>'+
       '<select id="vmm-artist"><option value="all">Все артисты</option>'+actorOptions+'</select></div>'+
-      '<div class="vmm-action-links"><button data-act="print-catalog">Печать / PDF каталога</button><button data-act="clear-selection">Снять отметки</button><span id="vmm-selected-count" class="sync-note">Выбрано: '+picked+' (если ничего не выбрано, печатается весь каталог)</span></div>'+
+      '<div class="vmm-action-links"><button data-act="bulk-artist">Перенести выбранные песни к артисту</button><button data-act="print-catalog">Печать / PDF каталога</button><button data-act="clear-selection">Снять отметки</button><span id="vmm-selected-count" class="sync-note">Выбрано: '+picked+' (если ничего не выбрано, печатается весь каталог)</span></div>'+
       '<div class="vmm-rows">'+a.slice(begin,begin+30).map(function(t){
         var r=row(t.sourceRow);
         return '<div class="vmm-catalog-row"><label class="vmm-row-select"><input type="checkbox" data-vmm-select="'+r+'"'+(chosen[r]?' checked':'')+'> Выбрать</label>'+
@@ -256,6 +256,26 @@
     id('vmm-search').oninput=function(){filter=this.value;page=0;catalogPage();refocus();};
     id('vmm-mode').onchange=function(){mode=this.value;page=0;catalogPage();};
     id('vmm-artist').onchange=function(){artist=this.value;page=0;catalogPage();};
+  }
+
+  function bulkArtist(){
+    var tracks=catalog.filter(function(t){return chosen[row(t.sourceRow)];});
+    if(tracks.length>450)return tell('Для безопасной пакетной записи выбери не более 450 песен.');
+    if(!tracks.length)return tell('Сначала отметь песни для переноса.');
+    pane.innerHTML=heading('Перенос песен','Меняется только исполнитель на сайте, официальные данные релиза сохраняются')+
+      '<form id="vmm-bulk-artist" class="vmm-card"><p>Выбрано песен: '+tracks.length+'</p><label>Новый артист<select name="artist" required><option value="">Выбери артиста</option>'+artistOptions('')+'</select></label>'+
+      '<div class="vmm-actions"><button type="submit">Перенести песни</button><button type="button" data-act="catalog">Отмена</button></div><p id="vmm-w-status" class="sync-note"></p></form>';
+    id('vmm-bulk-artist').onsubmit=function(e){
+      e.preventDefault();if(busy)return;var name=tr(this.elements.artist.value);
+      if(!artistList().some(function(n){return n===name;}))return tell('Выбери исполнителя из списка.');
+      if(!window.confirm('Назначить '+tracks.length+' песен артисту «'+name+'»? Официальные сведения останутся прежними.'))return;
+      busy=true;authenticated(function(){
+        var batch=db.batch();
+        tracks.forEach(function(t){batch.update(db.collection('vmm_catalog').doc(t.id),{siteArtist:name,updatedBy:user.uid,updatedAt:ts()});});
+        batch.set(db.collection('vmm_audit').doc(),{time:ts(),operation:'Массовое назначение артиста',subject:name,result:'Композиций: '+tracks.length,actor:user.uid});
+        batch.commit().then(function(){busy=false;chosen=Object.create(null);open('catalog');}).catch(function(err){busy=false;tell('Ошибка переноса: '+err.message);});
+      });
+    };
   }
   function printCatalog(){
     var selection=Object.keys(chosen).filter(function(k){return chosen[k];});
@@ -458,6 +478,7 @@
     if(a==='edit-release')return releaseEditor(t.getAttribute('data-id'));
     if(a==='missing-catalog'){current='catalog';filter='';mode='missing';page=0;navActive('catalog');catalogPage();return;}
     if(a==='print-catalog')return printCatalog();
+    if(a==='bulk-artist')return bulkArtist();
     if(a==='clear-selection'){chosen=Object.create(null);return catalogPage();}
     if(a==='prev'){page=Math.max(0,page-1);return catalogPage();}
     if(a==='next'){page++;return catalogPage();}
