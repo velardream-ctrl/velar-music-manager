@@ -2267,6 +2267,47 @@
      heading(panel,'Первый экран','Эмблема, название VELARDREAM и кнопки остаются частью оформления сайта; здесь меняются подпись и вступление.');
      field(panel,'Подзаголовок',data.hero.subtitle,function(v){data.hero.subtitle=v;});
      field(panel,'Основное описание',data.hero.intro,function(v){data.hero.intro=v;},true);
+     // RUN-123: on-site image load testing. Saving and publication remain separate.
+     var loadPanel=document.createElement('section');loadPanel.className='landing-loading-controls';
+     heading(loadPanel,'Загрузка изображений',
+       'Регулируй отложенную загрузку: первые обложки появляются быстро, остальные — по выбранной степени.');
+     var loadLabel=document.createElement('label');loadLabel.className='landing-loading-label';
+     var loadTitle=document.createElement('span');loadTitle.textContent='Степень ленивой загрузки';
+     loadLabel.appendChild(loadTitle);
+     var loadSlider=document.createElement('input');loadSlider.type='range';
+     loadSlider.min='0';loadSlider.max='3';loadSlider.step='1';
+     var loadNames=['0 · Выключена — всё сразу','1 · Лёгкая — первые 4 сразу',
+       '2 · Умеренная — первые 2 сразу','3 · Сильная — первая сразу'];
+     var loadHints=[
+       'Все показанные картинки и официальные обложки запрашиваются немедленно.',
+       'После первых четырёх картинок в каждой группе браузер управляет загрузкой остальных.',
+       'После первых двух картинок остальные загружаются лениво; поиск внешних обложек стартует вблизи экрана.',
+       'После первой картинки в каждой группе остальные откладываются; поиск внешних обложек начинается ближе к экрану.'
+     ];
+     var loadValue=document.createElement('strong');loadValue.className='landing-loading-value';
+     loadValue.setAttribute('aria-live','polite');
+     var loadHelp=document.createElement('p');loadHelp.className='sync-note landing-loading-help';
+     var loadTest=document.createElement('a');loadTest.className='landing-small landing-preview-link';
+     loadTest.textContent='Проверить выбранный режим на сайте';
+     loadTest.target='_blank';loadTest.rel='noopener noreferrer';
+     function updateLoadLabel(){
+       var n=Number(loadSlider.value);if(n<0||n>3||n!==Math.floor(n))n=0;
+       loadValue.textContent=loadNames[n];loadHelp.textContent=loadHints[n];
+       loadTest.href='../?imageLoadingTest='+n;
+       loadSlider.setAttribute('aria-valuetext',loadNames[n]);
+     }
+     loadSlider.value=String(data.hero.imageLoadingLevel||0);
+     loadSlider.setAttribute('aria-label','Степень ленивой загрузки изображений, от 0 до 3');
+     loadSlider.oninput=function(){
+       data.hero.imageLoadingLevel=Number(this.value);updateLoadLabel();updateButtons();
+     };
+     loadSlider.onchange=loadSlider.oninput;
+     loadLabel.appendChild(loadSlider);loadLabel.appendChild(loadValue);
+     loadPanel.appendChild(loadLabel);loadPanel.appendChild(loadHelp);loadPanel.appendChild(loadTest);
+     var loadNotice=document.createElement('p');loadNotice.className='sync-note';
+     loadNotice.textContent='Тестовая ссылка меняет загрузку только в открывшейся вкладке, без публикации. Для всех посетителей сохрани черновик и отдельно опубликуй. Эмблемы и музыкальные плееры не затрагиваются.';
+     loadPanel.appendChild(loadNotice);panel.appendChild(loadPanel);
+     updateLoadLabel();
      heading(panel,'Оформление песен во всех разделах',
        'Одна настройка для списков песен артистов, альбомов, языков и тем. Старые варианты оформления сохраняются, пока выбран обычный режим.');
      selectField(panel,'Вид песен на сайте',
