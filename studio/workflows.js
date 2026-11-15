@@ -164,13 +164,14 @@
 
   /* RUN-NEW: owner-only artist registry and manual release editor. */
   var registry=[],registryRevision=0,artistOverrides={};
+  function canonicalArtistName(name){return /^(?:dj\s+)?velar$/i.test(tr(name))?'Velar':tr(name);}
   function siteArtist(t){
-    if(t&&window.VMM_ARTIST_TRACKS&&window.VMM_ARTIST_CHOICES){var artistId=window.VMM_ARTIST_TRACKS.effective(t,artistOverrides);var custom=registry.filter(function(a){return a.id===artistId;})[0];if(custom)return custom.name;var choice=window.VMM_ARTIST_CHOICES.byId(window.VMM_ARTIST_CHOICES.choices(catalog),artistId);if(choice)return choice.label;if(custom)return custom.name;}
-    return t&&t.artist||'';
+    if(t&&window.VMM_ARTIST_TRACKS&&window.VMM_ARTIST_CHOICES){var artistId=window.VMM_ARTIST_TRACKS.effective(t,artistOverrides);var custom=registry.filter(function(a){return a.id===artistId;})[0];if(custom)return canonicalArtistName(custom.name);var choice=window.VMM_ARTIST_CHOICES.byId(window.VMM_ARTIST_CHOICES.choices(catalog),artistId);if(choice)return choice.label;if(custom)return custom.name;}
+    return canonicalArtistName(t&&t.artist||'');
   }
   function artistList(){
-    var map={};if(window.VMM_ARTIST_CHOICES)window.VMM_ARTIST_CHOICES.choices(catalog).forEach(function(a){map[tr(a.label).toLowerCase()]=a.label;});catalog.forEach(function(t){if(t.artist)map[tr(t.artist).toLowerCase()]=tr(t.artist);});
-    registry.forEach(function(a){map[tr(a.name).toLowerCase()]=a.name;});
+    var map={};if(window.VMM_ARTIST_CHOICES)window.VMM_ARTIST_CHOICES.choices(catalog).forEach(function(a){var n=canonicalArtistName(a.label);map[n.toLowerCase()]=n;});
+    registry.forEach(function(a){var n=canonicalArtistName(a.name);map[n.toLowerCase()]=n;});
     return Object.keys(map).sort().map(function(k){return map[k];});
   }
   function artistOptions(value){return artistList().map(function(n){return '<option value="'+esc(n)+'"'+(n===value?' selected':'')+'>'+esc(n)+'</option>';}).join('');}
@@ -186,14 +187,14 @@
       '<form id="vmm-artist-create" class="vmm-card"><h3>Добавить исполнителя</h3><label>Сценическое имя<input name="name" maxlength="120" required placeholder="Название артиста"></label><div class="vmm-actions"><button type="submit">Сохранить артиста</button><button type="button" data-act="catalog">К каталогу</button></div><p id="vmm-w-status" class="sync-note"></p></form>'+
       '<div class="vmm-card"><h3>Исполнители и статистика</h3>'+artistList().map(function(n){var songs=catalog.filter(function(t){return siteArtist(t)===n;});return '<p><strong>'+esc(n)+'</strong> · '+songs.length+' песен · выпущено '+songs.filter(function(t){return !t.releaseStatus||t.releaseStatus==='released';}).length+' · ожидают '+songs.filter(function(t){return t.releaseStatus==='scheduled';}).length+' · черновики '+songs.filter(function(t){return t.releaseStatus==='draft';}).length+'</p>';}).join('')+'</div>';
     id('vmm-artist-create').onsubmit=function(e){
-      e.preventDefault();if(busy)return;var name=tr(this.elements.name.value);
+      e.preventDefault();if(busy)return;var name=canonicalArtistName(this.elements.name.value);
       if(name.length<2||name.length>120)return tell('Имя должно содержать от 2 до 120 символов.');
       if(artistList().some(function(n){return n.toLowerCase()===name.toLowerCase();}))return tell('Такой исполнитель уже существует.');
       busy=true;authenticated(function(){
         var ref=db.collection('vmm_links').doc('artist_registry_v1'),audit=db.collection('vmm_audit').doc();
         db.runTransaction(function(tx){return tx.get(ref).then(function(s){
           var d=s.exists?s.data()||{}:{},arr=Array.isArray(d.artists)?d.artists.slice():[];
-          if(arr.some(function(a){return tr(a.name).toLowerCase()===name.toLowerCase();}))throw new Error('Исполнитель уже добавлен в другом окне.');
+          if(arr.some(function(a){return canonicalArtistName(a.name).toLowerCase()===name.toLowerCase();}))throw new Error('Исполнитель уже добавлен в другом окне.');
           if(arr.length>=300)throw new Error('Достигнут лимит артистов.');
           arr.push({id:'custom-'+db.collection('vmm_catalog').doc().id.toLowerCase(),name:name,createdBy:user.uid});
           tx.set(ref,{schemaVersion:1,revision:(Number(d.revision)||0)+1,artists:arr,updatedAt:ts(),updatedBy:user.uid});
@@ -239,7 +240,7 @@
             if(!docId){data.sourceRow=sequence;data.createdAt=ts();data.origin='studio-manual';data.links={};tx.set(counter,{lastRow:sequence,updatedAt:ts()});tx.set(target,data);}
             else tx.update(target,data);
             var choices=window.VMM_ARTIST_CHOICES&&window.VMM_ARTIST_CHOICES.choices(catalog)||[];
-            var match=registry.filter(function(x){return x.name===siteArtist;})[0]||choices.filter(function(x){return x.label===siteArtist;})[0];
+            var match=registry.filter(function(x){return canonicalArtistName(x.name)===siteArtist;})[0]||choices.filter(function(x){return x.label===siteArtist;})[0];
             if(!match)throw new Error('Артист отсутствует в реестре.');
             var existing=a.exists?a.data()||{}:{},map=Object.assign({},existing.overrides||{});
             if(Object.keys(map).length>=1900&&!map[target.id])throw new Error('Лимит индивидуальных привязок почти достигнут.');
@@ -287,7 +288,7 @@
       if(!window.confirm('Назначить '+tracks.length+' песен артисту «'+name+'»? Официальные сведения останутся прежними.'))return;
       busy=true;authenticated(function(){
         var choices=window.VMM_ARTIST_CHOICES&&window.VMM_ARTIST_CHOICES.choices(catalog)||[];
-        var match=registry.filter(function(a){return a.name===name;})[0]||choices.filter(function(a){return a.label===name;})[0];
+        var match=registry.filter(function(a){return canonicalArtistName(a.name)===name;})[0]||choices.filter(function(a){return a.label===name;})[0];
         if(!match||!window.VMM_ARTIST_TRACKS){busy=false;return tell('Модуль привязки артистов недоступен.');}
         window.VMM_ARTIST_TRACKS.read(db).then(function(snapshot){
           var ids=tracks.map(function(t){return t.id;}),map=Object.assign({},snapshot.overrides);
