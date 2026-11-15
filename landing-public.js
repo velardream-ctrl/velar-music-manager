@@ -207,6 +207,7 @@
        alternateButton=create('button','cms-music-alt-source',
          'Слушать в '+(track.alternateProvider==='spotify'?'Spotify':'YouTube'));
        alternateButton.type='button';
+       if(track.alternateProvider==='youtube'){alternateButton.className+=' cms-music-alt-source--youtube';alternateButton.textContent='';alternateButton.title='Открыть YouTube: '+track.title;}
        alternateButton.setAttribute('aria-pressed','false');
        alternateButton.setAttribute('aria-label','Слушать '+track.title+' в '+
          (track.alternateProvider==='spotify'?'Spotify':'YouTube'));
