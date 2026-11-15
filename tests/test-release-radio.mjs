@@ -214,7 +214,7 @@ assert.doesNotMatch(publicJS,/autoplay=1|loop=1|muted=1|setInterval\(/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(css,/.cms-release-art::before/);
 assert.match(html,/universe\.js\?v=7/);
-assert.match(html,/style\.css\?v=40/);
+assert.match(html,/style\.css\?v=48/);
 assert.match(sw,/CACHE_PREFIX \+ 'v55'/);
 assert.match(sw,/STUDIO_PREFIX\+'v49'/);
 assert.match(admin,/function releaseCatalogPicker/);
