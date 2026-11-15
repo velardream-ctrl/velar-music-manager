@@ -17,6 +17,12 @@ assert.equal(def.genres.languages.entries.every(x=>x.tracks.length===0),true);
 
 assert.ok(Object.keys(def).join(',')==='hero,artists,albums,releases,genres,about');
 assert.match(def.hero.subtitle,/Разные голоса/);
+assert.equal(def.hero.coverSourcePriority,'spotify-first');
+assert.equal(api.normalize({...def,hero:{subtitle:def.hero.subtitle,intro:def.hero.intro}}).hero.coverSourcePriority,'spotify-first');
+assert.equal(api.normalize({...def,hero:{...def.hero,coverSourcePriority:'youtube-first'}}).hero.coverSourcePriority,'youtube-first');
+for(const invalid of ['',null,'youtube','custom',42]){
+ assert.throws(()=>api.normalize({...def,hero:{...def.hero,coverSourcePriority:invalid}}),/Приоритет обложек/);
+}
 assert.throws(()=>api.normalize({...def,hero:{subtitle:'',intro:'A'}}),/обязательно/);
 assert.throws(()=>api.normalize({...def,hero:{subtitle:'x'.repeat(161),intro:'A'}}),/160/);
 assert.throws(()=>api.normalize({...def,genres:{...def.genres,tags:Array(21).fill('Поп')}}),/20/);
