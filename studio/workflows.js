@@ -166,7 +166,7 @@
   var registry=[],registryRevision=0,artistOverrides={};
   function canonicalArtistName(name){return /^(?:dj\s+)?velar$/i.test(tr(name))?'Velar':tr(name);}
   function siteArtist(t){
-    if(t&&window.VMM_ARTIST_TRACKS&&window.VMM_ARTIST_CHOICES){var artistId=window.VMM_ARTIST_TRACKS.effective(t,artistOverrides);var custom=registry.filter(function(a){return a.id===artistId;})[0];if(custom)return canonicalArtistName(custom.name);var choice=window.VMM_ARTIST_CHOICES.byId(window.VMM_ARTIST_CHOICES.choices(catalog),artistId);if(choice)return choice.label;if(custom)return custom.name;}
+    if(t&&window.VMM_ARTIST_TRACKS&&window.VMM_ARTIST_CHOICES){var artistId=window.VMM_ARTIST_TRACKS.effective(t,artistOverrides);var custom=registry.filter(function(a){return a.id===artistId;})[0];if(custom)return canonicalArtistName(custom.name);var choice=window.VMM_ARTIST_CHOICES.byId(window.VMM_ARTIST_CHOICES.choices(catalog),artistId);if(choice)return canonicalArtistName(choice.label);}
     return canonicalArtistName(t&&t.artist||'');
   }
   function artistList(){
@@ -185,7 +185,7 @@
   function artistManager(){
     pane.innerHTML=heading('Управление артистами','Создавай новых исполнителей и назначай им песни без изменения официальных кредитов')+
       '<form id="vmm-artist-create" class="vmm-card"><h3>Добавить исполнителя</h3><label>Сценическое имя<input name="name" maxlength="120" required placeholder="Название артиста"></label><div class="vmm-actions"><button type="submit">Сохранить артиста</button><button type="button" data-act="catalog">К каталогу</button></div><p id="vmm-w-status" class="sync-note"></p></form>'+
-      '<div class="vmm-card"><h3>Исполнители и статистика</h3>'+artistList().map(function(n){var songs=catalog.filter(function(t){return siteArtist(t)===n;});return '<p><strong>'+esc(n)+'</strong> · '+songs.length+' песен · выпущено '+songs.filter(function(t){return !t.releaseStatus||t.releaseStatus==='released';}).length+' · ожидают '+songs.filter(function(t){return t.releaseStatus==='scheduled';}).length+' · черновики '+songs.filter(function(t){return t.releaseStatus==='draft';}).length+'</p>';}).join('')+'</div>';
+      '<div class="vmm-card"><h3>Исполнители и статистика</h3><p class="sync-note">Загружено песен из каталога: '+catalog.length+'. Непривязанных: '+catalog.filter(function(t){return !siteArtist(t);}).length+'. Назначение по официальному имени выполняется автоматически.</p>'+artistList().map(function(n){var songs=catalog.filter(function(t){return siteArtist(t)===n;});return '<p><strong>'+esc(n)+'</strong> · '+songs.length+' песен · выпущено '+songs.filter(function(t){return !t.releaseStatus||t.releaseStatus==='released';}).length+' · ожидают '+songs.filter(function(t){return t.releaseStatus==='scheduled';}).length+' · черновики '+songs.filter(function(t){return t.releaseStatus==='draft';}).length+'</p>';}).join('')+'</div>';
     id('vmm-artist-create').onsubmit=function(e){
       e.preventDefault();if(busy)return;var name=canonicalArtistName(this.elements.name.value);
       if(name.length<2||name.length>120)return tell('Имя должно содержать от 2 до 120 символов.');
