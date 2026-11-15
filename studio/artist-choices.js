@@ -9,7 +9,7 @@
      'Илья Дмитриев','Ilya Dmitriev','Ilia Dmitriev','Ilja Dmitriev',
      'Ilya Dmitryev','Ilya Dmitriyev'
    ]},
-   {id:'crazy-bobr',label:'Crazy Bobr',aliases:['Crazy Bobr','Crazy Бобр']}
+   {id:'crazy-bobr',label:'Crazy Bobr',aliases:['Crazy Bobr','Crazy Bobber','Crazy Бобр']}
  ];
  function clean(s){return String(s==null?'':s).trim().replace(/\s+/g,' ');}
  function key(s){return clean(s).toLocaleLowerCase('ru').replace(/ё/g,'е');}
