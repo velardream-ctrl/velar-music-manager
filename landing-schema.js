@@ -287,6 +287,10 @@
         m=/(?:[?&])v=([A-Za-z0-9_-]{11})(?:&|#|$)/.exec(s);
       return m?'https://www.youtube.com/watch?v='+m[1]:'';
     }
+    if(provider==='appleMusic'){
+      m=/^https:\/\/music\.apple\.com\/([A-Za-z-]+)\/(?:album\/[^?#]+\?[^#]*\bi=\d+|song\/[^?#]+)(?:[&#][^\s]*)?$/i.exec(s);
+      return m?s:'';
+    }
     return '';
   }
   // RUN-122: add a second official provider without changing old records.
@@ -295,18 +299,26 @@
     if(!x||typeof x!=='object'||Array.isArray(x))
       throw new Error('Лучшая песня '+index+': неверная запись.');
     var provider=plain(x.provider||'','Площадка песни '+index,20,true);
-    if(provider!=='spotify'&&provider!=='youtube')
-      throw new Error('Лучшая песня '+index+': можно использовать только Spotify или YouTube.');
+    if(provider!=='spotify'&&provider!=='youtube'&&provider!=='appleMusic')
+      throw new Error('Лучшая песня '+index+': можно использовать только Spotify, YouTube или Apple Music.');
     var track={title:plain(x.title||'','Название песни '+index,110,true),
       provider:provider,url:songUrl(x.url,provider)};
     if(!track.url)throw new Error('Для песни '+index+' нужна прямая ссылка на трек '+provider+'.');
     if(x.alternateUrl||x.alternateProvider){
       var secondary=plain(x.alternateProvider||'','Вторая площадка песни '+index,20,true);
-      if((secondary!=='spotify'&&secondary!=='youtube')||secondary===provider)
-        throw new Error('У песни '+index+' вторая площадка должна отличаться от первой: Spotify или YouTube.');
+      if((secondary!=='spotify'&&secondary!=='youtube'&&secondary!=='appleMusic')||secondary===provider)
+        throw new Error('У песни '+index+' вторая площадка должна отличаться от первой: Spotify, YouTube или Apple Music.');
       var secondaryUrl=songUrl(x.alternateUrl,secondary);
       if(!secondaryUrl)throw new Error('Для песни '+index+' нужна прямая ссылка на трек '+secondary+'.');
       track.alternateProvider=secondary;track.alternateUrl=secondaryUrl;
+    }
+    if(x.thirdUrl||x.thirdProvider){
+      var third=plain(x.thirdProvider||'','Третья площадка песни '+index,20,true);
+      if(['spotify','youtube','appleMusic'].indexOf(third)<0||third===provider||third===track.alternateProvider)
+        throw new Error('Третья площадка должна отличаться от остальных.');
+      var thirdUrl=songUrl(x.thirdUrl,third);
+      if(!thirdUrl)throw new Error('Нужна прямая ссылка на трек '+third+'.');
+      track.thirdProvider=third;track.thirdUrl=thirdUrl;
     }
     return track;
   }
@@ -317,7 +329,7 @@
     var seen={};
     return rows.map(function(row,i){
       var selected=featuredTrack(row,i+1);
-      [selected.url,selected.alternateUrl].filter(function(x){return !!x;}).forEach(function(link){
+      [selected.url,selected.alternateUrl,selected.thirdUrl].filter(function(x){return !!x;}).forEach(function(link){
         if(seen[link])throw new Error('В подборке не должно быть повторов одной ссылки.');
         seen[link]=true;
       });
