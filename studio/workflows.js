@@ -194,7 +194,7 @@
         var ref=db.collection('vmm_links').doc('artist_registry_v1'),audit=db.collection('vmm_audit').doc();
         db.runTransaction(function(tx){return tx.get(ref).then(function(s){
           var d=s.exists?s.data()||{}:{},arr=Array.isArray(d.artists)?d.artists.slice():[];
-          if(arr.some(function(a){return canonicalArtistName(a.name).toLowerCase()===name.toLowerCase();}))throw new Error('Исполнитель уже добавлен в другом окне.');
+          if(arr.some(function(a){return canonicalArtistName(a.name).toLowerCase()===name.toLowerCase();})||window.VMM_ARTIST_CHOICES.choices(catalog).some(function(a){return canonicalArtistName(a.label).toLowerCase()===name.toLowerCase();}))throw new Error('Исполнитель уже существует в каталоге или реестре.');
           if(arr.length>=300)throw new Error('Достигнут лимит артистов.');
           arr.push({id:'custom-'+db.collection('vmm_catalog').doc().id.toLowerCase(),name:name,createdBy:user.uid});
           tx.set(ref,{schemaVersion:1,revision:(Number(d.revision)||0)+1,artists:arr,updatedAt:ts(),updatedBy:user.uid});
@@ -240,7 +240,7 @@
             if(!docId){data.sourceRow=sequence;data.createdAt=ts();data.origin='studio-manual';data.links={};tx.set(counter,{lastRow:sequence,updatedAt:ts()});tx.set(target,data);}
             else tx.update(target,data);
             var choices=window.VMM_ARTIST_CHOICES&&window.VMM_ARTIST_CHOICES.choices(catalog)||[];
-            var match=registry.filter(function(x){return canonicalArtistName(x.name)===siteArtist;})[0]||choices.filter(function(x){return x.label===siteArtist;})[0];
+            var match=choices.filter(function(x){return x.label===siteArtist;})[0]||registry.filter(function(x){return canonicalArtistName(x.name)===siteArtist;})[0];
             if(!match)throw new Error('Артист отсутствует в реестре.');
             var existing=a.exists?a.data()||{}:{},map=Object.assign({},existing.overrides||{});
             if(Object.keys(map).length>=1900&&!map[target.id])throw new Error('Лимит индивидуальных привязок почти достигнут.');
@@ -288,7 +288,7 @@
       if(!window.confirm('Назначить '+tracks.length+' песен артисту «'+name+'»? Официальные сведения останутся прежними.'))return;
       busy=true;authenticated(function(){
         var choices=window.VMM_ARTIST_CHOICES&&window.VMM_ARTIST_CHOICES.choices(catalog)||[];
-        var match=registry.filter(function(a){return canonicalArtistName(a.name)===name;})[0]||choices.filter(function(a){return a.label===name;})[0];
+        var match=choices.filter(function(a){return a.label===name;})[0]||registry.filter(function(a){return canonicalArtistName(a.name)===name;})[0];
         if(!match||!window.VMM_ARTIST_TRACKS){busy=false;return tell('Модуль привязки артистов недоступен.');}
         window.VMM_ARTIST_TRACKS.read(db).then(function(snapshot){
           var ids=tracks.map(function(t){return t.id;}),map=Object.assign({},snapshot.overrides);
