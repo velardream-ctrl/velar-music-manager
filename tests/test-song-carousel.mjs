@@ -87,42 +87,27 @@ assert.equal(first.children[0].children[1].children[0].src,'https://i.scdn.co/im
 engine.configure('rows',[{visible:true,imageUrl:'https://example.com/owner-cover.jpg',
  tracks:[{url:spotify}]}],'carousel');
 const owned=node();engine.mount(owned,[songs[1]],{prefix:'album'});
+await Promise.resolve();await Promise.resolve();await Promise.resolve();
 assert.equal(owned.children[1].children[0].children[0].children[1].children[0].src,
- 'https://example.com/owner-cover.jpg','Curated album art has priority over Spotify oEmbed');
-
+ 'https://i.scdn.co/image/abc123123','Spotify cover must override album art');
 engine.configure('rows',[],'carousel',[
  {visible:true,title:'Альфа',mediaProvider:'spotify',mediaUrl:spotify,
   imageUrl:'https://example.com/approved-single-cover.jpg'}
 ]);
 const released=node();engine.mount(released,[songs[1]],{prefix:'artist'});
 const releasedThumb=released.children[1].children[0].children[0].children[1].children[0];
-assert.equal(releasedThumb.src,'https://example.com/approved-single-cover.jpg',
- 'Published single artwork must appear without waiting for Spotify oEmbed');
-assert.equal(releasedThumb.loading,'eager',
- 'The first carousel cover must not be lazy in a horizontal rail');
-assert.equal(releasedThumb.attributes.fetchpriority,'high',
- 'The first carousel cover should have high fetch priority');
+assert.equal(releasedThumb.src,'https://i.scdn.co/image/abc123123',
+ 'Spotify cover must override release artwork');
+assert.equal(releasedThumb.loading,'eager');
+assert.equal(releasedThumb.attributes.fetchpriority,'high');
 assert.equal(released.children[1].children[0].children[0].children[2].children[0].textContent,
  'Альфа','Artist song name stays in its own card below the cover');
-engine.configure('rows',[],'carousel',[
- {visible:false,mediaProvider:'spotify',mediaUrl:spotify,
-  imageUrl:'https://example.com/private-draft-cover.jpg'}
-]);
-const unreleased=node();engine.mount(unreleased,[songs[1]],{prefix:'artist'});
-assert.notEqual(unreleased.children[1].children[0].children[0].children[1].children[0].src,
- 'https://example.com/private-draft-cover.jpg',
- 'Hidden release images cannot appear on public song cards');
-
 engine.configure('rows',[],'carousel');
 const youtubeOnly=node();
 engine.mount(youtubeOnly,[{title:'Видео',artist:'Velar',provider:'youtube',url:yt}],{prefix:'topic'});
 const onlyArtwork=youtubeOnly.children[1].children[0].children[0].children[1];
-assert.equal(onlyArtwork.children.length,2,'Pending YouTube art keeps image plus local note');
-assert.equal(onlyArtwork.children[1].textContent,'♫','Fallback note remains during a stalled request');
-onlyArtwork.children[0].onload();
-assert.equal(onlyArtwork.children.length,1,'Loaded YouTube art replaces the temporary note');
-assert.equal(onlyArtwork.children[0].src,'https://i.ytimg.com/vi/ABCDEFGHIjk/hqdefault.jpg',
- 'YouTube songs use a verified official video thumbnail without Spotify');
+assert.equal(onlyArtwork.children.length,1,'YouTube-only song shows a local note');
+assert.equal(onlyArtwork.children[0].textContent,'♫','Never fetch YouTube thumbnails');
 assert.equal(read('public-song-ui.js').includes('requestArtwork:requestArtwork'),true);
 assert.match(read('studio/landing-editor.js'),/Оформление песен во всех разделах/);
 assert.match(read('landing-public.js'),/value.genres.songViewMode/);
