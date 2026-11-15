@@ -255,10 +255,18 @@
        control.setAttribute('aria-label','Слушать '+track.title+' в '+control.title);
        sourceRow.appendChild(control);
      }
-     // Preserve the full song title/cover row as the primary playback control.
+     // Preserve the familiar song title/cover row, with a separate compact
+     // source icon for the primary provider (not a generic Play button).
      sourceRow.appendChild(button);
+     var primarySource=create('button','cms-music-alt-source');
+     primarySource.type='button';
+     primarySource.setAttribute('aria-pressed','false');
+     primarySource.onclick=function(){button.click();};
+     compactSource(primarySource,track.provider);
      if(alternateButton)compactSource(alternateButton,track.alternateProvider);
      if(thirdButton)compactSource(thirdButton,track.thirdProvider);
+     var genericPlay=button.querySelector&&button.querySelector('.cms-music-play-icon');
+     if(genericPlay)genericPlay.style.display='none';
      entry.appendChild(sourceRow);entry.appendChild(player);
      list.appendChild(entry);
    });
