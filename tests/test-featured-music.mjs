@@ -114,8 +114,8 @@ const panel=first.children[1],list=panel.children[1];
 assert.equal(panel.children.length,2,'No single player after the whole best-songs list');
 assert.equal(list.children.length,2);
 const firstRow=list.children[0],secondRow=list.children[1];
-const firstButton=firstRow.children[0],player=firstRow.children[1];
-const secondButton=secondRow.children[0],secondPlayer=secondRow.children[1];
+const firstButton=firstRow.children[0].children[0],player=firstRow.children[1];
+const secondButton=secondRow.children[0].children[0],secondPlayer=secondRow.children[1];
 assert.match(firstRow.className,/cms-music-entry/);
 const playIcon=firstButton.children[2];
 assert.equal(playIcon.className,'cms-music-play-icon');
@@ -156,11 +156,11 @@ listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:thre
 const list3=host.children[0].children[1].children[1];
 assert.equal(list3.children.length,3);
 assert.equal(list3.children[0].children[1].children.length,0);
-list3.children[0].children[0].onclick();
+list3.children[0].children[0].children[0].onclick();
 assert.equal(mediaFrame(list3.children[0].children[1]).tagName,'iframe');
-list3.children[0].children[0].onclick();
+list3.children[0].children[0].children[0].onclick();
 assert.equal(list3.children[0].children[1].children.length,0,'First of three closes on repeat tap');
-list3.children[0].children[0].onclick();
+list3.children[0].children[0].children[0].onclick();
 assert.equal(mediaFrame(list3.children[0].children[1]).tagName,'iframe');
 assert.equal(list3.children[1].children[1].children.length,0);
 assert.equal(list3.children[2].children[1].children.length,0);
@@ -170,7 +170,7 @@ const unsorted=api.normalize({...original,artists:{...original.artists,cards:[
  {...profile,featuredTracks:[s2,s1]},other
 ]}});
 listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:unsorted})});
-assert.equal(host.children[0].children[1].children[1].children[0].children[0].attributes['aria-label'],
+assert.equal(host.children[0].children[1].children[1].children[0].children[0].children[0].attributes['aria-label'],
  'Слушать: Белая берёза — Spotify');
 assert.equal(unsorted.artists.cards[0].featuredTracks[0].title,'Журавли',
  'Rendering must not rewrite published documents');
@@ -179,7 +179,7 @@ const manual=api.normalize({...original,artists:{...original.artists,cards:[
  {...profile,featuredTracks:[s2,s1],featuredSort:'manual'},other
 ]}});
 listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:manual})});
-assert.equal(host.children[0].children[1].children[1].children[0].children[0].attributes['aria-label'],
+assert.equal(host.children[0].children[1].children[1].children[0].children[0].children[0].attributes['aria-label'],
  'Слушать: Журавли — YouTube','Manual override honors user-defined featured order');
 assert.equal(manual.artists.cards[0].featuredSort,'manual');
 // RUN-122: even if owner switches off the carousel, both official
@@ -190,13 +190,13 @@ const dualPage=api.normalize({...original,artists:{...original.artists,cards:[
 listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:dualPage})});
 const classicTracks=host.children[0].children[1].children[1];
 const dualEntry=classicTracks.children[0];
-assert.equal(dualEntry.children.length,3,'One song row, two platform controls');
-const youtubeButton=dualEntry.children[2];
+assert.equal(dualEntry.children.length,2,'One song row with grouped platform controls and player');
+const youtubeButton=dualEntry.children[0].children[1];
 assert.match(youtubeButton.className,/cms-music-alt-source/);
 youtubeButton.onclick();
 assert.equal(mediaFrame(dualEntry.children[1]).src,'https://www.youtube-nocookie.com/embed/ABCDEFGHIjk');
 assert.equal(youtubeButton.attributes['aria-pressed'],'true');
-dualEntry.children[0].onclick();
+dualEntry.children[0].children[0].onclick();
 assert.equal(mediaFrame(dualEntry.children[1]).src,
   'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
 assert.equal(youtubeButton.attributes['aria-pressed'],'false');
