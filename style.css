@@ -1672,3 +1672,10 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .has-living-art .crystal-journey-ring,.has-living-art .crystal-journey-crystal,.has-living-art .crystal-journey-beam,
  .crystal-journey-ring,.crystal-journey-crystal,.crystal-journey-beam{top:330px}
 }
+
+/* Keep Spotify and YouTube on the same artist-song row; player opens below both. */
+.cms-music-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px}
+.cms-music-entry>.cms-music-track{min-width:0;width:100%}
+.cms-music-entry>.cms-music-alt-source{grid-column:2;grid-row:1;margin:0;flex-shrink:0}
+.cms-music-entry>.cms-music-player{grid-column:1/-1;grid-row:2}
+.cms-music-entry:not(:has(>.cms-music-alt-source))>.cms-music-track{grid-column:1/-1}
