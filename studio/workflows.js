@@ -122,7 +122,7 @@
   function searchRows(){
     var q=tr(filter).toLocaleLowerCase('ru').replace(/ё/g,'е');
     return catalog.filter(function(t){
-      if(q && [t.title,t.artist,t.siteArtist,t.album,t.upc,t.isrc].join(' ').toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)<0)return false;
+      if(q && [t.title,t.artist,siteArtist(t),t.album,t.upc,t.isrc].join(' ').toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)<0)return false;
       if(artist!=='all'&&siteArtist(t)!==artist)return false;
       if(mode==='missing')return !direct('spotify',urlValue(t,'spotify'))||!direct('appleMusic',urlValue(t,'appleMusic'))||!direct('youtube',urlValue(t,'youtube'));
       if(mode==='ready')return ['spotify','appleMusic','youtube'].every(function(k){return direct(k,urlValue(t,k));});
@@ -232,8 +232,10 @@
         db.runTransaction(function(tx){
           return Promise.all([tx.get(counter),tx.get(assignmentRef)]).then(function(results){
             var c=results[0],a=results[1];
-            var sequence=Math.max(max,Number(c.exists&&c.data().lastRow)||1)+1;
-            var data={title:title,artist:official,upc:upc,isrc:isrc,releaseStatus:status,releaseDate:date,updatedBy:user.uid,updatedAt:ts()};
+            var sequence=Math.max(max,Number(c.exists&&c.data().lastRow)||1,1000000)+1;
+            var data={title:title,releaseStatus:status,releaseDate:date,updatedBy:user.uid,updatedAt:ts()};
+            if(!docId||t&&t.origin==='studio-manual'){data.artist=official;data.upc=upc;data.isrc=isrc;}
+            else if(official!==tr(t.artist)||upc!==tr(t.upc)||isrc!==tr(t.isrc))throw new Error('Официальные кредиты импортированного релиза защищены от изменения.');
             if(!docId){data.sourceRow=sequence;data.createdAt=ts();data.origin='studio-manual';data.links={};tx.set(counter,{lastRow:sequence,updatedAt:ts()});tx.set(target,data);}
             else tx.update(target,data);
             var choices=window.VMM_ARTIST_CHOICES&&window.VMM_ARTIST_CHOICES.choices(catalog)||[];
@@ -253,7 +255,7 @@
   function catalogPage(){
     if(!catalog.length){pane.innerHTML=heading('Каталог релизов','Защищённая база данных')+'<div class="vmm-actions"><button data-act="new-release">+ Добавить песню</button><button data-act="artist-manager">Управление артистами</button></div><div class="vmm-card"><h3>В Firebase пока нет композиций</h3><p>Для заполнения используй прежний файл импорта. Не создавай дубликаты вручную.</p><button data-act="open-import">Открыть безопасный импорт</button></div>';return;}
     var a=searchRows(),begin=page*30;if(begin>=a.length&&page>0){page=0;begin=0;}
-    var allArtists=Object.create(null);catalog.forEach(function(t){if(siteArtist(t))allArtists[siteArtist(t)]=true;});
+    var allArtists=Object.create(null);artistList().forEach(function(n){allArtists[n]=true;});
     var actorOptions=Object.keys(allArtists).sort().map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>';}).join('');
     var picked=Object.keys(chosen).filter(function(k){return chosen[k];}).length;
     pane.innerHTML=heading('Каталог релизов','Поиск по названию, артисту, UPC и ISRC')+
@@ -264,7 +266,7 @@
       '<div class="vmm-rows">'+a.slice(begin,begin+30).map(function(t){
         var r=row(t.sourceRow);
         return '<div class="vmm-catalog-row"><label class="vmm-row-select"><input type="checkbox" data-vmm-select="'+r+'"'+(chosen[r]?' checked':'')+'> Выбрать</label>'+
-        '<button data-act="track" data-row="'+r+'"><strong>'+esc(t.title)+'</strong><small>'+esc(t.artist)+' · '+esc(t.upc||'нет UPC')+' · '+esc(t.isrc||'нет ISRC')+'</small><span class="vmm-flags">'+flags(t)+'</span></button></div>';
+        '<button data-act="track" data-row="'+r+'"><strong>'+esc(t.title)+'</strong><small>'+esc(siteArtist(t))+' · '+esc(t.upc||'нет UPC')+' · '+esc(t.isrc||'нет ISRC')+'</small><span class="vmm-flags">'+flags(t)+'</span></button></div>';
       }).join('')+'</div><div class="vmm-paging"><span>Записей: '+a.length+' · '+(a.length?begin+1:0)+'–'+Math.min(begin+30,a.length)+'</span><div><button data-act="prev" '+(!page?'disabled':'')+'>← Назад</button><button data-act="next" '+(begin+30>=a.length?'disabled':'')+'>Далее →</button></div></div>';
     id('vmm-mode').value=mode;id('vmm-artist').value=artist;
     id('vmm-search').oninput=function(){filter=this.value;page=0;catalogPage();refocus();};
@@ -324,7 +326,7 @@
   function trackPage(n){
     var t=findTrack(n);if(!t){catalogPage();return;}
     selected=String(t.sourceRow);
-    var body=heading(t.title,t.artist+' · UPC '+(t.upc||'—')+' · ISRC '+(t.isrc||'—'));
+    var body=heading(t.title,siteArtist(t)+' · UPC '+(t.upc||'—')+' · ISRC '+(t.isrc||'—'));
     body+='<div class="vmm-card"><h3>Подтверждённые адреса</h3>';
     ['appleMusic','spotify','youtube','yandex','zvuk'].forEach(function(k){
       var u=urlValue(t,k),ok=direct(k,u);
