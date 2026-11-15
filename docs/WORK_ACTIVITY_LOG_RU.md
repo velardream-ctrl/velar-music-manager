@@ -1418,3 +1418,6 @@
 - Исправлен ранее неучтённый общий рендерер `public-song-ui.js`: третий официальный источник, кнопка Apple Music, embed.music.apple.com, доступные названия и обложки альбомов по третьей ссылке. Старый интерфейс Spotify/YouTube сохранён.
 - Обновлены только нужные ссылки: schema v23, public v31 (main уже v30), Studio editor v36, shared song UI v15, service worker public v55/Studio v49; CSS main v48, artist-choices v3 и workflows v11 сохранены.
 - Начата адаптация тестов к новым версиям и трём площадкам. GitHub Actions пока **не зелёный**: старые тесты ещё ожидают версии v40/v54 и старую DOM-структуру. Не сливать до PASS. Публикации на сайте нет.
+
+- Создан **draft PR #90** `https://github.com/velardream-ctrl/velar-music-manager/pull/90` от свежей main; он не слит. Исправлены дополнительные CI-проверки для сохранения main CSS v48, выбора артиста `Velar`, artist-choices v3/workflows v11, обновлённого общего плеера v15 и группировки кнопок. Service Worker теперь предкеширует style.css?v=48.
+- Последний исследованный CI run `43761584110` — FAILURE: тест `test-eager-images.mjs` ожидал `public-song-ui.js?v=14` вместо v15; исправлено в коммите `7b9670e`. Полного зелёного CI для RUN-129 пока нет. **Не публиковать** до успешных тестов, review и smoke-check.
