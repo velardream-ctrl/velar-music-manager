@@ -347,3 +347,13 @@ CI (run ID и результат):
 - **Версии для обновления кеша:** `landing-schema.js?v=22`, `landing-public.js?v=26`, `public-song-ui.js?v=13`, `studio/landing-editor.js?v=35`, public shell v53, studio shell v48. Обновлены ожидания версий в тестах.
 - **Тесты:** расширены `tests/test-cover-fallback.mjs` (YouTube-first, Spotify fallback, отсутствие цикла), `tests/test-landing-admin.mjs` (select, draft/publish), `tests/test-landing-schema.mjs` (миграция старых документов и недопустимые значения). Полный GitHub Actions `43672388902` и `43672384437` на SHA `8265b52612666b99a7fe97fbe01e64e58d54aad5`: **SUCCESS**. `test-image-loading.mjs` остаётся частью общего успешного набора.
 - **Статус:** добавлено в ту же draft-ветку PR #84 (RUN-124 + RUN-125). Не слито в main; реальное отображение на iPhone/iPad и публикация не подтверждены. Не изменять опубликованные данные владельца автоматически.
+
+
+### 2026-11-15 — RUN-124 / RUN-125 — ЗАВЕРШИЛ: объединение, CI и публикация GitHub Pages
+- **PR #84:** https://github.com/velardream-ctrl/velar-music-manager/pull/84 переведён из Draft в Ready и **MERGED** методом squash в `main`. Итоговый merge SHA: `51a94edb534c39dab78db6c3585c41a7102259a8`.
+- **Итоговый CI PR:** GitHub Actions `43672592499` SUCCESS на `2864f29ce4f7cc00df012b6d6cf3ac666c1db6ff`; предыдущие полные прогоны `43672531954` и `43672528164` тоже SUCCESS. Охвачены сценарии собственная обложка → Spotify → YouTube, собственная обложка → YouTube → Spotify, отсутствие циклов и четыре режима lazy-loading.
+- **CI после merge:** GitHub Actions `43672628351` — **SUCCESS** на merge SHA `51a94edb534c39dab78db6c3585c41a7102259a8`.
+- **GitHub Pages:** workflow `43672627795` — **SUCCESS** на том же merge SHA. Автоматическое развёртывание подтверждено GitHub Actions, реальная проверка UI на iPhone/iPad ещё нужна.
+- **Пользовательские настройки:** `Studio → Главная страница → Первый экран → Загрузка изображений`, выбор `Spotify → YouTube` (по умолчанию) / `YouTube → Spotify`. При изменении опции в Studio необходимо отдельно сохранить черновик и опубликовать данные; merge не менял существующий облачный документ. Если старые данные не содержат `hero.coverSourcePriority`, схема выбирает `spotify-first`.
+- **Ограничение:** настройка приоритета реализована для общих публичных карточек песен с официальными Spotify/YouTube ссылками, а не как автоматическая подмена всех фотографий артистов или обложек отдельных релизов. Настройка lazy-loading RUN-123 сохранена.
+- **Журнал закрывает работу RUN-124/125:** после merge осуществлена эта дополнительная запись; она сама может вызвать ещё один автоматический Pages build, который не следует путать с первоначальной успешной публикацией приложения.
