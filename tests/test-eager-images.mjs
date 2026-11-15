@@ -34,7 +34,7 @@ for(const versioned of [
 }
 assert.ok(artist.includes('artist-detail.js?v=3'));
 assert.ok(sw.includes('./artist-detail.js?v=3'));
-assert.ok(sw.includes("CACHE_PREFIX + 'v55'"));
+assert.ok(sw.includes("CACHE_PREFIX + 'v56'"));
 assert.match(read('public-song-ui.js'),/frame\.loading='lazy'/,
   'Music players remain click-to-open without preloading');
 const window={location:{search:''}};const promises=[],requests=[];
