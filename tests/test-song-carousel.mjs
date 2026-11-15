@@ -117,7 +117,10 @@ engine.configure('rows',[],'carousel');
 const youtubeOnly=node();
 engine.mount(youtubeOnly,[{title:'Видео',artist:'Velar',provider:'youtube',url:yt}],{prefix:'topic'});
 const onlyArtwork=youtubeOnly.children[1].children[0].children[0].children[1];
-assert.equal(onlyArtwork.children.length,1,'YouTube-only song has exactly one cover');
+assert.equal(onlyArtwork.children.length,2,'Pending YouTube art keeps image plus local note');
+assert.equal(onlyArtwork.children[1].textContent,'♫','Fallback note remains during a stalled request');
+onlyArtwork.children[0].onload();
+assert.equal(onlyArtwork.children.length,1,'Loaded YouTube art replaces the temporary note');
 assert.equal(onlyArtwork.children[0].src,'https://i.ytimg.com/vi/ABCDEFGHIjk/hqdefault.jpg',
  'YouTube songs use a verified official video thumbnail without Spotify');
 assert.equal(read('public-song-ui.js').includes('requestArtwork:requestArtwork'),true);

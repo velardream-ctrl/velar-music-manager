@@ -11,7 +11,7 @@ let resolveFetch;
 window.fetch=()=>new Promise(resolve=>{resolveFetch=resolve;});
 const nodes=[];
 function element(tag){
-  const e={tagName:tag,className:'',children:[],attributes:{},textContent:'',
+  const e={tagName:tag,className:'',children:[],attributes:{},textContent:'',style:{},
     appendChild(x){x.parentNode=this;this.children.push(x);return x;},
     removeChild(x){this.children.splice(this.children.indexOf(x),1);return x;},
     get firstChild(){return this.children[0]||null;},
@@ -86,4 +86,30 @@ assert.equal(manualSpotifyHolder.children[0].src,'https://i.scdn.co/image/abc123
  'Manual cover failure should choose the published Spotify-first source');
 manualSpotifyHolder.children[0].onerror();
 assert.equal(manualSpotifyHolder.children[0].src,yt,'Spotify failure should still reach YouTube');
-console.log('PASS RUN-124/125: stable ordered covers, manual overrides and finite two-way fallback');
+// RUN-126: on poor mobile networks a pending image must leave a local note
+// visible in the same square. Only actual onload may remove the note.
+api.configure('rows',[],'carousel',[],'youtube-first');
+const slowHost=element('div');
+api.mount(slowHost,[track],{prefix:'language',batch:1});
+const slowRail=slowHost.children[1];
+const slowCard=slowRail.children[0];
+const slowArtwork=slowCard.children[0].children.find(x=>x.className==='public-song-artwork');
+assert.ok(slowArtwork,'carousel must have a square artwork holder');
+assert.equal(slowArtwork.children[0].tagName,'img');
+assert.equal(slowArtwork.children[0].style.visibility,'hidden',
+ 'unfinished image should not paint over the note');
+assert.equal(slowArtwork.children[1].textContent,'♫','note is visible even if network hangs');
+slowArtwork.children[0].onload();
+assert.equal(slowArtwork.children[0].style.visibility,'visible','only loaded artwork replaces note');
+assert.equal(slowArtwork.children.length,1,'remove note after real image load');
+api.configure('rows',[],'carousel',[],'spotify-first');
+const brokenHost=element('div');
+api.mount(brokenHost,[track],{prefix:'language',batch:1});
+const brokenArtwork=brokenHost.children[1].children[0].children[0].children.find(x=>x.className==='public-song-artwork');
+assert.equal(brokenArtwork.children[1].textContent,'♫');
+brokenArtwork.children[0].onerror();
+assert.equal(brokenArtwork.children[1].textContent,'♫','note persists through first source failure');
+brokenArtwork.children[0].onerror();
+assert.equal(brokenArtwork.children[0].className.includes('--empty'),true,
+ 'note remains after all image sources fail');
+console.log('PASS RUN-124/125/126: ordered covers and visible note during stalled network');
