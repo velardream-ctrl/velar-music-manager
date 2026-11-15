@@ -92,5 +92,5 @@ assert.ok(nodes['public-albums-cards'].children[0].children[1].children.some(n=>
  'Officially released album has direct verified Spotify album link');
 assert.match(read('index.html'),/id="albums"/);
 assert.match(read('studio/index.html'),/data-landing-tab="albums"/);
-assert.match(read('sw.js'),/\.\/albums-public\.js\?v=3/);
+assert.match(read('sw.js'),/\.\/albums-public\.js\?v=4/);
 console.log('PASS: RUN-096 curated singles album, official release distinction, thumbnails, playback and draft-safe UI');
