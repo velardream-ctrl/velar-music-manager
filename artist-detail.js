@@ -86,6 +86,8 @@
    if(!window.VMM_LANDING_SCHEMA)return false;
    var safe;
    try{safe=window.VMM_LANDING_SCHEMA.normalize(content);}catch(ignore){return false;}
+   if(window.VELAR_IMAGE_LOADING&&window.VELAR_IMAGE_LOADING.configure)
+     window.VELAR_IMAGE_LOADING.configure(safe.hero.imageLoadingLevel);
    var artist=selectedArtist(safe,query());
    if(!artist){
      show('artist-content',false);
@@ -102,6 +104,8 @@
    if(hero)hero.className='artist-hero'+(!pic?' artist-hero--text-only':'');
    if(pic){
      var image=node('artist-portrait');
+     if(window.VELAR_IMAGE_LOADING&&window.VELAR_IMAGE_LOADING.apply)
+       window.VELAR_IMAGE_LOADING.apply(image,0);
      image.src=pic;image.alt='Портрет артиста '+artist.title;
      image.referrerPolicy='no-referrer';
    }
@@ -132,12 +136,16 @@
    show('artist-tracks-section',tracks.children.length>0);
    var albums=node('artist-albums');clean(albums);
    // Exact published name only. Never infer a link from private catalog data.
-   (safe.albums.entries||[]).forEach(function(album){
+   (safe.albums.entries||[]).forEach(function(album,index){
      if(!album.visible||!album.artist||album.artist.toLocaleLowerCase('ru')!==artist.title.toLocaleLowerCase('ru'))return;
      var tile=make('div','artist-album');
      if(album.imageData||album.imageUrl){
        var img=make('img');img.src=album.imageData||album.imageUrl;
-       img.alt='Обложка: '+album.title;img.loading='eager';tile.appendChild(img);
+       img.alt='Обложка: '+album.title;
+       if(window.VELAR_IMAGE_LOADING&&window.VELAR_IMAGE_LOADING.apply)
+         window.VELAR_IMAGE_LOADING.apply(img,index);
+       else img.loading='eager';
+       tile.appendChild(img);
      }
      tile.appendChild(make('strong','',album.title));
      if(album.description)tile.appendChild(make('small','',album.description));
