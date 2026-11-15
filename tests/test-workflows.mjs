@@ -16,6 +16,15 @@ for(const path of ["'vmm_admins'","'vmm_catalog'","'vmm_links'","'vmm_audit'","'
 assert.match(workflows,/get\(\{source:'server'\}\)/);
 assert.match(workflows,/\.enabled!==true/);
 assert.match(workflows,/runTransaction/);
+assert.match(workflows,/function artistManager\(\)/);
+assert.match(workflows,/function releaseEditor\(docId\)/);
+assert.match(workflows,/function bulkArtist\(\)/);
+assert.match(workflows,/artist_track_assignments_v1/);
+assert.match(workflows,/artist_registry_v1/);
+assert.match(workflows,/manual_catalog_sequence_v1/);
+assert.match(workflows,/Официальные кредиты импортированного релиза защищены/);
+assert.match(workflows,/data-act="new-release"/);
+assert.match(workflows,/data-act="bulk-artist"/);
 assert.match(workflows,/batch\.commit\(\)/);
 assert.match(workflows,/Подтверждено вручную/);
 assert.match(workflows,/Ожидает подтверждения/);
