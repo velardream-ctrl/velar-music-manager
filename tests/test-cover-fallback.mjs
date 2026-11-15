@@ -47,4 +47,17 @@ assert.equal(holder.children[0].src,yt,'broken Spotify image should use YouTube'
 holder.children[0].onerror();
 assert.equal(holder.children[0].className.includes('--empty'),true,'broken YouTube cover must stop and use placeholder');
 assert.equal(host.children[0].children[2].children.length,0,'never pre-open player');
-console.log('PASS RUN-124: single choice, YouTube fallback, finite retries');
+// RUN-125: when YouTube is preferred, avoid Spotify metadata until a broken image.
+api.configure('rows',[],'standard',[],'youtube-first');
+const host2=element('div');
+api.mount(host2,[track],{prefix:'language',batch:1});
+const label2=host2.children[0].children[0];
+const holder2=label2.children.find(x=>x.className==='public-song-row-artwork');
+assert.equal(holder2.children[0].src,yt,'owner priority uses YouTube immediately');
+holder2.children[0].onerror();
+assert.equal(holder2.children[0].src,'https://i.scdn.co/image/abc123',
+ 'broken YouTube image must try Spotify before a placeholder');
+holder2.children[0].onerror();
+assert.equal(holder2.children[0].className.includes('--empty'),true,
+ 'both sources failing must not enter a retry loop');
+console.log('PASS RUN-124/125: stable ordered covers and two-way fallbacks');
