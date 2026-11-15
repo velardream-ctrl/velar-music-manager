@@ -146,3 +146,12 @@ assert.equal(api.normalize({...def,genres:{...def.genres,assistant:{...assistant
  {name:'Новая аватарка',dataUrl:validJPEG},{name:'Вторая',dataUrl:''}]}}}}).genres.assistant.avatars.customImages[0].dataUrl,validJPEG);
 
 console.log('PASS: curated landing schema, private field stripping, only HTTPS public links, precise public read and admin-only draft rules');
+
+// RUN-128: third official platform and complete artist picker regression.
+assert.equal(api.songUrl('https://music.apple.com/fi/album/example/123456789?i=987654321','appleMusic'),'https://music.apple.com/fi/album/example/123456789?i=987654321');
+assert.equal(api.songUrl('https://music.apple.com/fi/album/example/123456789','appleMusic'),'');
+const appleTriple=api.featuredTrack({title:'Тест',provider:'spotify',url:'https://open.spotify.com/track/0123456789012345678901',alternateProvider:'youtube',alternateUrl:'https://www.youtube.com/watch?v=12345678901',thirdProvider:'appleMusic',thirdUrl:'https://music.apple.com/fi/album/example/123456789?i=987654321'},1);
+assert.equal(appleTriple.thirdProvider,'appleMusic');
+assert.equal(appleTriple.thirdUrl.includes('987654321'),true);
+assert.match(read('studio/landing-editor.js'),/var visible=found;/);
+assert.doesNotMatch(read('studio/landing-editor.js'),/found\.slice\(0,36\)/);
