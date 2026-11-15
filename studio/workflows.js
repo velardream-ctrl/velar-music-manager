@@ -222,7 +222,7 @@
       var upc=tr(f.upc.value),isrc=tr(f.isrc.value),status=f.releaseStatus.value,date=f.releaseDate.value;
       if(!title||!siteArtist||!artistList().some(function(n){return n===siteArtist;}))return tell('Выбери существующего артиста и укажи название.');
       if(status==='scheduled'&&!date)return tell('Для ожидающего релиза укажи дату.');
-      if(catalog.some(function(x){return x.id!==docId&&tr(x.title).toLowerCase()===title.toLowerCase()&&tr(x.artist).toLowerCase()===official.toLowerCase()&&(!upc||tr(x.upc)===upc)}))return tell('Похожая песня уже есть в каталоге. Проверь дубликат.');
+      if(catalog.some(function(x){return x.id!==docId&&tr(x.title).toLowerCase()===title.toLowerCase()&&tr(x.artist).toLowerCase()===official.toLowerCase()&&((isrc&&tr(x.isrc)===isrc)||(!isrc&&(!upc||tr(x.upc)===upc)))}))return tell('Похожая песня уже есть в каталоге. Проверь дубликат.');
       if(!docId&&!window.confirm('Добавить новую запись в приватный каталог?'))return;
       busy=true;authenticated(function(){
         var target=docId?db.collection('vmm_catalog').doc(docId):db.collection('vmm_catalog').doc(),audit=db.collection('vmm_audit').doc();
@@ -296,6 +296,7 @@
           return db.runTransaction(function(tx){return tx.get(ref).then(function(s){
             var d=s.exists?s.data()||{}:{},rev=Number(d.revision)||0;
             if(rev!==snapshot.revision)throw new Error('Назначения изменились, обнови страницу.');
+            if(Object.keys(d.overrides||{}).length+ids.length>2000)throw new Error('Лимит привязок: раздели операцию или обратись к администратору.');
             var next=Object.assign({},d.overrides||{});
             ids.forEach(function(id){next[id]=match.id;});
             tx.set(ref,{schemaVersion:1,revision:rev+1,overrides:next,updatedBy:user.uid,updatedAt:ts()});
