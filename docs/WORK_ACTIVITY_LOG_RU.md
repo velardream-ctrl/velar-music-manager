@@ -1421,3 +1421,12 @@
 
 - Создан **draft PR #90** `https://github.com/velardream-ctrl/velar-music-manager/pull/90` от свежей main; он не слит. Исправлены дополнительные CI-проверки для сохранения main CSS v48, выбора артиста `Velar`, artist-choices v3/workflows v11, обновлённого общего плеера v15 и группировки кнопок. Service Worker теперь предкеширует style.css?v=48.
 - Последний исследованный CI run `43761584110` — FAILURE: тест `test-eager-images.mjs` ожидал `public-song-ui.js?v=14` вместо v15; исправлено в коммите `7b9670e`. Полного зелёного CI для RUN-129 пока нет. **Не публиковать** до успешных тестов, review и smoke-check.
+
+
+### 2026-11-15 — RUN-129 — CI SUCCESS, PR #90 MERGED; production smoke-check pending
+- Проверка HEAD `116215ef51e8f8701ff32137bc10c601e984e083`: GitHub Actions run `43763813938` — **SUCCESS**; job `static-safety`: `npm test` и `node --check main.js && node --check sw.js` — SUCCESS.
+- PR #90 переведён из draft в ready; GitHub подтвердил `mergeable=true`, отставание от `main` — 0 коммитов.
+- PR https://github.com/velardream-ctrl/velar-music-manager/pull/90 — **MERGED** методом squash, SHA `0ed3c6e1e975c70d358128ff492da2651ac2c77e`.
+- Изменения Apple Music и выбора всех привязанных песен артиста теперь в `main`. PR #89 не объединялся.
+- Независимая HTTP-проверка `https://velardream.com/` не удалась из среды проверки; нельзя заявлять о подтверждённой публикации и работе на реальном устройстве.
+- Осталось: подтвердить Pages/deployment, загрузку обновлённых ресурсов и визуально проверить Studio и публичные кнопки на iPhone/ПК. Firestore Rules и приватные данные не менялись.
