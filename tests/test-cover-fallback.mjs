@@ -83,8 +83,8 @@ api.mount(brokenHost,[track],{prefix:'language',batch:1});
 const brokenArtwork=brokenHost.children[1].children[0].children[0].children.find(x=>x.className==='public-song-artwork');
 assert.equal(brokenArtwork.children[1].textContent,'♫');
 brokenArtwork.children[0].onerror();
-assert.equal(brokenArtwork.children[1].textContent,'♫','note persists through first source failure');
-brokenArtwork.children[0].onerror();
-assert.equal(brokenArtwork.children[0].className.includes('--empty'),true,
- 'note remains after all image sources fail');
+assert.equal(brokenArtwork.children.length,1,
+ 'Failed Spotify image must leave one stable local note, not another network image');
+assert.equal(brokenArtwork.children[0].textContent,'♫',
+ 'Spotify-only fallback remains a local note');
 console.log('PASS RUN-132: Spotify-only covers and visible note during stalled network');
