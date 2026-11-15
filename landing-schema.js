@@ -151,7 +151,8 @@
       hero:{
         subtitle:'Разные голоса. Разные жанры. Одна вселенная музыки.',
         intro:'Здесь рождается пространство для артистов, авторских релизов и музыкальных историй — от оперы и этно до рока, поп-музыки и кроссоверов.',
-        imageLoadingLevel:0 // RUN-123: existing published pages remain eager.
+        imageLoadingLevel:0, // RUN-123: existing published pages remain eager.
+         coverSourcePriority:'spotify-first' // RUN-125: preserve current behavior.
       },
       artists:{
         heading:'У каждого голоса — своя история',
@@ -840,6 +841,12 @@
           if(candidate!==0&&candidate!==1&&candidate!==2&&candidate!==3)
             throw new Error('Ленивая загрузка изображений: выбери уровень от 0 до 3.');
           return candidate;
+        }()),
+        coverSourcePriority:(function(){
+          var choice=typeof hero.coverSourcePriority==='undefined'?'spotify-first':hero.coverSourcePriority;
+          if(choice!=='spotify-first'&&choice!=='youtube-first')
+            throw new Error('Приоритет обложек: выбери Spotify или YouTube.');
+          return choice;
         }())
       },
       artists:section(artists,'Артисты',d.artists),
