@@ -287,6 +287,8 @@
          // At most one attempt per URL. A missing manual cover tries the
          // published priority; a failed official cover tries the other source.
          if(currentCover!==url)return;
+         if(isCarousel)
+           holder.className=holder.className.replace(/\\s*public-song-artwork--loaded/g,'');
          failedCovers[url]=true;
          clearArtwork();
          var next=el('span','public-song-thumbnail public-song-thumbnail--empty','♫');
@@ -297,9 +299,17 @@
          requestArtwork(track,function(candidate){putCover(candidate);},only);
          return;
        };
-       thumb.onload=function(){thumb.onerror=null;};
+       thumb.onload=function(){
+         if(currentCover!==url)return;
+         thumb.onerror=null;
+         // The local CSS note stays visible while an image is pending.
+         // Reveal the actual cover only after it has fully loaded.
+         if(isCarousel)holder.className+=' public-song-artwork--loaded';
+       };
  
-       thumb.src=url;currentCover=url;clearArtwork();holder.appendChild(thumb);
+       if(isCarousel)
+         holder.className=holder.className.replace(/\\s*public-song-artwork--loaded/g,'');
+       currentCover=url;clearArtwork();holder.appendChild(thumb);thumb.src=url;
      }
      if(art)putCover(art);
      else {
