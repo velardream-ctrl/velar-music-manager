@@ -1650,3 +1650,10 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .crystal-journey-ring,.crystal-journey-crystal,.crystal-journey-beam{top:270px}
  .crystal-journey-copy{position:relative;top:auto;left:auto;right:auto;max-width:min(850px,calc(100% - 44px));margin:0 auto}
 }
+
+/* RUN-133: living-art sticky 100vh was overriding RUN-132 and cutting off the CTA. */
+@media (min-width:851px){
+ .has-living-art .crystal-journey{height:auto;min-height:0;padding:72px 24px 76px}
+ .has-living-art .crystal-journey-stage{position:relative;top:auto;height:auto;min-height:0;max-width:1300px;overflow:visible;padding-top:510px;padding-bottom:36px}
+ .has-living-art .crystal-journey-copy{position:relative;top:auto;left:auto;right:auto}
+}
