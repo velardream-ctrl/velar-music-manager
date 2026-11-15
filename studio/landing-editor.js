@@ -652,8 +652,8 @@
      selected.forEach(function(song,index){
        var line=document.createElement('div');line.className='landing-featured-chosen';
        var name=document.createElement('span');
-       name.textContent=(index+1)+'. '+song.title+' — '+(song.provider==='spotify'?'Spotify':'YouTube')+
-         (song.alternateUrl?' + '+(song.alternateProvider==='spotify'?'Spotify':'YouTube'):'');
+       var platformLabel=function(p){return p==='spotify'?'Spotify':p==='appleMusic'?'Apple Music':'YouTube';};
+       name.textContent=(index+1)+'. '+song.title+' — '+[song.provider,song.alternateProvider,song.thirdProvider].filter(Boolean).map(platformLabel).join(' + ');
        line.appendChild(name);
        if(manualOrder){
          var up=button('↑',function(){
