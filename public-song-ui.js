@@ -79,7 +79,7 @@
        .then(function(response){if(!response.ok)throw new Error('Artwork unavailable');return response.json();})
        .then(function(json){
          var url=String(json&&json.thumbnail_url||'');
-         if(!/^https:\/\/(?:i\.scdn\.co|image-cdn-ak\.spotifycdn\.com)\/image\/[a-z0-9]+$/i.test(url))
+         if(!/^https:\/\/(?:i\.scdn\.co|image-cdn-[a-z]{2}\.spotifycdn\.com)\/image\/[a-z0-9]+$/i.test(url))
            throw new Error('Invalid artwork host');
          settle(url);
        }).catch(function(){settle('');});
