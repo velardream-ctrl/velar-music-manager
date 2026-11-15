@@ -103,3 +103,13 @@ assert.equal(elements['public-artists-cards'].className,'feature feature-artists
 assert.doesNotMatch(html,/vmm_lyrics|vmm_recordings/);
 assert.doesNotMatch(publicSrc,/\.set\(|\.add\(|\.update\(|\.delete\(/);
 console.log('PASS: public landing only listens to approved landing doc, renders safe cards, protects private data and restores static fallbacks');
+
+// RUN-128: three-source playback structure and source-specific embed regression.
+assert.match(publicSrc,/track\.thirdProvider/);
+assert.match(publicSrc,/thirdButton\.onclick=function\(\)\{playFor\(track\.thirdProvider,track\.thirdUrl\);\}/);
+assert.match(publicSrc,/https:\/\/embed\.music\.apple\.com\//);
+assert.match(publicSrc,/sourceRow\.appendChild\(button\)/);
+assert.match(publicSrc,/sourceRow\.appendChild\(thirdButton\)/);
+assert.match(publicSrc,/provider===tracks\[i\]\.provider/);
+assert.match(read('studio/landing-editor.js'),/var visible=found;/);
+assert.match(read('studio/landing-editor.js'),/\['spotify','youtube','appleMusic'\]/);
