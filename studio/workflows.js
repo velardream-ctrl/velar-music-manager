@@ -77,7 +77,7 @@
   function loading(title) {pane.innerHTML='<h2>'+esc(title)+'</h2><p id="vmm-w-status" class="sync-note">Читаем записи из защищённой базы…</p>';}
   function row(s){var x=parseInt(s,10);return isFinite(x)&&x>=2?x:0;}
   function findTrack(n) {var r=row(n);for(var i=0;i<catalog.length;i++)if(Number(catalog[i].sourceRow)===r)return catalog[i];return null;}
-  function getDocs(name){return db.collection(name).limit(1200).get({source:'server'}).then(function(s){var a=[];s.forEach(function(d){if(name==='vmm_links'&&d.id==='artist_track_assignments_v1')return;var x=d.data();x.id=d.id;a.push(x);});return a;});}
+  function getDocs(name){return db.collection(name).limit(1200).get({source:'server'}).then(function(s){var a=[];s.forEach(function(d){if(name==='vmm_links'&&['artist_track_assignments_v1','artist_registry_v1','manual_catalog_sequence_v1'].indexOf(d.id)>=0)return;var x=d.data();x.id=d.id;a.push(x);});return a;});}
   function loadCommon(then) {
     Promise.all([getDocs('vmm_catalog'),getDocs('vmm_links')]).then(function(a){catalog=a[0];proposals=a[1];then();}).catch(function(e){pane.innerHTML='<h2>Ошибка загрузки</h2><p>'+esc(e.message)+'</p><button data-act="retry">Повторить</button>';});
   }
@@ -146,7 +146,7 @@
     var m=metrics(),todo=catalog.filter(function(t){return !direct('spotify',urlValue(t,'spotify'))||!direct('appleMusic',urlValue(t,'appleMusic'))||!direct('youtube',urlValue(t,'youtube'));});
     var totalSlots=m.total*3,doneSlots=m.spotify+m.appleMusic+m.youtube;
     var overall=totalSlots?Math.round(100*doneSlots/totalSlots):0;
-    pane.innerHTML=heading('Обзор каталога','Статистика по прямым ссылкам на песни · Spotify, Apple Music, YouTube')+
+    pane.innerHTML=heading('Обзор каталога','Статистика по прямым ссылкам на песни · Spotify, Apple Music, YouTube')+'<div class="vmm-actions"><button data-act="new-release">+ Добавить песню</button><button data-act="artist-manager">Управление артистами</button></div>'+
       '<div class="vmm-metrics vmm-metrics-progress">'+
       progressCard('Всего композиций',m.total,m.total,'Единый музыкальный каталог','releases')+
       progressCard('Apple Music',m.appleMusic,m.total,'Не хватает: '+(m.total-m.appleMusic),'apple')+
@@ -161,14 +161,89 @@
       '<div class="vmm-actions"><button data-act="missing-catalog">Показать все недостающие ссылки</button></div>';
   }
 
+
+  /* RUN-NEW: owner-only artist registry and manual release editor. */
+  var registry=[],registryRevision=0;
+  function artistList(){
+    var map={};catalog.forEach(function(t){if(t.artist)map[tr(t.artist).toLowerCase()]=tr(t.artist);});
+    registry.forEach(function(a){map[tr(a.name).toLowerCase()]=a.name;});
+    return Object.keys(map).sort().map(function(k){return map[k];});
+  }
+  function artistOptions(value){return artistList().map(function(n){return '<option value="'+esc(n)+'"'+(n===value?' selected':'')+'>'+esc(n)+'</option>';}).join('');}
+  function loadRegistry(done){
+    db.collection('vmm_links').doc('artist_registry_v1').get({source:'server'}).then(function(s){
+      var d=s.exists?s.data()||{}:{};
+      registry=Array.isArray(d.artists)?d.artists:[];registryRevision=Number(d.revision)||0;done();
+    }).catch(function(e){tell('Ошибка загрузки артистов: '+e.message);done();});
+  }
+  function artistManager(){
+    pane.innerHTML=heading('Управление артистами','Создавай новых исполнителей и назначай им песни без изменения официальных кредитов')+
+      '<form id="vmm-artist-create" class="vmm-card"><h3>Добавить исполнителя</h3><label>Сценическое имя<input name="name" maxlength="120" required placeholder="Название артиста"></label><div class="vmm-actions"><button type="submit">Сохранить артиста</button><button type="button" data-act="catalog">К каталогу</button></div><p id="vmm-w-status" class="sync-note"></p></form>'+
+      '<div class="vmm-card"><h3>Исполнители</h3>'+artistList().map(function(n){return '<p>'+esc(n)+'</p>';}).join('')+'</div>';
+    id('vmm-artist-create').onsubmit=function(e){
+      e.preventDefault();if(busy)return;var name=tr(this.elements.name.value);
+      if(name.length<2||name.length>120)return tell('Имя должно содержать от 2 до 120 символов.');
+      if(artistList().some(function(n){return n.toLowerCase()===name.toLowerCase();}))return tell('Такой исполнитель уже существует.');
+      busy=true;authenticated(function(){
+        var ref=db.collection('vmm_links').doc('artist_registry_v1'),audit=db.collection('vmm_audit').doc();
+        db.runTransaction(function(tx){return tx.get(ref).then(function(s){
+          var d=s.exists?s.data()||{}:{},arr=Array.isArray(d.artists)?d.artists.slice():[];
+          if(arr.some(function(a){return tr(a.name).toLowerCase()===name.toLowerCase();}))throw new Error('Исполнитель уже добавлен в другом окне.');
+          if(arr.length>=300)throw new Error('Достигнут лимит артистов.');
+          arr.push({id:db.collection('vmm_catalog').doc().id,name:name,createdBy:user.uid});
+          tx.set(ref,{schemaVersion:1,revision:(Number(d.revision)||0)+1,artists:arr,updatedAt:ts(),updatedBy:user.uid});
+          tx.set(audit,{time:ts(),operation:'Создан исполнитель',subject:name,result:'Сохранён в приватном реестре',actor:user.uid});
+        });}).then(function(){busy=false;loadRegistry(artistManager);}).catch(function(err){busy=false;tell('Ошибка: '+err.message);});
+      });
+    };
+  }
+  function releaseEditor(docId){
+    var t=docId?catalog.filter(function(x){return x.id===docId;})[0]:null;
+    if(docId&&!t)return catalogPage();
+    var currentArtist=t?(t.siteArtist||t.artist||''):'';
+    pane.innerHTML=heading(t?'Редактировать композицию':'Новая композиция','Сохранение только в приватном каталоге; публикация на главной выполняется отдельно')+
+      '<form id="vmm-release-editor" class="vmm-card"><label>Название песни<input name="title" required maxlength="220" value="'+esc(t?t.title:'')+'"></label>'+
+      '<label>Исполнитель на сайте<select name="siteArtist" required><option value="">Выбери исполнителя</option>'+artistOptions(currentArtist)+'</select></label>'+
+      '<label>Официальный исполнитель релиза<input name="artist" maxlength="220" value="'+esc(t?t.artist:'')+'" placeholder="Как указано на площадках"></label>'+
+      '<label>UPC (можно позже)<input name="upc" maxlength="40" value="'+esc(t?t.upc:'')+'"></label>'+
+      '<label>ISRC (можно позже)<input name="isrc" maxlength="40" value="'+esc(t?t.isrc:'')+'"></label>'+
+      '<label>Статус<select name="releaseStatus"><option value="draft">Черновик</option><option value="scheduled">Ожидает релиза</option><option value="released">Выпущена</option></select></label>'+
+      '<label>Дата релиза<input name="releaseDate" type="date" value="'+esc(t?t.releaseDate||'':'')+'"></label>'+
+      '<div class="vmm-actions"><button type="submit">Сохранить</button><button type="button" data-act="catalog">Отмена</button><button type="button" data-act="artist-manager">+ Исполнитель</button></div><p id="vmm-w-status" class="sync-note"></p></form>';
+    id('vmm-release-editor').elements.releaseStatus.value=t&&t.releaseStatus||'draft';
+    id('vmm-release-editor').onsubmit=function(e){
+      e.preventDefault();if(busy)return;
+      var f=this.elements,title=tr(f.title.value),siteArtist=tr(f.siteArtist.value),official=tr(f.artist.value)||siteArtist;
+      var upc=tr(f.upc.value),isrc=tr(f.isrc.value),status=f.releaseStatus.value,date=f.releaseDate.value;
+      if(!title||!siteArtist||!artistList().some(function(n){return n===siteArtist;}))return tell('Выбери существующего артиста и укажи название.');
+      if(status==='scheduled'&&!date)return tell('Для ожидающего релиза укажи дату.');
+      if(catalog.some(function(x){return x.id!==docId&&tr(x.title).toLowerCase()===title.toLowerCase()&&tr(x.artist).toLowerCase()===official.toLowerCase()&&(!upc||tr(x.upc)===upc)}))return tell('Похожая песня уже есть в каталоге. Проверь дубликат.');
+      if(!docId&&!window.confirm('Добавить новую запись в приватный каталог?'))return;
+      busy=true;authenticated(function(){
+        var target=db.collection('vmm_catalog').doc(docId||undefined),audit=db.collection('vmm_audit').doc();
+        var max=catalog.reduce(function(n,x){return Math.max(n,row(x.sourceRow));},1);
+        var counter=db.collection('vmm_links').doc('manual_catalog_sequence_v1');
+        db.runTransaction(function(tx){
+          return tx.get(counter).then(function(c){
+            var sequence=Math.max(max,Number(c.exists&&c.data().lastRow)||1)+1;
+            var data={title:title,artist:official,siteArtist:siteArtist,upc:upc,isrc:isrc,releaseStatus:status,releaseDate:date,updatedBy:user.uid,updatedAt:ts()};
+            if(!docId){data.sourceRow=sequence;data.createdAt=ts();data.origin='studio-manual';data.links={};tx.set(counter,{lastRow:sequence,updatedAt:ts()});tx.set(target,data);}
+            else tx.update(target,data);
+            tx.set(audit,{time:ts(),operation:docId?'Композиция изменена':'Композиция добавлена',subject:title,result:siteArtist+' · '+status,referenceId:target.id,actor:user.uid});
+          });
+        }).then(function(){busy=false;open('catalog');}).catch(function(err){busy=false;tell('Ошибка сохранения: '+err.message);});
+      });
+    };
+  }
+
   function catalogPage(){
-    if(!catalog.length){pane.innerHTML=heading('Каталог релизов','Защищённая база данных')+'<div class="vmm-card"><h3>В Firebase пока нет композиций</h3><p>Для заполнения используй прежний файл импорта. Не создавай дубликаты вручную.</p><button data-act="open-import">Открыть безопасный импорт</button></div>';return;}
+    if(!catalog.length){pane.innerHTML=heading('Каталог релизов','Защищённая база данных')+'<div class="vmm-actions"><button data-act="new-release">+ Добавить песню</button><button data-act="artist-manager">Управление артистами</button></div><div class="vmm-card"><h3>В Firebase пока нет композиций</h3><p>Для заполнения используй прежний файл импорта. Не создавай дубликаты вручную.</p><button data-act="open-import">Открыть безопасный импорт</button></div>';return;}
     var a=searchRows(),begin=page*30;if(begin>=a.length&&page>0){page=0;begin=0;}
     var allArtists=Object.create(null);catalog.forEach(function(t){if(t.artist)allArtists[t.artist]=true;});
     var actorOptions=Object.keys(allArtists).sort().map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>';}).join('');
     var picked=Object.keys(chosen).filter(function(k){return chosen[k];}).length;
     pane.innerHTML=heading('Каталог релизов','Поиск по названию, артисту, UPC и ISRC')+
-      '<div class="vmm-filter"><input id="vmm-search" type="search" placeholder="Поиск композиции, UPC, ISRC" value="'+esc(filter)+'">'+
+      '<div class="vmm-actions"><button data-act="new-release">+ Добавить песню</button><button data-act="artist-manager">Управление артистами</button></div><div class="vmm-filter"><input id="vmm-search" type="search" placeholder="Поиск композиции, UPC, ISRC" value="'+esc(filter)+'">'+
       '<select id="vmm-mode"><option value="all">Все</option><option value="missing">Недостающие ссылки</option><option value="ready">Все три площадки</option><option value="spotify">Без Spotify</option><option value="appleMusic">Без Apple Music</option><option value="youtube">Без YouTube</option></select>'+
       '<select id="vmm-artist"><option value="all">Все артисты</option>'+actorOptions+'</select></div>'+
       '<div class="vmm-action-links"><button data-act="print-catalog">Печать / PDF каталога</button><button data-act="clear-selection">Снять отметки</button><span id="vmm-selected-count" class="sync-note">Выбрано: '+picked+' (если ничего не выбрано, печатается весь каталог)</span></div>'+
@@ -212,7 +287,7 @@
     if(t.links&&safeUrl(t.links.yandex)&&/^https:\/\/music\.yandex\.(?:ru|com)\/album\//i.test(t.links.yandex))body+='<div class="vmm-detail"><strong>Яндекс Музыка · альбом</strong><span>'+linkButton(t.links.yandex,'Открыть альбом')+'</span></div>';
     if(t.links&&safeUrl(t.links.vkArtist))body+='<div class="vmm-detail"><strong>VK · профиль исполнителя</strong><span>'+linkButton(t.links.vkArtist,'Открыть профиль')+'</span></div>';
     body+='</div><div class="vmm-card"><h3>Найти композицию</h3><div class="vmm-action-links">'+['spotify','appleMusic','youtube'].map(function(k){return linkButton(searchUrl(k,t),platforms[k]);}).join('')+'</div><p class="sync-note">Поисковые ссылки не считаются прямыми URL треков.</p></div>';
-    body+='<div class="vmm-actions"><button data-act="propose" data-row="'+row(t.sourceRow)+'">+ Предложить ссылку</button><button data-act="lyrics-track" data-row="'+row(t.sourceRow)+'">✎ Текст песни</button><button data-act="catalog">← К каталогу</button></div>';
+    body+='<div class="vmm-actions"><button data-act="edit-release" data-id="'+esc(t.id)+'">✎ Редактировать запись</button><button data-act="propose" data-row="'+row(t.sourceRow)+'">+ Предложить ссылку</button><button data-act="lyrics-track" data-row="'+row(t.sourceRow)+'">✎ Текст песни</button><button data-act="catalog">← К каталогу</button></div>';
     pane.innerHTML=body;
   }
   function proposalForm(n){
@@ -366,7 +441,7 @@
     if(window.VMM_STUDIO&&window.VMM_STUDIO.rememberPanel)window.VMM_STUDIO.rememberPanel(type);
     current=type;filter='';page=0;mode=type==='platforms'?'pending':'all';navActive(type);loading(labels[type]);
     authenticated(function(){
-      if(type==='overview'||type==='catalog'||type==='platforms'){loadCommon(function(){if(type==='overview')overview();else if(type==='catalog')catalogPage();else platformPage();});}
+      if(type==='overview'||type==='catalog'||type==='platforms'){loadCommon(function(){loadRegistry(function(){if(type==='overview')overview();else if(type==='catalog')catalogPage();else platformPage();});});}
       else getDocs(collections[type]).then(function(records){auxiliary=records;if(type==='audit')auditPage();else additionalPage(type);}).catch(function(e){pane.innerHTML='<h2>Ошибка загрузки</h2><p>'+esc(e.message)+'</p>';});
     });
   }
@@ -378,6 +453,9 @@
     if(a==='retry')return open(current);
     if(a==='open-import'){if(window.VMM_STUDIO&&window.VMM_STUDIO.openData)window.VMM_STUDIO.openData();var details=id('data-import');if(details){details.open=true;details.scrollIntoView();}return;}
     if(a==='catalog')return open('catalog');
+    if(a==='new-release')return releaseEditor(null);
+    if(a==='artist-manager')return artistManager();
+    if(a==='edit-release')return releaseEditor(t.getAttribute('data-id'));
     if(a==='missing-catalog'){current='catalog';filter='';mode='missing';page=0;navActive('catalog');catalogPage();return;}
     if(a==='print-catalog')return printCatalog();
     if(a==='clear-selection'){chosen=Object.create(null);return catalogPage();}
