@@ -861,3 +861,25 @@ body.vmm-print-open{overflow:hidden}
 @media(max-width:520px){
  #panel-landing .landing-featured-row .landing-featured-sources{flex-basis:100%;padding-left:29px}
 }
+
+/* RUN-123 — global public image loading controller in Studio/First Screen. */
+#panel-landing .landing-loading-controls{
+ box-sizing:border-box;margin:18px 0;padding:16px;
+ border:1px solid #8b7654;border-radius:14px;
+ background:#142440;min-width:0;
+}
+#panel-landing .landing-loading-label{display:flex;flex-direction:column;gap:11px;min-width:0}
+#panel-landing .landing-loading-label>span{color:#e8d7b9}
+#panel-landing .landing-loading-label input[type="range"]{
+ display:block;width:100%;box-sizing:border-box;min-height:36px;
+ margin:5px 0;accent-color:#eac887;cursor:pointer;
+}
+#panel-landing .landing-loading-value{
+ display:block;color:#f7e1b4;font-size:1rem;line-height:1.4;overflow-wrap:anywhere;
+}
+#panel-landing .landing-loading-controls .landing-preview-link{
+ display:block;box-sizing:border-box;max-width:100%;width:100%;
+ min-height:44px;margin:12px 0;padding:12px 14px;text-align:center;
+ border:1px solid #c6a674;border-radius:11px;text-decoration:none;
+ white-space:normal;overflow-wrap:anywhere;
+}
