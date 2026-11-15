@@ -4,7 +4,7 @@
 (function(){
  'use strict';
  var PRESETS=[
-   {id:'velar',label:'DJ Velar',aliases:['Velar','DJ Velar']},
+   {id:'velar',label:'Velar',aliases:['Velar','DJ Velar']},
    {id:'ilya-dmitriev',label:'Илья Дмитриев',aliases:[
      'Илья Дмитриев','Ilya Dmitriev','Ilia Dmitriev','Ilja Dmitriev',
      'Ilya Dmitryev','Ilya Dmitriyev'
