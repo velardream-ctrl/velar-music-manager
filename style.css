@@ -1657,3 +1657,11 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .has-living-art .crystal-journey-stage{position:relative;top:auto;height:auto;min-height:0;max-width:1300px;overflow:visible;padding-top:510px;padding-bottom:36px}
  .has-living-art .crystal-journey-copy{position:relative;top:auto;left:auto;right:auto}
 }
+
+/* RUN-134: reserve a safe footer below the entire crystal CTA even if an older
+   sticky-stage rule is cached or animated scene height is recomputed. */
+@media (min-width:851px){
+ .crystal-journey,.has-living-art .crystal-journey{padding-bottom:110px}
+ .crystal-journey-stage,.has-living-art .crystal-journey-stage{min-height:860px;height:auto;overflow:visible}
+ .crystal-journey-copy,.has-living-art .crystal-journey-copy{padding-bottom:64px}
+}
