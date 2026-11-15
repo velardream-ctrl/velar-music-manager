@@ -216,7 +216,19 @@
      buttons.push(button);altButtons.push(alternateButton);players.push(player);entries.push(entry);
      var trackRow=create('div','cms-music-track-row');
      trackRow.appendChild(button);
-     if(alternateButton)trackRow.appendChild(alternateButton);
+     // Dedicated platform buttons, while the round Play keeps the configured default.
+     var services=['spotify','youtube'];
+     services.forEach(function(service){
+       var link=track.provider===service?track.url:
+         (track.alternateProvider===service?track.alternateUrl:'');
+       if(!link)return;
+       var serviceButton=create('button','cms-music-service cms-music-service--'+service);
+       serviceButton.type='button';
+       serviceButton.title='Слушать в '+(service==='spotify'?'Spotify':'YouTube');
+       serviceButton.setAttribute('aria-label',serviceButton.title+': '+track.title);
+       serviceButton.onclick=function(){playFor(service,link);};
+       trackRow.appendChild(serviceButton);
+     });
      entry.appendChild(trackRow);
      entry.appendChild(player);
      list.appendChild(entry);
