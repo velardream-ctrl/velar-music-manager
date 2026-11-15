@@ -20,3 +20,8 @@
 3. Проверить доступность обоих переключателей Studio и отсутствие изменения сохранённых пользовательских настроек.
 4. Добавить регрессионные тесты для классического вида, карусели, трёх платформ, неполных ссылок и сохранения настроек.
 5. Пройти CI до merge; затем smoke-check публикации. Не менять Firestore Rules и данные владельца.
+
+## Проверка CI PR #91
+- GitHub Actions run `43765175752`: FAILURE в `tests/test-featured-music.mjs`, TypeError `button.click is not a function` из обработчика новой основной кнопки.
+- Исправлено в `landing-public.js`: `primarySource.onclick` напрямую вызывает `playFor(track.provider,track.url)`, не зависит от наличия DOM `.click()`; коммит `01cb9ade`.
+- Повторный CI на исправленном HEAD ожидается. PR #91 остаётся draft; merge и публикации нет.
