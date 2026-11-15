@@ -93,7 +93,10 @@
    center.appendChild(el('span','universe-core-light'));
    var crystal=el('img','universe-core-crystal');
    crystal.src='assets/velardream-symbol.svg';crystal.alt='';
-   crystal.loading='eager';crystal.decoding='async';
+   if(window.VELAR_IMAGE_LOADING&&window.VELAR_IMAGE_LOADING.apply)
+     window.VELAR_IMAGE_LOADING.apply(crystal,0);
+   else crystal.loading='eager';
+   crystal.decoding='async';
    center.appendChild(crystal);stage.appendChild(center);
    nodes.forEach(function(n,i){
      // Orbit is visitor-driven (next/previous), never a costly idle loop.
