@@ -1265,3 +1265,11 @@
 - **Изменения:** `public-song-ui.js` сохраняет приоритет опубликованной обложки; без неё выбирает один источник Spotify oEmbed, при ошибке/тайм-ауте 3 с — YouTube thumbnail по уже опубликованной ссылке. Ошибка самого IMG однократно переключает на YouTube; при ошибке YouTube остаётся значок ♫ без цикла. При отсутствии Spotify используется YouTube. Выбор источника воспроизведения не меняется. Задержка 3 с относится к метаданным Spotify, а не к зависшей загрузке уже выбранного IMG.
 - **Версионирование:** index и публичный service worker v12 для `public-song-ui.js`; shell cache v52. `tests/test-eager-images.mjs` синхронизирован; создан `tests/test-cover-fallback.mjs`, добавлен в `npm test`.
 - **Статус:** коммиты в отдельной ветке, автоматический CI/проверка iPhone и публикация пока не подтверждены. Не считать завершённым до зелёных проверок, merge и проверки сайта; при сбоях сохранить их в журнале.
+
+
+### RUN-124 — 2026-11-15 — ПРОВЕРКА: исправлены регрессионные тесты версий кеша и JS
+- После обновления публичного script `public-song-ui.js?v=11 → v12` и public SW `v51 → v52` GitHub Actions сначала показывал **FAILURE** в ряде тестов: старые assertions продолжали ожидать `v51` и `v11`. Это несоответствие тестовых ожиданий, а не отключение owner slider.
+- Синхронизированы тесты `test-static`, `test-artist-photo`, `test-assistant`, `test-faq-library`, `test-featured-music`, `test-ipad-compat`, `test-living-art`, `test-release-radio`, `test-rule-audit-jokes`, `test-topic-cloud`, `test-universe-languages`, `test-dual-song-inline`. Добавлен `test-cover-fallback`.
+- **CI подтверждён:** GitHub Actions `43671692339` на SHA `02d7023d6629226fc73df5df54e228e454707ba7` — job `static-safety` **SUCCESS** (`npm test` и проверка синтаксиса). Старые неудачные прогоны сохранены в истории, не скрываются.
+- **Регулируемая lazy-loading RUN-123 сохранена:** `image-loading.js`, `hero.imageLoadingLevel`, настройки админ-меню, preview `?imageLoadingTest=0..3`, режимы 0/1/2/3, fallback для старого Safari и iframe on-click не менялись. `test-image-loading.mjs` включён в зелёный `npm test`.
+- **Статус релиза:** draft PR #84 открыт; в `main` не слит и на живом iPhone/iPad не проверен. Не выдавать CI за успешную публикацию или браузерную приёмку.
