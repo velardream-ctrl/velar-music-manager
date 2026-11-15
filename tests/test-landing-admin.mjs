@@ -95,6 +95,12 @@ assert.equal(slider.value,'0','Existing sites default to eager loading');
 const previewLink=traverse(get('landing-fields'),n=>n.textContent==='Проверить выбранный режим на сайте');
 assert.ok(previewLink);
 slider.value='2';slider.oninput.call(slider);
+const priority=traverse(get('landing-fields'),n=>n.tagName==='select'&&
+ n.children.some(o=>o.value==='youtube-first'));
+assert.ok(priority,'Cover priority selector must be next to image-loading slider');
+assert.equal(priority.value,'spotify-first','Existing sites keep Spotify-first by default');
+priority.value='youtube-first';priority.onchange.call(priority);
+assert.equal(api.isDirty(),true,'Cover source preference marks a draft dirty');
 assert.equal(previewLink.href,'../?imageLoadingTest=2',
  'Testing a mode must use a non-persistent URL override');
 assert.equal(api.isDirty(),true);
@@ -108,6 +114,7 @@ get('landing-save').onclick();await flush();
 assert.equal(api.isDirty(),false);
 assert.equal(records.get('vmm_public_drafts/landing').content.hero.subtitle,'Музыка меняет мир');
 assert.equal(records.get('vmm_public_drafts/landing').content.hero.imageLoadingLevel,2);
+assert.equal(records.get('vmm_public_drafts/landing').content.hero.coverSourcePriority,'youtube-first');
 assert.equal(records.has('vmm_public_pages/landing'),false,'Preview must not publish the slider value');
 assert.equal(records.has('vmm_public_pages/landing'),false,'Saving a draft must not publish');
 assert.equal(get('landing-publish').disabled,false);
@@ -116,6 +123,7 @@ const live=records.get('vmm_public_pages/landing');
 assert.equal(live.status,'published');
 assert.equal(live.content.hero.subtitle,'Музыка меняет мир');
 assert.equal(live.content.hero.imageLoadingLevel,2,'Owner publishes loading only explicitly');
+assert.equal(live.content.hero.coverSourcePriority,'youtube-first');
 assert.equal(live.updatedBy,'owner1234');
 // Artist card editor works independently from the private release catalog.
 nav[1].onclick();await flush();
