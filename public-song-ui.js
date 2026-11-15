@@ -48,33 +48,48 @@
    return '';
  }
  function requestArtwork(track,callback){
-   // YouTube preview is a reliable immediate fallback. The selected playback
-   // provider does not create a second card or a second cover.
+   // RUN-124: choose ONE source per request. Previously YouTube was shown
+   // immediately and Spotify later replaced it, causing cover flicker.
    var youtube=youtubeArtwork(track);
-   if(youtube)callback(youtube);
    var spotify=approved(track).filter(function(item){return item.provider==='spotify';})[0];
-   if(!spotify||typeof window.fetch!=='function')return;
+   if(!spotify||typeof window.fetch!=='function'){
+     if(youtube)callback(youtube);
+     return;
+   }
    var key=spotify.url,record=artworkCache[key];
    if(record){
      if(record.url)callback(record.url);
-     else if(record.pending)record.callbacks.push(callback);
+     else if(record.pending)record.callbacks.push({callback:callback,fallback:youtube});
      return;
    }
-   record={url:'',pending:true,callbacks:[callback]};
+   record={url:'',pending:true,callbacks:[{callback:callback,fallback:youtube}]};
    artworkCache[key]=record;
-   window.fetch('https://open.spotify.com/oembed?url='+encodeURIComponent(key))
-     .then(function(response){if(!response.ok)throw new Error('Artwork unavailable');return response.json();})
-     .then(function(json){
-       var url=String(json&&json.thumbnail_url||'');
-       if(!/^https:\/\/(?:i\.scdn\.co|image-cdn-ak\.spotifycdn\.com)\/image\/[a-z0-9]+$/i.test(url))
-         throw new Error('Invalid artwork host');
-       record.url=url;record.pending=false;
-       record.callbacks.forEach(function(fn){fn(url);});record.callbacks=[];
-     }).catch(function(){
-       record.pending=false;record.callbacks=[];
-       // Failed metadata should not poison every subsequent visit.
-       if(artworkCache[key]===record)delete artworkCache[key];
+   var finished=false,timer=null;
+   function settle(url){
+     if(finished)return;
+     finished=true;
+     if(timer!==null)window.clearTimeout(timer);
+     record.url=url;record.pending=false;
+     var listeners=record.callbacks.slice();record.callbacks=[];
+     listeners.forEach(function(listener){
+       var chosen=url||listener.fallback;
+       if(chosen)listener.callback(chosen);
      });
+     if(!url&&artworkCache[key]===record)delete artworkCache[key];
+   }
+   // A stalled oEmbed service must not leave the cover blank forever.
+   if(typeof window.setTimeout==='function')
+     timer=window.setTimeout(function(){settle('');},3000);
+   try{
+     window.fetch('https://open.spotify.com/oembed?url='+encodeURIComponent(key))
+       .then(function(response){if(!response.ok)throw new Error('Artwork unavailable');return response.json();})
+       .then(function(json){
+         var url=String(json&&json.thumbnail_url||'');
+         if(!/^https:\/\/(?:i\.scdn\.co|image-cdn-ak\.spotifycdn\.com)\/image\/[a-z0-9]+$/i.test(url))
+           throw new Error('Invalid artwork host');
+         settle(url);
+       }).catch(function(){settle('');});
+   }catch(e){settle('');}
  }
  function configure(view,albums,mode,releases){
    defaultView=['rows','covers','tiles'].indexOf(view)>=0?view:'rows';
@@ -235,7 +250,7 @@
      var art=opts.cover||coverMap[track.url]||coverMap[track.alternateUrl]||'';
      var holder=isCarousel?el('div','public-song-artwork'):view==='rows'?
        el('span','public-song-row-artwork'):title;
-     var currentCover=art||'',fallbackArtwork=youtubeArtwork(track);
+     var currentCover=art||'',fallbackArtwork=youtubeArtwork(track),failedCovers={};
      function clearArtwork(){
        if(holder!==title){clear(holder);return;}
        // In row/tiles/covers modes the title also owns the song number and
@@ -249,7 +264,7 @@
        }
      }
      function putCover(url){
-       if(!url||currentCover===url&&holder.firstChild&&holder.firstChild.tagName==='img')return;
+       if(!url||failedCovers[url]||currentCover===url&&holder.firstChild&&holder.firstChild.tagName==='img')return;
        var thumb=el('img','public-song-thumbnail');
        thumb.alt='Обложка: '+track.title;
        // RUN-121: every rendered song image is eager, independent of its
@@ -260,7 +275,12 @@
        if(isCarousel&&i===0)thumb.setAttribute('fetchpriority','high');
        thumb.decoding='async';thumb.referrerPolicy='no-referrer';
        thumb.onerror=function(){
-         if(fallbackArtwork&&url!==fallbackArtwork){putCover(fallbackArtwork);return;}
+         // At most two distinct network images per card: source, then YouTube.
+         // Never retry a failed URL or let a late metadata response revive it.
+         failedCovers[url]=true;
+         if(fallbackArtwork&&url!==fallbackArtwork&&!failedCovers[fallbackArtwork]){
+           putCover(fallbackArtwork);return;
+         }
          clearArtwork();
          var music=el('span','public-song-thumbnail public-song-thumbnail--empty','♫');
          music.setAttribute('aria-hidden','true');holder.appendChild(music);
