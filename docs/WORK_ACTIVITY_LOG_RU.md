@@ -1468,3 +1468,5 @@
 - Начато: по скриншотам Firefox Network Spotify oEmbed `200` для «Отчий дом» вернул `thumbnail_url` с `image-cdn-fa.spotifycdn.com`, тогда как `public-song-ui.js` разрешал только `image-cdn-ak.spotifycdn.com` и `i.scdn.co`; это воспроизводимая причина резервной нотки.
 - Исправлено: строгий regex официальных `image-cdn-[a-z]{2}.spotifycdn.com`, приоритет Spotify сохранён; `public-song-ui.js?v=18`, SW cache `v57`; PR #94 https://github.com/velardream-ctrl/velar-music-manager/pull/94.
 - Проверки CI и выпуск: в процессе; не утверждать, что опубликовано, до merge и подтверждения.
+
+- RUN-134 завершён: PR #94 объединён в main, squash `d498de3bb8eef0ea8b1ee9f94c391e68847a68fd`. CI `Verify safe VELAR shell` run #2881 (`43772480027`) — SUCCESS. Предыдущие CI выявляли устаревшие тестовые ожидания версий SW/JS; исправлены. Реальная загрузка обложек в браузере после публикации ещё не подтверждена; необходим контрольный Firefox smoke test.
