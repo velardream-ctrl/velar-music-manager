@@ -1665,3 +1665,10 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .crystal-journey-stage,.has-living-art .crystal-journey-stage{min-height:860px;height:auto;overflow:visible}
  .crystal-journey-copy,.has-living-art .crystal-journey-copy{padding-bottom:64px}
 }
+
+/* RUN-135: outer 570px orbit was centered at 270px, clipping its top 15px. */
+@media (min-width:851px){
+ .has-living-art .crystal-journey-stage,.crystal-journey-stage{padding-top:575px}
+ .has-living-art .crystal-journey-ring,.has-living-art .crystal-journey-crystal,.has-living-art .crystal-journey-beam,
+ .crystal-journey-ring,.crystal-journey-crystal,.crystal-journey-beam{top:330px}
+}
