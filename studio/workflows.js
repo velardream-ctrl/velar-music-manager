@@ -228,12 +228,21 @@
         var target=docId?db.collection('vmm_catalog').doc(docId):db.collection('vmm_catalog').doc(),audit=db.collection('vmm_audit').doc();
         var max=catalog.reduce(function(n,x){return Math.max(n,row(x.sourceRow));},1);
         var counter=db.collection('vmm_links').doc('manual_catalog_sequence_v1');
+        var assignmentRef=db.collection('vmm_links').doc('artist_track_assignments_v1');
         db.runTransaction(function(tx){
-          return tx.get(counter).then(function(c){
+          return Promise.all([tx.get(counter),tx.get(assignmentRef)]).then(function(results){
+            var c=results[0],a=results[1];
             var sequence=Math.max(max,Number(c.exists&&c.data().lastRow)||1)+1;
             var data={title:title,artist:official,upc:upc,isrc:isrc,releaseStatus:status,releaseDate:date,updatedBy:user.uid,updatedAt:ts()};
             if(!docId){data.sourceRow=sequence;data.createdAt=ts();data.origin='studio-manual';data.links={};tx.set(counter,{lastRow:sequence,updatedAt:ts()});tx.set(target,data);}
             else tx.update(target,data);
+            var choices=window.VMM_ARTIST_CHOICES&&window.VMM_ARTIST_CHOICES.choices(catalog)||[];
+            var match=registry.filter(function(x){return x.name===siteArtist;})[0]||choices.filter(function(x){return x.label===siteArtist;})[0];
+            if(!match)throw new Error('Артист отсутствует в реестре.');
+            var existing=a.exists?a.data()||{}:{},map=Object.assign({},existing.overrides||{});
+            if(Object.keys(map).length>=1900&&!map[target.id])throw new Error('Лимит индивидуальных привязок почти достигнут.');
+            map[target.id]=match.id;
+            tx.set(assignmentRef,{schemaVersion:1,revision:(Number(existing.revision)||0)+1,overrides:map,updatedAt:ts(),updatedBy:user.uid});
             tx.set(audit,{time:ts(),operation:docId?'Композиция изменена':'Композиция добавлена',subject:title,result:siteArtist+' · '+status,referenceId:target.id,actor:user.uid});
           });
         }).then(function(){busy=false;open('catalog');}).catch(function(err){busy=false;tell('Ошибка сохранения: '+err.message);});
