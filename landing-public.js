@@ -224,9 +224,13 @@
        thirdButton.onclick=function(){playFor(track.thirdProvider,track.thirdUrl);};
      }
      buttons.push(button);altButtons.push(alternateButton);thirdButtons.push(thirdButton);players.push(player);entries.push(entry);
-     entry.appendChild(button);entry.appendChild(player);
-     if(alternateButton)entry.appendChild(alternateButton);
-     if(thirdButton)entry.appendChild(thirdButton);
+     var sourceRow=create('div','cms-music-source-row');
+     sourceRow.style.display='flex';sourceRow.style.alignItems='center';sourceRow.style.gap='6px';
+     button.style.flex='1';button.style.minWidth='0';
+     sourceRow.appendChild(button);
+     if(alternateButton)sourceRow.appendChild(alternateButton);
+     if(thirdButton)sourceRow.appendChild(thirdButton);
+     entry.appendChild(sourceRow);entry.appendChild(player);
      list.appendChild(entry);
    });
    panel.appendChild(list);
