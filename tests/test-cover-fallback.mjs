@@ -59,8 +59,8 @@ const manual='https://example.com/published-cover.jpg';
 const manualHost=element('div');
 api.mount(manualHost,[track],{prefix:'language',cover:manual,batch:1});
 const manualHolder=manualHost.children[0].children[0].children.find(x=>x.className==='public-song-row-artwork');
-assert.equal(manualHolder.children[0].className.includes('--empty'),true,
- 'Manual art cannot override the Spotify-only policy before metadata resolves');
+assert.equal(manualHolder.children[0].src,'https://i.scdn.co/image/abc123',
+ 'Manual art cannot override the Spotify-only policy');
 // RUN-126: on poor mobile networks a pending image must leave a local note
 // visible in the same square. Only actual onload may remove the note.
 api.configure('rows',[],'carousel',[],'youtube-first');
