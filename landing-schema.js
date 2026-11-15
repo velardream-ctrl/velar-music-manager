@@ -150,7 +150,8 @@
     return {
       hero:{
         subtitle:'Разные голоса. Разные жанры. Одна вселенная музыки.',
-        intro:'Здесь рождается пространство для артистов, авторских релизов и музыкальных историй — от оперы и этно до рока, поп-музыки и кроссоверов.'
+        intro:'Здесь рождается пространство для артистов, авторских релизов и музыкальных историй — от оперы и этно до рока, поп-музыки и кроссоверов.',
+        imageLoadingLevel:0 // RUN-123: existing published pages remain eager.
       },
       artists:{
         heading:'У каждого голоса — своя история',
@@ -833,7 +834,13 @@
     var result={
       hero:{
         subtitle:plain(typeof hero.subtitle==='string'?hero.subtitle:d.hero.subtitle,'Первый экран — подзаголовок',160,true),
-        intro:plain(typeof hero.intro==='string'?hero.intro:d.hero.intro,'Первый экран — описание',600,true)
+        intro:plain(typeof hero.intro==='string'?hero.intro:d.hero.intro,'Первый экран — описание',600,true),
+        imageLoadingLevel:(function(){
+          var candidate=typeof hero.imageLoadingLevel==='undefined'?0:hero.imageLoadingLevel;
+          if(candidate!==0&&candidate!==1&&candidate!==2&&candidate!==3)
+            throw new Error('Ленивая загрузка изображений: выбери уровень от 0 до 3.');
+          return candidate;
+        }())
       },
       artists:section(artists,'Артисты',d.artists),
       albums:albumsConfig(albums,d.albums),

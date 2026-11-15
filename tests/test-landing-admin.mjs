@@ -89,6 +89,16 @@ assert.ok(reads.some(x=>x.key==='vmm_public_drafts/landing'));
 assert.ok(reads.some(x=>x.key==='vmm_public_pages/landing'));
 assert.equal(api.isDirty(),false);
 findInput('Подзаголовок').input('Музыка меняет мир');
+const slider=traverse(get('landing-fields'),n=>n.type==='range'&&n.attributes['aria-label']?.includes('Степень ленивой загрузки'));
+assert.ok(slider,'Image loading slider must be inside Studio -> Homepage -> First Screen');
+assert.equal(slider.value,'0','Existing sites default to eager loading');
+const previewLink=traverse(get('landing-fields'),n=>n.textContent==='Проверить выбранный режим на сайте');
+assert.ok(previewLink);
+slider.value='2';slider.oninput.call(slider);
+assert.equal(previewLink.href,'../?imageLoadingTest=2',
+ 'Testing a mode must use a non-persistent URL override');
+assert.equal(api.isDirty(),true);
+
 assert.equal(api.isDirty(),true);
 const beforeConfirm=window.confirm;
 window.confirm=()=>false;
@@ -97,12 +107,15 @@ window.confirm=beforeConfirm;
 get('landing-save').onclick();await flush();
 assert.equal(api.isDirty(),false);
 assert.equal(records.get('vmm_public_drafts/landing').content.hero.subtitle,'Музыка меняет мир');
+assert.equal(records.get('vmm_public_drafts/landing').content.hero.imageLoadingLevel,2);
+assert.equal(records.has('vmm_public_pages/landing'),false,'Preview must not publish the slider value');
 assert.equal(records.has('vmm_public_pages/landing'),false,'Saving a draft must not publish');
 assert.equal(get('landing-publish').disabled,false);
 get('landing-publish').onclick();await flush();
 const live=records.get('vmm_public_pages/landing');
 assert.equal(live.status,'published');
 assert.equal(live.content.hero.subtitle,'Музыка меняет мир');
+assert.equal(live.content.hero.imageLoadingLevel,2,'Owner publishes loading only explicitly');
 assert.equal(live.updatedBy,'owner1234');
 // Artist card editor works independently from the private release catalog.
 nav[1].onclick();await flush();

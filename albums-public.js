@@ -31,14 +31,17 @@
      host.appendChild(el('p','cms-album-empty','Альбомы появятся здесь после публикации в VELARDREAM Studio.'));
      return;
    }
-   items.forEach(function(album){
+   items.forEach(function(album,index){
      var card=el('article','cms-album-card');
      var visual=el('div','cms-album-cover');
      var cover=album.imageData||album.imageUrl;
      if(cover){
        var img=el('img','cms-album-cover-image');
-       img.src=cover;img.alt='Обложка альбома «'+album.title+'»';
-       img.loading='eager';img.decoding='async';img.referrerPolicy='no-referrer';
+       if(window.VELAR_IMAGE_LOADING&&window.VELAR_IMAGE_LOADING.apply)
+         window.VELAR_IMAGE_LOADING.apply(img,index);
+       else img.loading='eager';
+       img.decoding='async';img.referrerPolicy='no-referrer';
+       img.alt='Обложка альбома «'+album.title+'»';img.src=cover;
        visual.appendChild(img);
      }else{
        var symbol=el('span','cms-album-cover-placeholder','♫');
