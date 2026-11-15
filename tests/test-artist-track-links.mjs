@@ -20,7 +20,7 @@ const tracks=[
 ];
 const options=choice.choices(tracks);
 assert.equal(options[0].id,'velar');
-assert.equal(options[0].label,'DJ Velar');
+assert.equal(options[0].label,'Velar');
 assert.equal(options[0].count,2);
 assert.equal(options[1].id,'ilya-dmitriev');
 assert.equal(options[1].count,2);
