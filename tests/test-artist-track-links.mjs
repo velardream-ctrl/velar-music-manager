@@ -86,7 +86,7 @@ assert.match(editor,/loadTrackLinks|VMM_ARTIST_TRACKS\.read/);
 assert.match(editor,/VMM_ARTIST_TRACKS\.save/);
 assert.match(workflows,/d\.id==='artist_track_assignments_v1'/);
 assert.match(studio,/artist-track-links\.js\?v=1/);
-assert.match(studio,/artist-choices\.js\?v=1/);
+assert.match(studio,/artist-choices\.js\?v=3/);
 assert.match(sw,/STUDIO_PREFIX\+'v49'/);
 assert.match(rules,/match \/vmm_links\/\{itemId\}/);
 assert.match(schema,/artistId/);
