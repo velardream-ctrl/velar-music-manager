@@ -60,4 +60,30 @@ assert.equal(holder2.children[0].src,'https://i.scdn.co/image/abc123',
 holder2.children[0].onerror();
 assert.equal(holder2.children[0].className.includes('--empty'),true,
  'both sources failing must not enter a retry loop');
-console.log('PASS RUN-124/125: stable ordered covers and two-way fallbacks');
+// A manually uploaded cover must always take precedence, even when YouTube is first.
+const manual='https://example.com/published-cover.jpg';
+api.configure('rows',[],'standard',[],'youtube-first');
+const manualHost=element('div');
+api.mount(manualHost,[track],{prefix:'language',cover:manual,batch:1});
+const manualHolder=manualHost.children[0].children[0].children.find(x=>x.className==='public-song-row-artwork');
+assert.equal(manualHolder.children[0].src,manual,'Published manual cover wins over platform priority');
+manualHolder.children[0].onerror();
+assert.equal(manualHolder.children[0].src,yt,'Broken manual cover follows YouTube-first priority');
+manualHolder.children[0].onerror();
+assert.equal(manualHolder.children[0].src,'https://i.scdn.co/image/abc123',
+ 'Broken YouTube preview falls back to Spotify metadata after failed manual cover');
+manualHolder.children[0].onerror();
+assert.ok(manualHolder.children[0].className.includes('--empty'),
+ 'Three failed cover sources end in a stable placeholder');
+
+// Existing Spotify-first behavior also honors a broken manually uploaded cover.
+api.configure('rows',[],'standard',[],'spotify-first');
+const manualSpotifyHost=element('div');
+api.mount(manualSpotifyHost,[track],{prefix:'language',cover:manual,batch:1});
+const manualSpotifyHolder=manualSpotifyHost.children[0].children[0].children.find(x=>x.className==='public-song-row-artwork');
+manualSpotifyHolder.children[0].onerror();
+assert.equal(manualSpotifyHolder.children[0].src,'https://i.scdn.co/image/abc123',
+ 'Manual cover failure should choose the published Spotify-first source');
+manualSpotifyHolder.children[0].onerror();
+assert.equal(manualSpotifyHolder.children[0].src,yt,'Spotify failure should still reach YouTube');
+console.log('PASS RUN-124/125: stable ordered covers, manual overrides and finite two-way fallback');
