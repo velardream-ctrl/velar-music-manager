@@ -165,7 +165,7 @@
   /* RUN-NEW: owner-only artist registry and manual release editor. */
   var registry=[],registryRevision=0,artistOverrides={};
   function siteArtist(t){
-    if(t&&window.VMM_ARTIST_TRACKS&&window.VMM_ARTIST_CHOICES){var artistId=window.VMM_ARTIST_TRACKS.effective(t,artistOverrides);var choice=window.VMM_ARTIST_CHOICES.byId(window.VMM_ARTIST_CHOICES.choices(catalog),artistId);if(choice)return choice.label;var custom=registry.filter(function(a){return a.id===artistId;})[0];if(custom)return custom.name;}
+    if(t&&window.VMM_ARTIST_TRACKS&&window.VMM_ARTIST_CHOICES){var artistId=window.VMM_ARTIST_TRACKS.effective(t,artistOverrides);var custom=registry.filter(function(a){return a.id===artistId;})[0];if(custom)return custom.name;var choice=window.VMM_ARTIST_CHOICES.byId(window.VMM_ARTIST_CHOICES.choices(catalog),artistId);if(choice)return choice.label;if(custom)return custom.name;}
     return t&&t.artist||'';
   }
   function artistList(){
@@ -195,7 +195,7 @@
           var d=s.exists?s.data()||{}:{},arr=Array.isArray(d.artists)?d.artists.slice():[];
           if(arr.some(function(a){return tr(a.name).toLowerCase()===name.toLowerCase();}))throw new Error('Исполнитель уже добавлен в другом окне.');
           if(arr.length>=300)throw new Error('Достигнут лимит артистов.');
-          arr.push({id:db.collection('vmm_catalog').doc().id,name:name,createdBy:user.uid});
+          arr.push({id:'custom-'+db.collection('vmm_catalog').doc().id.toLowerCase(),name:name,createdBy:user.uid});
           tx.set(ref,{schemaVersion:1,revision:(Number(d.revision)||0)+1,artists:arr,updatedAt:ts(),updatedBy:user.uid});
           tx.set(audit,{time:ts(),operation:'Создан исполнитель',subject:name,result:'Сохранён в приватном реестре',actor:user.uid});
         });}).then(function(){busy=false;loadRegistry(artistManager);}).catch(function(err){busy=false;tell('Ошибка: '+err.message);});
@@ -276,7 +276,7 @@
       if(!window.confirm('Назначить '+tracks.length+' песен артисту «'+name+'»? Официальные сведения останутся прежними.'))return;
       busy=true;authenticated(function(){
         var choices=window.VMM_ARTIST_CHOICES&&window.VMM_ARTIST_CHOICES.choices(catalog)||[];
-        var match=choices.filter(function(a){return a.label===name;})[0]||registry.filter(function(a){return a.name===name;})[0];
+        var match=registry.filter(function(a){return a.name===name;})[0]||choices.filter(function(a){return a.label===name;})[0];
         if(!match||!window.VMM_ARTIST_TRACKS){busy=false;return tell('Модуль привязки артистов недоступен.');}
         window.VMM_ARTIST_TRACKS.read(db).then(function(snapshot){
           var ids=tracks.map(function(t){return t.id;}),map=Object.assign({},snapshot.overrides);
