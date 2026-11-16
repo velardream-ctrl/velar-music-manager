@@ -1528,3 +1528,9 @@
 
 
 - RUN-142 ЗАВЕРШЕНО В GITHUB: GitHub Actions `Verify safe VELAR shell` run `43836325231` — SUCCESS; PR #101 https://github.com/velardream-ctrl/velar-music-manager/pull/101 squash-MERGED в `main`, SHA `89c4a1f68e114c5ea5d165bddfa81fbf1c379eeb`. Публикация Pages и визуальная проверка эффекта на iPhone/iPad отдельно не подтверждены. JS плееров и загрузки изображений не изменён.
+
+### RUN-143 — 16.11.2026 — Музыкальный резонанс плейлистов (начато, публикация только после тестов)
+- Владелец одобрил отдельный интерактивный HTML-макет `velardream_playlist_resonance_preview.html` и дал разрешение опубликовать реализацию.
+- Ветка `feat/run143-playlist-musical-resonance-20261116`: создан `playlist-resonance.js` с лёгкой прокрутко-зависимой анимацией нот/орбит/кристалла, без WebGL, видео, таймеров, запросов и автозапуска аудио. Поддержка `prefers-reduced-motion`, requestAnimationFrame и пассивного scroll; ES5.
+- В `landing-public.js` подключено оформление для карточек, полученных из опубликованной конфигурации; статическая карточка оформляется при DOMContentLoaded. Существующие ссылки и кнопки плейлистов не изменены. CSS оформляет сцену, public CSS v57, landing-public v33, SW v64, новый скрипт v1.
+- Перед публикацией: CI и проверка сохранности динамических плейлистов, ссылок, lazy-loading, iOS Safari; затем merge. Визуальная приёмка на реальном iPhone после деплоя отдельно.
