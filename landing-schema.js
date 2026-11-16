@@ -395,6 +395,10 @@
       throw new Error('VELAR RADIO: выбери Spotify или YouTube.');
     var link=playlistUrl(x.url||'',provider);
     if(x.url&&!link)throw new Error('VELAR RADIO: укажи официальную ссылку на публичный плейлист '+provider+'.');
+    var streamUrl=x.streamUrl||'';
+    if(streamUrl&&(typeof streamUrl!=='string'||streamUrl.length>500||
+      !/^https:\/\/[a-z0-9.-]+\.[a-z]{2,}(?::[0-9]{2,5})?\/[A-Za-z0-9/_~.%+-]+$/i.test(streamUrl)))
+      throw new Error('VELAR RADIO: укажи прямой публичный HTTPS-адрес аудиопотока без токена или параметров.');
     var tracks=x.tracks||[];
     if(!Array.isArray(tracks)||tracks.length>300)throw new Error('В эфире допускается до 300 песен.');
     var seen={};
@@ -414,9 +418,9 @@
         if(!url||known[url])return false;known[url]=true;return true;
       });
     });
-    if(enabled&&!link&&!tracks.length&&!sources.length)throw new Error('VELAR RADIO: сначала укажи ссылку на плейлист.');
+    if(enabled&&!link&&!tracks.length&&!sources.length&&!streamUrl)throw new Error('VELAR RADIO: укажи источник музыки или адрес аудиопотока.');
     return {enabled:enabled,controlVersion:2,title:plain(typeof x.title==='string'?x.title:'VELAR RADIO','Название радио',70,true),
-      provider:provider,url:link,tracks:tracks,sources:sources,catalog:catalog};
+      provider:provider,url:link,tracks:tracks,sources:sources,catalog:catalog,streamUrl:streamUrl};
   }
 
   // RUN-096: a curated collection of singles must NOT claim an official album release.
