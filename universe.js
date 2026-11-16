@@ -46,6 +46,10 @@
    var countsNow=counts(data),key=n.id==='videos'?'videos':n.target;
    return typeof countsNow[key]==='number'?countsNow[key]:null;
  }
+ function pulse(){var core=stage&&stage.querySelector('.universe-core');if(!core)return;
+   core.classList.remove('crystal-selection-pulse');void core.offsetWidth;
+   core.classList.add('crystal-selection-pulse');
+ }
  function choose(id){
    var nodes=visibleNodes(),item=null;
    nodes.forEach(function(n){if(n.id===id)item=n;});
@@ -114,7 +118,7 @@
      btn.setAttribute('aria-pressed','false');
      btn.appendChild(el('span','universe-node-mark',('0'+(i+1)).slice(-2)));
      btn.appendChild(el('span','universe-node-name',n.label));
-     btn.onclick=function(){choose(n.id);};
+     btn.onclick=function(){choose(n.id);pulse();};
      btn.onfocus=function(){choose(n.id);};
      buttons.push(btn);stage.appendChild(btn);
    });
