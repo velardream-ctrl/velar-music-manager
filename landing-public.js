@@ -772,42 +772,82 @@
    while(offset>=order[index].seconds){offset-=order[index++].seconds;}
    return {track:order[index],offset:offset,remaining:order.slice(index+1)};
  }
- function radioMove(host,handle){
-   if(!host.getBoundingClientRect||!window.addEventListener)return;
-   var drag=null,position=null;
-   function place(x,y){
+ function radioMove(host,grip,orb){
+   if(!host.getBoundingClientRect||!window.addEventListener)return {sync:function(){},ignoreClick:function(){return false;}};
+   var anchor=null,drag=null,ignoreUntil=0;
+   function clamp(n,max){return Math.max(0,Math.min(n,max));}
+   function point(e){return e.touches?(e.touches[0]||e.changedTouches[0]):e;}
+   // Preserve a logical right-side anchor while wide and narrow panels change size.
+   // A large panel is allowed to shift onscreen while the saved orb position survives.
+   function fit(){
+     if(!anchor)return;
      var rect=host.getBoundingClientRect();
-     position=[Math.max(0,Math.min(x,window.innerWidth-rect.width)),Math.max(0,Math.min(y,window.innerHeight-rect.height))];
-     host.style.left=position[0]+'px';host.style.top=position[1]+'px';host.style.right='auto';
+     // Use the FINAL CSS width rather than a mid-animation width, especially
+     // on iOS 12 where ResizeObserver cannot help after transition.
+     var width=host.className.indexOf('velar-radio--bubble')!==-1?
+       68:Math.min(365,Math.max(0,window.innerWidth-24));
+     var right=clamp(anchor.right,Math.max(0,window.innerWidth-width));
+     var top=clamp(anchor.top,Math.max(0,window.innerHeight-rect.height));
+     host.style.right=right+'px';host.style.left='auto';host.style.top=top+'px';
+     if(host.className.indexOf('velar-radio--bubble')!==-1){
+       host.className=host.className.replace(/\svelar-radio--popup-left|\svelar-radio--popup-above/g,'');
+       if(window.innerWidth-right-width<window.innerWidth/2)host.className+=' velar-radio--popup-left';
+       if(window.innerHeight-top-rect.height<288)host.className+=' velar-radio--popup-above';
+     }
    }
-   function fit(){if(position)place(position[0],position[1]);}
-   function point(e){return e.touches?e.touches[0]:e;}
-   function down(e){
-     if(e.button>0)return;
-     var p=point(e),r=host.getBoundingClientRect();drag=[p.clientX-r.left,p.clientY-r.top];e.preventDefault();
+   function down(e,kind){
+     if(typeof e.button==='number'&&e.button>0)return;
+     if(kind==='orb'&&host.className.indexOf('velar-radio--bubble')===-1)return;
+     var p=point(e),r=host.getBoundingClientRect();if(!p)return;
+     drag={kind:kind,x:p.clientX,y:p.clientY,dx:r.right-p.clientX,dy:p.clientY-r.top,moved:false};
+     if(kind==='grip'&&e.cancelable)e.preventDefault();
    }
    function move(e){
      if(!drag)return;
-     var p=point(e);place(p.clientX-drag[0],p.clientY-drag[1]);if(e.cancelable)e.preventDefault();
+     var p=point(e);if(!p)return;
+     if(!drag.moved&&Math.abs(p.clientX-drag.x)+Math.abs(p.clientY-drag.y)<9)return;
+     drag.moved=true;
+     anchor={right:window.innerWidth-p.clientX-drag.dx,top:p.clientY-drag.dy};
+     fit();
+     if(e.cancelable)e.preventDefault();
    }
-   function up(){drag=null;}
-   handle.addEventListener('mousedown',down);handle.addEventListener('touchstart',down,{passive:false});
-   window.addEventListener('mousemove',move);window.addEventListener('touchmove',move,{passive:false});
-   window.addEventListener('mouseup',up);window.addEventListener('touchend',up);window.addEventListener('touchcancel',up);
+   function up(){if(drag&&drag.kind==='orb'&&drag.moved)ignoreUntil=Date.now()+650;drag=null;}
+   function gripDown(e){down(e,'grip');}
+   function orbDown(e){down(e,'orb');}
+   grip.addEventListener('mousedown',gripDown);
+   grip.addEventListener('touchstart',gripDown,{passive:false});
+   orb.addEventListener('mousedown',orbDown);
+   orb.addEventListener('touchstart',orbDown,{passive:true});
+   window.addEventListener('mousemove',move);
+   window.addEventListener('touchmove',move,{passive:false});
+   window.addEventListener('mouseup',up);
+   window.addEventListener('touchend',up);
+   window.addEventListener('touchcancel',up);
    window.addEventListener('resize',fit);
    var observer=window.ResizeObserver?new window.ResizeObserver(fit):null;
    if(observer)observer.observe(host);
-   handle.onkeydown=function(e){
-     var steps={ArrowLeft:[-24,0],ArrowRight:[24,0],ArrowUp:[0,-24],ArrowDown:[0,24]};
-     if(!steps[e.key])return;
-     var r=host.getBoundingClientRect();place(r.left+steps[e.key][0],r.top+steps[e.key][1]);e.preventDefault();
+   function keys(e){
+     var step={ArrowLeft:[-24,0],ArrowRight:[24,0],ArrowUp:[0,-24],ArrowDown:[0,24]}[e.key];
+     if(!step)return;
+     var rect=host.getBoundingClientRect();
+     anchor={right:window.innerWidth-rect.right-step[0],top:rect.top+step[1]};
+     fit();e.preventDefault();
+   }
+   grip.onkeydown=keys;
+   orb.onkeydown=function(e){
+     if(host.className.indexOf('velar-radio--bubble')!==-1)keys(e);
    };
    stopRadioMove=function(){
      if(observer)observer.disconnect();
+     grip.removeEventListener('mousedown',gripDown);grip.removeEventListener('touchstart',gripDown);
+     orb.removeEventListener('mousedown',orbDown);orb.removeEventListener('touchstart',orbDown);
      window.removeEventListener('mousemove',move);window.removeEventListener('touchmove',move);
      window.removeEventListener('mouseup',up);window.removeEventListener('touchend',up);window.removeEventListener('touchcancel',up);
      window.removeEventListener('resize',fit);
    };
+   return {sync:fit,ignoreClick:function(){
+     if(Date.now()<ignoreUntil){ignoreUntil=0;return true;}return false;
+   }};
  }
  function stationHelp(standalone){
    var details=create('details','station-help');
@@ -880,7 +920,7 @@
    host.className=station?'velar-radio':'velar-radio velar-radio--bubble';
    var toggle=create('button','velar-radio-toggle','');
    toggle.type='button';toggle.setAttribute('aria-expanded','false');
-   toggle.setAttribute('aria-label',station?'Свернуть VELAR RADIO':'Развернуть VELAR RADIO');
+   toggle.setAttribute('aria-label',station?'Свернуть VELAR RADIO':'Развернуть VELAR RADIO (можно перетащить)');
    toggle.setAttribute('aria-controls','velar-radio-panel');
    var dot=create('span','velar-radio-dot');dot.setAttribute('aria-hidden','true');
    toggle.appendChild(dot);toggle.appendChild(create('span','',config.title));
@@ -973,14 +1013,15 @@
    };
    if(!station){
      panel.appendChild(hide);
-     var bubble=create('button','velar-radio-bubble-action','☁ Свернуть в облачко');
-     bubble.type='button';bubble.setAttribute('aria-label','Минимизировать VELAR RADIO в облачко');
+     var bubble=create('button','velar-radio-bubble-action','Свернуть в значок');
+     bubble.type='button';bubble.setAttribute('aria-label','Минимизировать VELAR RADIO в значок');
      bubble.onclick=function(){
        // The official iframe remains mounted and visible in a small media card.
        // YouTube requires a visible 200×200 player; never hide or shrink it to 60px.
        panel.className=hasEmbed(player)?'velar-radio-panel velar-radio-panel--mini':'velar-radio-panel hidden';
        toggle.setAttribute('aria-expanded','false');
        host.className=host.className.replace(/\svelar-radio--chat-open/g,'')+' velar-radio--bubble';
+       radioDrag.sync();
        toggle.setAttribute('aria-label','Развернуть VELAR RADIO');
      };
      panel.appendChild(bubble);
@@ -991,11 +1032,14 @@
    host.appendChild(panel);
    var grip=create('button','velar-radio-grip','⠿');
    grip.type='button';grip.setAttribute('aria-label','Переместить радио · перетащите или используйте стрелки');
-   if(!station){host.appendChild(grip);radioMove(host,grip);host.appendChild(stationHelp(false));}
+   var radioDrag={sync:function(){},ignoreClick:function(){return false;}};
+   if(!station){host.appendChild(grip);radioDrag=radioMove(host,grip,toggle);host.appendChild(stationHelp(false));}
    radioControls={toggle:toggle,start:open,player:player,host:host};
    toggle.onclick=function(){
+     if(radioDrag.ignoreClick())return;
      if(host.className.indexOf('velar-radio--bubble')!==-1){
-       host.className=host.className.replace(/\svelar-radio--bubble/g,'');
+       host.className=host.className.replace(/\svelar-radio--bubble|\svelar-radio--popup-left|\svelar-radio--popup-above/g,'');
+       radioDrag.sync();
        panel.className='velar-radio-panel';
        toggle.setAttribute('aria-expanded','true');
        toggle.setAttribute('aria-label','Свернуть VELAR RADIO');
@@ -1007,6 +1051,7 @@
      panel.className=expanding?'velar-radio-panel':
        (hasEmbed(player)?'velar-radio-panel velar-radio-panel--mini':'velar-radio-panel hidden');
      toggle.setAttribute('aria-expanded',expanding?'true':'false');
+     radioDrag.sync();
      if(!expanding)host.className=host.className.replace(/\svelar-radio--chat-open/g,'');
    };
    if(station)toggle.onclick();
