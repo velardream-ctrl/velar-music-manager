@@ -187,11 +187,10 @@
      if(activeMount===instance)activeMount=null;
    }
    function open(i,src){
-     if(src.provider==='youtube'&&window.VMM_YOUTUBE_COMPAT&&window.VMM_YOUTUBE_COMPAT.required()){
+     if(src.provider==='youtube'&&window.VMM_YOUTUBE_COMPAT&&window.VMM_YOUTUBE_COMPAT.required()&&
+       window.VMM_PUBLIC_LANDING&&window.VMM_PUBLIC_LANDING.openYouTubeModal){
        if(activeMount)activeMount.close();
-       if(window.VMM_PUBLIC_LANDING&&window.VMM_PUBLIC_LANDING.stopExternalPlayers)
-         window.VMM_PUBLIC_LANDING.stopExternalPlayers();
-       return window.VMM_YOUTUBE_COMPAT.open(src.url);
+       return window.VMM_PUBLIC_LANDING.openYouTubeModal(src.url,tracks[i].title);
      }
      var link=embed(src);
      if(!link||!slots[i])return false;

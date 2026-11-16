@@ -127,12 +127,13 @@ assert.doesNotMatch(mobileCSS,/\.public-song-platforms\{flex:1 1 100%/,
  'Mobile sources cannot turn into a full-width Spotify button');
 assert.doesNotMatch(mobileCSS,/\.public-song-source\{flex:1 1 100px/,
  'Mobile source buttons cannot grow to the entire width');
-assert.match(read('index.html'),/public-song-ui\.js\?v=23/);
+assert.match(read('index.html'),/public-song-ui\.js\?v=24/);
 console.log('PASS: RUN-090 Spotify/YouTube inline single-row player, long lists, safe deep links, one active iframe');
 
-// RUN-154: legacy YouTube navigates directly; no iframe and no pressed state.
+// RUN-155: legacy YouTube opens the shared page-local modal.
 let legacyOpened='';
-window.VMM_YOUTUBE_COMPAT={required:()=>true,open:url=>{legacyOpened=url;return true;}};
+window.VMM_YOUTUBE_COMPAT={required:()=>true};
+window.VMM_PUBLIC_LANDING.openYouTubeModal=url=>{legacyOpened=url;return true;};
 assert.equal(app.openByUrl(yt),true);
 assert.equal(legacyOpened,yt);
 assert.equal(slot(other.children[0]).children.length,0);

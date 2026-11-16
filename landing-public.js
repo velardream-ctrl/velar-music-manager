@@ -166,7 +166,7 @@
      function playFor(provider,link){
        var validated=window.VMM_LANDING_SCHEMA.songUrl(link,provider);
        if(!validated)return;
-       if(provider==='youtube'&&externalYouTube(validated))return;
+       if(provider==='youtube'&&legacyYouTubeModal(validated,track.title))return;
        if(active===index&&activeProvider===provider&&hasEmbed(player)){
          empty(player);active=null;activeProvider='';
          entry.className=entry.className.replace(/ is-playing/g,'');
@@ -337,11 +337,18 @@
  }
  // RUN-147: older iPad Safari misplaces YouTube's own cross-origin play button.
  // Detect the unsupported layout engine, not all iPads or modern iPhones.
- function externalYouTube(url){
-   return window.VMM_YOUTUBE_COMPAT&&window.VMM_YOUTUBE_COMPAT.open(url);
+ function legacyYouTubeModal(url,title){
+   if(!legacyIpadVideo())return false;
+   return openYouTubeModal(url,title);
+ }
+ function openYouTubeModal(url,title){
+   var media=officialEmbed(url,'youtube',url.indexOf('/playlist?')>=0?'playlist':'release');
+   if(!media)return false;
+   showLegacyVideoModal(media,title||'YouTube');return true;
  }
  function legacyIpadVideo(){
    var ua=typeof navigator!=='undefined'?(navigator.userAgent||''):'';
+   if(window.VMM_YOUTUBE_COMPAT&&window.VMM_YOUTUBE_COMPAT.required())return true;
    if(!/iPad/i.test(ua))return false;
    return !window.CSS||!window.CSS.supports||
      !window.CSS.supports('aspect-ratio','16 / 9');
@@ -353,7 +360,6 @@
  // RUN-149: old iPad gets a page-local lightbox, never a new browser tab.
  var dismissVideoModal=null;
  function showLegacyVideoModal(media,title){
-   if(externalYouTube(youtubeWatchUrl(media)))return;
    if(dismissVideoModal)dismissVideoModal();
    pauseOtherEmbeds();
    var prior=document.getElementById('velar-legacy-video-modal');
@@ -372,42 +378,71 @@
    // Old Safari can leave youtube-nocookie embeds blank. Use YouTube's
    // regular player endpoint, inline playback and an explicit 16:9 viewport.
    var id=(media||'').match(/^https:\/\/www\.youtube-nocookie\.com\/embed\/([A-Za-z0-9_-]{11})$/);
-   var frameUrl=id?'https://www.youtube.com/embed/'+id[1]+'?playsinline='+(legacyIpadVideo()?'0':'1')+'&rel=0':media;
+   var frameUrl=id?'https://www.youtube.com/embed/'+id[1]:media.replace('www.youtube-nocookie.com','www.youtube.com');
+   frameUrl+=(frameUrl.indexOf('?')>=0?'&':'?')+'playsinline=1&rel=0';
    frame.referrerPolicy='strict-origin-when-cross-origin';
    frame.setAttribute('allow','autoplay; encrypted-media; fullscreen; picture-in-picture');
    frame.setAttribute('allowfullscreen','');
    frame.setAttribute('webkitallowfullscreen','');
    frame.setAttribute('playsinline','');
-   // RUN-153: iOS 12's YouTube iframe UI is offset inside its own frame.
-   // Use the official IFrame API for an accessible play control outside it.
-   var apiPlayer=null;
-   var apiPlay=null;
-   if(legacyIpadVideo()&&id){
-     apiPlay=create('button','velar-video-api-play','▶ Воспроизвести');
-     apiPlay.type='button';
+   // RUN-155: use YouTube's supported controls=0 and real API controls
+   // inside the modal, outside the broken cross-origin control layout.
+   var apiPlayer=null,apiPlay=null,apiMute=null,apiSeek=null,apiStatus=null;
+   var ready=false,playing=false,closed=false,apiTimer=null,playTimer=null,clock=null;
+   var width=0,height=0,apiReadyCallback=null,previousReady=null;
+   var legacy=legacyIpadVideo();
+   function clearTimer(timer){if(timer!==null)window.clearTimeout(timer);}
+   function failed(message){
+     if(closed||!apiStatus)return;
+     apiStatus.textContent=message;
+   }
+   if(legacy){
+     frameUrl+='&controls=0';
+     apiPlay=create('button','velar-video-api-play','Воспроизвести');
+     apiPlay.type='button';apiPlay.disabled=true;
      apiPlay.setAttribute('aria-label','Воспроизвести видео '+title);
+     apiMute=create('button','velar-video-api-mute','Выключить звук');
+     apiMute.type='button';apiMute.disabled=true;
+     apiSeek=create('input','velar-video-api-seek');
+     apiSeek.type='range';apiSeek.min='0';apiSeek.max='100';apiSeek.value='0';apiSeek.disabled=true;
+     apiSeek.setAttribute('aria-label','Позиция видео');
+     apiStatus=create('p','velar-video-api-status','Загрузка плеера YouTube…');
+     apiStatus.setAttribute('role','status');apiStatus.setAttribute('aria-live','polite');
      apiPlay.onclick=function(){
-       if(apiPlayer&&typeof apiPlayer.playVideo==='function'){
+       if(!ready||closed)return;
+       clearTimer(playTimer);
+       try{
+         if(playing){apiPlayer.pauseVideo();return;}
+         // Must run synchronously in the user's gesture, never in onReady.
+         apiStatus.textContent='Ожидаем запуска видео…';
          apiPlayer.playVideo();
-       }else{
-         // The API may be blocked on old iOS; keep a working direct fallback.
-         fallback.style.display='block';
-       }
+         playTimer=window.setTimeout(function(){
+           if(!playing)failed('YouTube не подтвердил запуск. Попробуйте ещё раз или используйте запасную ссылку ниже.');
+         },8000);
+       }catch(err){failed('Не удалось запустить YouTube. Можно повторить нажатие или открыть запасную ссылку.');}
+     };
+     apiMute.onclick=function(){
+       if(!ready||closed)return;
+       try{if(apiPlayer.isMuted()){apiPlayer.unMute();apiMute.textContent='Выключить звук';}
+       else{apiPlayer.mute();apiMute.textContent='Включить звук';}}catch(err){}
+     };
+     apiSeek.onchange=function(){
+       if(!ready||closed)return;
+       try{apiPlayer.seekTo(apiPlayer.getDuration()*Number(apiSeek.value)/100,true);}catch(err){}
      };
    }
    var fallback=create('a','velar-video-fallback','Если видео не запускается — смотреть на YouTube');
-   fallback.href=id?'https://www.youtube.com/watch?v='+id[1]:media;
+   fallback.href=id?'https://www.youtube.com/watch?v='+id[1]:media.replace('https://www.youtube-nocookie.com/embed/videoseries?list=','https://www.youtube.com/playlist?list=');
    fallback.target='_blank';fallback.rel='noopener noreferrer';
    var previousFocus=document.activeElement;
-   var legacy=legacyIpadVideo();
    // RUN-152: avoid percentage iframe height inside a height:0 padding box.
    // Size before navigation; rotation changes dimensions without reloading video.
    function sizeLegacyVideo(){
      if(!legacy)return;
-     var width=Math.floor(Math.min(940,window.innerWidth*0.94)-26);
-     var available=Math.floor(window.innerHeight-130);
+     width=Math.floor(Math.min(940,window.innerWidth*0.94)-26);
+     var available=Math.floor(window.innerHeight-235);
      width=Math.max(200,Math.min(width,Math.floor(Math.max(200,available)*16/9)));
-     var height=Math.max(200,Math.round(width*9/16));
+     height=Math.max(200,Math.round(width*9/16));
      viewport.style.width=width+'px';
      viewport.style.height=height+'px';
      viewport.style.paddingTop='0';
@@ -416,8 +451,13 @@
      frame.setAttribute('height',String(height));
      frame.style.setProperty('width',width+'px','important');
      frame.style.setProperty('height',height+'px','important');
+     if(ready&&apiPlayer.setSize)apiPlayer.setSize(width,height);
    }
    function dismiss(){
+     closed=true;ready=false;
+     clearTimer(apiTimer);clearTimer(playTimer);
+     if(clock!==null)window.clearInterval(clock);
+     if(window.onYouTubeIframeAPIReady===apiReadyCallback)window.onYouTubeIframeAPIReady=previousReady;
      if(legacy){
        window.removeEventListener('resize',sizeLegacyVideo);
        window.removeEventListener('orientationchange',sizeLegacyVideo);
@@ -432,8 +472,12 @@
    close.onclick=dismiss;
    overlay.onclick=function(e){if(e.target===overlay)dismiss();};
    viewport.appendChild(frame);
-   if(apiPlay)panel.appendChild(apiPlay);
    panel.appendChild(close);panel.appendChild(viewport);
+   if(apiPlay){
+     var controls=create('div','velar-video-api-controls');
+     controls.appendChild(apiPlay);controls.appendChild(apiMute);controls.appendChild(apiSeek);
+     panel.appendChild(controls);panel.appendChild(apiStatus);
+   }
    panel.appendChild(fallback);overlay.appendChild(panel);
    document.body.appendChild(overlay);
    sizeLegacyVideo();
@@ -442,24 +486,54 @@
    }
    frame.src=frameUrl;
    if(apiPlay){
-     // Attach to the existing iframe, not a replacement element: preserve geometry.
      var attachApi=function(){
-       if(!overlay.parentNode||!window.YT||typeof window.YT.Player!=='function')return;
-       try{apiPlayer=new window.YT.Player(frame,{events:{onStateChange:function(e){
-         if(e.data===1)apiPlay.style.display='none';
-       }}});}catch(err){fallback.style.display='block';}
+       if(closed||!overlay.parentNode||!window.YT||typeof window.YT.Player!=='function')return;
+       try{apiPlayer=new window.YT.Player(frame,{events:{
+         onReady:function(e){
+           if(closed)return;
+           apiPlayer=e.target;ready=true;clearTimer(apiTimer);
+           apiPlay.disabled=false;apiMute.disabled=false;apiSeek.disabled=false;
+           if(apiPlayer.setSize)apiPlayer.setSize(width,height);
+           apiStatus.textContent='Плеер готов. Нажмите «Воспроизвести».';
+           clock=window.setInterval(function(){
+             if(!ready||closed)return;
+             try{var duration=apiPlayer.getDuration();
+               if(duration>0)apiSeek.value=String(100*apiPlayer.getCurrentTime()/duration);
+             }catch(err){}
+           },1000);
+         },
+         onStateChange:function(e){
+           if(closed)return;
+           playing=e.data===1;
+           apiPlay.textContent=playing?'Пауза':'Воспроизвести';
+           if(playing){clearTimer(playTimer);apiStatus.textContent='Видео воспроизводится';}
+           else if(e.data===2)apiStatus.textContent='Пауза';
+           else if(e.data===0)apiStatus.textContent='Видео завершено';
+           else if(e.data===3)apiStatus.textContent='Загрузка видео…';
+         },
+         onError:function(e){failed('Ошибка YouTube ('+e.data+'). Запасная ссылка доступна ниже.');},
+         onAutoplayBlocked:function(){failed('Браузер заблокировал запуск. Нажмите «Воспроизвести» ещё раз.');}
+       }});}catch(err){failed('Плеер YouTube недоступен. Запасная ссылка доступна ниже.');}
      };
+     apiTimer=window.setTimeout(function(){
+       if(!ready)failed('YouTube не подтвердил готовность плеера. Попробуйте закрыть и открыть окно ещё раз.');
+     },15000);
      if(window.YT&&typeof window.YT.Player==='function')attachApi();
      else{
-       var prevReady=window.onYouTubeIframeAPIReady;
-       window.onYouTubeIframeAPIReady=function(){
-         if(typeof prevReady==='function')prevReady();
+       previousReady=window.onYouTubeIframeAPIReady;
+       apiReadyCallback=function(){
+         if(typeof previousReady==='function')try{previousReady();}catch(err){}
          attachApi();
        };
-       if(typeof document.createElement==='function'&&!document.getElementById('velar-youtube-iframe-api')){
+       window.onYouTubeIframeAPIReady=apiReadyCallback;
+       if(!document.getElementById('velar-youtube-iframe-api')){
          var apiScript=document.createElement('script');
          apiScript.id='velar-youtube-iframe-api';
          apiScript.src='https://www.youtube.com/iframe_api';
+         apiScript.onerror=function(){
+           if(apiScript.parentNode)apiScript.parentNode.removeChild(apiScript);
+           failed('Не загрузился плеер YouTube. Закройте и откройте окно для повтора.');
+         };
          document.head.appendChild(apiScript);
        }
      }
@@ -525,19 +599,14 @@
    // expanding row after the text of the release.
    art.appendChild(player);
    if(media){
-     var directYouTube=item.mediaProvider==='youtube'&&window.VMM_YOUTUBE_COMPAT&&window.VMM_YOUTUBE_COMPAT.required();
-     var listen=create(directYouTube?'a':'button','cms-release-listen');
-     if(directYouTube){
-       listen.href=youtubeWatchUrl(media);listen.rel='noopener';
-     }
-     if(!directYouTube)listen.type='button';
+     var listen=create('button','cms-release-listen');
+     listen.type='button';
      var icon=create('span','cms-release-play');
      icon.setAttribute('aria-hidden','true');listen.appendChild(icon);
-     listen.appendChild(create('span','',directYouTube?'Смотреть на YouTube':isVideo?'Смотреть клип':'Слушать'));
-     listen.setAttribute('aria-label',(directYouTube?'Смотреть на YouTube: ':isVideo?'Смотреть клип: ':'Слушать релиз: ')+item.title);
-     if(!directYouTube)listen.setAttribute('aria-pressed','false');
+     listen.appendChild(create('span','',isVideo?'Смотреть клип':'Слушать'));
+     listen.setAttribute('aria-label',(isVideo?'Смотреть клип: ':'Слушать релиз: ')+item.title);
+     listen.setAttribute('aria-pressed','false');
      listen.onclick=function(){
-       if(directYouTube){pauseOtherEmbeds();return;}
        if(isVideo&&item.mediaProvider==='youtube'&&legacyIpadVideo()){
          showLegacyVideoModal(media,item.title);return;
        }
@@ -565,7 +634,7 @@
    }
    // Distinct optional viewing mode on modern browsers: large page-local overlay.
    // On old iPads the main button already uses this mode, so do not duplicate it.
-   if(isVideo&&media&&!directYouTube&&!legacyIpadVideo()){
+   if(isVideo&&media&&!legacyIpadVideo()){
      var expand=create('button','cms-card-link cms-release-inline-link','Развернуть видео');
      expand.type='button';
      expand.setAttribute('aria-label','Открыть клип в большом окне: '+item.title);
@@ -659,7 +728,7 @@
        }
        var src=officialEmbed(item.url,item.provider,'playlist');
        if(!src)return;
-       if(item.provider==='youtube'&&externalYouTube(item.url))return;
+       if(item.provider==='youtube'&&legacyYouTubeModal(item.url,item.title))return;
        pauseOtherEmbeds();empty(player);choose.setAttribute('aria-pressed','true');
        var frame=create('iframe','cms-release-iframe'+(item.provider==='youtube'?' cms-release-iframe--video':''));
        frame.src=src;frame.title=item.title+' — официальный плейлист '+item.provider;
@@ -731,7 +800,7 @@
        empty(player);open.setAttribute('aria-pressed','false');return;
      }
      var src=officialEmbed(config.url,config.provider,'playlist');if(!src)return;
-     if(config.provider==='youtube'&&externalYouTube(config.url))return;
+     if(config.provider==='youtube'&&legacyYouTubeModal(config.url,config.title))return;
      pauseOtherEmbeds();empty(player);open.setAttribute('aria-pressed','true');
      var frame=create('iframe','velar-radio-iframe'+(config.provider==='youtube'?' velar-radio-iframe--video':''));
      frame.src=src;frame.title=config.title+' — '+config.provider;
@@ -841,5 +910,5 @@
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);
  else start();
  window.VMM_PUBLIC_LANDING={render:render,stopExternalPlayers:pauseOtherEmbeds,
-   openRadioFromChat:openRadioFromChat}; // public UI only, never writes
+   openYouTubeModal:openYouTubeModal,openRadioFromChat:openRadioFromChat}; // public UI only, never writes
 }());

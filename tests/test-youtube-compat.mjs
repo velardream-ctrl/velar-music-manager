@@ -16,13 +16,10 @@ for(const [ua,legacy] of [
  vm.runInNewContext(source,{window,navigator:{userAgent:ua}});
  const api=window.VMM_YOUTUBE_COMPAT;
  assert.equal(api.required(),legacy,ua);
- for(const url of ['https://www.youtube.com/watch?v=ABCDEFGHIjk','https://www.youtube.com/playlist?list=PLabc_123'])
-  assert.equal(api.open(url),legacy);
- for(const url of ['javascript:alert(1)','https://evil.test/watch?v=ABCDEFGHIjk','https://www.youtube.com.evil.test/watch?v=ABCDEFGHIjk','https://www.youtube.com/watch?v=bad'])
-  assert.equal(api.open(url),false);
- assert.equal(navigations.length,legacy?2:0);
+ assert.equal(typeof api.open,'undefined','Compatibility helper cannot navigate');
+ assert.equal(navigations.length,0);
 }
 const html=fs.readFileSync('index.html','utf8');
-assert.ok(html.indexOf('youtube-compat.js?v=1')<html.indexOf('landing-public.js?v='));
-assert.ok(html.indexOf('youtube-compat.js?v=1')<html.indexOf('public-song-ui.js?v='));
-console.log('PASS: iOS12 Safari/Chrome/iPhone/iPod direct official navigation; modern embeds untouched, invalid URLs rejected');
+assert.ok(html.indexOf('youtube-compat.js?v=2')<html.indexOf('landing-public.js?v='));
+assert.ok(html.indexOf('youtube-compat.js?v=2')<html.indexOf('public-song-ui.js?v='));
+console.log('PASS: iOS12 Safari/Chrome/iPhone/iPod legacy detection only; no external navigation');

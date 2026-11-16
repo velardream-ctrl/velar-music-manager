@@ -203,24 +203,25 @@ assert.equal(map['velar-radio'].className,'velar-radio hidden');
 assert.equal(window.VMM_PUBLIC_LANDING.openRadioFromChat(),false,'disabled radio cannot launch from chat');
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0,'Disabling always unloads the official external player');
 assert.doesNotMatch(universeJS,/setInterval\(|setTimeout\(|getContext\(['"]webgl|requestAnimationFrame\(|fetch\(|firestore\(/);
-assert.doesNotMatch(publicJS,/autoplay=1|loop=1|muted=1|setInterval\(/);
+assert.doesNotMatch(publicJS,/autoplay=1|loop=1|muted=1/);
+// The single modal-only clock updates the seek position and is destroyed on close.
+assert.equal((publicJS.match(/setInterval\(/g)||[]).length,1);
+assert.match(publicJS,/if\(clock!==null\)window.clearInterval\(clock\)/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(css,/.cms-release-art::before/);
 assert.match(html,/universe\.js\?v=7/);
-assert.match(html,/style\.css\?v=66/);
-assert.match(sw,/CACHE_PREFIX \+ 'v74'/);
+assert.match(html,/style\.css\?v=67/);
+assert.match(sw,/CACHE_PREFIX \+ 'v75'/);
 assert.match(sw,/STUDIO_PREFIX\+'v49'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);
 console.log('PASS: RUN-069/070 safe releases, Spotify playlists, subscribers, opt-in radio, one active iframe and lazy 2.5D universe');
-// RUN-154: iOS12 release uses a genuine, usable watch link, never a dead modal.
-window.VMM_YOUTUBE_COMPAT={required:()=>true,open:()=>true};
+// RUN-155: iOS12 main action restores a modal button, never a watch navigation.
+window.VMM_YOUTUBE_COMPAT={required:()=>true};
 observer({exists:true,data:()=>({status:'published',schemaVersion:1,content:page})});
 const legacyVideo=map['public-releases-cards'].children[0].children[1];
 const legacyActions=legacyVideo.children[1].children[3];
 assert.equal(legacyActions.children.length,1);
-assert.equal(legacyActions.children[0].tagName,'a');
-assert.equal(legacyActions.children[0].href,'https://www.youtube.com/watch?v=ABCDEFGHIjk');
-assert.equal(legacyActions.children[0].children[1].textContent,'Смотреть на YouTube');
-legacyActions.children[0].onclick();
-assert.equal(legacyVideo.children[0].children.at(-1).children.length,0,'No iframe created on legacy release click');
+assert.equal(legacyActions.children[0].tagName,'button');
+assert.equal(legacyActions.children[0].href,undefined);
+assert.equal(legacyActions.children[0].children[1].textContent,'Смотреть клип');
