@@ -136,10 +136,10 @@ assert.ok(css.includes('.cms-release-art--video::before{display:block!important;
 assert.ok(css.includes('height:calc(100% - 46px)!important;min-height:0!important;max-height:none!important'));
 assert.ok(css.includes('top:8px!important;bottom:8px!important;height:calc(100% - 16px)!important'));
 
-// RUN-147: old iPad uses an accessible YouTube watch link, modern browsers keep iframe.
+// RUN-149: legacy iPad opens a modal, modern browsers keep inline iframe.
 assert.ok(read('landing-public.js').includes('function legacyIpadVideo()'));
-assert.ok(read('landing-public.js').includes('if(media&&!oldIpadWatch)'));
-assert.ok(css.includes('.cms-release-art--video>.cms-release-legacy-cover-link'));
+assert.ok(read('landing-public.js').includes('if(media){'));
+assert.ok(css.includes('.velar-video-overlay'));
 
 // RUN-148: no visual button may obscure old-iPad YouTube cover.
 assert.ok(read('landing-public.js').includes('showLegacyVideoModal(media,item.title)'));
