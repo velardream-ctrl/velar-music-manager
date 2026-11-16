@@ -42,7 +42,7 @@ assert.equal(list.children.length,13,'First 12 songs plus show-more button');
 const first=list.children[0];
 const controls=row=>row.children.find(n=>String(n.className).includes('public-song-platforms'));
 const slot=row=>row.children.find(n=>String(n.className).includes('public-song-inline'));
-assert.equal(first.children.length,2,'One song row has label containing controls, and inline slot');
+assert.equal(first.children.length,3,'One song row has summary, inline player and bottom toolbar');
 assert.equal(controls(first).children.length,2,'Spotify and YouTube belong to ONE composition');
 assert.equal(controls(first).children[0].textContent,'♫',
  'Primary Spotify control is a compact source icon');
