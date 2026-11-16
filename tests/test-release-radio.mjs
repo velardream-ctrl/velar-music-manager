@@ -155,8 +155,15 @@ assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0,'Repeat 
 assert.equal(startRadio.attributes['aria-pressed'],'false');
 startRadio.onclick();
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,1);
+const beforeMinimize=doc.querySelectorAll('iframe.velar-radio-iframe')[0];
 radio.children[0].onclick();
-assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0,'Closing radio destroys iframe');
+assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,1,'Minimizing keeps the official iframe');
+assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0],beforeMinimize,'Iframe identity stays stable');
+assert.match(radioPanel.className,/velar-radio-panel--mini/);
+assert.equal(radio.children[0].attributes['aria-expanded'],'false');
+radio.children[0].onclick();
+assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0],beforeMinimize,'Expanding does not restart a song');
+radio.children[0].onclick();
 // RUN-086: a real click on the assistant's radio action reuses the safe radio UI.
 assert.equal(window.VMM_PUBLIC_LANDING.openRadioFromChat(),true);
 assert.equal(radio.children[0].attributes['aria-expanded'],'true');
@@ -166,8 +173,12 @@ assert.equal(window.VMM_PUBLIC_LANDING.openRadioFromChat(),true,
  'Asking again in chat must not toggle the playing radio off');
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,1);
 radio.children[0].onclick();
-assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0);
+assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,1,'Chat-open player survives minimizing');
 assert.doesNotMatch(radio.className,/velar-radio--chat-open/);
+const radioBeforeSnapshot=doc.querySelectorAll('iframe.velar-radio-iframe')[0];
+observer({exists:true,data:()=>({status:'published',schemaVersion:1,content:page})});
+assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0],radioBeforeSnapshot,'Unchanged snapshot preserves playback');
+radio.children[0].onclick();
 assert.equal(map['public-playlists-cards'].children.length,1);
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0);
 const openPlaylist=map['public-playlists-cards'].children[0].children[1].children[3].children[0];
