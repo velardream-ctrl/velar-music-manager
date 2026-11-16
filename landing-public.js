@@ -401,12 +401,12 @@
    var oldIpadWatch=isVideo&&item.mediaProvider==='youtube'&&legacyIpadVideo()?
      youtubeWatchUrl(media):'';
    if(oldIpadWatch){
-     // No embedded iframe on legacy iPad: preserve the approved cover and open
-     // YouTube's own player with a large accessible central action.
-     var coverAction=create('a','cms-release-legacy-play','▶ Смотреть клип');
+     // Keep the artwork unobstructed. The cover itself is a link to YouTube;
+     // the existing action below remains available as an alternative.
+     var coverAction=create('a','cms-release-legacy-cover-link');
      coverAction.href=oldIpadWatch;coverAction.target='_blank';
      coverAction.rel='noopener noreferrer';
-     coverAction.setAttribute('aria-label','Смотреть клип на YouTube: '+item.title);
+     coverAction.setAttribute('aria-label','Открыть клип на YouTube: '+item.title);
      art.appendChild(coverAction);
      var watchLink=create('a','cms-release-listen','▶ Смотреть клип');
      watchLink.href=oldIpadWatch;watchLink.target='_blank';
