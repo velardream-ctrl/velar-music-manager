@@ -130,7 +130,7 @@ assert.doesNotMatch(mobileCSS,/\.public-song-source\{flex:1 1 100px/,
 assert.match(read('index.html'),/public-song-ui\.js\?v=23/);
 console.log('PASS: RUN-090 Spotify/YouTube inline single-row player, long lists, safe deep links, one active iframe');
 
-// RUN-153: legacy YouTube navigates directly; no iframe and no pressed state.
+// RUN-154: legacy YouTube navigates directly; no iframe and no pressed state.
 let legacyOpened='';
 window.VMM_YOUTUBE_COMPAT={required:()=>true,open:url=>{legacyOpened=url;return true;}};
 assert.equal(app.openByUrl(yt),true);

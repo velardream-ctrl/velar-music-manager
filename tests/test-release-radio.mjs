@@ -207,14 +207,13 @@ assert.doesNotMatch(publicJS,/autoplay=1|loop=1|muted=1|setInterval\(/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(css,/.cms-release-art::before/);
 assert.match(html,/universe\.js\?v=7/);
-assert.match(html,/style\.css\?v=65/);
-assert.match(sw,/CACHE_PREFIX \+ 'v73'/);
+assert.match(html,/style\.css\?v=66/);
+assert.match(sw,/CACHE_PREFIX \+ 'v74'/);
 assert.match(sw,/STUDIO_PREFIX\+'v49'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);
 console.log('PASS: RUN-069/070 safe releases, Spotify playlists, subscribers, opt-in radio, one active iframe and lazy 2.5D universe');
-
-// RUN-153: iOS12 release uses a genuine, usable watch link, never a dead modal.
+// RUN-154: iOS12 release uses a genuine, usable watch link, never a dead modal.
 window.VMM_YOUTUBE_COMPAT={required:()=>true,open:()=>true};
 observer({exists:true,data:()=>({status:'published',schemaVersion:1,content:page})});
 const legacyVideo=map['public-releases-cards'].children[0].children[1];

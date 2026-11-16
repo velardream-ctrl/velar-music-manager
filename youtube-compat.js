@@ -1,4 +1,4 @@
-/* RUN-153: iOS 12 embed UI failed physical acceptance on iPad mini 3.
+/* RUN-154: iOS 12 embed UI failed physical acceptance on iPad mini 3.
    Use the official watch page confirmed working by the owner; no stream proxy. */
 (function(){
  'use strict';
