@@ -220,14 +220,10 @@
    // Explicit repeat click toggles off; picking the other service switches players.
    // The chat deep link calls open() directly so it can always OPEN the requested song.
    function toggle(i,src,fromTitle){
-     var slot=slots[i],playing=false;
-     if(slot)for(var k=0;k<slot.children.length;k++){
-       var child=slot.children[k];
-       if(child.tagName==='iframe'||child.className==='spotify-embed-viewport'&&
-         child.firstChild&&child.firstChild.tagName==='iframe')playing=true;
-     }
-     if(index===i&&playing&&(fromTitle||source===src.provider)){
-       clearActive(); // Remove the iframe, not only hide it: external audio stops.
+     // RUN-140: use our own active state, never inspect third-party iframe DOM.
+     // Mobile Safari may report iframe children inconsistently while loading.
+     if(index===i&&(fromTitle||source===src.provider)){
+       clearActive();
        return true;
      }
      return open(i,src);
@@ -331,10 +327,11 @@
        choice.onclick=function(){toggle(i,src,false);};
        controls.appendChild(choice);buttons[i].push(choice);
      });
-     if(view==='rows')title.appendChild(controls);
-     else item.appendChild(controls);
      var player=el('div','public-song-inline '+classes+'-inline-player');
      slots[i]=player;item.appendChild(player);
+     // RUN-140: controls always FOLLOW the player, in every view.
+     // The media panel replaces the song summary while expanded.
+     item.appendChild(controls);
      container.appendChild(item);
      if(!art){
        var images=window.VELAR_IMAGE_LOADING;

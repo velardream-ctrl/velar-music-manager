@@ -1874,3 +1874,17 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .public-song-source--youtube{font-size:0!important}
 /* Legacy iOS does not understand aspect-ratio: preserve a reasonable video height. */
 @supports not (aspect-ratio:16/9){.public-song-entry .public-song-inline>.cms-release-iframe--video{height:220px}}
+
+/* RUN-140: player replaces artwork/title; platform controls remain BELOW it. */
+.public-song-entry{display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch}
+.public-song-entry>.public-song-label{flex:0 0 auto;width:100%;max-width:100%}
+.public-song-entry.is-playing>.public-song-label{display:none!important}
+.public-song-entry>.public-song-inline{flex:0 0 auto;width:100%;max-width:100%;order:1;min-width:0;overflow:hidden}
+.public-song-entry>.public-song-platforms{order:2;display:flex;flex:0 0 auto;width:100%;min-width:0;max-width:100%;margin:8px 0 0!important;gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;box-sizing:border-box;padding:3px 2px 6px;position:relative;z-index:3;align-items:center;justify-content:flex-start}
+.public-song-entry>.public-song-platforms>.public-song-source{flex:0 0 40px;margin:0!important;width:40px;height:40px;min-width:40px;min-height:40px;touch-action:manipulation}
+.public-song-entry>.public-song-inline:empty{display:none}
+.public-song-entry.is-playing>.public-song-inline:not(:empty){margin:0;padding:0 0 4px;border-top:0}
+.public-song-entry.is-playing>.public-song-platforms{margin-top:9px!important}
+.public-song-entry>.public-song-inline>.cms-card-link{margin:0 0 6px!important}
+/* Keep compact rows and carousel cards consistent; don't let iframe cover controls. */
+.public-song-entry--carousel>.public-song-platforms{align-self:stretch}

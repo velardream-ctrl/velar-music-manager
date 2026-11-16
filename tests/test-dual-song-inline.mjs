@@ -40,16 +40,16 @@ assert.equal(tracks[0].title,'Аа Velar Superstar');
 assert.equal(tracks[11].title,'Музыка 11');
 assert.equal(list.children.length,13,'First 12 songs plus show-more button');
 const first=list.children[0];
-const controls=row=>row.children[0].children.find(n=>String(n.className).includes('public-song-platforms'));
+const controls=row=>row.children.find(n=>String(n.className).includes('public-song-platforms'));
 const slot=row=>row.children.find(n=>String(n.className).includes('public-song-inline'));
-assert.equal(first.children.length,2,'One song row has label containing controls, and inline slot');
+assert.equal(first.children.length,3,'One song row has summary, inline player and bottom toolbar');
 assert.equal(controls(first).children.length,2,'Spotify and YouTube belong to ONE composition');
 assert.equal(controls(first).children[0].textContent,'♫',
  'Primary Spotify control is a compact source icon');
 assert.equal(controls(first).children[1].textContent,'▶',
  'Secondary YouTube control is a compact icon on SAME row');
 assert.equal(slot(first).children.length,0,'Nothing loads before visitor click');
-assert.equal(controls(first).parentNode,first.children[0],'Provider buttons stay inside song heading');
+assert.equal(controls(first).parentNode,first,'Provider buttons stay inside song card below player');
 assert.equal(typeof window.VELAR_PUBLIC_SONGS.mount,'function');
 first.children[0].children[1].onclick();
 assert.equal(stops,1);
@@ -127,5 +127,5 @@ assert.doesNotMatch(mobileCSS,/\.public-song-platforms\{flex:1 1 100%/,
  'Mobile sources cannot turn into a full-width Spotify button');
 assert.doesNotMatch(mobileCSS,/\.public-song-source\{flex:1 1 100px/,
  'Mobile source buttons cannot grow to the entire width');
-assert.match(read('index.html'),/public-song-ui\.js\?v=21/);
+assert.match(read('index.html'),/public-song-ui\.js\?v=22/);
 console.log('PASS: RUN-090 Spotify/YouTube inline single-row player, long lists, safe deep links, one active iframe');
