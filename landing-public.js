@@ -337,7 +337,7 @@
  // RUN-147: older iPad Safari misplaces YouTube's own cross-origin play button.
  // Detect the unsupported layout engine, not all iPads or modern iPhones.
  function legacyIpadVideo(){
-   var ua=navigator.userAgent||'';
+   var ua=typeof navigator!=='undefined'?(navigator.userAgent||''):'';
    if(!/iPad/i.test(ua))return false;
    return !window.CSS||!window.CSS.supports||
      !window.CSS.supports('aspect-ratio','16 / 9');
