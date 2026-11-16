@@ -45,7 +45,7 @@ assert.equal(holder.children[0].src,'https://i.scdn.co/image/abc123');
 holder.children[0].onerror();
 assert.equal(holder.children[0].className.includes('--empty'),true,
  'Spotify image failure must show the local note, never a YouTube image');
-assert.equal(host.children[0].children[2].children.length,0,'never pre-open player');
+assert.equal(host.children[0].children.find(x=>String(x.className).includes('public-song-inline')).children.length,0,'never pre-open player');
 // Spotify-only artwork policy is independent of legacy stored priority.
 api.configure('rows',[],'standard',[],'youtube-first');
 const host2=element('div');
