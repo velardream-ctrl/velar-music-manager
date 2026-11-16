@@ -2108,3 +2108,86 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .velar-radio--bubble > .velar-radio-toggle:focus-visible{
  outline:3px solid #f5d29b;outline-offset:3px}
 @media(hover:hover){.velar-radio--bubble > .velar-radio-toggle:hover{filter:brightness(1.10)}}
+
+
+/* RUN-163: polished radio controls echo the approved magenta/violet/crystal-gold orb.
+   The outer coordinate anchor is the right side; the orb can be dragged by touch. */
+.velar-radio{
+  transition:width .30s cubic-bezier(.2,.75,.24,1);
+  color:#f5eafe;
+}
+.velar-radio--bubble{min-width:0;max-width:none}
+.velar-radio:not(.velar-radio--bubble)>.velar-radio-toggle{
+  position:relative;padding-left:58px;
+  border:1px solid #b478f1;border-bottom-color:#cf9cfa;
+  background:radial-gradient(circle at 17% 20%,#462268 0%,#23133e 42%,#111832 100%);
+  color:#fbe6ff;box-shadow:0 10px 30px #09051bcc,0 0 18px #a153da50;
+  text-shadow:0 0 9px #d193e766;
+}
+.velar-radio:not(.velar-radio--bubble)>.velar-radio-toggle::before{
+  content:"";position:absolute;left:7px;top:50%;width:40px;height:40px;
+  transform:translateY(-50%);
+  background:url('assets/velar-radio-icon.webp') center/contain no-repeat;
+  filter:drop-shadow(0 0 5px #cd71f277);pointer-events:none;
+}
+.velar-radio:not(.velar-radio--bubble) .velar-radio-dot{display:none}
+.velar-radio:not(.velar-radio--bubble) .velar-radio-chevron{
+  border-color:#dca4ff;
+}
+.velar-radio-panel{
+  border:1px solid #9758cb;border-top-color:#dc93ff;
+  background:linear-gradient(156deg,#30184b 0%,#1a173c 55%,#101c34 100%);
+  color:#f6ebff;box-shadow:0 15px 35px #0b0818d9,0 0 19px #ad5ff133;
+}
+.velar-radio-panel strong{color:#ffe5b3;text-shadow:0 0 11px #f5ab5450}
+.velar-radio-panel .velar-radio-note{color:#d5c5ed}
+.velar-radio-panel .velar-radio-start{
+  border:1px solid #f1c978;border-radius:12px;
+  background:linear-gradient(120deg,#f9d68e,#d29bfa 65%,#b87deb);
+  color:#1f1232;box-shadow:0 4px 14px #bd70ff4f;
+}
+.velar-radio-panel .velar-radio-start[aria-pressed="true"]{
+  background:linear-gradient(120deg,#ac67df,#633e9d);color:#fff8ff;
+}
+.velar-radio-panel select{
+  width:100%;max-width:100%;min-height:42px;margin:7px 0 0;
+  border:1px solid #9562cb;border-radius:10px;padding:7px 10px;
+  background:#241b49;color:#f8ebff;font:inherit;
+}
+.velar-radio-panel .velar-radio-hide,
+.velar-radio-panel .velar-radio-bubble-action{
+  border:1px solid #ac77df;background:linear-gradient(140deg,#462665,#281d48);
+  color:#f8e6ff;border-radius:11px;
+}
+.velar-radio-panel .velar-radio-external{color:#ffda94}
+.velar-radio:not(.velar-radio--bubble)>.velar-radio-grip{
+  border:1px solid #9863cd;border-radius:10px;
+  background:#321c50;color:#f4c7ff;
+}
+.velar-radio>.station-help>.station-help-button{
+  border-color:#a97cce;background:#2d1d4b;color:#f6d3ff;
+}
+.velar-radio .station-help-bubble{
+  border-color:#9461bb;background:linear-gradient(145deg,#30204e,#151d38);
+}
+.velar-radio--bubble>.velar-radio-toggle{
+  cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;
+  animation:velar-radio-glow 3.7s ease-in-out infinite;
+}
+.velar-radio--bubble>.velar-radio-toggle:active{cursor:grabbing}
+@keyframes velar-radio-glow{
+  0%,100%{filter:brightness(1) drop-shadow(0 0 2px #ab61f255)}
+  50%{filter:brightness(1.09) drop-shadow(0 0 10px #bf7bfa99)}
+}
+/* Opacity animation only: no transforms on the playing iframe itself. */
+.velar-radio-panel:not(.hidden):not(.velar-radio-panel--mini){
+  animation:velar-radio-panel-reveal .25s ease-out both;
+}
+@keyframes velar-radio-panel-reveal{
+  from{opacity:.25}to{opacity:1}
+}
+@media(prefers-reduced-motion:reduce){
+  .velar-radio{transition:none}
+  .velar-radio--bubble>.velar-radio-toggle,
+  .velar-radio-panel:not(.hidden):not(.velar-radio-panel--mini){animation:none}
+}
