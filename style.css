@@ -1988,3 +1988,23 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .crystal-journey-crystal{width:140px;max-width:20vw}
  .crystal-journey-beam{width:42vw;max-width:450px}
 }
+
+/* RUN-146: old iPad Safari. A later global iframe height:100% overrode the
+   RUN-145 inset, causing the YouTube embed to extend past its 16:9 viewport.
+   Keep the working cover ratio; give artwork a small breathing space. */
+@supports not (aspect-ratio: 16 / 9){
+ .cms-release-art--video>.cms-release-cover,
+ .cms-release-art--video>.cms-release-placeholder{
+   top:8px!important;bottom:8px!important;height:calc(100% - 16px)!important;
+ }
+ .cms-release-art--video>.cms-release-player:not(:empty){
+   top:8px!important;bottom:8px!important;height:calc(100% - 16px)!important;
+   padding:0!important;overflow:hidden!important;
+ }
+ .cms-release-art--video>.cms-release-player:not(:empty) .cms-release-iframe--video{
+   position:absolute!important;top:38px!important;left:8px!important;right:8px!important;
+   bottom:8px!important;width:calc(100% - 16px)!important;
+   height:calc(100% - 46px)!important;min-height:0!important;max-height:none!important;
+   aspect-ratio:auto!important;box-sizing:border-box!important;
+ }
+}

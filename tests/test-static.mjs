@@ -33,7 +33,7 @@ const sw = read('sw.js');
 assert.match(sw, /CACHE_PREFIX/);
 assert.match(sw, /isPublicAsset/);
 assert.match(sw, /velardream-crystal\.png/);
-assert.match(sw, /CACHE_PREFIX \+ 'v66'/);
+assert.match(sw, /CACHE_PREFIX \+ 'v67'/);
 const css = read('style.css');
 assert.ok(homepage.includes('class="brand-emblem brand-emblem-header"'), 'Header emblem missing');
 assert.ok(homepage.includes('class="brand-emblem brand-emblem-footer"'), 'Footer emblem missing');
@@ -44,9 +44,9 @@ assert.ok(!css.includes('.mini-mark{'), 'Old diamond CSS present');
 assert.match(css, /\.art-wrap\{max-width:315px;width:100%;margin:-8px auto 12px;/);
 assert.match(css, /\.art-wrap\{max-width:215px;margin:-5px auto 12px/);
 assert.ok(!css.includes('margin:-12px auto -30px') && !css.includes('margin:-12px auto -32px'), 'Logo must not overlap title');
-assert.match(homepage, /href="style\.css\?v=59"/);
+assert.match(homepage, /href="style\.css\?v=60"/);
 assert.match(sw, /url\.pathname\.slice\(-10\) === '\/style\.css'/);
-assert.match(sw, /'\.\/style\.css\?v=59'/);
+assert.match(sw, /'\.\/style\.css\?v=60'/);
 assert.match(homepage, /max-width:215px!important;margin:-5px auto 12px!important/);
 assert.ok(!sw.includes('cache.put(req, response)'), 'Never cache unfiltered responses');
 assert.match(read('firestore.rules'), /allow read, write: if false;/);
@@ -131,3 +131,7 @@ assert.match(css, /playlist-resonance-orbit--three\{padding-bottom:45%\}/);
 assert.ok(css.includes('@supports not (aspect-ratio: 16 / 9)'));
 assert.ok(css.includes('@supports not (width: min(670px, 91vw))'));
 assert.ok(css.includes('.cms-release-art--video::before{display:block!important;padding-top:56.25%}'));
+
+// RUN-146: ensure legacy iPad iframe height cannot escape its media viewport.
+assert.ok(css.includes('height:calc(100% - 46px)!important;min-height:0!important;max-height:none!important'));
+assert.ok(css.includes('top:8px!important;bottom:8px!important;height:calc(100% - 16px)!important'));

@@ -67,7 +67,7 @@ assert.match(studioHTML,/artist-image-editor\.js\?v=1/);
 assert.match(studioHTML,/landing-editor\.js\?v=37/);
 assert.match(studioHTML,/landing-schema\.js\?v=24/);
 assert.match(sw,/STUDIO_PREFIX\+'v49'/);
-assert.match(sw,/CACHE_PREFIX \+ 'v66'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v67'/);
 assert.doesNotMatch(sw,/data:image\/webp/);
 // RUN-116: an inline preview link wrapped its padded border on narrow iPhones.
 assert.ok(editor.includes("live.className='landing-small landing-artist-profile-link'"));
