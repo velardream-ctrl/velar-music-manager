@@ -123,6 +123,6 @@ assert.match(read('landing-public.js'), /VELAR_PLAYLIST_RESONANCE\.decorate\(dec
 assert.match(css, /playlist-resonance-crystal/);
 
 // RUN-144: keep all three orbits circular using the artwork width, even on tall iPhones.
-assert.match(css, /cms-playlist-art--resonance \\.playlist-resonance-orbit\\{height:0;padding-bottom:68%;box-sizing:content-box\\}/);
-assert.match(css, /playlist-resonance-orbit--two\\{padding-bottom:90%\\}/);
-assert.match(css, /playlist-resonance-orbit--three\\{padding-bottom:45%\\}/);
+assert.match(css, /cms-playlist-art--resonance \.playlist-resonance-orbit\{height:0;padding-bottom:68%;box-sizing:content-box\}/);
+assert.match(css, /playlist-resonance-orbit--two\{padding-bottom:90%\}/);
+assert.match(css, /playlist-resonance-orbit--three\{padding-bottom:45%\}/);
