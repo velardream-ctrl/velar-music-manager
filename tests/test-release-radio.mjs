@@ -300,7 +300,7 @@ assert.doesNotMatch(JSON.stringify(collected),/example.com|private/);
 const catalogPage={...page,releases:{...page.releases,radio:{...scheduled.releases.radio,sources:checked,catalog:collected}}};
 window.VMM_PUBLIC_LANDING.render(catalogPage);
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0);
-const catalogPanel=radio.children[2],choice=catalogPanel.children.find(c=>c.tagName==='select');
+const catalogPanel=radio.children[1],choice=catalogPanel.children.find(c=>c.tagName==='select');
 const listen=catalogPanel.children.find(c=>c.className==='velar-radio-start');
 listen.onclick();
 const videoURL=new URL(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src);
