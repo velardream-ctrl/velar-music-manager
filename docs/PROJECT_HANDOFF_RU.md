@@ -381,3 +381,6 @@ CI (run ID и результат):
 - Публичные версии: `style.css?v=56`, service worker `v63`. Сопутствующие изменения в тестах — только синхронизация ожидаемых версий CSS/SW. Firestore, данные песен, загрузка и резервные обложки, настройки lazy-loading не менялись.
 - PR #100: https://github.com/velardream-ctrl/velar-music-manager/pull/100 ; финальный GitHub Actions `Verify safe VELAR shell` run `43834081929` — SUCCESS, commit PR `a91e4bedbb0bc9718808b70114f2fe27674da6ba`.
 - PR #100 squash-MERGED в `main`: `77517209a0fa8fce1c48d2a245a6ae914f7d89eb`. Проверка фактического развёртывания GitHub Pages и визуальная приёмка на iPhone/iPad отдельно НЕ подтверждены. Следующий шаг: проверить стабильную высоту до/после нажатия и повторного закрытия для трёх платформ; при проблеме корректировать только стили.
+
+
+- RUN-142 ЗАВЕРШЕНО В GITHUB: GitHub Actions `Verify safe VELAR shell` run `43836325231` — SUCCESS; PR #101 https://github.com/velardream-ctrl/velar-music-manager/pull/101 squash-MERGED в `main`, SHA `89c4a1f68e114c5ea5d165bddfa81fbf1c379eeb`. Публикация Pages и визуальная проверка эффекта на iPhone/iPad отдельно не подтверждены. JS плееров и загрузки изображений не изменён.
