@@ -70,8 +70,8 @@ assert.ok(rail.children[0].children[0].children[1].className.includes('artwork')
 assert.equal(rail.children[0].children[2].children.length,0,'No iframe before play');
 const first=rail.children[0];
 first.children[0].children[2].onclick();
-assert.equal(first.children[2].children[0].tagName,'div','Spotify official iframe is inside masked viewport');
-assert.equal(first.children[2].children[0].children[0].src,'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
+assert.equal(first.children[2].children[1].tagName,'div','Spotify official iframe is inside masked viewport');
+assert.equal(first.children[2].children[1].children[0].src,'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
 first.children[0].children[2].onclick();
 assert.equal(first.children[2].children.length,0,'Second click unloads the player');
 controls.children[2].onclick();
