@@ -1902,3 +1902,19 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .public-song-entry--carousel.is-playing>.public-song-platforms{
  margin-top:auto!important;flex-shrink:0;
 }
+
+/* RUN-142: one lightweight crystal response per deliberate constellation/language/topic selection. */
+@keyframes velar-crystal-select-pulse{
+ 0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 rgba(245,207,148,0))}
+ 45%{transform:scale(1.065);filter:drop-shadow(0 0 17px rgba(245,207,148,.7))}
+}
+.universe-core.crystal-selection-pulse .universe-core-crystal,
+.language-cosmos-core.crystal-selection-pulse img,
+.topics-cosmos-core.crystal-selection-pulse img{
+ animation:velar-crystal-select-pulse .62s ease-in-out 1;
+}
+@media (prefers-reduced-motion:reduce){
+ .universe-core.crystal-selection-pulse .universe-core-crystal,
+ .language-cosmos-core.crystal-selection-pulse img,
+ .topics-cosmos-core.crystal-selection-pulse img{animation:none}
+}
