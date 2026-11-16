@@ -2093,3 +2093,18 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  top:66px;right:0;width:min(320px,calc(100vw - 24px));max-width:calc(100vw - 24px);
  border-radius:13px;box-shadow:0 12px 38px #000b}
 .velar-radio--bubble .velar-radio-panel--mini .velar-radio-iframe--video{min-height:200px}
+
+/* RUN-162: approved VELAR RADIO orb (transparent beyond circular edge).
+   One small image; controls and media iframe retain existing RUN-158 behavior. */
+.velar-radio--bubble{width:68px;min-width:68px;max-width:68px}
+.velar-radio--bubble > .velar-radio-toggle{
+ width:68px;height:68px;min-height:68px;padding:0;border:0;
+ background:transparent url('assets/velar-radio-icon.webp') center/contain no-repeat;
+ border-radius:50%;box-shadow:none;overflow:hidden;
+}
+.velar-radio--bubble > .velar-radio-toggle::before,
+.velar-radio--bubble > .velar-radio-toggle::after{content:none;display:none}
+.velar-radio--bubble > .velar-radio-panel--mini{top:74px}
+.velar-radio--bubble > .velar-radio-toggle:focus-visible{
+ outline:3px solid #f5d29b;outline-offset:3px}
+@media(hover:hover){.velar-radio--bubble > .velar-radio-toggle:hover{filter:brightness(1.10)}}
