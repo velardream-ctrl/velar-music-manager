@@ -391,3 +391,6 @@ CI (run ID и результат):
 - Обновление ресурсов: `style.css?v=57`, `landing-public.js?v=33`, `playlist-resonance.js?v=1`, публичный SW `v64`. Регрессионные тесты синхронизированы с версиями, добавлены проверки лёгкости анимации, reduced-motion, подключения и динамического оформления.
 - Финальный GitHub Actions `Verify safe VELAR shell` #43838950133: **SUCCESS**, PR head `9d49f63b17bb48fc4415cc5dbad0bbe0d36b0704`. PR #102 https://github.com/velardream-ctrl/velar-music-manager/pull/102 **squash-MERGED** в main, SHA `87467d0d1668b4aaca0d0b13e2c9b7d3dd940455`.
 - Публикация GitHub Pages и визуальная приёмка на реальном iPhone/старом iPad пока отдельно не подтверждены. Проверить, что в разделе «Плейлисты и подписки» круги заменены нотами/кристаллом, а при прокрутке орбиты двигаются без нагрузки и плейлисты открываются как раньше.
+
+
+- RUN-144: PR #103 https://github.com/velardream-ctrl/velar-music-manager/pull/103 — финальная проверка GitHub Actions #43839989169 **SUCCESS**, squash-MERGED в `main`, SHA `c90c21b074daae1a20b5b5b9e0b31d74313cf1e3`. CSS-исправление круговых орбит (68/90/45% от ширины) опубликовано в исходниках; Pages/CDN и визуальная проверка на iPhone отдельно не подтверждены. Проверить в разделе «Плейлисты и подписки» после обновления кэша.
