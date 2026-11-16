@@ -1918,3 +1918,42 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .language-cosmos-core.crystal-selection-pulse img,
  .topics-cosmos-core.crystal-selection-pulse img{animation:none}
 }
+
+/* RUN-143 — playlist musical resonance. Only artwork changes; card actions remain intact. */
+.cms-playlist-art--resonance{position:relative;isolation:isolate;overflow:hidden;
+ min-height:clamp(320px,75vw,500px);background:radial-gradient(ellipse at 50% 52%,#4d4264 0%,#253b5d 43%,#111c36 85%)}
+.playlist-resonance-halo{position:absolute;inset:15%;border-radius:50%;
+ background:radial-gradient(circle,rgba(233,189,125,.16),transparent 65%);filter:blur(14px)}
+.playlist-resonance-orbit{position:absolute;left:50%;top:50%;width:68%;height:68%;
+ border:1px solid rgba(233,204,149,.42);border-radius:50%;
+ transform:translate(-50%,-50%) rotate(var(--resonance-one,0deg));pointer-events:none}
+.playlist-resonance-orbit--two{width:90%;height:90%;border-style:dashed;
+ border-color:rgba(184,200,221,.30);transform:translate(-50%,-50%) rotate(var(--resonance-two,0deg))}
+.playlist-resonance-orbit--three{width:45%;height:45%;border-color:rgba(182,197,214,.36);
+ transform:translate(-50%,-50%) rotate(var(--resonance-three,0deg))}
+.playlist-resonance-note{position:absolute;color:#f3d49d;text-shadow:0 0 14px rgba(242,207,159,.62);
+ font:35px Georgia,serif;line-height:1}
+.playlist-resonance-note--top{left:50%;top:-18px;transform:translateX(-50%)}
+.playlist-resonance-note--right{left:100%;top:50%;font-size:29px}
+.playlist-resonance-note--left{left:0;top:50%;font-size:23px}
+.playlist-resonance-note--upper{left:25%;top:3%;font-size:24px}
+.playlist-resonance-spark{position:absolute;width:5px;height:5px;border-radius:50%;
+ background:#e9c68b;box-shadow:0 0 12px #f6db9e}
+.playlist-resonance-spark--one{top:20%;left:25%}
+.playlist-resonance-spark--two{top:75%;left:77%}
+.playlist-resonance-spark--three{top:32%;left:84%}
+.playlist-resonance-crystal{position:absolute;left:50%;top:50%;width:90px;height:158px;
+ transform:translate(-50%,-50%) scale(var(--resonance-pulse,1));
+ filter:drop-shadow(0 0 22px rgba(237,198,141,.62));pointer-events:none}
+.playlist-resonance-symbol{display:block;width:100%;height:100%;object-fit:contain}
+.playlist-resonance-wave{position:absolute;left:50%;top:50%;width:180px;height:180px;
+ border:1px solid #f1d49b;border-radius:50%;opacity:var(--resonance-wave-opacity,0);
+ transform:translate(-50%,-50%) scale(var(--resonance-wave-scale,1));pointer-events:none}
+.playlist-resonance-caption{position:absolute;bottom:24px;left:0;right:0;text-align:center;
+ color:#edd1a0;letter-spacing:.22em;font-size:11px;pointer-events:none}
+@media(max-width:740px){
+ .cms-playlist-art--resonance{min-height:clamp(320px,85vw,500px)}
+}
+@media(prefers-reduced-motion:reduce){
+ .playlist-resonance-orbit,.playlist-resonance-crystal,.playlist-resonance-wave{transition:none!important}
+}
