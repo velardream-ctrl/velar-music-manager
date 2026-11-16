@@ -398,21 +398,7 @@
    // The existing cover is the video/player stage: do not add another
    // expanding row after the text of the release.
    art.appendChild(player);
-   var oldIpadWatch=isVideo&&item.mediaProvider==='youtube'&&legacyIpadVideo()?
-     youtubeWatchUrl(media):'';
-   if(oldIpadWatch){
-     // Keep the artwork unobstructed. The cover itself is a link to YouTube;
-     // the existing action below remains available as an alternative.
-     var coverAction=create('a','cms-release-legacy-cover-link');
-     coverAction.href=oldIpadWatch;coverAction.target='_blank';
-     coverAction.rel='noopener noreferrer';
-     coverAction.setAttribute('aria-label','Открыть клип на YouTube: '+item.title);
-     art.appendChild(coverAction);
-     var watchLink=create('a','cms-release-listen','▶ Смотреть клип');
-     watchLink.href=oldIpadWatch;watchLink.target='_blank';
-     watchLink.rel='noopener noreferrer';actions.appendChild(watchLink);
-   }
-   if(media&&!oldIpadWatch){
+   if(media){
      var listen=create('button','cms-release-listen');
      listen.type='button';
      var icon=create('span','cms-release-play');
@@ -444,7 +430,7 @@
      catch(ignore){player.scrollIntoView();}
    }
    var external=item.url||item.mediaUrl;
-   if(isVideo&&media&&!oldIpadWatch){
+   if(isVideo&&media){
      // The old "Открыть видео" link used target=_blank and opened another tab.
      // Now both clip actions point to the ONE in-card official iframe.
      var openHere=create('button','cms-card-link cms-release-inline-link','Открыть видео здесь');
