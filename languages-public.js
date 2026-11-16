@@ -13,8 +13,8 @@
    return dataset.entries.filter(function(x){return x.visible===true;});
  }
  function pulse(){var core=id('languages')&&id('languages').querySelector('.language-cosmos-core');
-   if(!core)return;core.classList.remove('crystal-selection-pulse');void core.offsetWidth;
-   core.classList.add('crystal-selection-pulse');
+   if(!core)return;core.className=core.className.replace(/ crystal-selection-pulse/g,'');void core.offsetWidth;
+   core.className+=' crystal-selection-pulse';
  }
  function show(code,requestedUrl){
    var lang=null,detail=id('public-language-detail');
