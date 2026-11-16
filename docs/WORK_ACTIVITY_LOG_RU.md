@@ -1571,3 +1571,6 @@
 - После RUN-146 пользователь показал, что встроенный YouTube на старом Safari размещает кнопку в левом нижнем углу и практически не позволяет запускать видео; согласован резервный режим.
 - В `landing-public.js` добавлена проверка именно старого iPad (`iPad` + отсутствие CSS `aspect-ratio`). Только там для YouTube-видео не создаётся iframe, вместо него по центру обложки и в действиях карточки отображается доступная ссылка «▶ Смотреть клип», открывающая оригинальный YouTube watch URL в новой вкладке. URL получается только из проверенного `youtube-nocookie.com/embed/<video-id>`. Новые Safari/iPhone и Spotify не изменены.
 - CSS: центральная контрастная кнопка; CSS v61, JS v34, SW v68, обновлены тесты. Перед merge требуется успешный CI; реальная приёмка на старом iPad после публикации.
+
+
+- RUN-147: первый CI #43846401893 **FAIL** (`navigator is not defined` в Node test sandbox), исправлено защитой `typeof navigator!=='undefined'`; повторный CI #43846522155 **SUCCESS**. PR #106 https://github.com/velardream-ctrl/velar-music-manager/pull/106 **MERGED** в `main` squash SHA `599f2b682ec40c7aa00885784c2ccb9c55cdd14d`. Старый iPad (без CSS aspect-ratio): вместо обрезанного YouTube iframe — крупная центральная ссылка на официальный YouTube watch, современные браузеры без изменений. Реальный iPad и GitHub Pages CDN пока не проверены.
