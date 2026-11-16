@@ -1843,3 +1843,14 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .public-artist-song-list .public-song-entry:not(.public-song-entry--carousel)>.public-song-label{display:grid;grid-template-columns:26px 48px minmax(0,1fr);gap:8px;align-items:center}
  .public-artist-song-list .public-song-entry:not(.public-song-entry--carousel)>.public-song-label>.public-song-platforms{grid-column:2 / 4;grid-row:2;justify-content:flex-start;margin:0;flex-wrap:wrap}
 }
+
+/* RUN-137 follow-up: no ordinal numbers on songs or carousel counters. */
+.public-song-index,.cms-music-number,.public-song-carousel-count{display:none!important}
+@media(max-width:590px){
+ .public-song-entry:not(.public-song-entry--carousel):not(.public-song-entry--covers):not(.public-song-entry--tiles)>.public-song-label,
+ .public-artist-song-list .public-song-entry:not(.public-song-entry--carousel)>.public-song-label{grid-template-columns:48px minmax(0,1fr)}
+ .public-song-entry:not(.public-song-entry--carousel):not(.public-song-entry--covers):not(.public-song-entry--tiles) .public-song-row-artwork{grid-column:1}
+ .public-song-entry:not(.public-song-entry--carousel):not(.public-song-entry--covers):not(.public-song-entry--tiles) .public-song-copy{grid-column:2}
+ .public-song-entry:not(.public-song-entry--carousel):not(.public-song-entry--covers):not(.public-song-entry--tiles)>.public-song-label>.public-song-platforms,
+ .public-artist-song-list .public-song-entry:not(.public-song-entry--carousel)>.public-song-label>.public-song-platforms{grid-column:1 / 3}
+}
