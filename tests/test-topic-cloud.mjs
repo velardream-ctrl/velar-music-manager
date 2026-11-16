@@ -75,7 +75,7 @@ let detail=nodes['public-topic-detail'];
 assert.equal(detail.children[2].children.length,1);
 assert.equal(detail.children.length,3,'No bottom-of-list player');
 const mediaFrame=holder=>{
- const first=holder.children[0];return first&&first.tagName==='iframe'?first:first&&first.children[0];
+ const first=holder.children.find(n=>n.tagName==='iframe'||n.className==='spotify-embed-viewport');return first&&first.tagName==='iframe'?first:first&&first.children[0];
 };
 const weddingSong=detail.children[2].children[0];
 const controls=row=>row.children[0].children.find(n=>String(n.className).includes('public-song-platforms'));
@@ -85,7 +85,7 @@ assert.equal(slot(weddingSong).children.length,0,'No iframe until clicked');
 controls(weddingSong).children[0].onclick();
 assert.equal(stopCalls,1);
 assert.equal(mediaFrame(slot(weddingSong)).tagName,'iframe');
-assert.equal(slot(weddingSong).children[0].className,'spotify-embed-viewport');
+assert.equal(slot(weddingSong).children[1].className,'spotify-embed-viewport');
 assert.equal(mediaFrame(slot(weddingSong)).src,
  'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
 assert.equal(mediaFrame(slot(weddingSong)).attributes.allow.includes('autoplay'),false);
