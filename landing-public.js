@@ -971,6 +971,17 @@
    };
    if(!station){
      panel.appendChild(hide);
+     var bubble=create('button','velar-radio-bubble-action','☁ Свернуть в облачко');
+     bubble.type='button';bubble.setAttribute('aria-label','Минимизировать VELAR RADIO в облачко');
+     bubble.onclick=function(){
+       // The official iframe remains mounted and visible in a small media card.
+       // YouTube requires a visible 200×200 player; never hide or shrink it to 60px.
+       panel.className=hasEmbed(player)?'velar-radio-panel velar-radio-panel--mini':'velar-radio-panel hidden';
+       toggle.setAttribute('aria-expanded','false');
+       host.className=host.className.replace(/\svelar-radio--chat-open/g,'')+' velar-radio--bubble';
+       toggle.setAttribute('aria-label','Развернуть VELAR RADIO');
+     };
+     panel.appendChild(bubble);
      var stationLink=create('a','velar-radio-external','Отдельный плеер · установить или поделиться');
      stationLink.href='radio/';stationLink.target='_blank';stationLink.rel='noopener';
      panel.appendChild(stationLink);
@@ -981,6 +992,13 @@
    if(!station){host.appendChild(grip);radioMove(host,grip);host.appendChild(stationHelp(false));}
    radioControls={toggle:toggle,start:open,player:player,host:host};
    toggle.onclick=function(){
+     if(host.className.indexOf('velar-radio--bubble')!==-1){
+       host.className=host.className.replace(/\svelar-radio--bubble/g,'');
+       panel.className='velar-radio-panel';
+       toggle.setAttribute('aria-expanded','true');
+       toggle.setAttribute('aria-label','Свернуть VELAR RADIO');
+       return;
+     }
      var expanding=toggle.getAttribute('aria-expanded')!=='true';
      // Keep started embeds both mounted AND visibly rendered in the compact
      // panel: display:none is unsafe for media and YouTube requires a visible player.
