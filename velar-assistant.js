@@ -149,7 +149,7 @@
    if(radioCommand(q)){
      var radio=data&&data.releases&&data.releases.radio,api=window.VMM_LANDING_SCHEMA;
      var ready=!!(radio&&radio.enabled===true&&radio.controlVersion===2&&
-       ((radio.tracks&&radio.tracks.length)||api&&api.playlistUrl&&api.playlistUrl(radio.url,radio.provider)));
+       ((radio.sources&&radio.sources.length)||(radio.tracks&&radio.tracks.length)||api&&api.playlistUrl&&api.playlistUrl(radio.url,radio.provider)));
      if(ready)return {text:'VELAR RADIO готово. Нажми кнопку ниже, чтобы открыть официальный плеер. Воспроизведение выбираешь ты.',
        action:'radio',target:'',label:'▶ Открыть VELAR RADIO'};
      return {text:'VELAR RADIO сейчас выключено владельцем сайта или не настроено. Другие доступные плейлисты можно открыть в музыкальном разделе.',

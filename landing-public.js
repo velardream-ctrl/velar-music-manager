@@ -359,7 +359,7 @@
  }
  // RUN-149: old iPad gets a page-local lightbox, never a new browser tab.
  var dismissVideoModal=null;
- function showLegacyVideoModal(media,title){
+ function showLegacyVideoModal(media,title,catalogIds){
    if(dismissVideoModal)dismissVideoModal();
    pauseOtherEmbeds();
    var prior=document.getElementById('velar-legacy-video-modal');
@@ -492,6 +492,7 @@
          onReady:function(e){
            if(closed)return;
            apiPlayer=e.target;ready=true;clearTimer(apiTimer);
+           if(catalogIds&&catalogIds.length)apiPlayer.cuePlaylist(catalogIds);
            apiPlay.disabled=false;apiMute.disabled=false;apiSeek.disabled=false;
            if(apiPlayer.setSize)apiPlayer.setSize(width,height);
            apiStatus.textContent='Плеер готов. Нажмите «Воспроизвести».';
@@ -834,16 +835,44 @@
    details.onkeydown=function(event){if(details.open&&event.key==='Escape'){event.preventDefault();dismiss();}};
    bubble.appendChild(close);details.appendChild(bubble);return details;
  }
+ function shuffledRadioUrls(urls){
+   var queue=urls.slice();
+   for(var i=queue.length-1;i>0;i--){
+     var j=Math.floor(Math.random()*(i+1)),swap=queue[i];queue[i]=queue[j];queue[j]=swap;
+   }
+   return queue;
+ }
+ function cueCatalog(frame,ids,status){
+   function ready(){
+     if(!frame.parentNode)return;
+     new window.YT.Player(frame,{events:{onReady:function(e){e.target.cuePlaylist(ids);},
+       onError:function(){status.textContent='YouTube не смог открыть клип. Выберите следующую песню в плеере.';}}});
+   }
+   if(window.YT&&window.YT.Player){ready();return;}
+   var prior=window.onYouTubeIframeAPIReady;
+   window.onYouTubeIframeAPIReady=function(){
+     window.onYouTubeIframeAPIReady=prior;
+     if(prior)prior();ready();
+   };
+   if(!byId('velar-youtube-iframe-api')){
+     var script=create('script','');script.id='velar-youtube-iframe-api';script.src='https://www.youtube.com/iframe_api';
+     script.onerror=function(){status.textContent='Не удалось загрузить очередь YouTube. Обновите страницу для повтора.';script.parentNode.removeChild(script);};
+     document.head.appendChild(script);
+   }
+ }
  function renderRadio(config){
    if(radioTimer!==null){window.clearTimeout(radioTimer);radioTimer=null;}
    if(stopRadioMove){stopRadioMove();stopRadioMove=null;}
-   var tracks=config.tracks||[];
+   var sources=config.sources||[],catalog=config.catalog||{},available=sources.filter(function(p){return catalog[p]&&catalog[p].length;});
+   var tracks=sources.length?[]:(config.tracks||[]);
+   var names={youtube:'YouTube',spotify:'Spotify',appleMusic:'Apple Music'};
+   var selected=available[0],queue=[],cursor=0;
 
    var host=byId('velar-radio');
    if(!host)return;
    radioControls=null;
    empty(host);
-   if(!config.enabled||(!tracks.length&&!window.VMM_LANDING_SCHEMA.playlistUrl(config.url,config.provider))){
+   if(!config.enabled||(!sources.length&&!tracks.length&&!window.VMM_LANDING_SCHEMA.playlistUrl(config.url,config.provider))){
      host.className='velar-radio hidden';return;
    }
    var radioHidden=false;
@@ -893,13 +922,38 @@
      panel.children[1].textContent='Открой плеер и нажми ▶, чтобы присоединиться к эфиру.';
      open.textContent='Открыть эфир';
    }
+   if(sources.length){
+     panel.children[0].textContent=config.title+' · каталог Velar Dream';
+     panel.children[1].textContent=available.length?'Выберите площадку и откройте плеер. YouTube воспроизводит перемешанную очередь клипов.':'Для выбранных площадок пока нет опубликованных ссылок.';
+     open.textContent='Открыть плеер';open.disabled=!available.length;
+     if(available.length>1){
+       var select=create('select','');select.setAttribute('aria-label','Площадка радио');
+       available.forEach(function(p){var option=create('option','',names[p]+' · '+catalog[p].length);option.value=p;select.appendChild(option);});
+       select.onchange=function(){selected=select.value;queue=[];cursor=0;empty(player);open.setAttribute('aria-pressed','false');};
+       panel.appendChild(select);
+     }
+   }
    open.type='button';open.setAttribute('aria-pressed','false');
    open.onclick=function(){
      if(hasEmbed(player)){
        empty(player);open.setAttribute('aria-pressed','false');return;
      }
      var provider=config.provider,url=config.url,title=config.title,src;
-     if(tracks.length){
+     var ids=null;
+     if(sources.length){
+       if(!selected)return;
+       if(cursor>=queue.length){queue=shuffledRadioUrls(catalog[selected]);cursor=0;}
+       provider=selected;url=queue[cursor++];title=config.title+' · '+names[provider];
+       if(provider==='youtube'){
+         ids=queue.map(function(link){return link.split('v=')[1];});
+         src=officialEmbed(queue[0],provider,'release');
+         if(ids.length>1&&ids.length<=100)src+='?playlist='+ids.slice(1).join(',');
+         if(legacyIpadVideo()){showLegacyVideoModal(src,title,ids);return;}
+         if(ids.length>100)src+='?enablejsapi=1&origin='+encodeURIComponent(window.location.origin);
+         cursor=queue.length;
+       }else if(provider==='appleMusic')src=url.replace('https://music.apple.com/','https://embed.music.apple.com/');
+       else src=officialEmbed(url,provider,'release');
+     }else if(tracks.length){
        var slot=radioSchedule(tracks,Math.floor(Date.now()/1000));
        url=slot.track.url;title=slot.track.title;provider='youtube';
        src=officialEmbed(url,provider,'release')+'?start='+slot.offset;
@@ -916,7 +970,12 @@
      frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
      frame.setAttribute('allowfullscreen','');
      appendOfficialFrame(player,frame,provider,false);
-     var link=create('a','velar-radio-external','Открыть в '+(provider==='spotify'?'Spotify':'YouTube'));
+     if(ids&&ids.length>100)cueCatalog(frame,ids,panel.children[1]);
+     if(sources.length&&provider!=='youtube'&&catalog[provider].length>1){
+       var next=create('button','velar-radio-hide','Следующая песня');next.type='button';
+       next.onclick=function(){empty(player);open.onclick();};player.appendChild(next);
+     }
+     var link=create('a','velar-radio-external','Открыть в '+names[provider]);
      link.href=url;link.target='_blank';link.rel='noopener noreferrer';player.appendChild(link);
    };
    panel.appendChild(open);panel.appendChild(player);

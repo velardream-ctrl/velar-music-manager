@@ -927,6 +927,16 @@
    note.textContent='Отключение скрывает плавающее радио. Раздел обычных плейлистов и подписок остаётся доступным. Автозапуска музыки нет.';
    parent.appendChild(note);
    field(parent,'Название радио',radio.title||'VELAR RADIO',function(v){radio.title=v;});
+   heading(parent,'Эфир из каталога сайта','Отметь площадки. При публикации Studio собирает ссылки из каталога и видимых разделов сайта. Этот режим имеет приоритет перед плейлистом и расписанием.');
+   var choices=radio.sources||(radio.sources=[]);
+   ['youtube','spotify','appleMusic'].forEach(function(p){
+     var box=attachedSourceCheckbox(parent,p,choices.indexOf(p)>=0,false);
+     box.onchange=function(){
+       radio.sources=radio.sources.filter(function(item){return item!==p;});
+       if(box.checked)radio.sources.push(p);
+       updateButtons();
+     };
+   });
    var scheduleInput=field(parent,'Эфир YouTube · название | секунды | ссылка (одна песня в строке)',
      (radio.tracks||[]).map(function(t){return [t.title,t.seconds,t.url].join(' | ');}).join('\n'),
      function(value){
@@ -2552,10 +2562,22 @@
    if(!navigator.onLine){info('Публикация требует интернета.');return;}
    if(!window.confirm('Опубликовать выбранные артистов, релизы и тексты на открытой главной странице velardream.com?'))return;
    var cleanData;try{cleanData=API.normalize(data);}catch(e){info('Публикация остановлена: '+e.message);return;}
-   var account=uid,expectedDraft=draftRev,expectedLive=publishedRev;
+   var liveData=cleanData,account=uid,expectedDraft=draftRev,expectedLive=publishedRev;
    busy=true;updateButtons();info('Публикуем проверенные данные…');
    authorized().then(function(a){
      if(a.user.uid!==account)throw new Error('Учётная запись изменилась.');
+     var sources=cleanData.releases.radio.sources;
+     if(!sources.length)return;
+     return a.db.collection('vmm_catalog').get({source:'server'}).then(function(snapshot){
+       var rows=[];snapshot.forEach(function(doc){rows.push(doc.data());});
+       liveData=clone(cleanData);
+       liveData.releases.radio.catalog=API.radioCatalog(cleanData,rows,sources);
+       liveData=API.normalize(liveData);
+       if(!sources.some(function(p){return liveData.releases.radio.catalog[p].length;}))
+         throw new Error('В каталоге пока нет ссылок выбранных площадок.');
+     });
+   }).then(function(){
+     if(uid!==account)throw new Error('Учётная запись изменилась.');
      var r=refs();
      return db.runTransaction(function(tx){
        return tx.get(r.draft).then(function(s){
@@ -2565,14 +2587,14 @@
          return tx.get(r.live).then(function(pub){
            var v=pub.exists?(Number(pub.data().revision)||0):0;
            if(v!==expectedLive)throw new Error('Главная страница уже опубликована из другого окна. Обнови редактор.');
-           tx.set(r.live,{schemaVersion:1,status:'published',revision:v+1,content:cleanData,
+           tx.set(r.live,{schemaVersion:1,status:'published',revision:v+1,content:liveData,
              updatedBy:account,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
            return v+1;
          });
        });
      });
    }).then(function(v){
-     published=clone(cleanData);publishedRev=v;busy=false;
+     published=clone(liveData);publishedRev=v;busy=false;
      // RUN-114: the distribution UI compares the draft with the LAST
      // published snapshot. A successful publish changes that snapshot:
      // remount this tab immediately so badges stop saying "draft" after
