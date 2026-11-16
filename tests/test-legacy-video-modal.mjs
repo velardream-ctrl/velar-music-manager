@@ -14,7 +14,7 @@ for(const legacy of [true,false]){
  }
  const body=create('body'),doc={body,getElementById(){return null;},addEventListener(k,f){events[k]=f;},removeEventListener(k){delete events[k];}};
  const win={innerWidth:768,innerHeight:1024,addEventListener(k,f){events[k]=f;},removeEventListener(k){delete events[k];}};
- const ctx={document:doc,window:win,create,legacyIpadVideo:()=>legacy,pauseOtherEmbeds(){}};
+ const ctx={document:doc,window:win,create,legacyIpadVideo:()=>legacy,pauseOtherEmbeds(){},externalYouTube:()=>false,youtubeWatchUrl:()=>'https://www.youtube.com/watch?v=ABCDEFGHIjk'};
  vm.createContext(ctx);vm.runInContext(section,ctx);
  const open=()=>ctx.showLegacyVideoModal('https://www.youtube-nocookie.com/embed/ABCDEFGHIjk','Test');
  open();

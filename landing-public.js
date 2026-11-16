@@ -166,6 +166,7 @@
      function playFor(provider,link){
        var validated=window.VMM_LANDING_SCHEMA.songUrl(link,provider);
        if(!validated)return;
+       if(provider==='youtube'&&externalYouTube(validated))return;
        if(active===index&&activeProvider===provider&&hasEmbed(player)){
          empty(player);active=null;activeProvider='';
          entry.className=entry.className.replace(/ is-playing/g,'');
@@ -336,6 +337,9 @@
  }
  // RUN-147: older iPad Safari misplaces YouTube's own cross-origin play button.
  // Detect the unsupported layout engine, not all iPads or modern iPhones.
+ function externalYouTube(url){
+   return window.VMM_YOUTUBE_COMPAT&&window.VMM_YOUTUBE_COMPAT.open(url);
+ }
  function legacyIpadVideo(){
    var ua=typeof navigator!=='undefined'?(navigator.userAgent||''):'';
    if(!/iPad/i.test(ua))return false;
@@ -349,6 +353,7 @@
  // RUN-149: old iPad gets a page-local lightbox, never a new browser tab.
  var dismissVideoModal=null;
  function showLegacyVideoModal(media,title){
+   if(externalYouTube(youtubeWatchUrl(media)))return;
    if(dismissVideoModal)dismissVideoModal();
    pauseOtherEmbeds();
    var prior=document.getElementById('velar-legacy-video-modal');
@@ -520,14 +525,19 @@
    // expanding row after the text of the release.
    art.appendChild(player);
    if(media){
-     var listen=create('button','cms-release-listen');
-     listen.type='button';
+     var directYouTube=item.mediaProvider==='youtube'&&window.VMM_YOUTUBE_COMPAT&&window.VMM_YOUTUBE_COMPAT.required();
+     var listen=create(directYouTube?'a':'button','cms-release-listen');
+     if(directYouTube){
+       listen.href=youtubeWatchUrl(media);listen.rel='noopener';
+     }
+     if(!directYouTube)listen.type='button';
      var icon=create('span','cms-release-play');
      icon.setAttribute('aria-hidden','true');listen.appendChild(icon);
-     listen.appendChild(create('span','',isVideo?'Смотреть клип':'Слушать'));
-     listen.setAttribute('aria-label',(isVideo?'Смотреть клип: ':'Слушать релиз: ')+item.title);
-     listen.setAttribute('aria-pressed','false');
+     listen.appendChild(create('span','',directYouTube?'Смотреть на YouTube':isVideo?'Смотреть клип':'Слушать'));
+     listen.setAttribute('aria-label',(directYouTube?'Смотреть на YouTube: ':isVideo?'Смотреть клип: ':'Слушать релиз: ')+item.title);
+     if(!directYouTube)listen.setAttribute('aria-pressed','false');
      listen.onclick=function(){
+       if(directYouTube){pauseOtherEmbeds();return;}
        if(isVideo&&item.mediaProvider==='youtube'&&legacyIpadVideo()){
          showLegacyVideoModal(media,item.title);return;
        }
@@ -555,7 +565,7 @@
    }
    // Distinct optional viewing mode on modern browsers: large page-local overlay.
    // On old iPads the main button already uses this mode, so do not duplicate it.
-   if(isVideo&&media&&!legacyIpadVideo()){
+   if(isVideo&&media&&!directYouTube&&!legacyIpadVideo()){
      var expand=create('button','cms-card-link cms-release-inline-link','Развернуть видео');
      expand.type='button';
      expand.setAttribute('aria-label','Открыть клип в большом окне: '+item.title);
@@ -649,6 +659,7 @@
        }
        var src=officialEmbed(item.url,item.provider,'playlist');
        if(!src)return;
+       if(item.provider==='youtube'&&externalYouTube(item.url))return;
        pauseOtherEmbeds();empty(player);choose.setAttribute('aria-pressed','true');
        var frame=create('iframe','cms-release-iframe'+(item.provider==='youtube'?' cms-release-iframe--video':''));
        frame.src=src;frame.title=item.title+' — официальный плейлист '+item.provider;
@@ -720,6 +731,7 @@
        empty(player);open.setAttribute('aria-pressed','false');return;
      }
      var src=officialEmbed(config.url,config.provider,'playlist');if(!src)return;
+     if(config.provider==='youtube'&&externalYouTube(config.url))return;
      pauseOtherEmbeds();empty(player);open.setAttribute('aria-pressed','true');
      var frame=create('iframe','velar-radio-iframe'+(config.provider==='youtube'?' velar-radio-iframe--video':''));
      frame.src=src;frame.title=config.title+' — '+config.provider;
