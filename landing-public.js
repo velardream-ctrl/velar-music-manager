@@ -651,7 +651,7 @@
    if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.configure)
      window.VELAR_PUBLIC_SONGS.configure(
        value.albums.trackView,value.albums.entries,value.genres.songViewMode,value.releases.cards,value.hero.coverSourcePriority);
-   cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums,value.genres.songViewMode);
+   cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums,value.artists.songViewMode||value.genres.songViewMode);
    if(window.VELAR_ALBUMS&&window.VELAR_ALBUMS.render)window.VELAR_ALBUMS.render(value.albums);
    releaseGallery(value.releases);
    playlistGallery(value.releases);
