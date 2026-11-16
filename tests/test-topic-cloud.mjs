@@ -78,7 +78,7 @@ const mediaFrame=holder=>{
  const first=holder.children.find(n=>n.tagName==='iframe'||n.className==='spotify-embed-viewport');return first&&first.tagName==='iframe'?first:first&&first.children[0];
 };
 const weddingSong=detail.children[2].children[0];
-const controls=row=>row.children[0].children.find(n=>String(n.className).includes('public-song-platforms'));
+const controls=row=>row.children.find(n=>String(n.className).includes('public-song-platforms'));
 const slot=row=>row.children.find(n=>String(n.className).includes('public-song-inline'));
 assert.equal(controls(weddingSong).children.length,2,'One song row offers Spotify + YouTube');
 assert.equal(slot(weddingSong).children.length,0,'No iframe until clicked');
