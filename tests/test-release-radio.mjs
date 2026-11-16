@@ -95,31 +95,24 @@ assert.match(featured.children[1].children[0].className,/cms-release-art--video/
 assert.equal(gallery.children[2].className,'cms-release-grid');
 assert.equal(gallery.children[2].children.length,1);
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0);
-// RUN-103: both video actions stay inside the same page; Spotify links remain external.
+// RUN-150: one video action; modern browsers still play in-card.
 const videoCard=featured.children[1],videoActions=videoCard.children[1].children[3];
-const videoAction=videoActions.children[1];
-assert.equal(videoAction.tagName,'button','The second video action is not a new-tab anchor');
-assert.equal(videoAction.href,undefined);
-assert.equal(videoAction.target,undefined);
-assert.match(videoAction.textContent,/Открыть видео здесь/);
-videoAction.onclick();
+assert.equal(videoActions.children.length,2,'Inline play and expanded overlay are distinct actions');
+const videoPrimary=videoActions.children[0];
+assert.equal(videoPrimary.tagName,'button');
+videoPrimary.onclick();
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1);
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe')[0].src,
- 'https://www.youtube-nocookie.com/embed/ABCDEFGHIjk','Video opens only in its in-page official iframe');
+ 'https://www.youtube-nocookie.com/embed/ABCDEFGHIjk');
 const videoPlayer=videoCard.children[0].children[videoCard.children[0].children.length-1];
-assert.equal(videoCard.children.length,2,'Player stays inside the existing cover area, not below the card');
+assert.equal(videoCard.children.length,2);
 assert.equal(videoPlayer.children[0].tagName,'iframe');
 assert.equal(videoPlayer.children[1].textContent,'Закрыть плеер');
-videoAction.onclick();
-assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1,
- 'Repeated in-page action focuses the same video, not a second player or new tab');
-videoPlayer.children[1].onclick();
+videoPrimary.onclick();
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0);
-const videoPrimary=videoActions.children[0];
 videoPrimary.onclick();
-assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1,
- 'Primary watch button uses the same in-page player');
-videoPrimary.onclick();
+assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1);
+videoPlayer.children[1].onclick();
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0);
 const musicActions=featured.children[0].children[1].children[3];
 assert.equal(musicActions.children[1].tagName,'a',
@@ -214,8 +207,8 @@ assert.doesNotMatch(publicJS,/autoplay=1|loop=1|muted=1|setInterval\(/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(css,/.cms-release-art::before/);
 assert.match(html,/universe\.js\?v=7/);
-assert.match(html,/style\.css\?v=63/);
-assert.match(sw,/CACHE_PREFIX \+ 'v70'/);
+assert.match(html,/style\.css\?v=64/);
+assert.match(sw,/CACHE_PREFIX \+ 'v71'/);
 assert.match(sw,/STUDIO_PREFIX\+'v49'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);

@@ -358,10 +358,20 @@
    var panel=create('div','velar-video-dialog');
    var close=create('button','velar-video-dialog-close','✕ Закрыть');
    close.type='button';close.setAttribute('aria-label','Закрыть видеоплеер');
+   var viewport=create('div','velar-video-viewport');
    var frame=create('iframe','velar-video-dialog-frame');
-   frame.title=title+' — YouTube';frame.src=media;
-   frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
+   frame.title=title+' — YouTube';
+   // Old Safari can leave youtube-nocookie embeds blank. Use YouTube's
+   // regular player endpoint, inline playback and an explicit 16:9 viewport.
+   var id=(media||'').match(/^https:\/\/www\.youtube-nocookie\.com\/embed\/([A-Za-z0-9_-]{11})$/);
+   frame.src=id?'https://www.youtube.com/embed/'+id[1]+'?playsinline=1&rel=0':media;
+   frame.setAttribute('allow','autoplay; encrypted-media; fullscreen; picture-in-picture');
    frame.setAttribute('allowfullscreen','');
+   frame.setAttribute('webkitallowfullscreen','');
+   frame.setAttribute('playsinline','');
+   var fallback=create('a','velar-video-fallback','Если видео не запускается — смотреть на YouTube');
+   fallback.href=id?'https://www.youtube.com/watch?v='+id[1]:media;
+   fallback.target='_blank';fallback.rel='noopener noreferrer';
    function dismiss(){
      if(overlay.parentNode)overlay.parentNode.removeChild(overlay);
      document.removeEventListener('keydown',onKey);
@@ -369,7 +379,9 @@
    function onKey(e){if(e.key==='Escape'||e.keyCode===27)dismiss();}
    close.onclick=dismiss;
    overlay.onclick=function(e){if(e.target===overlay)dismiss();};
-   panel.appendChild(close);panel.appendChild(frame);overlay.appendChild(panel);
+   viewport.appendChild(frame);
+   panel.appendChild(close);panel.appendChild(viewport);
+   panel.appendChild(fallback);overlay.appendChild(panel);
    document.body.appendChild(overlay);
    document.addEventListener('keydown',onKey);
    if(close.focus)close.focus();
@@ -460,21 +472,17 @@
      try{player.scrollIntoView({block:'center'});}
      catch(ignore){player.scrollIntoView();}
    }
+   // Distinct optional viewing mode on modern browsers: large page-local overlay.
+   // On old iPads the main button already uses this mode, so do not duplicate it.
+   if(isVideo&&media&&!legacyIpadVideo()){
+     var expand=create('button','cms-card-link cms-release-inline-link','Развернуть видео');
+     expand.type='button';
+     expand.setAttribute('aria-label','Открыть клип в большом окне: '+item.title);
+     expand.onclick=function(){pauseOtherEmbeds();empty(player);listen.setAttribute('aria-pressed','false');showLegacyVideoModal(media,item.title);};
+     actions.appendChild(expand);
+   }
    var external=item.url||item.mediaUrl;
-   if(isVideo&&media){
-     // The old "Открыть видео" link used target=_blank and opened another tab.
-     // Now both clip actions point to the ONE in-card official iframe.
-     var openHere=create('button','cms-card-link cms-release-inline-link','Открыть видео здесь');
-     openHere.type='button';
-     openHere.setAttribute('aria-label','Открыть клип на этой странице: '+item.title);
-     openHere.onclick=function(){
-       if(isVideo&&item.mediaProvider==='youtube'&&legacyIpadVideo()){
-         showLegacyVideoModal(media,item.title);
-       }else if(!hasEmbed(player))listen.onclick();
-       else revealInlineVideo();
-     };
-     actions.appendChild(openHere);
-   }else if(external&&!isVideo){
+   if(external&&!isVideo){
      var link=create('a','cms-card-link','На музыкальной площадке');
      link.href=external;link.rel='noopener noreferrer';link.target='_blank';actions.appendChild(link);
    }
