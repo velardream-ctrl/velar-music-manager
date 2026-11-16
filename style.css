@@ -2071,3 +2071,25 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .velar-radio-panel--mini .velar-radio-iframe--video{height:215px;min-height:200px;aspect-ratio:auto}
 .velar-radio-panel--mini .velar-radio-player > .velar-radio-external,
 .velar-radio-panel--mini .velar-radio-player > .velar-radio-hide{display:none}
+
+/* RUN-158: true small cloud control. Keep an active official iframe visible
+   nearby, rather than hiding YouTube video or destroying the playing frame. */
+.velar-radio-bubble-action{display:block;margin-top:8px;padding:10px 14px;min-height:42px;
+ border:1px solid #cba874;border-radius:12px;background:#253853;color:#ffe6b9;
+ font:600 .83rem -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;cursor:pointer}
+.velar-radio-bubble-action:focus-visible{outline:3px solid #ffe1a8;outline-offset:2px}
+.velar-radio--bubble{width:60px;min-width:60px;max-width:60px;max-height:none;overflow:visible}
+.velar-radio--bubble > .velar-radio-toggle{box-sizing:border-box;position:relative;width:60px;
+ height:60px;min-height:60px;padding:0;border-radius:50%;display:flex;align-items:center;
+ justify-content:center;border:1px solid #f1d5a1;background:radial-gradient(circle at 35% 28%,#4b6693,#152844 70%)}
+.velar-radio--bubble > .velar-radio-toggle > *{display:none}
+.velar-radio--bubble > .velar-radio-toggle::before{content:"☁";font:normal 35px/1 Arial,sans-serif;
+ color:#ffe4b4;text-shadow:0 0 10px #e9ca9160}
+.velar-radio--bubble > .velar-radio-toggle::after{content:"♪";position:absolute;
+ top:25px;left:26px;font:700 17px/1 Arial,sans-serif;color:#172945}
+.velar-radio--bubble > .velar-radio-grip,
+.velar-radio--bubble > .station-help{display:none}
+.velar-radio--bubble > .velar-radio-panel--mini{box-sizing:border-box;position:absolute;
+ top:66px;right:0;width:min(320px,calc(100vw - 24px));max-width:calc(100vw - 24px);
+ border-radius:13px;box-shadow:0 12px 38px #000b}
+.velar-radio--bubble .velar-radio-panel--mini .velar-radio-iframe--video{min-height:200px}
