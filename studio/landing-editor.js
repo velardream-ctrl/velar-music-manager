@@ -937,9 +937,18 @@
    function broadcastCommand(action){
      broadcastStatus.textContent='Проверяем сервер эфира…';
      authorized().then(function(){
-       if(!firebase.functions||typeof firebase.functions!=='function')
-         throw new Error('Модуль управления эфиром не загружен.');
-       return firebase.functions().httpsCallable('velarRadioControl')({action:action});
+       if(firebase.functions&&typeof firebase.functions==='function')
+         return firebase.functions().httpsCallable('velarRadioControl')({action:action});
+       return new Promise(function(resolve,reject){
+         var sdk=document.createElement('script');
+         sdk.src='https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js';
+         sdk.onload=function(){resolve();};
+         sdk.onerror=function(){reject(new Error('Не удалось загрузить модуль управления эфиром.'));};
+         document.head.appendChild(sdk);
+       }).then(function(){
+         if(!firebase.functions)throw new Error('Модуль управления эфиром недоступен.');
+         return firebase.functions().httpsCallable('velarRadioControl')({action:action});
+       });
      }).then(function(result){
        var state=result&&result.data||{};
        if(state.frontendRunning===true&&state.backendRunning===true)
