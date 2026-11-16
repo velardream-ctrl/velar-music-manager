@@ -1963,3 +1963,28 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .cms-playlist-art--resonance .playlist-resonance-orbit{height:0;padding-bottom:68%;box-sizing:content-box}
 .cms-playlist-art--resonance .playlist-resonance-orbit--two{padding-bottom:90%}
 .cms-playlist-art--resonance .playlist-resonance-orbit--three{padding-bottom:45%}
+
+/* RUN-145: legacy iPad Safari fallbacks only; modern iPhone layouts untouched.
+   Old Safari ignores aspect-ratio but still renders the ratio pseudo-element. */
+@supports not (aspect-ratio: 16 / 9){
+ .cms-release-art--video{height:auto;min-height:0}
+ .cms-release-art--video::before{display:block!important;padding-top:56.25%}
+ .cms-release-art--video>.cms-release-cover,
+ .cms-release-art--video>.cms-release-placeholder,
+ .cms-release-art--video>.cms-release-player:not(:empty){
+   position:absolute;top:0;right:0;bottom:0;left:0;height:100%;width:100%;
+ }
+ .cms-release-art--video>.cms-release-player:not(:empty){
+   box-sizing:border-box;height:100%;padding:8px;overflow:hidden;
+ }
+ .cms-release-art--video>.cms-release-player:not(:empty) .cms-release-iframe--video{
+   position:absolute;top:39px;left:8px;width:calc(100% - 16px);
+   height:calc(100% - 47px)!important;min-height:0!important;
+ }
+}
+@supports not (width: min(670px, 91vw)){
+ .crystal-journey-ring--outer{width:91vw;max-width:670px;height:91vw;max-height:670px}
+ .crystal-journey-ring--inner{width:68vw;max-width:465px;height:68vw;max-height:465px}
+ .crystal-journey-crystal{width:140px;max-width:20vw}
+ .crystal-journey-beam{width:42vw;max-width:450px}
+}
