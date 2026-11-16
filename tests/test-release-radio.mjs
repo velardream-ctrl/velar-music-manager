@@ -97,7 +97,7 @@ assert.equal(gallery.children[2].children.length,1);
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0);
 // RUN-150: one video action; modern browsers still play in-card.
 const videoCard=featured.children[1],videoActions=videoCard.children[1].children[3];
-assert.equal(videoActions.children.length,1,'No duplicate video action');
+assert.equal(videoActions.children.length,2,'Inline play and expanded overlay are distinct actions');
 const videoPrimary=videoActions.children[0];
 assert.equal(videoPrimary.tagName,'button');
 videoPrimary.onclick();
