@@ -54,7 +54,7 @@ assert.throws(()=>api.normalize({...def,artists:{...def.artists,cards:[{...artis
 const privateObject={...def,secretToken:'abc123',lyrics:[{text:'не публиковать'}]};
 const clean=JSON.stringify(api.normalize(privateObject));
 assert.doesNotMatch(clean,/secretToken|не публиковать/);
-assert.match(html,/landing-public\.js\?v=32/);
+assert.match(html,/landing-public\.js\?v=33/);
 assert.match(html,/landing-schema\.js\?v=24/);
 assert.match(studio,/landing-editor\.js\?v=37/);
 assert.match(studio,/data-panel="landing"/);
