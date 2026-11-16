@@ -347,7 +347,10 @@
    return match?'https://www.youtube.com/watch?v='+match[1]:'';
  }
  // RUN-149: old iPad gets a page-local lightbox, never a new browser tab.
+ var dismissVideoModal=null;
  function showLegacyVideoModal(media,title){
+   if(dismissVideoModal)dismissVideoModal();
+   pauseOtherEmbeds();
    var prior=document.getElementById('velar-legacy-video-modal');
    if(prior&&prior.parentNode)prior.parentNode.removeChild(prior);
    var overlay=create('div','velar-video-overlay');
@@ -364,7 +367,8 @@
    // Old Safari can leave youtube-nocookie embeds blank. Use YouTube's
    // regular player endpoint, inline playback and an explicit 16:9 viewport.
    var id=(media||'').match(/^https:\/\/www\.youtube-nocookie\.com\/embed\/([A-Za-z0-9_-]{11})$/);
-   frame.src=id?'https://www.youtube.com/embed/'+id[1]+'?playsinline=1&rel=0':media;
+   var frameUrl=id?'https://www.youtube.com/embed/'+id[1]+'?playsinline='+(legacyIpadVideo()?'0':'1')+'&rel=0':media;
+   frame.referrerPolicy='strict-origin-when-cross-origin';
    frame.setAttribute('allow','autoplay; encrypted-media; fullscreen; picture-in-picture');
    frame.setAttribute('allowfullscreen','');
    frame.setAttribute('webkitallowfullscreen','');
@@ -372,9 +376,34 @@
    var fallback=create('a','velar-video-fallback','Если видео не запускается — смотреть на YouTube');
    fallback.href=id?'https://www.youtube.com/watch?v='+id[1]:media;
    fallback.target='_blank';fallback.rel='noopener noreferrer';
+   var previousFocus=document.activeElement;
+   var legacy=legacyIpadVideo();
+   // RUN-152: avoid percentage iframe height inside a height:0 padding box.
+   // Size before navigation; rotation changes dimensions without reloading video.
+   function sizeLegacyVideo(){
+     if(!legacy)return;
+     var width=Math.floor(Math.min(940,window.innerWidth*0.94)-26);
+     var available=Math.floor(window.innerHeight-130);
+     width=Math.max(200,Math.min(width,Math.floor(Math.max(200,available)*16/9)));
+     var height=Math.max(200,Math.round(width*9/16));
+     viewport.style.width=width+'px';
+     viewport.style.height=height+'px';
+     viewport.style.paddingTop='0';
+     viewport.style.margin='0 auto';
+     frame.setAttribute('width',String(width));
+     frame.setAttribute('height',String(height));
+     frame.style.setProperty('width',width+'px','important');
+     frame.style.setProperty('height',height+'px','important');
+   }
    function dismiss(){
+     if(legacy){
+       window.removeEventListener('resize',sizeLegacyVideo);
+       window.removeEventListener('orientationchange',sizeLegacyVideo);
+     }
+     dismissVideoModal=null;
      if(overlay.parentNode)overlay.parentNode.removeChild(overlay);
      document.removeEventListener('keydown',onKey);
+     if(previousFocus&&previousFocus.focus)previousFocus.focus();
    }
    function onKey(e){if(e.key==='Escape'||e.keyCode===27)dismiss();}
    close.onclick=dismiss;
@@ -383,6 +412,13 @@
    panel.appendChild(close);panel.appendChild(viewport);
    panel.appendChild(fallback);overlay.appendChild(panel);
    document.body.appendChild(overlay);
+   sizeLegacyVideo();
+   frame.src=frameUrl;
+   if(legacy){
+     window.addEventListener('resize',sizeLegacyVideo);
+     window.addEventListener('orientationchange',sizeLegacyVideo);
+   }
+   dismissVideoModal=dismiss;
    document.addEventListener('keydown',onKey);
    if(close.focus)close.focus();
  }

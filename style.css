@@ -2027,3 +2027,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  border:0!important;transform:none!important;margin:0!important;box-sizing:border-box}
 .velar-video-fallback{display:block;text-align:center;padding:9px 4px 0;color:#f5dcaa;font-size:13px}
 @media(max-width:740px){.velar-video-dialog{width:96vw}}
+
+/* RUN-152: keep close and official fallback reachable on short viewports. */
+.velar-video-overlay{overflow:auto}
+.velar-video-dialog{max-height:100%;overflow:auto}
