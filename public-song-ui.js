@@ -210,9 +210,6 @@
      var external=el('a','cms-card-link','Открыть в '+platformName(src.provider));
      external.href=src.url;external.rel='noopener noreferrer';external.target='_blank';
      host.appendChild(external);
-     var close=el('button','cms-release-close','Закрыть плеер');
-     close.type='button';close.onclick=function(){clearActive();};
-     host.appendChild(close);
      buttons[i].forEach(function(button){
        button.setAttribute('aria-pressed',button.getAttribute('data-provider')===src.provider?'true':'false');
      });
@@ -324,14 +321,15 @@
        // Preserve the original compact round Play glyph instead of a
        // wide emoji/text button. The optional second service is a small pill.
        var choice=el('button','public-song-source'+(j===0?' is-primary':'')+' public-song-source--'+src.provider,
-         src.provider==='spotify'?'♫':src.provider==='youtube'?'▶':'♪');
+         src.provider==='spotify'?'♫':src.provider==='youtube'?'▶':'♫');
        choice.type='button';choice.setAttribute('aria-pressed','false');
        choice.setAttribute('data-provider',src.provider);
        choice.setAttribute('aria-label','Слушать '+track.title+' в '+platformName(src.provider));
        choice.onclick=function(){toggle(i,src,false);};
        controls.appendChild(choice);buttons[i].push(choice);
      });
-     item.appendChild(controls);
+     if(view==='rows')title.appendChild(controls);
+     else item.appendChild(controls);
      var player=el('div','public-song-inline '+classes+'-inline-player');
      slots[i]=player;item.appendChild(player);
      container.appendChild(item);
