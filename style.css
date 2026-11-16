@@ -2062,3 +2062,14 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .velar-radio>.station-help{order:1}
 .velar-radio>.velar-radio-panel{order:2;flex-shrink:0}
 #station-page .velar-radio{max-height:none;overflow:visible}
+
+/* RUN-156: compact-first VELAR RADIO. Native audio remains mounted when collapsed. */
+.velar-radio-mini-listen{display:none;box-sizing:border-box;width:100%;min-height:36px;
+  margin-top:4px;padding:7px 12px;border:1px solid #dab982;border-radius:10px;
+  color:#192944;background:#ecd09e;font:bold .83rem system-ui,sans-serif;cursor:pointer}
+.velar-radio--minimized .velar-radio-mini-listen{display:block}
+.velar-radio--minimized .velar-radio-toggle{min-height:43px;padding:8px 98px 8px 10px;font-size:.82rem}
+.velar-radio--minimized .velar-radio-cover,.velar-radio--minimized .velar-radio-caption{display:none}
+.velar-radio--minimized{max-width:315px}
+.velar-radio-audio{display:block;width:100%;min-height:44px}
+.velar-radio-stream-status{font-size:.82rem;color:#f5dba6;margin:8px 0}
