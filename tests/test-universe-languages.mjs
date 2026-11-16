@@ -106,7 +106,7 @@ const mediaFrame=holder=>{
 };
 const firstRow=list.children[0],secondRow=list.children[1];
 const slot=row=>row.children.find(n=>String(n.className).includes('public-song-inline'));
-const controls=row=>row.children[0].children.find(n=>String(n.className).includes('public-song-platforms'));
+const controls=row=>row.children.find(n=>String(n.className).includes('public-song-platforms'));
 assert.equal(slot(firstRow).children.length,0,'No iframe before visitor clicks');
 firstRow.children[0].children.find(n=>String(n.className).includes('public-song-copy')).onclick();
 assert.equal(stopped,1,'Other external players are stopped before opening a song');
