@@ -346,6 +346,34 @@
    var match=(embed||'').match(/^https:\/\/www\.youtube-nocookie\.com\/embed\/([A-Za-z0-9_-]{11})$/);
    return match?'https://www.youtube.com/watch?v='+match[1]:'';
  }
+ // RUN-149: old iPad gets a page-local lightbox, never a new browser tab.
+ function showLegacyVideoModal(media,title){
+   var prior=document.getElementById('velar-legacy-video-modal');
+   if(prior&&prior.parentNode)prior.parentNode.removeChild(prior);
+   var overlay=create('div','velar-video-overlay');
+   overlay.id='velar-legacy-video-modal';
+   overlay.setAttribute('role','dialog');
+   overlay.setAttribute('aria-modal','true');
+   overlay.setAttribute('aria-label','Видеоклип: '+title);
+   var panel=create('div','velar-video-dialog');
+   var close=create('button','velar-video-dialog-close','✕ Закрыть');
+   close.type='button';close.setAttribute('aria-label','Закрыть видеоплеер');
+   var frame=create('iframe','velar-video-dialog-frame');
+   frame.title=title+' — YouTube';frame.src=media;
+   frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
+   frame.setAttribute('allowfullscreen','');
+   function dismiss(){
+     if(overlay.parentNode)overlay.parentNode.removeChild(overlay);
+     document.removeEventListener('keydown',onKey);
+   }
+   function onKey(e){if(e.key==='Escape'||e.keyCode===27)dismiss();}
+   close.onclick=dismiss;
+   overlay.onclick=function(e){if(e.target===overlay)dismiss();};
+   panel.appendChild(close);panel.appendChild(frame);overlay.appendChild(panel);
+   document.body.appendChild(overlay);
+   document.addEventListener('keydown',onKey);
+   if(close.focus)close.focus();
+ }
  function releaseCard(item,feature,index){
    index=typeof index==='number'?index:0;
    var isVideo=item.kind==='video';
@@ -407,6 +435,9 @@
      listen.setAttribute('aria-label',(isVideo?'Смотреть клип: ':'Слушать релиз: ')+item.title);
      listen.setAttribute('aria-pressed','false');
      listen.onclick=function(){
+       if(isVideo&&item.mediaProvider==='youtube'&&legacyIpadVideo()){
+         showLegacyVideoModal(media,item.title);return;
+       }
        if(hasEmbed(player)){
          empty(player);listen.setAttribute('aria-pressed','false');return;
        }
@@ -437,7 +468,9 @@
      openHere.type='button';
      openHere.setAttribute('aria-label','Открыть клип на этой странице: '+item.title);
      openHere.onclick=function(){
-       if(!hasEmbed(player))listen.onclick();
+       if(isVideo&&item.mediaProvider==='youtube'&&legacyIpadVideo()){
+         showLegacyVideoModal(media,item.title);
+       }else if(!hasEmbed(player))listen.onclick();
        else revealInlineVideo();
      };
      actions.appendChild(openHere);
