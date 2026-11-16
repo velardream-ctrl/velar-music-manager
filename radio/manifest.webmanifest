@@ -1,0 +1,25 @@
+{
+  "id": "./",
+  "name": "VELAR RADIO",
+  "short_name": "VELAR RADIO",
+  "description": "Музыкальный эфир Velar Dream",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#101727",
+  "theme_color": "#101727",
+  "icons": [
+    {
+      "src": "../assets/velardream-app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "../assets/velardream-app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

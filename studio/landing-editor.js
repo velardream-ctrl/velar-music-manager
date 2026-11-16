@@ -851,6 +851,62 @@
    },'landing-add'));
    parent.appendChild(wrap);
  }
+ function radioPlaylistImport(parent,radio,input){
+   var source=field(parent,'Добавить в эфир песни из плейлиста YouTube','',function(){});
+   var key=field(parent,'Ключ YouTube Data API v3 для импорта (только на время ввода)','',function(){});
+   key.type='password';
+   var button=document.createElement('button'),status=document.createElement('p');
+   button.type='button';button.textContent='Добавить песни из плейлиста';status.setAttribute('role','status');
+   parent.appendChild(button);parent.appendChild(status);
+   button.onclick=function(){
+     var url=API.playlistUrl(source.value,'youtube'),credential=key.value.trim();
+     if(!url||!credential){status.textContent='Укажи ссылку на плейлист YouTube и ключ для импорта.';return;}
+     var imported=[],seen={},pages={};
+     button.disabled=true;status.textContent='Читаем плейлист…';
+     function request(resource,params){
+       return window.fetch('https://www.googleapis.com/youtube/v3/'+resource+'?'+params,{
+         headers:{'X-Goog-Api-Key':credential},credentials:'omit'
+       }).then(function(response){
+         if(!response.ok)throw new Error('YouTube отклонил запрос ('+response.status+'). Проверь ключ, квоту и доступность плейлиста.');
+         return response.json();
+       });
+     }
+     function readPage(token){
+       return request('playlistItems','part=contentDetails&maxResults=50&playlistId='+url.split('list=')[1]+
+         (token?'&pageToken='+encodeURIComponent(token):'')).then(function(page){
+         var ids=page.items.map(function(item){return item.contentDetails.videoId;});
+         var details=ids.length?request('videos','part=snippet,contentDetails,status&id='+ids.join(',')):Promise.resolve({items:[]});
+         return details.then(function(result){
+           result.items.forEach(function(video){
+             if(seen[video.id]||!video.status.embeddable)return;
+             var d=/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/.exec(video.contentDetails.duration);
+             if(!d)return;
+             var seconds=Number(d[1]||0)*3600+Number(d[2]||0)*60+Number(d[3]||0);
+             if(!seconds||seconds>86400)return;
+             seen[video.id]=true;
+             imported.push({title:video.snippet.title,seconds:seconds,url:'https://www.youtube.com/watch?v='+video.id});
+           });
+           if(imported.length>300)throw new Error('В плейлисте больше 300 песен. Выбери меньший плейлист.');
+           if(page.nextPageToken){
+             if(pages[page.nextPageToken])throw new Error('YouTube вернул повторную страницу.');
+             pages[page.nextPageToken]=true;return readPage(page.nextPageToken);
+           }
+         });
+       });
+     }
+     readPage('').then(function(){
+       if(!document.body.contains(button))return;
+       var current=API.radioConfig(Object.assign({},radio,{enabled:false})).tracks;
+       var urls={};current.forEach(function(t){urls[t.url]=true;});
+       var extra=imported.filter(function(t){return !urls[t.url];});
+       if(current.length+extra.length>300)throw new Error('После добавления будет больше 300 песен.');
+       radio.tracks=current.concat(extra);
+       input.value=radio.tracks.map(function(t){return [t.title,t.seconds,t.url].join(' | ');}).join('\n');
+       status.textContent='Добавлено песен: '+extra.length+'. Сохрани черновик и опубликуй настройки.';
+       updateButtons();
+     }).catch(function(error){status.textContent=error.message;}).then(function(){button.disabled=false;key.value='';});
+   };
+ }
  function radioEditor(parent){
    var radio=data.releases.radio;
    if(!radio){
@@ -871,6 +927,18 @@
    note.textContent='Отключение скрывает плавающее радио. Раздел обычных плейлистов и подписок остаётся доступным. Автозапуска музыки нет.';
    parent.appendChild(note);
    field(parent,'Название радио',radio.title||'VELAR RADIO',function(v){radio.title=v;});
+   var scheduleInput=field(parent,'Эфир YouTube · название | секунды | ссылка (одна песня в строке)',
+     (radio.tracks||[]).map(function(t){return [t.title,t.seconds,t.url].join(' | ');}).join('\n'),
+     function(value){
+       radio.tracks=value.split(/\r?\n/).filter(function(line){return line.trim();}).map(function(line){
+         var parts=line.split('|'),url=parts.pop()||'',seconds=parts.pop()||'';
+         return {title:parts.join('|').trim(),seconds:Number(seconds),url:url.trim()};
+       });
+     },true);
+   radioPlaylistImport(parent,radio,scheduleInput);
+   var info=document.createElement('p');info.className='sync-note';
+   info.textContent='Заполненный список песен включает общий эфир. Чтобы вернуться к обычному плейлисту, очисти список.';
+   parent.appendChild(info);
    var list=data.releases.playlists||[],options=[['manual','Указать плейлист вручную']];
    list.forEach(function(p,i){
      if(API.playlistUrl(p.url,p.provider)){

@@ -51,6 +51,7 @@ function el(tag='div'){
    setAttribute(k,v){this.attributes[k]=v;},
    getAttribute(k){return this.attributes[k];},
    appendChild(child){child.parentNode=this;this.children.push(child);return child;},
+   insertBefore(child,before){child.parentNode=this;this.children.splice(this.children.indexOf(before),0,child);},
    removeChild(child){this.children.splice(this.children.indexOf(child),1);child.parentNode=null;},
    get firstChild(){return this.children[0]||null;},
    set innerHTML(t){this._html=t;this.children=[];},
@@ -134,9 +135,12 @@ assert.equal(musicBtn.attributes['aria-pressed'],'false');
 musicBtn.onclick();
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1,'Third release click reopens it');
 const radio=map['velar-radio'];assert.equal(radio.className,'velar-radio');
-assert.equal(radio.children.length,2);
+assert.equal(radio.children.length,4);
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0);
 radio.children[0].onclick();
+const help=radio.children[3];
+assert.equal(help.tagName,'details');
+assert.match(help.children[0].attributes['aria-label'],/установить/);
 const radioPanel=radio.children[1];
 const startRadio=radioPanel.children[2];
 startRadio.onclick();
@@ -210,9 +214,9 @@ assert.match(publicJS,/if\(clock!==null\)window.clearInterval\(clock\)/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(css,/.cms-release-art::before/);
 assert.match(html,/universe\.js\?v=7/);
-assert.match(html,/style\.css\?v=67/);
-assert.match(sw,/CACHE_PREFIX \+ 'v75'/);
-assert.match(sw,/STUDIO_PREFIX\+'v49'/);
+assert.match(html,/style\.css\?v=68/);
+assert.match(sw,/CACHE_PREFIX \+ 'v76'/);
+assert.match(sw,/STUDIO_PREFIX\+'v50'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);
 console.log('PASS: RUN-069/070 safe releases, Spotify playlists, subscribers, opt-in radio, one active iframe and lazy 2.5D universe');
@@ -225,3 +229,32 @@ assert.equal(legacyActions.children.length,1);
 assert.equal(legacyActions.children[0].tagName,'button');
 assert.equal(legacyActions.children[0].href,undefined);
 assert.equal(legacyActions.children[0].children[1].textContent,'Смотреть клип');
+
+// A saved schedule without a fallback playlist opens only on listener input.
+window.VMM_YOUTUBE_COMPAT={required:()=>false};
+window.setTimeout=()=>1;window.clearTimeout=()=>{};
+const tracks=[{url:'https://youtu.be/ABCDEFGHIjk',title:'Первая',seconds:180},
+ {url:'https://youtu.be/abcdefghijk',title:'Вторая',seconds:120}];
+const scheduled={...page,releases:{...page.releases,radio:{...page.releases.radio,url:'',tracks}}};
+assert.throws(()=>api.radioConfig({...scheduled.releases.radio,tracks:[tracks[0],tracks[0]]}),/повторы/);
+observer({exists:true,data:()=>({status:'published',schemaVersion:1,content:scheduled})});
+assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0);
+assert.match(radio.children[0].children.at(-1).textContent,/В эфире · (Первая|Вторая)/);
+radio.children[0].onclick();
+radio.children[1].children[2].onclick();
+assert.match(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src,/^https:\/\/www.youtube-nocookie.com\/embed\/[A-Za-z]{11}\?start=\d+/);
+
+// The installable page reads the same station, ignores the homepage collapse
+// preference, and keeps playback intact on unrelated published-page updates.
+map['station-page']=el();map['station-status']=el();
+const stationPage={...page,releases:{...page.releases,radio:{...page.releases.radio,title:'Station'}}};
+window.VMM_PUBLIC_LANDING.render(stationPage);
+assert.equal(radio.children[0].getAttribute('aria-expanded'),'true');
+assert.equal(radio.children.length,2);
+radio.children[1].children[2].onclick();
+const stationPlayer=radio.children[1].children[3].firstChild;
+window.VMM_PUBLIC_LANDING.render(stationPage);
+assert.equal(radio.children[1].children[3].firstChild,stationPlayer);
+window.VMM_PUBLIC_LANDING.render(disabledPage);
+assert.equal(radio.className,'velar-radio hidden');
+assert.match(map['station-status'].textContent,/выключено/);

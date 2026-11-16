@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101727">
+  <meta name="robots" content="noindex,nofollow">
+  <title>VELAR RADIO — эфир Velar Dream</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../assets/velardream-app-icon-192.png">
+  <link rel="icon" href="../favicon.svg">
+  <link rel="stylesheet" href="../style.css?v=68">
+  <link rel="stylesheet" href="station.css">
+  <script defer src="station.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script defer src="../studio/firebase-config.js"></script>
+  <script defer src="../landing-schema.js?v=25"></script>
+  <script defer src="../public-offline.js?v=1"></script>
+  <script defer src="../youtube-compat.js?v=2"></script>
+  <script defer src="../landing-public.js?v=42"></script>
+</head>
+<body>
+<main id="station-page">
+  <header><img src="../assets/velardream-symbol.svg" alt="" width="28" height="44"><h1>VELAR RADIO</h1></header>
+  <div id="standalone-help"></div>
+  <p id="station-status" role="status">Подключаемся к эфиру…</p>
+  <section id="velar-radio" class="velar-radio hidden" aria-label="Плеер радио"></section>
+  <nav aria-label="Действия с радио">
+    <button id="share" type="button">Поделиться</button>
+    <button id="install" type="button">Установить</button>
+    <button id="embed" type="button">Код для сайта</button>
+    <button id="output" type="button">Где слушать</button>
+  </nav>
+  <p id="action-status" role="status"></p>
+  <textarea id="copy-value" aria-label="Текст для копирования" readonly hidden></textarea>
+  <a id="open-station" href="./" target="_blank" rel="noopener" hidden>Открыть радио отдельно</a>
+</main>
+</body></html>
