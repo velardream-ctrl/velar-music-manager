@@ -364,7 +364,18 @@
    // Old Safari can leave youtube-nocookie embeds blank. Use YouTube's
    // regular player endpoint, inline playback and an explicit 16:9 viewport.
    var id=(media||'').match(/^https:\/\/www\.youtube-nocookie\.com\/embed\/([A-Za-z0-9_-]{11})$/);
-   frame.src=id?'https://www.youtube.com/embed/'+id[1]+'?playsinline=1&rel=0':media;
+   var embedSrc=id?'https://www.youtube.com/embed/'+id[1]+'?playsinline=1&rel=0':media;
+   frame.src=embedSrc;
+   // A site-owned centered control avoids relying on the misplaced button
+   // inside YouTube's cross-origin iframe on old Safari.
+   var play=create('button','velar-video-center-play','▶');
+   play.type='button';play.setAttribute('aria-label','Воспроизвести клип: '+title);
+   play.onclick=function(){
+     play.style.display='none';
+     // Autoplay is requested directly from the user's click; old iOS may
+     // still block it. Keep the original YouTube fallback visible.
+     frame.src=embedSrc+(embedSrc.indexOf('?')>=0?'&':'?')+'autoplay=1';
+   };
    frame.setAttribute('allow','autoplay; encrypted-media; fullscreen; picture-in-picture');
    frame.setAttribute('allowfullscreen','');
    frame.setAttribute('webkitallowfullscreen','');
@@ -380,6 +391,7 @@
    close.onclick=dismiss;
    overlay.onclick=function(e){if(e.target===overlay)dismiss();};
    viewport.appendChild(frame);
+   viewport.appendChild(play);
    panel.appendChild(close);panel.appendChild(viewport);
    panel.appendChild(fallback);overlay.appendChild(panel);
    document.body.appendChild(overlay);
