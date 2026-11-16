@@ -304,3 +304,62 @@ const videoURL=new URL(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src)
 assert.deepEqual([videoURL.pathname.split('/').pop(),videoURL.searchParams.get('playlist')].sort(),['ABCDEFGHIjk','abcdefghijk']);
 choice.value='appleMusic';choice.onchange();listen.onclick();
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src,apple.replace('music.apple','embed.music.apple'));
+
+
+// RUN-163: regression for the right-side drag anchor and the draggable logo.
+assert.match(css,/\.velar-radio-panel\{/);
+assert.match(css,/@keyframes velar-radio-glow/);
+assert.match(css,/touch-action:none/);
+assert.match(css,/prefers-reduced-motion:reduce/);
+const moveStart=publicJS.indexOf(' function radioMove(');
+const moveEnd=publicJS.indexOf(' function stationHelp(',moveStart);
+assert.ok(moveStart>=0&&moveEnd>moveStart,'The radio movement helper is present');
+const listeners={};
+const fakeWindow={
+ innerWidth:390,innerHeight:844,
+ addEventListener(type,fn){listeners[type]=fn;},
+ removeEventListener(type,fn){if(listeners[type]===fn)delete listeners[type];}
+};
+function draggable(){
+ return {className:'',style:{},events:{},
+  addEventListener(type,fn){this.events[type]=fn;},
+  removeEventListener(type,fn){if(this.events[type]===fn)delete this.events[type];},
+  getBoundingClientRect(){
+   const bubble=this.className.indexOf('velar-radio--bubble')!==-1;
+   const width=bubble?68:365,height=bubble?68:245;
+   const rightOffset=Number.parseFloat(this.style.right)||12;
+   const top=Number.parseFloat(this.style.top)||50;
+   return {width,height,left:390-rightOffset-width,right:390-rightOffset,top,bottom:top+height};
+  }
+ };
+}
+const movingHost=draggable(),grip=draggable(),movingOrb=draggable();
+movingHost.className='velar-radio';
+const movingContext={window:fakeWindow,stopRadioMove:null,Date};
+const moveHelper=vm.runInNewContext('('+publicJS.slice(moveStart,moveEnd).trim()+')',movingContext,{timeout:1000});
+const ignoreDragClick=moveHelper(movingHost,grip,movingOrb);
+grip.events.mousedown({button:0,clientX:350,clientY:65,cancelable:true,preventDefault(){}});
+listeners.mousemove({clientX:295,clientY:180,cancelable:true,preventDefault(){}});
+listeners.mouseup();
+const wideRight=movingHost.getBoundingClientRect().right;
+const wideTop=movingHost.getBoundingClientRect().top;
+movingHost.className='velar-radio velar-radio--bubble';
+ignoreDragClick.sync();
+const smallRect=movingHost.getBoundingClientRect();
+assert.equal(smallRect.right,wideRight,'Collapsing keeps the same right-side grip position');
+assert.equal(smallRect.top,wideTop,'Collapsing keeps the same top coordinate');
+assert.equal(movingHost.style.left,'auto','Never anchor the small logo to the wide panel left edge');
+movingOrb.events.touchstart({touches:[{clientX:smallRect.right-25,clientY:smallRect.top+30}]});
+listeners.touchmove({touches:[{clientX:smallRect.right-70,clientY:smallRect.top+65}],cancelable:true,preventDefault(){}});
+listeners.touchend();
+assert.equal(movingHost.getBoundingClientRect().right,smallRect.right-45,'Touch dragging the orb changes its position');
+assert.equal(ignoreDragClick(),true,'Drag must not trigger an expand click');
+assert.equal(ignoreDragClick(),false,'A subsequent tap still opens the logo');
+const previousRight=movingHost.getBoundingClientRect().right;
+movingHost.className='velar-radio';
+ignoreDragClick.sync();
+const expanded=movingHost.getBoundingClientRect();
+assert.ok(expanded.left>=0,'Expanded panel stays inside narrow iPhone viewport');
+assert.ok(expanded.right<=390,'Expanded panel stays within viewport');
+movingContext.stopRadioMove();
+assert.equal(Object.keys(listeners).length,0,'Drag listeners are cleaned up');
