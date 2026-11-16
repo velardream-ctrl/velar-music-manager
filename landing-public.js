@@ -334,6 +334,18 @@
      else parent.removeChild(frames[i]);
    }
  }
+ // RUN-147: older iPad Safari misplaces YouTube's own cross-origin play button.
+ // Detect the unsupported layout engine, not all iPads or modern iPhones.
+ function legacyIpadVideo(){
+   var ua=navigator.userAgent||'';
+   if(!/iPad/i.test(ua))return false;
+   return !window.CSS||!window.CSS.supports||
+     !window.CSS.supports('aspect-ratio','16 / 9');
+ }
+ function youtubeWatchUrl(embed){
+   var match=(embed||'').match(/^https:\/\/www\.youtube-nocookie\.com\/embed\/([A-Za-z0-9_-]{11})$/);
+   return match?'https://www.youtube.com/watch?v='+match[1]:'';
+ }
  function releaseCard(item,feature,index){
    index=typeof index==='number'?index:0;
    var isVideo=item.kind==='video';
@@ -386,7 +398,21 @@
    // The existing cover is the video/player stage: do not add another
    // expanding row after the text of the release.
    art.appendChild(player);
-   if(media){
+   var oldIpadWatch=isVideo&&item.mediaProvider==='youtube'&&legacyIpadVideo()?
+     youtubeWatchUrl(media):'';
+   if(oldIpadWatch){
+     // No embedded iframe on legacy iPad: preserve the approved cover and open
+     // YouTube's own player with a large accessible central action.
+     var coverAction=create('a','cms-release-legacy-play','▶ Смотреть клип');
+     coverAction.href=oldIpadWatch;coverAction.target='_blank';
+     coverAction.rel='noopener noreferrer';
+     coverAction.setAttribute('aria-label','Смотреть клип на YouTube: '+item.title);
+     art.appendChild(coverAction);
+     var watchLink=create('a','cms-release-listen','▶ Смотреть клип');
+     watchLink.href=oldIpadWatch;watchLink.target='_blank';
+     watchLink.rel='noopener noreferrer';actions.appendChild(watchLink);
+   }
+   if(media&&!oldIpadWatch){
      var listen=create('button','cms-release-listen');
      listen.type='button';
      var icon=create('span','cms-release-play');
@@ -418,7 +444,7 @@
      catch(ignore){player.scrollIntoView();}
    }
    var external=item.url||item.mediaUrl;
-   if(isVideo&&media){
+   if(isVideo&&media&&!oldIpadWatch){
      // The old "Открыть видео" link used target=_blank and opened another tab.
      // Now both clip actions point to the ONE in-card official iframe.
      var openHere=create('button','cms-card-link cms-release-inline-link','Открыть видео здесь');
