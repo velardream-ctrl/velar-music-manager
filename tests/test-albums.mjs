@@ -79,7 +79,7 @@ assert.equal(title.children[1].className.includes('--empty'),true,
  'YouTube-only album track uses local note, never the album or video thumbnail');
 const primary=row.children[1].children[0];
 primary.onclick();
-assert.equal(row.children[2].children[0].className,'spotify-embed-viewport');
+assert.equal(row.children[2].children[1].className,'spotify-embed-viewport');
 assert.equal(stopped,1);
 primary.onclick();
 assert.equal(row.children[2].children.length,0,'Click second time unloads Spotify embed');

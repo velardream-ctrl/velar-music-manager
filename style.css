@@ -1858,3 +1858,19 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 /* Safari 12 / older iOS: keep supported word-wrap fallback before newer overflow-wrap. */
 .public-artist-song-list .public-song-copy,.public-artist-song-list .public-song-inline .cms-card-link{word-wrap:break-word;overflow-wrap:break-word;overflow-wrap:anywhere}
 .public-artist-song-list .public-song-carousel,.public-artist-song-list .public-song-carousel-rail{max-width:100%;min-width:0;box-sizing:border-box}
+
+/* RUN-139: iPhone / Safari 12: keep source controls accessible above embedded players. */
+.public-song-entry{position:relative;align-content:flex-start}
+.public-song-entry>.public-song-label{position:relative;z-index:2;flex:0 0 100%;max-width:100%;box-sizing:border-box}
+.public-song-entry>.public-song-platforms{position:relative;z-index:2}
+.public-song-entry>.public-song-inline{position:relative;z-index:1;clear:both;flex:0 0 100%;width:100%;max-width:100%;min-width:0;overflow:hidden}
+.public-song-entry .public-song-inline:not(:empty){display:flex;flex-direction:column;align-items:stretch;gap:8px}
+.public-song-entry .public-song-inline>.cms-card-link{display:block;position:relative;z-index:1;order:0;margin:0;line-height:1.4;min-height:24px;box-sizing:border-box}
+.public-song-entry .public-song-inline>.cms-release-iframe,.public-song-entry .public-song-inline>.spotify-embed-viewport{order:1;flex:0 0 auto;position:relative;max-width:100%;box-sizing:border-box}
+.public-song-entry .public-song-inline>.cms-release-iframe:not(.cms-release-iframe--video){height:175px;min-height:175px;max-height:175px;border-radius:10px;background:#f5f5f7}
+.public-song-entry .public-song-inline>.cms-release-iframe--video{height:auto;min-height:170px;aspect-ratio:16/9}
+/* Do not render the device-dependent grey play emoji in YouTube's branded button. */
+.public-song-source--youtube::after{content:"";display:block;width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:12px solid #fff;margin-left:3px}
+.public-song-source--youtube{font-size:0!important}
+/* Legacy iOS does not understand aspect-ratio: preserve a reasonable video height. */
+@supports not (aspect-ratio:16/9){.public-song-entry .public-song-inline>.cms-release-iframe--video{height:220px}}

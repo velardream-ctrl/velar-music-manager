@@ -75,7 +75,7 @@ let detail=nodes['public-topic-detail'];
 assert.equal(detail.children[2].children.length,1);
 assert.equal(detail.children.length,3,'No bottom-of-list player');
 const mediaFrame=holder=>{
- const first=holder.children[0];return first&&first.tagName==='iframe'?first:first&&first.children[0];
+ const first=holder.children.find(n=>n.tagName==='iframe'||n.className==='spotify-embed-viewport');return first&&first.tagName==='iframe'?first:first&&first.children[0];
 };
 const weddingSong=detail.children[2].children[0];
 const controls=row=>row.children[0].children.find(n=>String(n.className).includes('public-song-platforms'));
@@ -85,7 +85,7 @@ assert.equal(slot(weddingSong).children.length,0,'No iframe until clicked');
 controls(weddingSong).children[0].onclick();
 assert.equal(stopCalls,1);
 assert.equal(mediaFrame(slot(weddingSong)).tagName,'iframe');
-assert.equal(slot(weddingSong).children[0].className,'spotify-embed-viewport');
+assert.equal(slot(weddingSong).children[1].className,'spotify-embed-viewport');
 assert.equal(mediaFrame(slot(weddingSong)).src,
  'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
 assert.equal(mediaFrame(slot(weddingSong)).attributes.allow.includes('autoplay'),false);
@@ -105,7 +105,7 @@ assert.equal(detail.children[2].children[0].children[0].children[1].children[0].
 const firstSong=detail.children[2].children[0];
 controls(firstSong).children[0].onclick();
 assert.equal(stopCalls,3);
-assert.equal(slot(firstSong).children[0].src,
+assert.equal(slot(firstSong).children[1].src,
  'https://www.youtube-nocookie.com/embed/ABCDEFGHIjk');
 controls(firstSong).children[0].onclick();
 assert.equal(slot(firstSong).children.length,0,'Closing topic player removes iframe');
@@ -117,12 +117,12 @@ assert.match(universe,/topics:'#topics'/);
 assert.match(html,/id="public-topic-cloud"/);
 assert.match(html,/id="public-topic-orbit"/);
 assert.match(html,/topics-public\.js\?v=3/);
-assert.match(html,/public-song-ui\.js\?v=20/);
+assert.match(html,/public-song-ui\.js\?v=21/);
 assert.match(html,/<meta name="robots" content="noindex,nofollow,noarchive">/,
  'The user explicitly wants the developing website blocked from search indexing');
 assert.match(css,/\.topic-tag\[aria-pressed=true\]/);
 assert.match(sw,/'\.\/topics-public\.js\?v=3'/);
-assert.match(sw,/CACHE_PREFIX \+ 'v60'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v61'/);
 assert.match(sw,/STUDIO_PREFIX\+'v49'/);
 assert.doesNotMatch(topics,/setTimeout\(|setInterval\(|fetch\(|firestore\(|autoplay=1|loop=1/);
 console.log('PASS: RUN-073 topic cloud, multiple tags per song, curator-only catalog, noindex retained and no unrequested playback');
