@@ -12,6 +12,10 @@
    if(!dataset||!Array.isArray(dataset.entries))return [];
    return dataset.entries.filter(function(x){return x.visible===true;});
  }
+ function pulse(){var core=id('languages')&&id('languages').querySelector('.language-cosmos-core');
+   if(!core)return;core.className=core.className.replace(/ crystal-selection-pulse/g,'');void core.offsetWidth;
+   core.className+=' crystal-selection-pulse';
+ }
  function show(code,requestedUrl){
    var lang=null,detail=id('public-language-detail');
    entries().forEach(function(item){if(item.code===code)lang=item;});
@@ -68,7 +72,7 @@
      chip.setAttribute('aria-pressed','false');
      chip.appendChild(el('span','language-orbit-label',lang.label));
      chip.appendChild(el('small','',lang.tracks.length?String(lang.tracks.length)+' песен':'скоро'));
-     chip.onclick=function(){show(lang.code);};
+     chip.onclick=function(){show(lang.code);pulse();};
      buttons.push({btn:chip,code:lang.code});orbit.appendChild(chip);
    });
    show(current);
