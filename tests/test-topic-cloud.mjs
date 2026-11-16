@@ -105,7 +105,7 @@ assert.equal(detail.children[2].children[0].children[0].children[1].children[0].
 const firstSong=detail.children[2].children[0];
 controls(firstSong).children[0].onclick();
 assert.equal(stopCalls,3);
-assert.equal(slot(firstSong).children[0].src,
+assert.equal(slot(firstSong).children[1].src,
  'https://www.youtube-nocookie.com/embed/ABCDEFGHIjk');
 controls(firstSong).children[0].onclick();
 assert.equal(slot(firstSong).children.length,0,'Closing topic player removes iframe');
