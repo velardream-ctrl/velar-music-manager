@@ -1967,8 +1967,8 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 /* RUN-145: legacy iPad Safari fallbacks only; modern iPhone layouts untouched.
    Old Safari ignores aspect-ratio but still renders the ratio pseudo-element. */
 @supports not (aspect-ratio: 16 / 9){
- .cms-release-art--video{height:0;padding-top:56.25%;box-sizing:content-box}
- .cms-release-art--video::before{display:none!important}
+ .cms-release-art--video{height:auto;min-height:0}
+ .cms-release-art--video::before{display:block!important;padding-top:56.25%}
  .cms-release-art--video>.cms-release-cover,
  .cms-release-art--video>.cms-release-placeholder,
  .cms-release-art--video>.cms-release-player:not(:empty){
