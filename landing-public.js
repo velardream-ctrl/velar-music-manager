@@ -837,10 +837,16 @@
      window.removeEventListener('mouseup',up);window.removeEventListener('touchend',up);window.removeEventListener('touchcancel',up);
      window.removeEventListener('resize',fit);
    };
-   return function(){
+   function transitionFit(e){if(e&&e.target===host&&e.propertyName==='width')fit();}
+   host.addEventListener('transitionend',transitionFit);
+   var shouldIgnoreCloudClick=function(){
      if(Date.now()<ignoreCloudClickUntil){ignoreCloudClickUntil=0;return true;}
      return false;
    };
+   shouldIgnoreCloudClick.sync=fit;
+   var stop=stopRadioMove;
+   stopRadioMove=function(){host.removeEventListener('transitionend',transitionFit);stop();};
+   return shouldIgnoreCloudClick;
  }
  function stationHelp(standalone){
    var details=create('details','station-help');
@@ -1014,6 +1020,7 @@
        panel.className=hasEmbed(player)?'velar-radio-panel velar-radio-panel--mini':'velar-radio-panel hidden';
        toggle.setAttribute('aria-expanded','false');
        host.className=host.className.replace(/\svelar-radio--chat-open/g,'')+' velar-radio--bubble';
+       if(ignoreCloudClick.sync)ignoreCloudClick.sync();
        toggle.setAttribute('aria-label','Развернуть VELAR RADIO (перетащите значок, чтобы переместить)');
      };
      panel.appendChild(bubble);
@@ -1036,6 +1043,7 @@
      if(host.className.indexOf('velar-radio--bubble')!==-1){
        host.className=host.className.replace(/\svelar-radio--bubble/g,'');
        panel.className='velar-radio-panel';
+       if(ignoreCloudClick.sync)ignoreCloudClick.sync();
        toggle.setAttribute('aria-expanded','true');
        toggle.setAttribute('aria-label','Свернуть VELAR RADIO');
        return;
@@ -1046,6 +1054,7 @@
      panel.className=expanding?'velar-radio-panel':
        (hasEmbed(player)?'velar-radio-panel velar-radio-panel--mini':'velar-radio-panel hidden');
      toggle.setAttribute('aria-expanded',expanding?'true':'false');
+     if(ignoreCloudClick.sync)ignoreCloudClick.sync();
      if(!expanding)host.className=host.className.replace(/\svelar-radio--chat-open/g,'');
    };
    if(station)toggle.onclick();
