@@ -891,7 +891,7 @@ host.appendChild(toggle);
      miniListen.type='button';host.appendChild(miniListen);
    }
    var cover=create('img','velar-radio-cover');cover.alt='';
-   if(tracks.length){
+   if(tracks.length&&!config.streamUrl){
      toggle.insertBefore(cover,toggle.firstChild);
      var caption=create('span','velar-radio-caption');toggle.appendChild(caption);
      function updateProgramme(){
@@ -932,7 +932,7 @@ if(sources.length&&!config.streamUrl){
    open.type='button';open.setAttribute('aria-pressed','false');
    open.onclick=function(){
      if(config.streamUrl){
-       var audio=player._vmmAudio;
+       var audio=player._vmmAudio,info=player._vmmStatus;
        if(!audio){
          pauseOtherEmbeds();
          audio=create('audio','velar-radio-audio');
@@ -940,7 +940,7 @@ if(sources.length&&!config.streamUrl){
          audio.setAttribute('aria-label','Аудиопоток VELAR RADIO');
          var info=create('p','velar-radio-stream-status','Подключаемся к эфирному серверу…');
          info.setAttribute('role','status');
-         player.appendChild(audio);player.appendChild(info);player._vmmAudio=audio;
+         player.appendChild(audio);player.appendChild(info);player._vmmAudio=audio;player._vmmStatus=info;
          audio.onplay=function(){
            open.textContent='❚❚ Пауза';open.setAttribute('aria-pressed','true');
            if(miniListen)miniListen.textContent='❚❚ Пауза';
@@ -1049,7 +1049,7 @@ radioControls={toggle:toggle,start:open,player:player,host:host};
    if(station)toggle.onclick();
  }
  // Only call this synchronously from the visitor's explicit chat button click.
- // Respect the owner's OFF switch and local hidden state; never autoplay media.
+ // Respect the owner's OFF switch; browser audio starts only on a user gesture.
  function openRadioFromChat(){
    if(!radioControls)return false;
    if(radioControls.restore)radioControls.restore.onclick();
@@ -1058,7 +1058,8 @@ radioControls={toggle:toggle,start:open,player:player,host:host};
    if(controls.toggle.getAttribute('aria-expanded')!=='true')controls.toggle.onclick();
    if(controls.host.className.indexOf('velar-radio--chat-open')===-1)
      controls.host.className+=' velar-radio--chat-open';
-   if(!hasEmbed(controls.player))controls.start.onclick(); // Chat command means OPEN, not toggle.
+   if(!hasEmbed(controls.player)&&!(controls.player._vmmAudio&&controls.player._vmmAudio.paused===false))
+     controls.start.onclick(); // Never pause an already playing stream on repeated chat request.
    return true;
  }
 var stationSettings=null,homepageRadioSettings=null;
