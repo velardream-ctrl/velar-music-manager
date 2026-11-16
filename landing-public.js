@@ -872,7 +872,7 @@
    if(!host)return;
    radioControls=null;
    empty(host);
-   if(!config.enabled||(!sources.length&&!tracks.length&&!window.VMM_LANDING_SCHEMA.playlistUrl(config.url,config.provider))){
+   if(!config.enabled||(!sources.length&&!tracks.length&&!config.streamUrl&&!window.VMM_LANDING_SCHEMA.playlistUrl(config.url,config.provider))){
      host.className='velar-radio hidden';return;
    }
 var station=byId("station-page");
@@ -931,6 +931,41 @@ if(sources.length&&!config.streamUrl){
    }
    open.type='button';open.setAttribute('aria-pressed','false');
    open.onclick=function(){
+     if(config.streamUrl){
+       var audio=player._vmmAudio;
+       if(!audio){
+         pauseOtherEmbeds();
+         audio=create('audio','velar-radio-audio');
+         audio.controls=true;audio.preload='none';audio.src=config.streamUrl;
+         audio.setAttribute('aria-label','Аудиопоток VELAR RADIO');
+         var info=create('p','velar-radio-stream-status','Подключаемся к эфирному серверу…');
+         info.setAttribute('role','status');
+         player.appendChild(audio);player.appendChild(info);player._vmmAudio=audio;
+         audio.onplay=function(){
+           open.textContent='❚❚ Пауза';open.setAttribute('aria-pressed','true');
+           if(miniListen)miniListen.textContent='❚❚ Пауза';
+           info.textContent='Аудиопоток воспроизводится';
+         };
+         audio.onpause=function(){
+           open.textContent='▶ Слушать эфир';open.setAttribute('aria-pressed','false');
+           if(miniListen)miniListen.textContent='▶ Слушать';
+           info.textContent='Прослушивание приостановлено';
+         };
+         audio.onerror=function(){
+           info.textContent='Сервер эфира недоступен. Проверьте подключение.';
+           open.setAttribute('aria-pressed','false');
+           if(miniListen)miniListen.textContent='▶ Повторить';
+         };
+       }
+       if(audio.paused===false){if(audio.pause)audio.pause();return;}
+       try{
+         var start=audio.play&&audio.play();
+         if(start&&typeof start.catch==='function')start.catch(function(){
+           info.textContent='Автозапуск отклонён браузером. Нажмите кнопку прослушивания ещё раз.';
+         });
+       }catch(ignore){info.textContent='Не удалось включить аудиопоток.';}
+       return;
+     }
      if(hasEmbed(player)){
        empty(player);open.setAttribute('aria-pressed','false');return;
      }
