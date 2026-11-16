@@ -203,13 +203,14 @@
      frame.src=link;frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
      frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
      frame.setAttribute('allowfullscreen','');
+     var external=el('a','cms-card-link','Открыть в '+platformName(src.provider));
+     external.href=src.url;external.rel='noopener noreferrer';external.target='_blank';
+     // Keep the external link outside the embedded provider's drawing surface.
+     host.appendChild(external);
      if(src.provider==='spotify'){
        var viewport=el('div','spotify-embed-viewport');
        viewport.appendChild(frame);host.appendChild(viewport);
      }else host.appendChild(frame);
-     var external=el('a','cms-card-link','Открыть в '+platformName(src.provider));
-     external.href=src.url;external.rel='noopener noreferrer';external.target='_blank';
-     host.appendChild(external);
      buttons[i].forEach(function(button){
        button.setAttribute('aria-pressed',button.getAttribute('data-provider')===src.provider?'true':'false');
      });
