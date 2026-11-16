@@ -127,6 +127,7 @@ assert.match(css, /cms-playlist-art--resonance \.playlist-resonance-orbit\{heigh
 assert.match(css, /playlist-resonance-orbit--two\{padding-bottom:90%\}/);
 assert.match(css, /playlist-resonance-orbit--three\{padding-bottom:45%\}/);
 
-// RUN-145: old Safari receives isolated fallbacks without changing modern CSS.
-assert.match(css, /@supports not \\(aspect-ratio: 16 \\/ 9\\)/);
-assert.match(css, /@supports not \\(width: min\\(670px, 91vw\\)\\)/);
+// RUN-145: legacy-only CSS fallbacks must exist for old iPad Safari.
+assert.ok(css.includes('@supports not (aspect-ratio: 16 / 9)'));
+assert.ok(css.includes('@supports not (width: min(670px, 91vw))'));
+assert.ok(css.includes('.cms-release-art--video::before{display:block!important;padding-top:56.25%}'));
