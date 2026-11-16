@@ -11,8 +11,8 @@
  function entries(){return data&&Array.isArray(data.entries)?
    data.entries.filter(function(t){return t.visible===true;}):[];}
  function pulse(){var section=byId('topics'),core=section&&section.querySelector('.topics-cosmos-core');
-   if(!core)return;core.classList.remove('crystal-selection-pulse');void core.offsetWidth;
-   core.classList.add('crystal-selection-pulse');
+   if(!core)return;core.className=core.className.replace(/ crystal-selection-pulse/g,'');void core.offsetWidth;
+   core.className+=' crystal-selection-pulse';
  }
  function select(slug,requestedUrl){
    var selected=null,list=entries(),area=byId('public-topic-detail');
