@@ -97,7 +97,7 @@
      panel.appendChild(create('p','cms-music-empty','Подборка композиций появится здесь после выбора в музыкальной студии.'));
      return panel;
    }
-   if(view==='carousel'&&window.VELAR_PUBLIC_SONGS){
+   if((view==='carousel'||view==='classic')&&window.VELAR_PUBLIC_SONGS){
      var carousel=create('div','cms-music-list');
      panel.appendChild(carousel);
      // Retain the curator's explicit manual order for an artist's best songs.
@@ -107,7 +107,7 @@
          thirdProvider:t.thirdProvider,thirdUrl:t.thirdUrl};
      });
      window.VELAR_PUBLIC_SONGS.mount(carousel,curated,{
-       prefix:'artist',view:'carousel',batch:30,keepOrder:true
+       prefix:'artist',view:view==='carousel'?'carousel':'rows',batch:30,keepOrder:true
      });
      return panel;
    }
