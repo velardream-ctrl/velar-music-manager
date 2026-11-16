@@ -27,14 +27,14 @@ assert.ok(read('universe.js').includes('window.VELAR_IMAGE_LOADING.apply'));
 assert.ok(read('artist-detail.js').includes('window.VELAR_IMAGE_LOADING.apply'));
 const index=read('index.html'),artist=read('artist.html'),sw=read('sw.js');
 for(const versioned of [
-  'landing-public.js?v=31','universe.js?v=7','public-song-ui.js?v=18','albums-public.js?v=4'
+  'landing-public.js?v=31','universe.js?v=7','public-song-ui.js?v=19','albums-public.js?v=4'
 ]){
   assert.ok(index.includes(versioned),'Homepage must load '+versioned);
   assert.ok(sw.includes('./'+versioned),'Service worker should precache '+versioned);
 }
 assert.ok(artist.includes('artist-detail.js?v=3'));
 assert.ok(sw.includes('./artist-detail.js?v=3'));
-assert.ok(sw.includes("CACHE_PREFIX + 'v58'"));
+assert.ok(sw.includes("CACHE_PREFIX + 'v59'"));
 assert.match(read('public-song-ui.js'),/frame\.loading='lazy'/,
   'Music players remain click-to-open without preloading');
 const window={location:{search:''}};const promises=[],requests=[];
@@ -67,7 +67,7 @@ assert.equal(host.children.length,6);
 assert.equal(requests.length,6,
   'All six visible song cards must immediately request artwork, including item 5 and 6');
 for(const item of host.children){
-  assert.equal(item.children[2].children.length,0,'No Spotify iframe before playback');
+  assert.equal(item.children.find(x=>String(x.className).includes('public-song-inline')).children.length,0,'No Spotify iframe before playback');
 }
 for(const complete of promises)
   complete({ok:true,json:()=>Promise.resolve({thumbnail_url:'https://i.scdn.co/image/abc123123'})});

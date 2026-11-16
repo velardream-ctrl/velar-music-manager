@@ -1794,3 +1794,36 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .public-song-source--appleMusic{
  background:#fff;border-color:#d7d7dd;color:#171923;
 }
+
+/* RUN-136: unified service controls for list and carousel, including iPhone.
+   Controls live INSIDE the row label rather than beside its bordered box. */
+.public-song-entry:not(.public-song-entry--carousel):not(.public-song-entry--covers):not(.public-song-entry--tiles)>.public-song-label{
+ display:flex;flex-wrap:wrap;width:100%;flex:1 1 100%;gap:0;min-width:0;
+}
+.public-song-entry:not(.public-song-entry--carousel):not(.public-song-entry--covers):not(.public-song-entry--tiles)>.public-song-label>.public-song-platforms{
+ margin-left:auto;display:flex;gap:6px;align-items:center;flex:0 0 auto;
+}
+.public-song-entry:not(.public-song-entry--carousel):not(.public-song-entry--covers):not(.public-song-entry--tiles)>.public-song-label>.public-song-platforms>.public-song-source{margin:0}
+.public-song-source--spotify,.public-song-source--youtube,.public-song-source--appleMusic{
+ width:36px;min-width:36px;height:36px;min-height:36px;
+ border-radius:9px;box-sizing:border-box;padding:0;margin-left:4px;
+}
+.public-song-source--spotify,.public-song-source--spotify.is-primary{
+ background:#192d4b;border:1px solid #e8c88d;color:#e8c88d;
+}
+.public-song-source--youtube{background:#cc2027;border-color:#cc2027;color:#fff}
+.public-song-source--appleMusic{background:#fff;border-color:#d7d7dd;color:#171923}
+.public-song-source[aria-pressed=true]{outline:2px solid #fff0c6;outline-offset:2px}
+@media(max-width:590px){
+ .public-song-entry:not(.public-song-entry--carousel):not(.public-song-entry--covers):not(.public-song-entry--tiles)>.public-song-label{
+  display:grid;grid-template-columns:26px 48px minmax(0,1fr);column-gap:7px;row-gap:7px;align-items:center;
+ }
+ .public-song-entry:not(.public-song-entry--carousel):not(.public-song-entry--covers):not(.public-song-entry--tiles) .public-song-index{grid-column:1;grid-row:1}
+ .public-song-entry:not(.public-song-entry--carousel):not(.public-song-entry--covers):not(.public-song-entry--tiles) .public-song-row-artwork{grid-column:2;grid-row:1;min-width:0;max-width:48px}
+ .public-song-entry:not(.public-song-entry--carousel):not(.public-song-entry--covers):not(.public-song-entry--tiles) .public-song-copy{grid-column:3;grid-row:1;min-width:0;overflow-wrap:normal}
+ .public-song-entry:not(.public-song-entry--carousel):not(.public-song-entry--covers):not(.public-song-entry--tiles)>.public-song-label>.public-song-platforms{
+  grid-column:2 / 4;grid-row:2;justify-content:flex-start;margin:0;gap:8px;
+ }
+}
+/* External player: link has its own line and cannot collide with control labels. */
+.public-song-inline .cms-card-link{display:inline-block;max-width:100%;overflow-wrap:anywhere;margin:10px 0 4px}

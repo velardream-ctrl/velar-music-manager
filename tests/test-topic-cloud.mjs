@@ -78,18 +78,20 @@ const mediaFrame=holder=>{
  const first=holder.children[0];return first&&first.tagName==='iframe'?first:first&&first.children[0];
 };
 const weddingSong=detail.children[2].children[0];
-assert.equal(weddingSong.children[1].children.length,2,'One song row offers Spotify + YouTube');
-assert.equal(weddingSong.children[2].children.length,0,'No iframe until clicked');
-weddingSong.children[1].children[0].onclick();
+const controls=row=>row.children[0].children.find(n=>String(n.className).includes('public-song-platforms'));
+const slot=row=>row.children.find(n=>String(n.className).includes('public-song-inline'));
+assert.equal(controls(weddingSong).children.length,2,'One song row offers Spotify + YouTube');
+assert.equal(slot(weddingSong).children.length,0,'No iframe until clicked');
+controls(weddingSong).children[0].onclick();
 assert.equal(stopCalls,1);
-assert.equal(mediaFrame(weddingSong.children[2]).tagName,'iframe');
-assert.equal(weddingSong.children[2].children[0].className,'spotify-embed-viewport');
-assert.equal(mediaFrame(weddingSong.children[2]).src,
+assert.equal(mediaFrame(slot(weddingSong)).tagName,'iframe');
+assert.equal(slot(weddingSong).children[0].className,'spotify-embed-viewport');
+assert.equal(mediaFrame(slot(weddingSong)).src,
  'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
-assert.equal(mediaFrame(weddingSong.children[2]).attributes.allow.includes('autoplay'),false);
-weddingSong.children[1].children[1].onclick();
+assert.equal(mediaFrame(slot(weddingSong)).attributes.allow.includes('autoplay'),false);
+controls(weddingSong).children[1].onclick();
 assert.equal(stopCalls,2);
-assert.equal(mediaFrame(weddingSong.children[2]).src,
+assert.equal(mediaFrame(slot(weddingSong)).src,
  'https://www.youtube-nocookie.com/embed/ZYXWVUTSRQP',
  'YouTube plays in same inline slot, not a duplicate song');
 const love=nodes['public-topic-cloud'].children.find(x=>x.textContent==='Любовь');
@@ -101,12 +103,12 @@ assert.equal(edited.genres.topics.entries.find(t=>t.slug==='love').tracks[0].tit
 assert.equal(detail.children[2].children[0].children[0].children[1].children[0].textContent,
  'Космос','Alphabetical topic order places Космос before Моя любовь');
 const firstSong=detail.children[2].children[0];
-firstSong.children[1].children[0].onclick();
+controls(firstSong).children[0].onclick();
 assert.equal(stopCalls,3);
-assert.equal(firstSong.children[2].children[0].src,
+assert.equal(slot(firstSong).children[0].src,
  'https://www.youtube-nocookie.com/embed/ABCDEFGHIjk');
-firstSong.children[2].children[2].onclick();
-assert.equal(firstSong.children[2].children.length,0,'Closing topic player removes iframe');
+controls(firstSong).children[0].onclick();
+assert.equal(slot(firstSong).children.length,0,'Closing topic player removes iframe');
 assert.match(studio,/data-landing-tab="topics"/);
 assert.match(admin,/function topicEditor/);
 assert.match(admin,/checkbox\.onchange=function/);
@@ -115,12 +117,12 @@ assert.match(universe,/topics:'#topics'/);
 assert.match(html,/id="public-topic-cloud"/);
 assert.match(html,/id="public-topic-orbit"/);
 assert.match(html,/topics-public\.js\?v=3/);
-assert.match(html,/public-song-ui\.js\?v=18/);
+assert.match(html,/public-song-ui\.js\?v=19/);
 assert.match(html,/<meta name="robots" content="noindex,nofollow,noarchive">/,
  'The user explicitly wants the developing website blocked from search indexing');
 assert.match(css,/\.topic-tag\[aria-pressed=true\]/);
 assert.match(sw,/'\.\/topics-public\.js\?v=3'/);
-assert.match(sw,/CACHE_PREFIX \+ 'v58'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v59'/);
 assert.match(sw,/STUDIO_PREFIX\+'v49'/);
 assert.doesNotMatch(topics,/setTimeout\(|setInterval\(|fetch\(|firestore\(|autoplay=1|loop=1/);
 console.log('PASS: RUN-073 topic cloud, multiple tags per song, curator-only catalog, noindex retained and no unrequested playback');
