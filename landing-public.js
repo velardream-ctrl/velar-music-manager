@@ -496,6 +496,8 @@
      var card=create('article','cms-playlist-card'+(index===0?' cms-playlist-card--featured':''));
      var decoration=create('div','cms-playlist-art');
      decoration.appendChild(create('span','cms-playlist-vinyl'));
+     if(window.VELAR_PLAYLIST_RESONANCE&&window.VELAR_PLAYLIST_RESONANCE.decorate)
+       window.VELAR_PLAYLIST_RESONANCE.decorate(decoration);
      card.appendChild(decoration);
      var details=create('div','cms-playlist-copy');
      if(index===0)details.appendChild(create('span','cms-release-type','ВЫБОР VELAR'));

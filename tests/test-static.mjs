@@ -33,7 +33,7 @@ const sw = read('sw.js');
 assert.match(sw, /CACHE_PREFIX/);
 assert.match(sw, /isPublicAsset/);
 assert.match(sw, /velardream-crystal\.png/);
-assert.match(sw, /CACHE_PREFIX \+ 'v63'/);
+assert.match(sw, /CACHE_PREFIX \+ 'v64'/);
 const css = read('style.css');
 assert.ok(homepage.includes('class="brand-emblem brand-emblem-header"'), 'Header emblem missing');
 assert.ok(homepage.includes('class="brand-emblem brand-emblem-footer"'), 'Footer emblem missing');
@@ -44,9 +44,9 @@ assert.ok(!css.includes('.mini-mark{'), 'Old diamond CSS present');
 assert.match(css, /\.art-wrap\{max-width:315px;width:100%;margin:-8px auto 12px;/);
 assert.match(css, /\.art-wrap\{max-width:215px;margin:-5px auto 12px/);
 assert.ok(!css.includes('margin:-12px auto -30px') && !css.includes('margin:-12px auto -32px'), 'Logo must not overlap title');
-assert.match(homepage, /href="style\.css\?v=56"/);
+assert.match(homepage, /href="style\.css\?v=57"/);
 assert.match(sw, /url\.pathname\.slice\(-10\) === '\/style\.css'/);
-assert.match(sw, /'\.\/style\.css\?v=56'/);
+assert.match(sw, /'\.\/style\.css\?v=57'/);
 assert.match(homepage, /max-width:215px!important;margin:-5px auto 12px!important/);
 assert.ok(!sw.includes('cache.put(req, response)'), 'Never cache unfiltered responses');
 assert.match(read('firestore.rules'), /allow read, write: if false;/);
@@ -108,3 +108,16 @@ assert.ok(studioCss.includes('#panel-landing input.landing-language-catalog-sear
   'Catalog search CSS must not be scoped only to languages');
 assert.ok(studioCss.includes('-webkit-appearance:none;appearance:none;box-sizing:border-box;'),
   'iOS Safari must not draw a native black pill');
+
+
+// RUN-143: approved playlist resonance is decorative, scroll-driven and offline-safe.
+const resonance = read('playlist-resonance.js');
+assert.match(homepage, /playlist-resonance\.js\?v=1/);
+assert.match(sw, /playlist-resonance\.js\?v=1/);
+assert.match(resonance, /prefers-reduced-motion: reduce/);
+assert.match(resonance, /requestAnimationFrame/);
+assert.match(resonance, /addEventListener\('scroll',schedule,\{passive:true\}\)/);
+assert.match(resonance, /data-resonance-ready/);
+assert.ok(!/setInterval|WebGL|fetch\(/.test(resonance), 'Playlist artwork must stay lightweight');
+assert.match(read('landing-public.js'), /VELAR_PLAYLIST_RESONANCE\.decorate\(decoration\)/);
+assert.match(css, /playlist-resonance-crystal/);
