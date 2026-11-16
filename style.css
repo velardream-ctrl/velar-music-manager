@@ -1888,3 +1888,17 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .public-song-entry>.public-song-inline>.cms-card-link{margin:0 0 6px!important}
 /* Keep compact rows and carousel cards consistent; don't let iframe cover controls. */
 .public-song-entry--carousel>.public-song-platforms{align-self:stretch}
+
+/* RUN-141: preserve carousel card geometry when the artwork is replaced by an embed.
+   Override the older absolute artwork-overlay rules; keep platform controls below. */
+.public-song-entry--carousel{min-height:350px}
+.public-song-entry--carousel.is-playing{min-height:350px}
+.public-song-entry--carousel.is-playing>.public-song-inline:not(:empty){
+ position:relative!important;top:auto!important;right:auto!important;left:auto!important;
+ width:100%!important;max-width:100%!important;height:240px!important;min-height:240px!important;
+ padding:0!important;margin:0!important;box-sizing:border-box;overflow:hidden;
+ flex:0 0 240px!important;aspect-ratio:auto!important;
+}
+.public-song-entry--carousel.is-playing>.public-song-platforms{
+ margin-top:auto!important;flex-shrink:0;
+}
