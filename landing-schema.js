@@ -373,9 +373,19 @@
       throw new Error('VELAR RADIO: выбери Spotify или YouTube.');
     var link=playlistUrl(x.url||'',provider);
     if(x.url&&!link)throw new Error('VELAR RADIO: укажи официальную ссылку на публичный плейлист '+provider+'.');
-    if(enabled&&!link)throw new Error('VELAR RADIO: сначала укажи ссылку на плейлист.');
+    var tracks=x.tracks||[];
+    if(!Array.isArray(tracks)||tracks.length>300)throw new Error('В эфире допускается до 300 песен.');
+    var seen={};
+    tracks=tracks.map(function(track){
+      var url=songUrl(track&&track.url,'youtube');
+      if(!url||seen[url]||!(track.seconds>0&&track.seconds<=86400&&Math.floor(track.seconds)===track.seconds))
+        throw new Error('Проверь ссылку YouTube, длительность и повторы песен радио.');
+      seen[url]=true;
+      return {url:url,title:plain(track.title,'Название песни радио',150,true),seconds:track.seconds};
+    });
+    if(enabled&&!link&&!tracks.length)throw new Error('VELAR RADIO: сначала укажи ссылку на плейлист.');
     return {enabled:enabled,controlVersion:2,title:plain(typeof x.title==='string'?x.title:'VELAR RADIO','Название радио',70,true),
-      provider:provider,url:link};
+      provider:provider,url:link,tracks:tracks};
   }
 
   // RUN-096: a curated collection of singles must NOT claim an official album release.

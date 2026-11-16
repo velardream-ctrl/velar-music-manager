@@ -1,0 +1,13 @@
+body{margin:0;min-height:100vh;background:#101727;color:#fff0d5;font-family:system-ui,sans-serif}
+#station-page{box-sizing:border-box;width:100%;max-width:36rem;margin:auto;padding:clamp(12px,4vw,28px)}
+#station-page header,#station-page nav{display:flex;align-items:center;gap:.6rem}
+#station-page h1{font:normal 1.55rem Georgia,serif;letter-spacing:.1em}
+#station-page nav{flex-wrap:wrap;margin-top:1rem}
+#station-page nav button{padding:.6rem .9rem;border:1px solid #877858;border-radius:20px;background:#1c2840;color:inherit;cursor:pointer}
+#station-page .velar-radio{position:static;width:100%;max-width:none}
+#station-page .velar-radio-toggle{padding-right:16px}
+#station-page .velar-radio-panel{max-height:none}
+#station-page .velar-radio-iframe--video{min-height:200px}
+#station-page textarea{box-sizing:border-box;width:100%;min-height:5rem}
+#station-page a{color:#edcd91}
+#station-page p:empty,#station-page [hidden]{display:none}

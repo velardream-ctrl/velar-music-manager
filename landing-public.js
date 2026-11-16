@@ -757,18 +757,100 @@
    if(!follow.children||!follow.children.length)
      follow.appendChild(create('p','cms-release-empty','Ссылки для подписки появятся здесь.'));
  }
+ var radioTimer=null;
+ var stopRadioMove=null;
+ function radioSchedule(tracks,time){
+   var total=tracks.reduce(function(sum,t){return sum+t.seconds;},0);
+   var cycle=Math.floor(time/total),offset=time%total,order=tracks.slice();
+   var seed=(cycle%2147483646)+1;
+   for(var i=order.length-1;i>0;i--){
+     seed=seed*16807%2147483647;
+     var j=seed%(i+1),swap=order[i];order[i]=order[j];order[j]=swap;
+   }
+   var index=0;
+   while(offset>=order[index].seconds){offset-=order[index++].seconds;}
+   return {track:order[index],offset:offset,remaining:order.slice(index+1)};
+ }
+ function radioMove(host,handle){
+   if(!host.getBoundingClientRect||!window.addEventListener)return;
+   var drag=null,position=null;
+   function place(x,y){
+     var rect=host.getBoundingClientRect();
+     position=[Math.max(0,Math.min(x,window.innerWidth-rect.width)),Math.max(0,Math.min(y,window.innerHeight-rect.height))];
+     host.style.left=position[0]+'px';host.style.top=position[1]+'px';host.style.right='auto';
+   }
+   function fit(){if(position)place(position[0],position[1]);}
+   function point(e){return e.touches?e.touches[0]:e;}
+   function down(e){
+     if(e.button>0)return;
+     var p=point(e),r=host.getBoundingClientRect();drag=[p.clientX-r.left,p.clientY-r.top];e.preventDefault();
+   }
+   function move(e){
+     if(!drag)return;
+     var p=point(e);place(p.clientX-drag[0],p.clientY-drag[1]);if(e.cancelable)e.preventDefault();
+   }
+   function up(){drag=null;}
+   handle.addEventListener('mousedown',down);handle.addEventListener('touchstart',down,{passive:false});
+   window.addEventListener('mousemove',move);window.addEventListener('touchmove',move,{passive:false});
+   window.addEventListener('mouseup',up);window.addEventListener('touchend',up);window.addEventListener('touchcancel',up);
+   window.addEventListener('resize',fit);
+   var observer=window.ResizeObserver?new window.ResizeObserver(fit):null;
+   if(observer)observer.observe(host);
+   handle.onkeydown=function(e){
+     var steps={ArrowLeft:[-24,0],ArrowRight:[24,0],ArrowUp:[0,-24],ArrowDown:[0,24]};
+     if(!steps[e.key])return;
+     var r=host.getBoundingClientRect();place(r.left+steps[e.key][0],r.top+steps[e.key][1]);e.preventDefault();
+   };
+   stopRadioMove=function(){
+     if(observer)observer.disconnect();
+     window.removeEventListener('mousemove',move);window.removeEventListener('touchmove',move);
+     window.removeEventListener('mouseup',up);window.removeEventListener('touchend',up);window.removeEventListener('touchcancel',up);
+     window.removeEventListener('resize',fit);
+   };
+ }
+ function stationHelp(standalone){
+   var details=create('details','station-help');
+   var summary=create('summary','station-help-button','?');
+   summary.setAttribute('aria-label','Как слушать и установить VELAR RADIO');
+   details.appendChild(summary);
+   var bubble=create('div','station-help-bubble');
+   bubble.appendChild(create('strong','','Возьмите музыку с собой'));
+   function tip(label,text){
+     var line=create('p','');
+     line.appendChild(create('b','',label+' '));line.appendChild(create('span','',text));bubble.appendChild(line);
+   }
+   tip('На компьютере.','Откройте радио в отдельном окне и включите эфир. Можно вернуться к работе, оставив окно открытым. Кнопка «Установить» поможет добавить радио как приложение, если браузер это поддерживает.');
+   tip('На iPhone и iPad.','Откройте страницу радио в Safari. В меню «Поделиться» выберите «На экран Домой». Радио появится рядом с вашими приложениями.');
+   tip('На Android.','Откройте страницу радио в Chrome. В меню браузера выберите «Установить приложение» или «Добавить на главный экран».');
+   tip('В наушниках или на колонке.','Выберите устройство в настройках звука. На iPhone и iPad это можно сделать в Пункте управления через значок AirPlay.');
+   tip('Для друзей и для вашего сайта.','В отдельном плеере нажмите «Поделиться», чтобы отправить ссылку. Кнопка «Код для сайта» даст код для вставки на страницу, которая поддерживает iframe.');
+   if(!standalone){
+     var link=create('a','','Открыть отдельный плеер');link.href='radio/';link.target='_blank';link.rel='noopener';bubble.appendChild(link);
+   }
+   bubble.appendChild(create('p','station-help-signoff','Оставайтесь с нами. Пусть любимая музыка всегда будет рядом с вами.'));
+   var close=create('button','','Закрыть подсказку');close.type='button';
+   function dismiss(){details.open=false;summary.focus();}
+   close.onclick=dismiss;
+   details.onkeydown=function(event){if(details.open&&event.key==='Escape'){event.preventDefault();dismiss();}};
+   bubble.appendChild(close);details.appendChild(bubble);return details;
+ }
  function renderRadio(config){
+   if(radioTimer!==null){window.clearTimeout(radioTimer);radioTimer=null;}
+   if(stopRadioMove){stopRadioMove();stopRadioMove=null;}
+   var tracks=config.tracks||[];
+
    var host=byId('velar-radio');
    if(!host)return;
    radioControls=null;
    empty(host);
-   if(!config.enabled||!window.VMM_LANDING_SCHEMA.playlistUrl(config.url,config.provider)){
+   if(!config.enabled||(!tracks.length&&!window.VMM_LANDING_SCHEMA.playlistUrl(config.url,config.provider))){
      host.className='velar-radio hidden';return;
    }
    var radioHidden=false;
    try{radioHidden=!!(window.localStorage&&window.localStorage.getItem('velar-radio-hidden')==='1');}
    catch(ignore){}
-   if(radioHidden){
+   var station=byId("station-page");
+   if(radioHidden&&!station){
      host.className='velar-radio velar-radio--minimized';
      var restore=create('button','velar-radio-restore','VELAR RADIO · показать');
      restore.type='button';
@@ -789,27 +871,53 @@
    toggle.appendChild(dot);toggle.appendChild(create('span','',config.title));
    var icon=create('span','velar-radio-chevron');icon.setAttribute('aria-hidden','true');toggle.appendChild(icon);
    host.appendChild(toggle);
+   var cover=create('img','velar-radio-cover');cover.alt='';
+   if(tracks.length){
+     toggle.insertBefore(cover,toggle.firstChild);
+     var caption=create('span','velar-radio-caption');toggle.appendChild(caption);
+     function updateProgramme(){
+       var slot=radioSchedule(tracks,Math.floor(Date.now()/1000));
+       caption.textContent='В эфире · '+slot.track.title;
+       cover.src='https://i.ytimg.com/vi/'+slot.track.url.split('v=')[1]+'/default.jpg';
+       radioTimer=window.setTimeout(updateProgramme,(slot.track.seconds-slot.offset)*1000);
+     }
+     updateProgramme();
+   }
    var panel=create('div','velar-radio-panel hidden');panel.id='velar-radio-panel';
    panel.appendChild(create('strong','',config.title+' · музыкальный плейлист'));
    panel.appendChild(create('p','velar-radio-note','Воспроизведение только по вашему выбору, через официальный плеер '+(config.provider==='spotify'?'Spotify':'YouTube')+'.'));
    var player=create('div','velar-radio-player');
    var open=create('button','velar-radio-start','Открыть плейлист');
+   if(tracks.length){
+     panel.children[0].textContent=config.title+' · эфир YouTube';
+     panel.children[1].textContent='Открой плеер и нажми ▶, чтобы присоединиться к эфиру.';
+     open.textContent='Открыть эфир';
+   }
    open.type='button';open.setAttribute('aria-pressed','false');
    open.onclick=function(){
      if(hasEmbed(player)){
        empty(player);open.setAttribute('aria-pressed','false');return;
      }
-     var src=officialEmbed(config.url,config.provider,'playlist');if(!src)return;
-     if(config.provider==='youtube'&&legacyYouTubeModal(config.url,config.title))return;
+     var provider=config.provider,url=config.url,title=config.title,src;
+     if(tracks.length){
+       var slot=radioSchedule(tracks,Math.floor(Date.now()/1000));
+       url=slot.track.url;title=slot.track.title;provider='youtube';
+       src=officialEmbed(url,provider,'release')+'?start='+slot.offset;
+       if(slot.remaining.length)src+='&playlist='+slot.remaining.map(function(t){return t.url.split('v=')[1];}).join(',');
+       if(legacyIpadVideo()){showLegacyVideoModal(src,title);return;}
+     }else{
+       src=officialEmbed(url,provider,'playlist');if(!src)return;
+       if(provider==='youtube'&&legacyYouTubeModal(url,title))return;
+     }
      pauseOtherEmbeds();empty(player);open.setAttribute('aria-pressed','true');
-     var frame=create('iframe','velar-radio-iframe'+(config.provider==='youtube'?' velar-radio-iframe--video':''));
-     frame.src=src;frame.title=config.title+' — '+config.provider;
+     var frame=create('iframe','velar-radio-iframe'+(provider==='youtube'?' velar-radio-iframe--video':''));
+     frame.src=src;frame.title=title+' — '+provider;
      frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
      frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
      frame.setAttribute('allowfullscreen','');
-     appendOfficialFrame(player,frame,config.provider,false);
-     var link=create('a','velar-radio-external','Открыть в '+(config.provider==='spotify'?'Spotify':'YouTube'));
-     link.href=config.url;link.target='_blank';link.rel='noopener noreferrer';player.appendChild(link);
+     appendOfficialFrame(player,frame,provider,false);
+     var link=create('a','velar-radio-external','Открыть в '+(provider==='spotify'?'Spotify':'YouTube'));
+     link.href=url;link.target='_blank';link.rel='noopener noreferrer';player.appendChild(link);
    };
    panel.appendChild(open);panel.appendChild(player);
    var hide=create('button','velar-radio-hide','Скрыть радио на этом устройстве');
@@ -820,8 +928,16 @@
      catch(ignore){}
      renderRadio(config);
    };
-   panel.appendChild(hide);
+   if(!station){
+     panel.appendChild(hide);
+     var stationLink=create('a','velar-radio-external','Отдельный плеер · установить или поделиться');
+     stationLink.href='radio/';stationLink.target='_blank';stationLink.rel='noopener';
+     panel.appendChild(stationLink);
+   }
    host.appendChild(panel);
+   var grip=create('button','velar-radio-grip','⠿');
+   grip.type='button';grip.setAttribute('aria-label','Переместить радио · перетащите или используйте стрелки');
+   if(!station){host.appendChild(grip);radioMove(host,grip);host.appendChild(stationHelp(false));}
    radioControls={toggle:toggle,start:open,player:player,host:host};
    toggle.onclick=function(){
      var shown=panel.className.indexOf(' hidden')!==-1;
@@ -832,6 +948,7 @@
        host.className=host.className.replace(/\svelar-radio--chat-open/g,'');
      }
    };
+   if(station)toggle.onclick();
  }
  // Only call this synchronously from the visitor's explicit chat button click.
  // Respect the owner's OFF switch and local hidden state; never autoplay media.
@@ -846,10 +963,17 @@
    if(!hasEmbed(controls.player))controls.start.onclick(); // Chat command means OPEN, not toggle.
    return true;
  }
+ var stationSettings=null;
  function render(content){
    if(!window.VMM_LANDING_SCHEMA)return false;
    var value;
    try{value=window.VMM_LANDING_SCHEMA.normalize(content);}catch(e){return false;}
+   if(byId('station-page')){
+     var config=value.releases.radio,signature=JSON.stringify(config);
+     if(signature!==stationSettings){renderRadio(config);stationSettings=signature;}
+     byId('station-status').textContent=config.enabled?'':'Радио сейчас выключено владельцем.';
+     return true;
+   }
    if(imagePolicy()&&imagePolicy().configure)imagePolicy().configure(value.hero.imageLoadingLevel);
    assign('public-hero-subtitle',value.hero.subtitle);
    assign('public-hero-intro',value.hero.intro);
@@ -883,6 +1007,7 @@
    return true;
  }
  function start(){
+   var help=byId("standalone-help");if(help)help.appendChild(stationHelp(true));
    if(!window.VMM_LANDING_SCHEMA)return;
    var fresh=false;
    // Public-only IndexedDB snapshot restores every published section and the
