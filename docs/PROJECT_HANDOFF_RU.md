@@ -408,3 +408,6 @@ CI (run ID и результат):
 
 
 - RUN-149: PR #108 https://github.com/velardream-ctrl/velar-music-manager/pull/108. Первый CI #43848492700 FAIL из-за устаревших assertions RUN-147; обновлены под модальное окно. Повторный CI #43848603742 SUCCESS. PR #108 MERGED в main squash SHA `bb243070f189d4382c7e78e556e1b2451c2024fc`. На старом iPad открывается YouTube iframe в модальном окне с затемнением без новой вкладки, кнопка закрытия/фон/Esc. Версии CSS v63, JS v36, SW v70. Приёмка на физическом старом iPad остаётся обязательной.
+
+
+- RUN-150: PR #109 https://github.com/velardream-ctrl/velar-music-manager/pull/109 **MERGED** в main, squash SHA `1d63cae3a48d4c7cad88b190454b543edabea857`. CI #43850000380 SUCCESS (после исправления тестов); последующий коммит журнала не менял код. На современных устройствах две разные функции: inline «Смотреть клип» и модальное «Развернуть видео»; старый iPad использует модальное окно по основной кнопке. Окончательная проверка YouTube на физическом iPad не проведена.
