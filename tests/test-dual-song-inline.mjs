@@ -31,7 +31,7 @@ for(let i=1;i<28;i++)tracks.push({
  url:'https://open.spotify.com/track/'+String(i).padStart(22,'0')
 });
 const mediaFrame=host=>{
- const first=host.children[0];
+ const first=host.children.find(x=>x.tagName==='iframe'||x.className==='spotify-embed-viewport');
  return first&&first.tagName==='iframe'?first:first&&first.children[0];
 };
 const list=node(),app=window.VELAR_PUBLIC_SONGS.mount(list,tracks,{prefix:'topic',batch:12});
@@ -49,11 +49,13 @@ assert.equal(controls(first).children[0].textContent,'♫',
 assert.equal(controls(first).children[1].textContent,'▶',
  'Secondary YouTube control is a compact icon on SAME row');
 assert.equal(slot(first).children.length,0,'Nothing loads before visitor click');
+assert.equal(controls(first).parentNode,first.children[0],'Provider buttons stay inside song heading');
 assert.equal(typeof window.VELAR_PUBLIC_SONGS.mount,'function');
 first.children[0].children[1].onclick();
 assert.equal(stops,1);
 assert.equal(mediaFrame(slot(first)).tagName,'iframe');
-assert.equal(slot(first).children[0].className,'spotify-embed-viewport',
+assert.equal(slot(first).children[0].tagName,'a','External link appears before provider iframe');
+assert.equal(slot(first).children[1].className,'spotify-embed-viewport',
  'Spotify iframe must sit inside a cropped viewport rather than expose pale corners');
 assert.equal(mediaFrame(slot(first)).src,'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
 assert.equal(first.children[0].children[1].attributes['aria-pressed'],'true');
