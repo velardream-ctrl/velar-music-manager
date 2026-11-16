@@ -134,14 +134,14 @@ assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0,'Repeat 
 assert.equal(musicBtn.attributes['aria-pressed'],'false');
 musicBtn.onclick();
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1,'Third release click reopens it');
-const radio=map['velar-radio'];assert.equal(radio.className,'velar-radio');
-assert.equal(radio.children.length,4);
+const radio=map['velar-radio'];assert.equal(radio.className,'velar-radio velar-radio--minimized');
+assert.equal(radio.children.length,5);
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0);
 radio.children[0].onclick();
-const help=radio.children[3];
+const help=radio.children[4];
 assert.equal(help.tagName,'details');
 assert.match(help.children[0].attributes['aria-label'],/установить/);
-const radioPanel=radio.children[1];
+const radioPanel=radio.children[2];
 const startRadio=radioPanel.children[2];
 startRadio.onclick();
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,1);
@@ -241,8 +241,39 @@ observer({exists:true,data:()=>({status:'published',schemaVersion:1,content:sche
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0);
 assert.match(radio.children[0].children.at(-1).textContent,/В эфире · (Первая|Вторая)/);
 radio.children[0].onclick();
-radio.children[1].children[2].onclick();
+radio.children[2].children[2].onclick();
 assert.match(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src,/^https:\/\/www.youtube-nocookie.com\/embed\/[A-Za-z]{11}\?start=\d+/);
+
+// RUN-156: a native broadcast stream starts from the compact control and
+// stays attached when collapsed and when unrelated page content changes.
+const streamUrl='https://radio.example.com/listen/velar/stream.mp3';
+const noStream={...d.releases.radio,enabled:true,url:'',sources:[],tracks:[]};
+assert.equal(api.radioConfig({...noStream,streamUrl}).streamUrl,streamUrl);
+assert.throws(()=>api.radioConfig({...noStream,streamUrl:'http://radio.example.com/radio.mp3'}),/HTTPS/);
+assert.throws(()=>api.radioConfig({...noStream,streamUrl:'https://radio.example.com/stream?token=secret'}),/HTTPS/);
+const broadcast={...page,releases:{...page.releases,radio:{...noStream,streamUrl}}};
+observer({exists:true,data:()=>({status:'published',schemaVersion:1,content:broadcast})});
+assert.equal(radio.className,'velar-radio velar-radio--minimized');
+assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0);
+const compactListen=radio.children[1];
+assert.equal(compactListen.className,'velar-radio-mini-listen');
+compactListen.onclick();
+const streamPanel=radio.children[2],streamPlayer=streamPanel.children[3];
+const streamAudio=streamPlayer.children[0];
+assert.equal(streamAudio.tagName,'audio');
+assert.equal(streamAudio.src,streamUrl);
+assert.equal(streamAudio.controls,true);
+streamAudio.onplay();
+radio.children[0].onclick(); // expand
+radio.children[0].onclick(); // collapse without unloading native audio
+assert.equal(streamPlayer.children[0],streamAudio);
+assert.equal(compactListen.textContent,'❚❚ Пауза');
+const broadcastOtherCopy={...broadcast,hero:{...broadcast.hero,intro:'Новый текст'}};
+observer({exists:true,data:()=>({status:'published',schemaVersion:1,content:broadcastOtherCopy})});
+assert.equal(radio.children[2].children[3].children[0],streamAudio,'Unchanged radio config must preserve native stream');
+assert.match(css,/velar-radio-mini-listen/);
+assert.match(admin,/velarRadioControl/);
+assert.match(admin,/httpsCallable/);
 
 // The installable page reads the same station, ignores the homepage collapse
 // preference, and keeps playback intact on unrelated published-page updates.
@@ -269,7 +300,7 @@ assert.doesNotMatch(JSON.stringify(collected),/example.com|private/);
 const catalogPage={...page,releases:{...page.releases,radio:{...scheduled.releases.radio,sources:checked,catalog:collected}}};
 window.VMM_PUBLIC_LANDING.render(catalogPage);
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0);
-const catalogPanel=radio.children[1],choice=catalogPanel.children.find(c=>c.tagName==='select');
+const catalogPanel=radio.children[2],choice=catalogPanel.children.find(c=>c.tagName==='select');
 const listen=catalogPanel.children.find(c=>c.className==='velar-radio-start');
 listen.onclick();
 const videoURL=new URL(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src);
