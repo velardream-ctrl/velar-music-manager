@@ -927,6 +927,34 @@
    note.textContent='Отключение скрывает плавающее радио. Раздел обычных плейлистов и подписок остаётся доступным. Автозапуска музыки нет.';
    parent.appendChild(note);
    field(parent,'Название радио',radio.title||'VELAR RADIO',function(v){radio.title=v;});
+   heading(parent,'Серверная трансляция 24/7',
+    'Один общий эфир для всех слушателей. Studio запускает сервер, а не музыку на вашем телефоне. Используйте фонограммы с правом интернет-вещания.');
+   field(parent,'Прямая HTTPS-ссылка на аудиопоток (без токена)',radio.streamUrl||'',function(v){radio.streamUrl=v.trim();});
+   var broadcastStatus=document.createElement('p');broadcastStatus.className='sync-note';
+   broadcastStatus.setAttribute('role','status');
+   broadcastStatus.textContent='Сервер вещания должен быть подключён отдельно. До его настройки трансляция не запускается.';
+   parent.appendChild(broadcastStatus);
+   function broadcastCommand(action){
+     broadcastStatus.textContent='Проверяем сервер эфира…';
+     authorized().then(function(){
+       if(!firebase.functions||typeof firebase.functions!=='function')
+         throw new Error('Модуль управления эфиром не загружен.');
+       return firebase.functions().httpsCallable('velarRadioControl')({action:action});
+     }).then(function(result){
+       var state=result&&result.data||{};
+       if(state.frontendRunning===true&&state.backendRunning===true)
+         broadcastStatus.textContent='Сервер сообщил: эфирные службы запущены. Проверьте фактический звук.';
+       else if(state.frontendRunning===false||state.backendRunning===false)
+         broadcastStatus.textContent='Сервер сообщил: одна или обе эфирные службы остановлены.';
+       else broadcastStatus.textContent='Команда принята, но сервер не подтвердил звучание. Проверьте поток.';
+     }).catch(function(err){broadcastStatus.textContent='Трансляция не запущена: '+safeStatus(err);});
+   }
+   parent.appendChild(button('Проверить состояние эфира',function(){broadcastCommand('status');}));
+   parent.appendChild(button('▶ Начать трансляцию',function(){broadcastCommand('start');},'landing-add'));
+   parent.appendChild(button('■ Остановить трансляцию',function(){broadcastCommand('stop');}));
+   var broadcastNote=document.createElement('p');broadcastNote.className='sync-note';
+   broadcastNote.textContent='Кнопки доступны после подключения AzuraCast и защищённой серверной функции. YouTube, Spotify и Apple Music остаются отдельными режимами встроенного плеера. Ссылка на поток не запускает сервер сама по себе.';
+   parent.appendChild(broadcastNote);
    heading(parent,'Эфир из каталога сайта','Отметь площадки. При публикации Studio собирает ссылки из каталога и видимых разделов сайта. Этот режим имеет приоритет перед плейлистом и расписанием.');
    var choices=radio.sources||(radio.sources=[]);
    ['youtube','spotify','appleMusic'].forEach(function(p){
