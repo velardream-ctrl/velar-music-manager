@@ -402,3 +402,6 @@ CI (run ID и результат):
 
 
 - RUN-147: первый CI #43846401893 **FAIL** (`navigator is not defined` в Node test sandbox), исправлено защитой `typeof navigator!=='undefined'`; повторный CI #43846522155 **SUCCESS**. PR #106 https://github.com/velardream-ctrl/velar-music-manager/pull/106 **MERGED** в `main` squash SHA `599f2b682ec40c7aa00885784c2ccb9c55cdd14d`. Старый iPad (без CSS aspect-ratio): вместо обрезанного YouTube iframe — крупная центральная ссылка на официальный YouTube watch, современные браузеры без изменений. Реальный iPad и GitHub Pages CDN пока не проверены.
+
+
+- RUN-148: PR #107 https://github.com/velardream-ctrl/velar-music-manager/pull/107 — GitHub Actions #43847270853 **SUCCESS**, squash **MERGED** SHA `7c11a164ca01212ed5fa1709f5859b3ac2d3a78e`. Большая кнопка на обложке удалена; прозрачная ссылка на весь кадр открывает YouTube на старом iPad, обычная кнопка под карточкой сохранена. Современный inline-плеер не менялся. Реальный iPad и Pages CDN требуют проверки.
