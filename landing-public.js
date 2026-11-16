@@ -876,9 +876,11 @@
      host.className='velar-radio hidden';return;
    }
    var station=byId('station-page');
-   host.className='velar-radio';
+   // RUN-162: start collapsed as a real floating logo, no playback until user chooses.
+   host.className=station?'velar-radio':'velar-radio velar-radio--bubble';
    var toggle=create('button','velar-radio-toggle','');
    toggle.type='button';toggle.setAttribute('aria-expanded','false');
+   toggle.setAttribute('aria-label',station?'Свернуть VELAR RADIO':'Развернуть VELAR RADIO');
    toggle.setAttribute('aria-controls','velar-radio-panel');
    var dot=create('span','velar-radio-dot');dot.setAttribute('aria-hidden','true');
    toggle.appendChild(dot);toggle.appendChild(create('span','',config.title));
