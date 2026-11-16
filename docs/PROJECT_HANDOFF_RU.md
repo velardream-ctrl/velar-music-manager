@@ -384,3 +384,10 @@ CI (run ID и результат):
 
 
 - RUN-142 ЗАВЕРШЕНО В GITHUB: GitHub Actions `Verify safe VELAR shell` run `43836325231` — SUCCESS; PR #101 https://github.com/velardream-ctrl/velar-music-manager/pull/101 squash-MERGED в `main`, SHA `89c4a1f68e114c5ea5d165bddfa81fbf1c379eeb`. Публикация Pages и визуальная проверка эффекта на iPhone/iPad отдельно не подтверждены. JS плееров и загрузки изображений не изменён.
+
+
+### RUN-143 — 16.11.2026 — УТВЕРЖДЁННЫЙ «МУЗЫКАЛЬНЫЙ РЕЗОНАНС»: MERGED
+- Владелец предварительно посмотрел отдельный HTML-прототип и прямо разрешил публикацию. Реализация для карточек плейлистов: `playlist-resonance.js` (ES5, пассивная прокрутка + requestAnimationFrame, reduced-motion), CSS-орбиты, ноты, кристалл из `assets/velardream-symbol.svg`, световая волна. Подключается и к статической карточке, и к динамическим карточкам опубликованных плейлистов. Кнопки воспроизведения, ссылки и данные не изменены.
+- Обновление ресурсов: `style.css?v=57`, `landing-public.js?v=33`, `playlist-resonance.js?v=1`, публичный SW `v64`. Регрессионные тесты синхронизированы с версиями, добавлены проверки лёгкости анимации, reduced-motion, подключения и динамического оформления.
+- Финальный GitHub Actions `Verify safe VELAR shell` #43838950133: **SUCCESS**, PR head `9d49f63b17bb48fc4415cc5dbad0bbe0d36b0704`. PR #102 https://github.com/velardream-ctrl/velar-music-manager/pull/102 **squash-MERGED** в main, SHA `87467d0d1668b4aaca0d0b13e2c9b7d3dd940455`.
+- Публикация GitHub Pages и визуальная приёмка на реальном iPhone/старом iPad пока отдельно не подтверждены. Проверить, что в разделе «Плейлисты и подписки» круги заменены нотами/кристаллом, а при прокрутке орбиты двигаются без нагрузки и плейлисты открываются как раньше.
