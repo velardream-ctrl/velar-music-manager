@@ -10,6 +10,10 @@
  function clear(n){while(n&&n.firstChild)n.removeChild(n.firstChild);}
  function entries(){return data&&Array.isArray(data.entries)?
    data.entries.filter(function(t){return t.visible===true;}):[];}
+ function pulse(){var section=byId('topics'),core=section&&section.querySelector('.topics-cosmos-core');
+   if(!core)return;core.classList.remove('crystal-selection-pulse');void core.offsetWidth;
+   core.classList.add('crystal-selection-pulse');
+ }
  function select(slug,requestedUrl){
    var selected=null,list=entries(),area=byId('public-topic-detail');
    list.forEach(function(t){if(t.slug===slug)selected=t;});
@@ -59,14 +63,14 @@
      chip.style.top=(50+36*Math.sin(angle)).toFixed(2)+'%';
      chip.appendChild(el('span','topic-planet-name',t.label));
      chip.appendChild(el('small','',t.tracks.length?String(t.tracks.length)+' песен':'скоро'));
-     chip.onclick=function(){select(t.slug);};
+     chip.onclick=function(){select(t.slug);pulse();};
      orbit.appendChild(chip);buttons.push({element:chip,slug:t.slug});
    });
    available.forEach(function(t){
      var chip=el('button','topic-tag',t.label);
      chip.type='button';chip.setAttribute('aria-pressed','false');
      chip.setAttribute('aria-label','Подборка: '+t.label);
-     chip.onclick=function(){select(t.slug);};
+     chip.onclick=function(){select(t.slug);pulse();};
      cloud.appendChild(chip);buttons.push({element:chip,slug:t.slug});
    });
    select(active);
