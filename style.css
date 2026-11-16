@@ -2031,3 +2031,9 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 /* RUN-152: keep close and official fallback reachable on short viewports. */
 .velar-video-overlay{overflow:auto}
 .velar-video-dialog{max-height:100%;overflow:auto}
+
+/* RUN-153: official YouTube API controls outside iOS 12 iframe. */
+.velar-video-api-play{display:block;margin:12px auto 2px;padding:12px 24px;
+ border:1px solid #e9c789;border-radius:9px;background:#233c62;color:#fff;
+ font-size:17px;font-weight:700;cursor:pointer}
+.velar-video-api-play:focus{outline:3px solid #fff;outline-offset:3px}

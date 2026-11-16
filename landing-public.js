@@ -373,6 +373,23 @@
    frame.setAttribute('allowfullscreen','');
    frame.setAttribute('webkitallowfullscreen','');
    frame.setAttribute('playsinline','');
+   // RUN-153: iOS 12's YouTube iframe UI is offset inside its own frame.
+   // Use the official IFrame API for an accessible play control outside it.
+   var apiPlayer=null;
+   var apiPlay=null;
+   if(legacyIpadVideo()&&id){
+     apiPlay=create('button','velar-video-api-play','▶ Воспроизвести');
+     apiPlay.type='button';
+     apiPlay.setAttribute('aria-label','Воспроизвести видео '+title);
+     apiPlay.onclick=function(){
+       if(apiPlayer&&typeof apiPlayer.playVideo==='function'){
+         apiPlayer.playVideo();
+       }else{
+         // The API may be blocked on old iOS; keep a working direct fallback.
+         fallback.style.display='block';
+       }
+     };
+   }
    var fallback=create('a','velar-video-fallback','Если видео не запускается — смотреть на YouTube');
    fallback.href=id?'https://www.youtube.com/watch?v='+id[1]:media;
    fallback.target='_blank';fallback.rel='noopener noreferrer';
@@ -401,6 +418,7 @@
        window.removeEventListener('orientationchange',sizeLegacyVideo);
      }
      dismissVideoModal=null;
+     if(apiPlayer&&typeof apiPlayer.destroy==='function')try{apiPlayer.destroy();}catch(err){}
      if(overlay.parentNode)overlay.parentNode.removeChild(overlay);
      document.removeEventListener('keydown',onKey);
      if(previousFocus&&previousFocus.focus)previousFocus.focus();
@@ -409,11 +427,38 @@
    close.onclick=dismiss;
    overlay.onclick=function(e){if(e.target===overlay)dismiss();};
    viewport.appendChild(frame);
+   if(apiPlay)panel.appendChild(apiPlay);
    panel.appendChild(close);panel.appendChild(viewport);
    panel.appendChild(fallback);overlay.appendChild(panel);
    document.body.appendChild(overlay);
    sizeLegacyVideo();
+   if(apiPlay){
+     frameUrl+=(frameUrl.indexOf('?')>=0?'&':'?')+'enablejsapi=1&origin='+encodeURIComponent((window.location&&window.location.origin)||'https://velardream.com');
+   }
    frame.src=frameUrl;
+   if(apiPlay){
+     // Attach to the existing iframe, not a replacement element: preserve geometry.
+     var attachApi=function(){
+       if(!overlay.parentNode||!window.YT||typeof window.YT.Player!=='function')return;
+       try{apiPlayer=new window.YT.Player(frame,{events:{onStateChange:function(e){
+         if(e.data===1)apiPlay.style.display='none';
+       }}});}catch(err){fallback.style.display='block';}
+     };
+     if(window.YT&&typeof window.YT.Player==='function')attachApi();
+     else{
+       var prevReady=window.onYouTubeIframeAPIReady;
+       window.onYouTubeIframeAPIReady=function(){
+         if(typeof prevReady==='function')prevReady();
+         attachApi();
+       };
+       if(typeof document.createElement==='function'&&!document.getElementById('velar-youtube-iframe-api')){
+         var apiScript=document.createElement('script');
+         apiScript.id='velar-youtube-iframe-api';
+         apiScript.src='https://www.youtube.com/iframe_api';
+         document.head.appendChild(apiScript);
+       }
+     }
+   }
    if(legacy){
      window.addEventListener('resize',sizeLegacyVideo);
      window.addEventListener('orientationchange',sizeLegacyVideo);
