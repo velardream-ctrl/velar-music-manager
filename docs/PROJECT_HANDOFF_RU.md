@@ -405,3 +405,6 @@ CI (run ID и результат):
 
 
 - RUN-148: PR #107 https://github.com/velardream-ctrl/velar-music-manager/pull/107 — GitHub Actions #43847270853 **SUCCESS**, squash **MERGED** SHA `7c11a164ca01212ed5fa1709f5859b3ac2d3a78e`. Большая кнопка на обложке удалена; прозрачная ссылка на весь кадр открывает YouTube на старом iPad, обычная кнопка под карточкой сохранена. Современный inline-плеер не менялся. Реальный iPad и Pages CDN требуют проверки.
+
+
+- RUN-149: PR #108 https://github.com/velardream-ctrl/velar-music-manager/pull/108. Первый CI #43848492700 FAIL из-за устаревших assertions RUN-147; обновлены под модальное окно. Повторный CI #43848603742 SUCCESS. PR #108 MERGED в main squash SHA `bb243070f189d4382c7e78e556e1b2451c2024fc`. На старом iPad открывается YouTube iframe в модальном окне с затемнением без новой вкладки, кнопка закрытия/фон/Esc. Версии CSS v63, JS v36, SW v70. Приёмка на физическом старом iPad остаётся обязательной.
