@@ -97,8 +97,8 @@
      panel.appendChild(create('p','cms-music-empty','Подборка композиций появится здесь после выбора в музыкальной студии.'));
      return panel;
    }
-   if(view==='carousel'&&window.VELAR_PUBLIC_SONGS){
-     var carousel=create('div','cms-music-list');
+   if((view==='carousel'||view==='classic')&&window.VELAR_PUBLIC_SONGS){
+     var carousel=create('div','public-artist-song-list');
      panel.appendChild(carousel);
      // Retain the curator's explicit manual order for an artist's best songs.
      var curated=tracks.map(function(t){
@@ -107,7 +107,7 @@
          thirdProvider:t.thirdProvider,thirdUrl:t.thirdUrl};
      });
      window.VELAR_PUBLIC_SONGS.mount(carousel,curated,{
-       prefix:'artist',view:'carousel',batch:30,keepOrder:true
+       prefix:'artist',view:view==='carousel'?'carousel':'rows',batch:30,keepOrder:true
      });
      return panel;
    }
@@ -286,7 +286,7 @@
      if(stories){
        var row=create('div','cms-artist-story'+(index%2?' cms-artist-story--reverse':''));
        row.appendChild(card);
-       row.appendChild(musicPanel(item,songMode==='carousel'?'carousel':featuredView,albums));
+       row.appendChild(musicPanel(item,songMode==='carousel'?'carousel':'classic',albums));
        target.appendChild(row);
      }else target.appendChild(card);
    });
@@ -651,7 +651,7 @@
    if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.configure)
      window.VELAR_PUBLIC_SONGS.configure(
        value.albums.trackView,value.albums.entries,value.genres.songViewMode,value.releases.cards,value.hero.coverSourcePriority);
-   cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums,value.genres.songViewMode);
+   cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums,value.artists.songViewMode||value.genres.songViewMode);
    if(window.VELAR_ALBUMS&&window.VELAR_ALBUMS.render)window.VELAR_ALBUMS.render(value.albums);
    releaseGallery(value.releases);
    playlistGallery(value.releases);

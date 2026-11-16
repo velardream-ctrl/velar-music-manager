@@ -157,7 +157,7 @@
       artists:{
         heading:'У каждого голоса — своя история',
         intro:'Отдельные профили артистов с собственным оформлением, записями, клипами и ссылками на музыкальные площадки.',
-        cards:[],featuredView:'classic'
+        cards:[],featuredView:'classic',songViewMode:'standard'
       },
       albums:{
         heading:'Альбомы VELARDREAM',
@@ -868,7 +868,10 @@
       about:section(about,'О проекте',d.about)
     };
     result.artists.cards=cards(artists,'Артисты');
-    var featuredView=artists.featuredView||d.artists.featuredView;
+    var artistSongMode=typeof artists.songViewMode==='undefined'?(typeof genres.songViewMode==='undefined'?'standard':genres.songViewMode):artists.songViewMode;
+     if(artistSongMode!=='standard'&&artistSongMode!=='carousel')throw new Error('Песни артистов: выбери список или карусель.');
+     result.artists.songViewMode=artistSongMode;
+     var featuredView=artists.featuredView||d.artists.featuredView;
     if(['classic','covers','tiles'].indexOf(featuredView)<0)
       throw new Error('Лучшие песни: неверный вариант отображения.');
     result.artists.featuredView=featuredView;

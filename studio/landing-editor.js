@@ -2319,9 +2319,9 @@
      coverNotice.textContent='Обложка, загруженная вручную, имеет высший приоритет. При отказе источника используется второй, затем значок ♫. Сохрани черновик и опубликуй, чтобы изменить настройки для посетителей.';
      loadPanel.appendChild(coverNotice);panel.appendChild(loadPanel);
      updateLoadLabel();
-     heading(panel,'Оформление песен во всех разделах',
-       'Одна настройка для списков песен артистов, альбомов, языков и тем. Старые варианты оформления сохраняются, пока выбран обычный режим.');
-     selectField(panel,'Вид песен на сайте',
+     heading(panel,'Оформление каталога песен',
+       'Отдельная настройка для языков, тем и альбомов. Песни артистов настраиваются независимо.');
+     selectField(panel,'Вид каталога песен',
        [['standard','Обычный показ (сохранить оформление разделов)'],
         ['carousel','Карусель с обложками: свайп на телефоне, стрелки на компьютере']],
        data.genres.songViewMode||'standard',function(v){data.genres.songViewMode=v;});
@@ -2362,12 +2362,12 @@
        selectField(panel,'Вид лучших песен',
          [['classic','Обычные строки (как сейчас)'],['covers','Строки с маленькими обложками'],['tiles','Квадратные карточки']],
          data.artists.featuredView||'classic',function(v){data.artists.featuredView=v;});
-       heading(panel,'Общий вид песен на сайте',
-         'Один и тот же выбор действует для артистов, альбомов, языков и тем. Обычный список не удаляется при включении карусели.');
+       heading(panel,'Отображение песен артистов',
+         'Настройка действует только для лучших песен артистов. Каталог языков и тем управляется отдельно.');
        selectField(panel,'Вид песен на сайте',
          [['standard','Обычный список песен'],
           ['carousel','Карусель с обложками']],
-         data.genres.songViewMode||'standard',function(v){data.genres.songViewMode=v;});
+         data.artists.songViewMode||'standard',function(v){data.artists.songViewMode=v;});
      }
      cardFields(panel,tab);
    }else if(tab==='albums'){

@@ -30,6 +30,9 @@ const document={createElement:node};
 vm.runInNewContext(schema,{window,Array,String,Object,JSON,Number,Error},{timeout:1000});
 const API=window.VMM_LANDING_SCHEMA,defaults=API.defaults();
 assert.equal(API.normalize(defaults).genres.songViewMode,'standard');
+assert.equal(API.normalize(defaults).artists.songViewMode,'standard');
+assert.equal(API.normalize({...defaults,artists:{...defaults.artists,songViewMode:'carousel'}}).artists.songViewMode,'carousel');
+assert.throws(()=>API.normalize({...defaults,artists:{...defaults.artists,songViewMode:'bad'}}),/Песни артистов/);
 assert.equal(API.normalize({...defaults,genres:{...defaults.genres,songViewMode:'carousel'}})
  .genres.songViewMode,'carousel');
 assert.equal(API.normalize({...defaults,genres:{...defaults.genres,songViewMode:undefined}})
@@ -51,6 +54,8 @@ assert.equal(old.children.length,3,'Standard songs stay regular rows');
 assert.ok(!old.className.includes('carousel'));
 original.close();
 engine.configure('rows',[],'carousel');
+const artistRows=node();engine.mount(artistRows,[songs[1]],{prefix:'artist',view:'rows'});
+assert.ok(!artistRows.className.includes('carousel'),'Artist rows ignore catalog carousel');
 const list=node();
 const carousel=engine.mount(list,songs,{prefix:'topic',batch:2});
 assert.match(list.className,/public-song-carousel/);
@@ -94,7 +99,7 @@ engine.configure('rows',[],'carousel',[
  {visible:true,title:'Альфа',mediaProvider:'spotify',mediaUrl:spotify,
   imageUrl:'https://example.com/approved-single-cover.jpg'}
 ]);
-const released=node();engine.mount(released,[songs[1]],{prefix:'artist'});
+const released=node();engine.mount(released,[songs[1]],{prefix:'artist',view:'carousel'});
 const releasedThumb=released.children[1].children[0].children[0].children[1].children[0];
 assert.equal(releasedThumb.src,'https://i.scdn.co/image/abc123123',
  'Spotify cover must override release artwork');
@@ -109,7 +114,7 @@ const onlyArtwork=youtubeOnly.children[1].children[0].children[0].children[1];
 assert.equal(onlyArtwork.children.length,1,'YouTube-only song shows a local note');
 assert.equal(onlyArtwork.children[0].textContent,'♫','Never fetch YouTube thumbnails');
 assert.equal(read('public-song-ui.js').includes('requestArtwork:requestArtwork'),true);
-assert.match(read('studio/landing-editor.js'),/Оформление песен во всех разделах/);
+assert.match(read('studio/landing-editor.js'),/Оформление каталога песен/);
 assert.match(read('landing-public.js'),/value.genres.songViewMode/);
 const css=read('style.css');
 assert.match(css,/\.public-song-carousel-track\{/);
