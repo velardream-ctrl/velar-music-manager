@@ -77,12 +77,12 @@ const row=list.children[1],title=row.children[0];
 assert.match(row.className,/public-song-entry--covers/);
 assert.equal(title.children[1].className.includes('--empty'),true,
  'YouTube-only album track uses local note, never the album or video thumbnail');
-const primary=row.children[1].children[0];
+const primary=row.children[2].children[0];
 primary.onclick();
-assert.equal(row.children[2].children[1].className,'spotify-embed-viewport');
+assert.equal(row.children[1].children[1].className,'spotify-embed-viewport');
 assert.equal(stopped,1);
 primary.onclick();
-assert.equal(row.children[2].children.length,0,'Click second time unloads Spotify embed');
+assert.equal(row.children[1].children.length,0,'Click second time unloads Spotify embed');
 toggle.onclick();
 assert.equal(card.children[2].children.length,0);
 assert.equal(toggle.attributes['aria-expanded'],'false');
