@@ -472,6 +472,15 @@
      try{player.scrollIntoView({block:'center'});}
      catch(ignore){player.scrollIntoView();}
    }
+   // Distinct optional viewing mode on modern browsers: large page-local overlay.
+   // On old iPads the main button already uses this mode, so do not duplicate it.
+   if(isVideo&&media&&!legacyIpadVideo()){
+     var expand=create('button','cms-card-link cms-release-inline-link','Развернуть видео');
+     expand.type='button';
+     expand.setAttribute('aria-label','Открыть клип в большом окне: '+item.title);
+     expand.onclick=function(){pauseOtherEmbeds();empty(player);listen.setAttribute('aria-pressed','false');showLegacyVideoModal(media,item.title);};
+     actions.appendChild(expand);
+   }
    var external=item.url||item.mediaUrl;
    if(external&&!isVideo){
      var link=create('a','cms-card-link','На музыкальной площадке');
