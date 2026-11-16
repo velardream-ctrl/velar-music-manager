@@ -114,7 +114,7 @@ const onlyArtwork=youtubeOnly.children[1].children[0].children[0].children[1];
 assert.equal(onlyArtwork.children.length,1,'YouTube-only song shows a local note');
 assert.equal(onlyArtwork.children[0].textContent,'♫','Never fetch YouTube thumbnails');
 assert.equal(read('public-song-ui.js').includes('requestArtwork:requestArtwork'),true);
-assert.match(read('studio/landing-editor.js'),/Оформление песен во всех разделах/);
+assert.match(read('studio/landing-editor.js'),/Оформление каталога песен/);
 assert.match(read('landing-public.js'),/value.genres.songViewMode/);
 const css=read('style.css');
 assert.match(css,/\.public-song-carousel-track\{/);
