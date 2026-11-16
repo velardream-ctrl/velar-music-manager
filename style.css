@@ -1854,3 +1854,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .public-song-entry:not(.public-song-entry--carousel):not(.public-song-entry--covers):not(.public-song-entry--tiles)>.public-song-label>.public-song-platforms,
  .public-artist-song-list .public-song-entry:not(.public-song-entry--carousel)>.public-song-label>.public-song-platforms{grid-column:1 / 3}
 }
+
+/* Safari 12 / older iOS: keep supported word-wrap fallback before newer overflow-wrap. */
+.public-artist-song-list .public-song-copy,.public-artist-song-list .public-song-inline .cms-card-link{word-wrap:break-word;overflow-wrap:break-word;overflow-wrap:anywhere}
+.public-artist-song-list .public-song-carousel,.public-artist-song-list .public-song-carousel-rail{max-width:100%;min-width:0;box-sizing:border-box}
