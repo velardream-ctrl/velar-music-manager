@@ -239,3 +239,9 @@
 - Новый способ восстановления истории: GitHub-уведомления в подключённом проектном Gmail показывают timestamp, repo, branch/PR, короткий commit SHA и проваленные промежуточные workflows. Сверять **с полным SHA, PR, job conclusion и Pages run в GitHub**; одно событие может породить письма `Run failed` и `PR run failed` одновременно. Временные зоны различаются.
 - Детальный безопасный протокол и первая проверенная цепочка для VMM, Sanastoyhteisö production/test: [EMAIL_BREADCRUMB_AUDIT_RU.md](EMAIL_BREADCRUMB_AUDIT_RU.md). Не копировать из Gmail личные URL с параметрами `email_token`, ID писем, коды подтверждения и секреты в публичный репозиторий.
 - Следующие шаги: дочитать страницы и старые даты, дополнить соответствующие журналы **каждого** сайта; не менять code/Firestore. Клиентский баг: на iPhone отсутствует эффект печати VELAR, на старом iPad другая компоновка; скриншоты ожидаются, нельзя считать RUN-082 приёмку состоявшейся на реальном устройстве.
+
+
+### Дополнение 16.11.2026 — RUN-156 / серверное VELAR RADIO
+- Источник фонограмм: частная Google Drive «VELARDREAM RECORDS - Фонограммы» — исходные мастер-файлы, но не публичный URL трансляции. Для радио нужны разрешения и процедура копирования на вещательный сервер.
+- План целевой архитектуры: GitHub Pages velardream.com (UI) → Firebase Callable Function (допуск администратора) → AzuraCast AutoDJ + Icecast (непрерывный поток) → HTML5 audio (слушатель). Не размещать ключи AzuraCast/Google Drive в JS, GitHub или Firestore. На стороне браузера нет настоящего непрерывного вещательного процесса.
+- RUN-156 DRAFT PR https://github.com/velardream-ctrl/velar-music-manager/pull/117, проектная документация radio-broadcast/README_RU.md. Это подготовка к подключению сервера, не акт его запуска. Разработка и CI продолжаются.
