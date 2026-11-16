@@ -432,7 +432,7 @@
    panel.appendChild(fallback);overlay.appendChild(panel);
    document.body.appendChild(overlay);
    sizeLegacyVideo();
-   if(apiPlay&&window.YT&&typeof window.YT.Player==='function'){
+   if(apiPlay){
      frameUrl+=(frameUrl.indexOf('?')>=0?'&':'?')+'enablejsapi=1&origin='+encodeURIComponent(window.location.origin);
    }
    frame.src=frameUrl;
