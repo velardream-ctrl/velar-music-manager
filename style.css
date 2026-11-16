@@ -2108,3 +2108,40 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .velar-radio--bubble > .velar-radio-toggle:focus-visible{
  outline:3px solid #f5d29b;outline-offset:3px}
 @media(hover:hover){.velar-radio--bubble > .velar-radio-toggle:hover{filter:brightness(1.10)}}
+
+
+/* RUN-164: approved navy/gold radio emblem. Keep the existing radio panel palette. */
+.velar-radio{
+  transition:width .30s cubic-bezier(.22,.75,.3,1);
+}
+.velar-radio--bubble>.velar-radio-toggle{
+  background:transparent url('assets/velar-radio-icon-gold.webp') center/contain no-repeat;
+  touch-action:none;
+  -webkit-user-select:none;user-select:none;
+  cursor:grab;
+  animation:velar-radio-gold-breathe 4.2s ease-in-out infinite;
+}
+.velar-radio--bubble>.velar-radio-toggle:active{cursor:grabbing}
+@keyframes velar-radio-gold-breathe{
+  0%,100%{filter:brightness(1) drop-shadow(0 0 2px #eed39a55)}
+  50%{filter:brightness(1.08) drop-shadow(0 0 7px #eed39aa0)}
+}
+.velar-radio:not(.velar-radio--bubble)>.velar-radio-panel:not(.hidden){
+  animation:velar-radio-panel-appear .27s ease-out both;
+}
+@keyframes velar-radio-panel-appear{
+  from{opacity:.12}
+  to{opacity:1}
+}
+/* A visible official iframe is never hidden merely because the logo shrinks. */
+.velar-radio--bubble.velar-radio--popup-left>.velar-radio-panel--mini{
+  left:0;right:auto;
+}
+.velar-radio--bubble.velar-radio--popup-above>.velar-radio-panel--mini{
+  top:auto;bottom:74px;
+}
+@media(prefers-reduced-motion:reduce){
+  .velar-radio{transition:none}
+  .velar-radio--bubble>.velar-radio-toggle,
+  .velar-radio:not(.velar-radio--bubble)>.velar-radio-panel:not(.hidden){animation:none}
+}
