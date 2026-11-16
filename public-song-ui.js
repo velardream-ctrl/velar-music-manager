@@ -220,10 +220,12 @@
    // Explicit repeat click toggles off; picking the other service switches players.
    // The chat deep link calls open() directly so it can always OPEN the requested song.
    function toggle(i,src,fromTitle){
-     var slot=slots[i],first=slot&&slot.firstChild,
-       playing=!!(first&&(first.tagName==='iframe'||
-         first.className==='spotify-embed-viewport'&&
-         first.firstChild&&first.firstChild.tagName==='iframe'));
+     var slot=slots[i],playing=false;
+     if(slot)for(var k=0;k<slot.children.length;k++){
+       var child=slot.children[k];
+       if(child.tagName==='iframe'||child.className==='spotify-embed-viewport'&&
+         child.firstChild&&child.firstChild.tagName==='iframe')playing=true;
+     }
      if(index===i&&playing&&(fromTitle||source===src.provider)){
        clearActive(); // Remove the iframe, not only hide it: external audio stops.
        return true;
