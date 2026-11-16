@@ -1827,3 +1827,19 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 }
 /* External player: link has its own line and cannot collide with control labels. */
 .public-song-inline .cms-card-link{display:inline-block;max-width:100%;overflow-wrap:anywhere;margin:10px 0 4px}
+
+/* RUN-137: two independently configured song surfaces; consistent branded controls. */
+.public-artist-song-list{min-width:0;max-width:100%;width:100%;overflow:hidden}
+.public-artist-song-list .public-song-entry{min-width:0;max-width:100%;box-sizing:border-box}
+.public-artist-song-list .public-song-label{box-sizing:border-box;min-width:0;max-width:100%}
+.public-artist-song-list .public-song-copy{min-width:0;overflow-wrap:anywhere}
+.public-artist-song-list .public-song-platforms{max-width:100%;box-sizing:border-box}
+.public-song-source--spotify,.public-song-source--spotify.is-primary{background:#1db954;border-color:#1db954;color:#092b18}
+.public-song-source--youtube{background:#e11928;border-color:#e11928;color:#fff}
+.public-song-source--appleMusic{background:linear-gradient(135deg,#fa6d77,#e53e78);border-color:#fa6d77;color:#fff}
+.public-song-entry--carousel .public-song-platforms{display:flex;flex-wrap:wrap;gap:6px;max-width:100%}
+.public-song-entry--carousel .public-song-platforms>.public-song-source{margin:0}
+@media(max-width:590px){
+ .public-artist-song-list .public-song-entry:not(.public-song-entry--carousel)>.public-song-label{display:grid;grid-template-columns:26px 48px minmax(0,1fr);gap:8px;align-items:center}
+ .public-artist-song-list .public-song-entry:not(.public-song-entry--carousel)>.public-song-label>.public-song-platforms{grid-column:2 / 4;grid-row:2;justify-content:flex-start;margin:0;flex-wrap:wrap}
+}
