@@ -149,7 +149,7 @@ assert.match(read('studio/landing-editor.js'),/var next=clone\(data\)/);
 assert.match(read('studio/landing-editor.js'),/var distributionContext=\{/,
  'Distribution context must be named so the callback can refresh its draft reference');
 assert.match(read('studio/landing-editor.js'),
- /published=clone\(cleanData\);publishedRev=v;busy=false;[\s\S]{0,400}if\(tab==='distribution'\)render\(\)/,
+ /published=clone\(liveData\);publishedRev=v;busy=false;[\s\S]{0,400}if\(tab==='distribution'\)render\(\)/,
  'Successful publish must redraw the distribution UI with updated published badges');
 assert.match(read('studio/landing-editor.js'),/distributionContext\.draft=data;/,
  'Successful Add must update the live context used to redraw topic badges');

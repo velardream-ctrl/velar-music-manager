@@ -362,6 +362,28 @@
     }
     return '';
   }
+  var radioProviders=['youtube','spotify','appleMusic'];
+  function radioCatalog(page,rows,selected){
+    var result={},seen={};
+    selected.forEach(function(p){result[p]=[];});
+    function add(provider,raw){
+      if(selected.indexOf(provider)<0)return;
+      var url=songUrl(raw,provider);
+      if(url&&!seen[url]){seen[url]=true;result[provider].push(url);}
+    }
+    rows.forEach(function(song){
+      var links=song.links||{};
+      selected.forEach(function(p){add(p,links[p]||(p==='appleMusic'?links.apple:''));});
+    });
+    function track(song){
+      add(song.provider,song.url);add(song.alternateProvider,song.alternateUrl);add(song.thirdProvider,song.thirdUrl);
+    }
+    [page.artists.cards,page.albums.entries,page.genres.languages.entries,page.genres.topics.entries].forEach(function(group){
+      group.forEach(function(item){if(item.visible)(item.featuredTracks||item.tracks||[]).forEach(track);});
+    });
+    page.releases.cards.forEach(function(item){if(item.visible)add(item.mediaProvider,item.mediaUrl);});
+    return result;
+  }
   function radioConfig(raw){
     var x=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
     // RUN-078: old published documents can have enabled:true, but were never
@@ -383,9 +405,18 @@
       seen[url]=true;
       return {url:url,title:plain(track.title,'Название песни радио',150,true),seconds:track.seconds};
     });
-    if(enabled&&!link&&!tracks.length)throw new Error('VELAR RADIO: сначала укажи ссылку на плейлист.');
+    var sources=radioProviders.filter(function(p){return Array.isArray(x.sources)&&x.sources.indexOf(p)>=0;});
+    var catalog={};
+    sources.forEach(function(p){
+      var urls=x.catalog&&x.catalog[p]||[],known={};
+      if(!Array.isArray(urls))throw new Error('Неверный каталог радио.');
+      catalog[p]=urls.map(function(url){return songUrl(url,p);}).filter(function(url){
+        if(!url||known[url])return false;known[url]=true;return true;
+      });
+    });
+    if(enabled&&!link&&!tracks.length&&!sources.length)throw new Error('VELAR RADIO: сначала укажи ссылку на плейлист.');
     return {enabled:enabled,controlVersion:2,title:plain(typeof x.title==='string'?x.title:'VELAR RADIO','Название радио',70,true),
-      provider:provider,url:link,tracks:tracks};
+      provider:provider,url:link,tracks:tracks,sources:sources,catalog:catalog};
   }
 
   // RUN-096: a curated collection of singles must NOT claim an official album release.
@@ -907,7 +938,7 @@
   function blankCard(){return {title:'',subtitle:'',description:'',url:'',imageUrl:'',visible:false};}
   window.VMM_LANDING_SCHEMA={defaults:defaults,normalize:normalize,blankCard:blankCard,
     songUrl:songUrl,featuredTrack:featuredTrack,featuredTracks:featuredTracks,
-    releaseMediaUrl:releaseMediaUrl,playlistUrl:playlistUrl,radioConfig:radioConfig,
+    releaseMediaUrl:releaseMediaUrl,playlistUrl:playlistUrl,radioConfig:radioConfig,radioCatalog:radioCatalog,
     albumsConfig:albumsConfig,albumEntry:albumEntry,
     subscriptionUrl:subscriptionUrl,playlistCard:playlistCard,subscriptionCard:subscriptionCard,
     universeConfig:universeConfig,languagesConfig:languagesConfig,
