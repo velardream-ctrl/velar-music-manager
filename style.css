@@ -2027,3 +2027,10 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  border:0!important;transform:none!important;margin:0!important;box-sizing:border-box}
 .velar-video-fallback{display:block;text-align:center;padding:9px 4px 0;color:#f5dcaa;font-size:13px}
 @media(max-width:740px){.velar-video-dialog{width:96vw}}
+
+/* RUN-151: our own centered play control, outside YouTube's cross-origin iframe. */
+.velar-video-center-play{position:absolute;z-index:3;top:50%;left:50%;
+ transform:translate(-50%,-50%);width:68px;height:68px;
+ border:2px solid #f5dcaa;border-radius:50%;background:rgba(10,22,40,.85);
+ color:#f5dcaa;font-size:30px;line-height:1;cursor:pointer}
+.velar-video-center-play:focus{outline:3px solid #fff;outline-offset:3px}
