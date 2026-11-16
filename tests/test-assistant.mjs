@@ -69,7 +69,7 @@ assert.ok(css.includes("max-height:min(390px,50vh)"));
 assert.ok(!code.includes("dj-velar-assistant.webp"));
 assert.match(code,/sessionStorage/);
 assert.match(sw,/'\.\/velar-assistant\.js\?v=14'/);
-assert.match(publicCode,/velar-radio-hidden/);
+assert.match(publicCode,/velar-radio--minimized/);
 assert.match(publicCode,/VELAR_ASSISTANT\.render\(value\)/);
 assert.doesNotMatch(code,/fetch\(|firebase|XMLHttpRequest|setInterval\(|WebSocket|autoplay=|\.play\(/);
 assert.match(code,/window\.setTimeout\(step,/,'typing uses one cancellable local timer');
