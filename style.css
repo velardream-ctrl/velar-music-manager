@@ -1957,3 +1957,9 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 @media(prefers-reduced-motion:reduce){
  .playlist-resonance-orbit,.playlist-resonance-crystal,.playlist-resonance-wave{transition:none!important}
 }
+
+/* RUN-144: percentage heights followed the tall mobile artwork, stretching circles into ellipses.
+   Equal width and vertical padding are both measured against the artwork WIDTH (legacy Safari safe). */
+.cms-playlist-art--resonance .playlist-resonance-orbit{height:0;padding-bottom:68%;box-sizing:content-box}
+.cms-playlist-art--resonance .playlist-resonance-orbit--two{padding-bottom:90%}
+.cms-playlist-art--resonance .playlist-resonance-orbit--three{padding-bottom:45%}
