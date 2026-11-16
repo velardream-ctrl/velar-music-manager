@@ -47,8 +47,8 @@
    return typeof countsNow[key]==='number'?countsNow[key]:null;
  }
  function pulse(){var core=crystalCore;if(!core)return;
-   core.classList.remove('crystal-selection-pulse');void core.offsetWidth;
-   core.classList.add('crystal-selection-pulse');
+   core.className=core.className.replace(/ crystal-selection-pulse/g,'');void core.offsetWidth;
+   core.className+=' crystal-selection-pulse';
  }
  function choose(id){
    var nodes=visibleNodes(),item=null;
