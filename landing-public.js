@@ -433,7 +433,7 @@
    document.body.appendChild(overlay);
    sizeLegacyVideo();
    if(apiPlay){
-     frameUrl+=(frameUrl.indexOf('?')>=0?'&':'?')+'enablejsapi=1&origin='+encodeURIComponent(window.location.origin);
+     frameUrl+=(frameUrl.indexOf('?')>=0?'&':'?')+'enablejsapi=1&origin='+encodeURIComponent((window.location&&window.location.origin)||'https://velardream.com');
    }
    frame.src=frameUrl;
    if(apiPlay){
