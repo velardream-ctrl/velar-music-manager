@@ -108,3 +108,16 @@ assert.ok(studioCss.includes('#panel-landing input.landing-language-catalog-sear
   'Catalog search CSS must not be scoped only to languages');
 assert.ok(studioCss.includes('-webkit-appearance:none;appearance:none;box-sizing:border-box;'),
   'iOS Safari must not draw a native black pill');
+
+
+// RUN-143: approved playlist resonance is decorative, scroll-driven and offline-safe.
+const resonance = read('playlist-resonance.js');
+assert.match(homepage, /playlist-resonance\.js\?v=1/);
+assert.match(sw, /playlist-resonance\.js\?v=1/);
+assert.match(resonance, /prefers-reduced-motion: reduce/);
+assert.match(resonance, /requestAnimationFrame/);
+assert.match(resonance, /addEventListener\('scroll',schedule,\{passive:true\}\)/);
+assert.match(resonance, /data-resonance-ready/);
+assert.ok(!/setInterval|WebGL|fetch\(/.test(resonance), 'Playlist artwork must stay lightweight');
+assert.match(read('landing-public.js'), /VELAR_PLAYLIST_RESONANCE\.decorate\(decoration\)/);
+assert.match(css, /playlist-resonance-crystal/);
