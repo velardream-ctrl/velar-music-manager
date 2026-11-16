@@ -33,7 +33,7 @@ const sw = read('sw.js');
 assert.match(sw, /CACHE_PREFIX/);
 assert.match(sw, /isPublicAsset/);
 assert.match(sw, /velardream-crystal\.png/);
-assert.match(sw, /CACHE_PREFIX \+ 'v70'/);
+assert.match(sw, /CACHE_PREFIX \+ 'v71'/);
 const css = read('style.css');
 assert.ok(homepage.includes('class="brand-emblem brand-emblem-header"'), 'Header emblem missing');
 assert.ok(homepage.includes('class="brand-emblem brand-emblem-footer"'), 'Footer emblem missing');
@@ -44,9 +44,9 @@ assert.ok(!css.includes('.mini-mark{'), 'Old diamond CSS present');
 assert.match(css, /\.art-wrap\{max-width:315px;width:100%;margin:-8px auto 12px;/);
 assert.match(css, /\.art-wrap\{max-width:215px;margin:-5px auto 12px/);
 assert.ok(!css.includes('margin:-12px auto -30px') && !css.includes('margin:-12px auto -32px'), 'Logo must not overlap title');
-assert.match(homepage, /href="style\.css\?v=63"/);
+assert.match(homepage, /href="style\.css\?v=64"/);
 assert.match(sw, /url\.pathname\.slice\(-10\) === '\/style\.css'/);
-assert.match(sw, /'\.\/style\.css\?v=63'/);
+assert.match(sw, /'\.\/style\.css\?v=64'/);
 assert.match(homepage, /max-width:215px!important;margin:-5px auto 12px!important/);
 assert.ok(!sw.includes('cache.put(req, response)'), 'Never cache unfiltered responses');
 assert.match(read('firestore.rules'), /allow read, write: if false;/);
@@ -148,3 +148,8 @@ assert.ok(!read('landing-public.js').includes("create('a','cms-release-legacy-pl
 // RUN-149: old iPad opens a page-local modal rather than external tab.
 assert.ok(read('landing-public.js').includes("overlay.setAttribute('aria-modal','true')"));
 assert.ok(css.includes('.velar-video-dialog-frame'));
+
+// RUN-150: single video action; YouTube modal uses an isolated 16:9 viewport.
+assert.ok(!read('landing-public.js').includes("'Открыть видео здесь'"));
+assert.ok(read('landing-public.js').includes('https://www.youtube.com/embed/'));
+assert.ok(css.includes('.velar-video-viewport'));
