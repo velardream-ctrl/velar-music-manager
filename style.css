@@ -2062,3 +2062,12 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .velar-radio>.station-help{order:1}
 .velar-radio>.velar-radio-panel{order:2;flex-shrink:0}
 #station-page .velar-radio{max-height:none;overflow:visible}
+
+/* RUN-157: miniature VISIBLY rendered official player; never display:none. */
+.velar-radio-panel--mini{display:block;padding:9px;max-height:285px;overflow-y:auto;border-radius:0 0 13px 13px}
+.velar-radio-panel--mini > :not(.velar-radio-player){display:none}
+.velar-radio-panel--mini .velar-radio-player{display:block;margin:0;min-width:200px}
+.velar-radio-panel--mini .velar-radio-iframe{height:235px;min-height:200px}
+.velar-radio-panel--mini .velar-radio-iframe--video{height:215px;min-height:200px;aspect-ratio:auto}
+.velar-radio-panel--mini .velar-radio-player > .velar-radio-external,
+.velar-radio-panel--mini .velar-radio-player > .velar-radio-hide{display:none}
