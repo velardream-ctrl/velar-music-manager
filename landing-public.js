@@ -875,31 +875,21 @@
    if(!config.enabled||(!sources.length&&!tracks.length&&!window.VMM_LANDING_SCHEMA.playlistUrl(config.url,config.provider))){
      host.className='velar-radio hidden';return;
    }
-   var radioHidden=false;
-   try{radioHidden=!!(window.localStorage&&window.localStorage.getItem('velar-radio-hidden')==='1');}
-   catch(ignore){}
-   var station=byId("station-page");
-   if(radioHidden&&!station){
-     host.className='velar-radio velar-radio--minimized';
-     var restore=create('button','velar-radio-restore','VELAR RADIO · показать');
-     restore.type='button';
-     restore.onclick=function(){
-       try{if(window.localStorage)window.localStorage.removeItem('velar-radio-hidden');}
-       catch(ignore){}
-       renderRadio(config);
-     };
-     host.appendChild(restore);
-     radioControls={restore:restore,host:host};
-     return;
-   }
-   host.className='velar-radio';
+var station=byId("station-page");
+   // Start with a compact radio on the homepage; expanding it is opt-in.
+   host.className=station?'velar-radio':'velar-radio velar-radio--minimized';
    var toggle=create('button','velar-radio-toggle','');
    toggle.type='button';toggle.setAttribute('aria-expanded','false');
    toggle.setAttribute('aria-controls','velar-radio-panel');
    var dot=create('span','velar-radio-dot');dot.setAttribute('aria-hidden','true');
    toggle.appendChild(dot);toggle.appendChild(create('span','',config.title));
    var icon=create('span','velar-radio-chevron');icon.setAttribute('aria-hidden','true');toggle.appendChild(icon);
-   host.appendChild(toggle);
+host.appendChild(toggle);
+   var miniListen=null;
+   if(!station){
+     miniListen=create('button','velar-radio-mini-listen',config.streamUrl?'▶ Слушать':'▶ Открыть');
+     miniListen.type='button';host.appendChild(miniListen);
+   }
    var cover=create('img','velar-radio-cover');cover.alt='';
    if(tracks.length){
      toggle.insertBefore(cover,toggle.firstChild);
@@ -914,15 +904,21 @@
    }
    var panel=create('div','velar-radio-panel hidden');panel.id='velar-radio-panel';
    panel.appendChild(create('strong','',config.title+' · музыкальный плейлист'));
-   panel.appendChild(create('p','velar-radio-note','Воспроизведение только по вашему выбору, через официальный плеер '+(config.provider==='spotify'?'Spotify':'YouTube')+'.'));
+panel.appendChild(create('p','velar-radio-note',config.streamUrl?
+     'Единый поток VELAR RADIO. Нажмите «Слушать», чтобы подключиться к уже идущему эфиру.':
+     'Воспроизведение только по вашему выбору, через официальный плеер '+(config.provider==='spotify'?'Spotify':'YouTube')+'.'));
    var player=create('div','velar-radio-player');
    var open=create('button','velar-radio-start','Открыть плейлист');
-   if(tracks.length){
+if(config.streamUrl){
+     panel.children[0].textContent=config.title+' · общий аудиоэфир';
+     open.textContent='▶ Слушать эфир';
+   }
+   if(tracks.length&&!config.streamUrl){
      panel.children[0].textContent=config.title+' · эфир YouTube';
      panel.children[1].textContent='Открой плеер и нажми ▶, чтобы присоединиться к эфиру.';
      open.textContent='Открыть эфир';
    }
-   if(sources.length){
+if(sources.length&&!config.streamUrl){
      panel.children[0].textContent=config.title+' · каталог Velar Dream';
      panel.children[1].textContent=available.length?'Выберите площадку и откройте плеер. YouTube воспроизводит перемешанную очередь клипов.':'Для выбранных площадок пока нет опубликованных ссылок.';
      open.textContent='Открыть плеер';open.disabled=!available.length;
@@ -979,13 +975,13 @@
      link.href=url;link.target='_blank';link.rel='noopener noreferrer';player.appendChild(link);
    };
    panel.appendChild(open);panel.appendChild(player);
-   var hide=create('button','velar-radio-hide','Скрыть радио на этом устройстве');
+var hide=create('button','velar-radio-hide',config.streamUrl?'Свернуть радио (звук продолжится)':'Скрыть радио на этом устройстве');
    hide.type='button';
-   hide.onclick=function(){
-     empty(player);open.setAttribute('aria-pressed','false');
-     try{if(window.localStorage)window.localStorage.setItem('velar-radio-hidden','1');}
-     catch(ignore){}
-     renderRadio(config);
+hide.onclick=function(){
+     if(!config.streamUrl){empty(player);open.setAttribute('aria-pressed','false');}
+     panel.className='velar-radio-panel hidden';
+     host.className='velar-radio velar-radio--minimized';
+     toggle.setAttribute('aria-expanded','false');
    };
    if(!station){
      panel.appendChild(hide);
@@ -997,15 +993,23 @@
    var grip=create('button','velar-radio-grip','⠿');
    grip.type='button';grip.setAttribute('aria-label','Переместить радио · перетащите или используйте стрелки');
    if(!station){host.appendChild(grip);radioMove(host,grip);host.appendChild(stationHelp(false));}
-   radioControls={toggle:toggle,start:open,player:player,host:host};
+radioControls={toggle:toggle,start:open,player:player,host:host};
    toggle.onclick=function(){
      var shown=panel.className.indexOf(' hidden')!==-1;
      panel.className=shown?'velar-radio-panel':'velar-radio-panel hidden';
      toggle.setAttribute('aria-expanded',shown?'true':'false');
-     if(!shown){
-       empty(player);open.setAttribute('aria-pressed','false'); // stop the iframe.
+     if(shown)host.className=host.className.replace(/\svelar-radio--minimized/g,'');
+     else{
        host.className=host.className.replace(/\svelar-radio--chat-open/g,'');
+       if(host.className.indexOf('velar-radio--minimized')===-1)host.className+=' velar-radio--minimized';
+       // Native audio keeps playing while collapsed; embedded videos cannot
+       // provide true background broadcast and therefore stop on collapse.
+       if(!config.streamUrl){empty(player);open.setAttribute('aria-pressed','false');}
      }
+   };
+   if(miniListen)miniListen.onclick=function(){
+     if(config.streamUrl)open.onclick();
+     else if(toggle.getAttribute('aria-expanded')!=='true')toggle.onclick();
    };
    if(station)toggle.onclick();
  }
@@ -1022,7 +1026,7 @@
    if(!hasEmbed(controls.player))controls.start.onclick(); // Chat command means OPEN, not toggle.
    return true;
  }
- var stationSettings=null;
+var stationSettings=null,homepageRadioSettings=null;
  function render(content){
    if(!window.VMM_LANDING_SCHEMA)return false;
    var value;
@@ -1055,7 +1059,8 @@
    if(window.VELAR_ALBUMS&&window.VELAR_ALBUMS.render)window.VELAR_ALBUMS.render(value.albums);
    releaseGallery(value.releases);
    playlistGallery(value.releases);
-   renderRadio(value.releases.radio);
+var radioSignature=JSON.stringify(value.releases.radio);
+   if(radioSignature!==homepageRadioSettings){renderRadio(value.releases.radio);homepageRadioSettings=radioSignature;}
    if(window.VELAR_UNIVERSE&&window.VELAR_UNIVERSE.render)window.VELAR_UNIVERSE.render(value);
    if(window.VELAR_LANGUAGES&&window.VELAR_LANGUAGES.render)
      window.VELAR_LANGUAGES.render(value.genres.languages);
