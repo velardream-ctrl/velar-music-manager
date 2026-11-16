@@ -98,7 +98,7 @@
      return panel;
    }
    if((view==='carousel'||view==='classic')&&window.VELAR_PUBLIC_SONGS){
-     var carousel=create('div','cms-music-list');
+     var carousel=create('div','public-artist-song-list');
      panel.appendChild(carousel);
      // Retain the curator's explicit manual order for an artist's best songs.
      var curated=tracks.map(function(t){
