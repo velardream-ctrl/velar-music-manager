@@ -123,7 +123,7 @@
    if(!opts.keepOrder)tracks.sort(function(a,b){return compareSong(a.track,b.track)||a.index-b.index;});
    tracks=tracks.map(function(row){return row.track;});
    var classes=opts.prefix==='language'?'language':opts.prefix==='album'?'album':'topic';
-   var view=globalMode==='carousel'?'carousel':(opts.view||defaultView);
+   var view=opts.prefix==='artist'?(opts.view||'rows'):(globalMode==='carousel'?'carousel':(opts.view||defaultView));
    if(['rows','covers','tiles','carousel'].indexOf(view)<0)view='rows';
    if(view==='tiles')list.className+=' public-song-list--tiles';
    var isCarousel=view==='carousel';
