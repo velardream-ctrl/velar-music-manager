@@ -782,12 +782,16 @@
    function fit(){
      if(!anchor)return;
      var rect=host.getBoundingClientRect();
-     var right=clamp(anchor.right,Math.max(0,window.innerWidth-rect.width));
+     // Use the FINAL CSS width rather than a mid-animation width, especially
+     // on iOS 12 where ResizeObserver cannot help after transition.
+     var width=host.className.indexOf('velar-radio--bubble')!==-1?
+       68:Math.min(365,Math.max(0,window.innerWidth-24));
+     var right=clamp(anchor.right,Math.max(0,window.innerWidth-width));
      var top=clamp(anchor.top,Math.max(0,window.innerHeight-rect.height));
      host.style.right=right+'px';host.style.left='auto';host.style.top=top+'px';
      if(host.className.indexOf('velar-radio--bubble')!==-1){
        host.className=host.className.replace(/\svelar-radio--popup-left|\svelar-radio--popup-above/g,'');
-       if(window.innerWidth-right-rect.width<window.innerWidth/2)host.className+=' velar-radio--popup-left';
+       if(window.innerWidth-right-width<window.innerWidth/2)host.className+=' velar-radio--popup-left';
        if(window.innerHeight-top-rect.height<288)host.className+=' velar-radio--popup-above';
      }
    }
