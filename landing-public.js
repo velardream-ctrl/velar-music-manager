@@ -451,7 +451,7 @@
          if(typeof prevReady==='function')prevReady();
          attachApi();
        };
-       if(!document.getElementById('velar-youtube-iframe-api')){
+       if(typeof document.createElement==='function'&&!document.getElementById('velar-youtube-iframe-api')){
          var apiScript=document.createElement('script');
          apiScript.id='velar-youtube-iframe-api';
          apiScript.src='https://www.youtube.com/iframe_api';
