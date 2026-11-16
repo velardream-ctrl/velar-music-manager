@@ -875,23 +875,7 @@
    if(!config.enabled||(!sources.length&&!tracks.length&&!window.VMM_LANDING_SCHEMA.playlistUrl(config.url,config.provider))){
      host.className='velar-radio hidden';return;
    }
-   var radioHidden=false;
-   try{radioHidden=!!(window.localStorage&&window.localStorage.getItem('velar-radio-hidden')==='1');}
-   catch(ignore){}
-   var station=byId("station-page");
-   if(radioHidden&&!station){
-     host.className='velar-radio velar-radio--minimized';
-     var restore=create('button','velar-radio-restore','VELAR RADIO · показать');
-     restore.type='button';
-     restore.onclick=function(){
-       try{if(window.localStorage)window.localStorage.removeItem('velar-radio-hidden');}
-       catch(ignore){}
-       renderRadio(config);
-     };
-     host.appendChild(restore);
-     radioControls={restore:restore,host:host};
-     return;
-   }
+   var station=byId('station-page');
    host.className='velar-radio';
    var toggle=create('button','velar-radio-toggle','');
    toggle.type='button';toggle.setAttribute('aria-expanded','false');
@@ -979,13 +963,11 @@
      link.href=url;link.target='_blank';link.rel='noopener noreferrer';player.appendChild(link);
    };
    panel.appendChild(open);panel.appendChild(player);
-   var hide=create('button','velar-radio-hide','Скрыть радио на этом устройстве');
+   var hide=create('button','velar-radio-hide','Свернуть радио (сохранить плеер)');
    hide.type='button';
    hide.onclick=function(){
-     empty(player);open.setAttribute('aria-pressed','false');
-     try{if(window.localStorage)window.localStorage.setItem('velar-radio-hidden','1');}
-     catch(ignore){}
-     renderRadio(config);
+     // Collapse visually but preserve the actual official iframe and its state.
+     if(toggle.getAttribute('aria-expanded')==='true')toggle.onclick();
    };
    if(!station){
      panel.appendChild(hide);
@@ -999,13 +981,13 @@
    if(!station){host.appendChild(grip);radioMove(host,grip);host.appendChild(stationHelp(false));}
    radioControls={toggle:toggle,start:open,player:player,host:host};
    toggle.onclick=function(){
-     var shown=panel.className.indexOf(' hidden')!==-1;
-     panel.className=shown?'velar-radio-panel':'velar-radio-panel hidden';
-     toggle.setAttribute('aria-expanded',shown?'true':'false');
-     if(!shown){
-       empty(player);open.setAttribute('aria-pressed','false'); // stop the iframe.
-       host.className=host.className.replace(/\svelar-radio--chat-open/g,'');
-     }
+     var expanding=toggle.getAttribute('aria-expanded')!=='true';
+     // Keep started embeds both mounted AND visibly rendered in the compact
+     // panel: display:none is unsafe for media and YouTube requires a visible player.
+     panel.className=expanding?'velar-radio-panel':
+       (hasEmbed(player)?'velar-radio-panel velar-radio-panel--mini':'velar-radio-panel hidden');
+     toggle.setAttribute('aria-expanded',expanding?'true':'false');
+     if(!expanding)host.className=host.className.replace(/\svelar-radio--chat-open/g,'');
    };
    if(station)toggle.onclick();
  }
@@ -1022,7 +1004,7 @@
    if(!hasEmbed(controls.player))controls.start.onclick(); // Chat command means OPEN, not toggle.
    return true;
  }
- var stationSettings=null;
+ var stationSettings=null,landingRadioSettings=null;
  function render(content){
    if(!window.VMM_LANDING_SCHEMA)return false;
    var value;
@@ -1055,7 +1037,11 @@
    if(window.VELAR_ALBUMS&&window.VELAR_ALBUMS.render)window.VELAR_ALBUMS.render(value.albums);
    releaseGallery(value.releases);
    playlistGallery(value.releases);
-   renderRadio(value.releases.radio);
+   // A new snapshot of another section must never restart an active radio iframe.
+   var radioSignature=JSON.stringify(value.releases.radio);
+   if(radioSignature!==landingRadioSettings){
+     renderRadio(value.releases.radio);landingRadioSettings=radioSignature;
+   }
    if(window.VELAR_UNIVERSE&&window.VELAR_UNIVERSE.render)window.VELAR_UNIVERSE.render(value);
    if(window.VELAR_LANGUAGES&&window.VELAR_LANGUAGES.render)
      window.VELAR_LANGUAGES.render(value.genres.languages);

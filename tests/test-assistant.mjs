@@ -69,7 +69,8 @@ assert.ok(css.includes("max-height:min(390px,50vh)"));
 assert.ok(!code.includes("dj-velar-assistant.webp"));
 assert.match(code,/sessionStorage/);
 assert.match(sw,/'\.\/velar-assistant\.js\?v=14'/);
-assert.match(publicCode,/velar-radio-hidden/);
+assert.match(publicCode,/velar-radio-panel--mini/);
+assert.doesNotMatch(publicCode,/localStorage\.setItem\('velar-radio-hidden'/);
 assert.match(publicCode,/VELAR_ASSISTANT\.render\(value\)/);
 assert.doesNotMatch(code,/fetch\(|firebase|XMLHttpRequest|setInterval\(|WebSocket|autoplay=|\.play\(/);
 assert.match(code,/window\.setTimeout\(step,/,'typing uses one cancellable local timer');
@@ -93,8 +94,8 @@ assert.match(css,/\.velar-assistant-suggestion\{min-height:28px;padding:2px 7px/
 assert.match(css,/\.velar-assistant-privacy\{padding:1px 7px 3px/);
 assert.match(css,/\.velar-assistant-header-note\{display:none\}/);
 assert.match(css,/\.velar-assistant-input\{height:36px;padding:6px 8px;font-size:16px\}/);
-assert.match(sw,/CACHE_PREFIX \+ 'v77'/);
-assert.match(html,/style\.css\?v=68/);
+assert.match(sw,/CACHE_PREFIX \+ 'v78'/);
+assert.match(html,/style\.css\?v=69/);
 assert.ok(code.includes("querySelector('.velar-assistant-launch')"));
 
 const customLabels={...settings,labels:{...settings.labels,
