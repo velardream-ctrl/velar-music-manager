@@ -2,7 +2,7 @@
    ES5 / Safari12, no WebGL, no timed orbit, no extra Firestore or media. */
 (function(){
  'use strict';
- var stage=null,details=null,opened=false,buttons=[],beams=[],data=null;
+ var stage=null,details=null,opened=false,buttons=[],beams=[],data=null,crystalCore=null;
  var selected='',initialized=false,orbitStep=0;
  var allowed={artists:'#artists',releases:'#releases',playlists:'#playlists',
    genres:'#genres',languages:'#languages',topics:'#topics',about:'#about',radio:'#playlists'};
@@ -46,7 +46,7 @@
    var countsNow=counts(data),key=n.id==='videos'?'videos':n.target;
    return typeof countsNow[key]==='number'?countsNow[key]:null;
  }
- function pulse(){var core=stage&&stage.querySelector('.universe-core');if(!core)return;
+ function pulse(){var core=crystalCore;if(!core)return;
    core.classList.remove('crystal-selection-pulse');void core.offsetWidth;
    core.classList.add('crystal-selection-pulse');
  }
@@ -91,7 +91,7 @@
      stage.appendChild(svg);
    }
    // Official standalone logo symbol only. No planet, wave or drawn substitute.
-   var center=el('button','universe-core');center.type='button';
+   var center=el('button','universe-core');center.type='button';crystalCore=center;
    center.setAttribute('aria-label','Кристалл VELARDREAM — выбрать первое созвездие');
    center.onclick=function(){var list=visibleNodes();if(list.length)choose(list[0].id);};
    center.appendChild(el('span','universe-core-light'));
