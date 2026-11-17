@@ -84,7 +84,7 @@ assert.match(editor,/Музыкальные анекдоты/);
 assert.match(editor,/Редактировать анекдоты/);
 assert.match(editor,/Сохрани и опубликуй/);
 assert.match(read('index.html'),/landing-schema\.js\?v=31/);
-assert.match(read('index.html'),/velar-assistant\.js\?v=14/);
+assert.match(read('index.html'),/velar-assistant\.js\?v=15/);
 assert.match(read('studio/index.html'),/landing-editor\.js\?v=46/);
 assert.match(read('sw.js'),/CACHE_PREFIX \+ 'v96'/);
 assert.match(read('sw.js'),/STUDIO_PREFIX\+'v58'/);
