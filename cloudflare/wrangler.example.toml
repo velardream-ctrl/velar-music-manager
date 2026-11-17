@@ -1,0 +1,50 @@
+# RUN-198 — EXAMPLE ONLY. Do not deploy unchanged.
+# Copy to a private deployment directory as wrangler.toml after verifying
+# the existing Cloudflare Worker settings and safeguarding the owner token.
+name = "dj-velar-private-lab"
+main = "dj-velar-owner-lab.js"
+compatibility_date = "2026-11-17"
+workers_dev = true
+
+[vars]
+PUBLIC_AI_ENABLED = "false"
+# Strict UTC-day cap of AI model attempts, not tokens or fees.
+PUBLIC_AI_DAILY_LIMIT = "100"
+
+[ai]
+binding = "AI"
+
+# The namespace IDs must be chosen uniquely in the owner's Cloudflare account.
+# These example IDs are NOT verified for that account.
+[[ratelimits]]
+name = "PUBLIC_RATE_LIMITER"
+namespace_id = "19801"
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
+[[ratelimits]]
+name = "PUBLIC_GLOBAL_RATE_LIMITER"
+namespace_id = "19802"
+  [ratelimits.simple]
+  limit = 30
+  period = 60
+
+# Add only after validating DNS, zone/account ownership and the existing Worker:
+# [[routes]]
+# pattern = "ai.velardream.com"
+# custom_domain = true
+
+# Keep VELAR_OWNER_TEST_TOKEN as a Cloudflare Secret; NEVER in this file.
+# The global limiter is approximate/per-location, NOT a strict daily cap.
+
+# One singleton SQLite-backed Durable Object holds the authoritative daily count.
+[[durable_objects.bindings]]
+name = "PUBLIC_AI_BUDGET"
+class_name = "VelarAiBudget"
+
+[[migrations]]
+tag = "run198-ai-budget-v1"
+new_sqlite_classes = ["VelarAiBudget"]
+
+# Deploy only after confirming billing, CPU, daily quotas and protection.

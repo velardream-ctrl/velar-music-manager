@@ -43,7 +43,7 @@ assert.doesNotMatch(c,/collection\(['"]vmm_catalog['"]\)/);
 assert.doesNotMatch(c,/collection\(['"]vmm_landing_drafts['"]\)/);
 assert.match(c,/collection\('vmm_public_pages'\)/);
 assert.match(read('studio/index.html'),/ai-public-catalog\.js\?v=1/);
-assert.match(read('studio/index.html'),/ai-lab\.js\?v=4/);
+assert.match(read('studio/index.html'),/ai-lab\.js\?v=5/);
 assert.match(read('sw.js'),/catalog194/);
 assert.doesNotMatch(read('index.html'),/ai-public-catalog/);
 console.log('PASS RUN-194 published-only catalog recommendations, verified links, no private reads');
