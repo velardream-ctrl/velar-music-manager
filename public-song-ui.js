@@ -266,7 +266,8 @@
      var host=slots[i],frame=el('iframe','cms-release-iframe '+classes+'-song-iframe'+
        (src.provider==='youtube'?' cms-release-iframe--video':''));
      frame.title=tracks[i].title+' — официальный плеер '+platformName(src.provider);
-     frame.src=link;frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
+     frame.src=link;frame.loading='lazy';
+     if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.record('player_open',{title:tracks[i].title,artist:tracks[i].artist||'',provider:src.provider,section:classes||'collections'});frame.referrerPolicy='strict-origin-when-cross-origin';
      frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
      frame.setAttribute('allowfullscreen','');
      var external=el('a','cms-card-link','Открыть в '+platformName(src.provider));
