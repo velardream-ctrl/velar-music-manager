@@ -2372,3 +2372,25 @@ html.legacy-ipad-crystal .crystal-journey-stage{
    position:relative;top:auto;height:100vh;min-height:700px;
  }
 }
+
+
+/* RUN-176: legacy iPad Safari 12 may ignore sticky inside the isolated
+   artwork. JS switches only this stage between ordinary, fixed and
+   bottom-anchored positions. Leave iPhone/new iPad/desktop untouched. */
+html.legacy-ipad-crystal .crystal-journey-stage{
+ position:relative;top:auto;left:auto;bottom:auto;
+ height:100vh;min-height:0;width:100%;
+}
+html.legacy-ipad-crystal .crystal-journey-stage.legacy-crystal-pinned{
+ position:fixed;top:0;left:0;right:0;bottom:auto;
+ height:100vh;min-height:0;width:100%;z-index:5;
+}
+html.legacy-ipad-crystal .crystal-journey-stage.legacy-crystal-ended{
+ position:absolute;top:auto;left:0;right:0;bottom:0;
+ height:100vh;min-height:0;width:100%;
+}
+@media(prefers-reduced-motion:reduce){
+ html.legacy-ipad-crystal .crystal-journey-stage.legacy-crystal-pinned{
+  position:relative;top:auto;left:auto;right:auto;
+ }
+}
