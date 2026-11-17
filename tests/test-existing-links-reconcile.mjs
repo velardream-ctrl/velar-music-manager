@@ -22,7 +22,7 @@ const page=api.defaults();page.artists.cards=[{
 }];
 page.genres.topics.entries[0].tracks=[{title:'Звёзды',artist:'Velar',provider:'youtube',url:youtube}];
 page.genres.languages.entries[0].tracks=[{title:'Звёзды',artist:'Velar',provider:'spotify',url:spotify}];
-page.albums.entries=[{id:'test-album',title:'Тест',visible:true,tracks:[
+page.albums.entries=[{id:'test-album',title:'Тест',artist:'Velar',visible:true,tracks:[
  {title:'Звёзды',artist:'Velar',provider:'spotify',url:spotify}]}];
 const original=JSON.stringify(page);
 const result=reconcile.audit(page,catalog,api);
