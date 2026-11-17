@@ -2609,6 +2609,18 @@
        item.textContent=k+': '+stats.bySection[k].newLinks+' новых значков';
        box.appendChild(item);
      });
+     if(stats.examples.length){
+       var examples=document.createElement('div');examples.className='landing-link-audit-examples';
+       var subtitle=document.createElement('p');subtitle.className='sync-note';
+       subtitle.textContent='Примеры добавлений (первые '+stats.examples.length+'):';
+       examples.appendChild(subtitle);
+       stats.examples.forEach(function(row){
+         var item=document.createElement('p');item.className='sync-note';
+         item.textContent=row.section+' — '+row.title+' → '+row.added;
+         examples.appendChild(item);
+       });
+       box.appendChild(examples);
+     }
      var buttonApply=button('Перенести точные совпадения в черновик',function(){
        if(!linksAudit||!linksAudit.summary.addedLinks)return;
        try{
