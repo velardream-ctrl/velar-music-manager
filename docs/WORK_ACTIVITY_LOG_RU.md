@@ -1945,3 +1945,11 @@
 
 - **Дополнение по снимкам iPhone/iPad:** на iPhone первый экран завершается у нижней границы дисплея, тогда как старый iPad показывает дугу следующей сцены сразу под кнопкой «Листайте дальше». Для старого iPad добавлен `legacyIpadFirstScreen()`: высота hero = `window.innerHeight - высота header` (пересчёт при повороте/изменении размера), так что следующая сцена начинается после первого экрана. iPhone/desktop не получают этого расчёта.
 - **CI:** первая проверка PR #133 завершилась ошибкой из-за устаревшего ожидания комментария RUN-174 в тесте после замены legacy-функции; утверждение обновлено, добавлена проверка высоты первого экрана. Повторный CI должен подтвердить результат до объединения.
+
+
+### 2026-11-17 — RUN-177 — ЦЕНТРИРОВАНИЕ '?' В СПРАВКЕ VELAR RADIO НА СТАРОМ IPAD
+- **НАЧАЛ:** владелец прислал фото старого iPad: знак вопроса в круглом значке справки VELAR RADIO смещён к верхнему краю. Просьба продолжить точечную правку.
+- **ИСТОЧНИК:** `landing-public.js` создаёт `<summary class="station-help-button">?</summary>`; основной CSS `.station-help-button` применяет `display:grid;place-items:center`. На Safari 12 `place-items` работает ненадёжно.
+- **ИСПРАВЛЕНИЕ:** только для `html.legacy-ipad-crystal .velar-radio > .station-help > .station-help-button` установлен `display:-webkit-flex;display:flex` + `align-items:center;justify-content:center`, сброшены padding/text-indent/appearance. Скрыт встроенный `::-webkit-details-marker`. Размер 40×40, положение круга и открытие справки не меняются.
+- **ПРОВЕРКА:** дополнен `tests/test-radio-visual.mjs` для реального summary и iPad-scoped CSS. Должны быть подтверждены CI и визуально на старом iPad. Не трогать iPhone, desktop, радио-iframe, плейлисты, Firestore и Studio.
+- **КЭШ:** версия CSS сохранена; общедоступный service worker уже использует network-first для stylesheet при подключении к сети.
