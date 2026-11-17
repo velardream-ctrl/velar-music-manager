@@ -502,7 +502,7 @@
    }
    // A fixed non-secret endpoint. Until DNS route and Cloudflare public
    // protection are deliberately enabled, any failure falls back locally.
-   var endpoint='https://ai.velardream.com/v1/public-chat';
+   var endpoint='https://dj-velar-private-lab.velardream.workers.dev/v1/public-chat';
    var controller=typeof AbortController==='function'?new AbortController():null;
    var abortTimer=null;
    function remote(){
