@@ -482,8 +482,48 @@
      return;
    }
    var result=answer(t,published,config);
-   itemMessage('assistant',result.text,(result.actions&&result.actions.length)||result.action?result:null,reactionChoice(t,result.text),true);
    if(input)input.value='';
+   // RUN-196: owner's rules, actual music commands and verified site links
+   // always win. Only unrecognized questions may be sent to public AI.
+   var unresolved=result.text===replyText(config,'fallbackEnabled')||
+     result.text===replyText(config,'fallbackDisabled');
+   var router=window.VELAR_AI_FALLBACK;
+   function show(out,source,reason){
+     itemMessage('assistant',out.text,
+       (out.actions&&out.actions.length)||out.action?out:null,
+       reactionChoice(t,out.text),true);
+     if(log&&log.lastChild&&log.lastChild.setAttribute)
+       log.lastChild.setAttribute('data-response-source',source||'local');
+     if(source==='local'&&reason&&root)root.setAttribute('data-ai-fallback',reason);
+     else if(root)root.removeAttribute('data-ai-fallback');
+   }
+   if(!unresolved||!router||typeof window.fetch!=='function'){
+     show(result,'local','');return;
+   }
+   // A fixed non-secret endpoint. Until DNS route and Cloudflare public
+   // protection are deliberately enabled, any failure falls back locally.
+   var endpoint='https://ai.velardream.com/v1/public-chat';
+   var controller=typeof AbortController==='function'?new AbortController():null;
+   var abortTimer=null;
+   function remote(){
+     if(controller)abortTimer=setTimeout(function(){controller.abort();},15000);
+     return window.fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',
+       headers:{'Content-Type':'application/json'},
+       body:JSON.stringify({message:t,language:/[а-яё]/i.test(t)?'ru':'en'}),
+       signal:controller?controller.signal:undefined
+     }).then(function(response){
+       return response.json().then(function(body){
+         if(!response.ok)throw {code:body&&body.error||'http_'+response.status};
+         return body;
+       });
+     }).then(function(body){if(abortTimer)clearTimeout(abortTimer);return body;},
+       function(err){if(abortTimer)clearTimeout(abortTimer);throw err;});
+   }
+   router.offer(function(){return result;},remote,{enabled:true,timeoutMs:15500})
+     .then(function(out){
+       if(out.source!=='ai'&&controller)controller.abort();
+       show(out.answer,out.source,out.reason);
+     }).catch(function(){if(controller)controller.abort();show(result,'local','unexpected');});
  }
  function paint(){
    if(initialized)return;
@@ -542,6 +582,9 @@
    dialog.appendChild(form);
    dialog.appendChild(el('p','velar-assistant-privacy',
      'Не сохраняем и не отправляем автору'));
+   // Transparent notice: unknown questions may be processed by Cloudflare AI.
+   dialog.appendChild(el('p','velar-assistant-ai-notice',
+     'Неизвестные вопросы могут передаваться Cloudflare AI для ответа.'));
    root.appendChild(dialog);
    if(window.addEventListener)window.addEventListener('scroll',updateBrowsingState,false);
    function toggle(open){
