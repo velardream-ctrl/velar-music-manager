@@ -120,8 +120,10 @@
      if(document.hidden)return;
      var r=chapter.getBoundingClientRect();
      if(r.bottom<0||r.top>window.innerHeight)return;
-     var total=window.innerHeight+(chapter.offsetHeight||r.bottom-r.top);
-     var p=clamp((window.innerHeight-r.top)/Math.max(1,total));
+     // RUN-175: progress spans the pinned part of the chapter, reaching
+     // phase 3 before sticky releases; no idle animations or observer needed.
+     var duration=Math.max(1,chapter.offsetHeight-window.innerHeight);
+     var p=clamp(-r.top/duration);
      // RUN-174: clearly perceptible but lightweight scroll feedback on Safari 12.
      // This branch is only called for pre-iPadOS-14 iPads.
      image.style.transform='translate(-50%,-50%) scale('+(0.90+.27*p).toFixed(3)+')';
