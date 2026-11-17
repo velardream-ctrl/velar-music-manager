@@ -178,4 +178,10 @@ assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-crystal\{[^}]*widt
  'Legacy crystal must have an explicit non-clamp width');
 assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-ring--outer\{[^}]*width:72vw;height:72vw;/,
  'Legacy ring must have normal CSS values without CSS min()');
+// RUN-174: the final device-specific overrides must restore viewport geometry
+// without leaking onto desktop or newer iPads.
+assert.match(css,/html\.ios-scroll-stable\.has-living-art \.crystal-journey\{\s*height:200vh;/);
+assert.match(css,/html\.ios-scroll-stable\.has-living-art \.crystal-journey-stage\{\s*position:-webkit-sticky;position:sticky;top:0;\s*height:100vh;/);
+assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-stage\{\s*height:100vh;min-height:700px;/);
+assert.match(art,/RUN-174: clearly perceptible but lightweight scroll feedback/);
 console.log('PASS: RUN-071/171/173 iPhone and modern iPad untouched; Safari12 iPad receives the missing crystal, rings and throttled scroll motion');

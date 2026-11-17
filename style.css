@@ -2324,3 +2324,30 @@ html.legacy-ipad-crystal .crystal-journey-ring--inner::after{
 html.legacy-ipad-crystal .crystal-journey-beam{
  top:34%;width:40vw;max-width:420px;
 }
+
+
+/* RUN-174: independently restore the full-viewport crystal story on iPhone.
+   RUN-171's visible body overflow and fixed-control compositor safeguards stay.
+   This is scoped to the JS-assigned iPhone class, never iPad or desktop. */
+@media(max-width:1100px){
+ html.ios-scroll-stable.has-living-art .crystal-journey{
+   height:200vh;min-height:0;padding:0;
+ }
+ html.ios-scroll-stable.has-living-art .crystal-journey-stage{
+   position:-webkit-sticky;position:sticky;top:0;
+   height:100vh;min-height:0;max-width:none;
+ }
+}
+/* RUN-174: pre-iPadOS-14 iPads get a full-screen canvas. Plain vh/px
+   properties work in Safari 12; keep their low-cost JS scroll motion. */
+html.legacy-ipad-crystal .crystal-journey{
+ padding:0;min-height:0;
+}
+html.legacy-ipad-crystal .crystal-journey-stage{
+ height:100vh;min-height:700px;max-width:none;
+}
+@media(max-width:850px){
+ html.legacy-ipad-crystal .crystal-journey-stage{
+   height:100vh;min-height:700px;
+ }
+}
