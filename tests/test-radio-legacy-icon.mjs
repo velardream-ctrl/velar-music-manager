@@ -11,8 +11,9 @@ assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a','Real PNG must
 assert.equal(png.readUInt32BE(16),112,'Approved PNG logo should retain width');
 assert.equal(png.readUInt32BE(20),112,'Approved PNG logo should retain height');
 assert.ok(png.includes(Buffer.from('tRNS')),'Transparent PNG is necessary for circular logo');
-const back=css.match(/\.velar-radio--bubble\s*>\s*\.velar-radio-toggle\s*\{[^}]*background:[^}]*\}/g)||[];
-assert.ok(back.length>=2,'Both the legacy and final bubble CSS rules must load the logo');
+const back=(css.match(/\.velar-radio--bubble\s*>\s*\.velar-radio-toggle\s*\{[^}]*\}/g)||[])
+ .filter(rule=>/background\s*:[^;]*url\(/.test(rule));
+assert.equal(back.length,2,'Both image-backed bubble CSS declarations must load the logo');
 for(const rule of back){
  assert.ok(rule.includes(filename),'All bubble background declarations must use PNG');
  assert.ok(!rule.includes('.webp'),'Old Safari must never be left with an unsupported WebP source');
