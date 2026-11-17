@@ -2532,7 +2532,7 @@
        'Вид песен после выбора '+(entry[0]==='languages'?'языка':entry[0]==='topics'?'темы':'жанра')+'.');
      var selected=data.genres.displayModes[entry[0]]||
        (data.genres.songViewMode==='carousel'?'carousel':data.albums.trackView||'rows');
-     selectField(block,'Вид списка',choices,selected,function(v){
+     selectField(block,'Показ: '+entry[1],choices,selected,function(v){
        data.genres.displayModes[entry[0]]=v;
      });
      headingBlock.appendChild(block);
