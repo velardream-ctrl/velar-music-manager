@@ -103,37 +103,58 @@
      if(visibleWatcher)visibleWatcher.unobserve(target);
    }
  }
- // RUN-173: low-cost scroll feedback for old iPads without sticky layout.
- // If rAF is unavailable the fixed-size crystal/rings remain visible.
+ // RUN-176: Safari 12 old iPad uses a scroll-synchronized fixed stage
+ // because CSS sticky can fail even when transforms and rAF work.
+ // The chapter keeps its 200vh placeholder; the art does not leave the
+ // viewport until all three narrative phases have been displayed.
  function legacyIpadMotion(){
+   var stage=chapter.querySelector('.crystal-journey-stage');
    var image=chapter.querySelector('.crystal-journey-crystal');
    var outerRing=chapter.querySelector('.crystal-journey-ring--outer');
    var innerRing=chapter.querySelector('.crystal-journey-ring--inner');
-   if(!image||!outerRing||!innerRing||!window.requestAnimationFrame)return;
-   var reduced=false;
+   var captions=chapter.querySelectorAll('.crystal-journey-stanza');
+   if(!stage||!image||!outerRing||!innerRing||!captions||captions.length!==3)return;
+   var reduced=false,saveData=false;
    try{reduced=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);}
    catch(ignore){}
-   if(reduced||(window.navigator&&window.navigator.connection&&window.navigator.connection.saveData))return;
-   var queued=false;
+   saveData=!!(window.navigator&&window.navigator.connection&&window.navigator.connection.saveData);
+   if(reduced||saveData)return; // Static full-screen scene; never pin without motion.
+   if(!window.requestAnimationFrame)return;
+   var queued=false,lastPhase=-1;
    function draw(){
      queued=false;
      if(document.hidden)return;
-     var r=chapter.getBoundingClientRect();
-     if(r.bottom<0||r.top>window.innerHeight)return;
-     // RUN-175: progress spans the pinned part of the chapter, reaching
-     // phase 3 before sticky releases; no idle animations or observer needed.
-     var duration=Math.max(1,chapter.offsetHeight-window.innerHeight);
+     var r=chapter.getBoundingClientRect(),viewport=window.innerHeight;
+     var duration=Math.max(1,chapter.offsetHeight-viewport);
+     // Before chapter: ordinary flow. In chapter: fixed to viewport.
+     // After chapter: settle at bottom, without layout jumps.
+     if(r.top>0){
+       stage.className=stage.className.replace(/ legacy-crystal-pinned| legacy-crystal-ended/g,'');
+     }else if(r.bottom>viewport){
+       if(stage.className.indexOf('legacy-crystal-pinned')===-1)
+         stage.className=stage.className.replace(/ legacy-crystal-ended/g,'')+' legacy-crystal-pinned';
+     }else{
+       if(stage.className.indexOf('legacy-crystal-ended')===-1)
+         stage.className=stage.className.replace(/ legacy-crystal-pinned/g,'')+' legacy-crystal-ended';
+     }
+     if(r.bottom<0||r.top>viewport)return;
      var p=clamp(-r.top/duration);
-     // RUN-174: clearly perceptible but lightweight scroll feedback on Safari 12.
-     // This branch is only called for pre-iPadOS-14 iPads.
      image.style.transform='translate(-50%,-50%) scale('+(0.90+.27*p).toFixed(3)+')';
      outerRing.style.transform='translate(-50%,-50%) rotate('+Math.round(65*p)+'deg)';
      innerRing.style.transform='translate(-50%,-50%) rotate('+Math.round(-75*p)+'deg)';
+     var phase=phaseFor(p);
+     if(phase!==lastPhase){
+       lastPhase=phase;
+       for(var i=0;i<captions.length;i++)
+         captions[i].className='crystal-journey-stanza'+(i===phase?' is-current':'');
+       chapter.setAttribute('data-journey-phase',String(phase+1));
+     }
    }
    function schedule(){if(!queued){queued=true;window.requestAnimationFrame(draw);}}
    window.addEventListener('scroll',schedule,false);
    window.addEventListener('resize',schedule,false);
    window.addEventListener('orientationchange',schedule,false);
+   document.addEventListener('visibilitychange',schedule,false);
    schedule();
  }
  function init(){
