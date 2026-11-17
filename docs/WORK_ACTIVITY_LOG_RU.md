@@ -1916,3 +1916,12 @@
 - GitHub Actions ветки **#44037140962 SUCCESS**, PR **#44037147820 SUCCESS**, main CI **#44037253199 SUCCESS**, GitHub Pages deployment **#44037252849 SUCCESS**.
 - Выполнены тесты CSS-границ, эмуляции старого iPadOS 12/Chrome, Safari reduced-motion, отсутствие применения на iPhone/iPadOS 16 и общий npm test. Изменения опубликованы; визуально на реальном планшете результат пока не подтверждён.
 - Запись проекта: docs/RUN173_LEGACY_IPAD_CRYSTAL_RU.md. Имя RUN-173 выбрано во избежание пересечения с уже существующим RUN-172, относящимся к iPhone.
+
+
+### 2026-11-17 — RUN-174 — ПОЛНОЭКРАННЫЙ КРИСТАЛЛ: IPHONE И СТАРЫЙ IPAD (PR #131)
+- **НАЧАЛ:** владелец сообщил о регрессии iPhone после RUN-171/173: сокращённая сцена, анимация прокручивается вверх слишком быстро; на старом iPad видна только статичная картинка, кольцо обрезается. Запрошена отдельная настройка для iPhone / старого iPad и контроль desktop.
+- **Причина по исходникам:** RUN-171 заменил iPhone sticky-сцену на `height:auto;position:relative;min-height:650px`; RUN-173 дал старому iPad статическую высоту `min-height:700px` и лишь лёгкое движение через rAF. Это не является подтверждением реального поведения браузеров без просмотра на устройствах.
+- **ИСПРАВЛЕНИЕ (ветка `fix/run174-device-isolated-crystal-viewport`):** для класса iPhone `ios-scroll-stable` возвращена сцена `200vh` с липкой областью `100vh`; прежние защиты `overflow-x:visible` и compositing radio/assistant сохранены. Для `legacy-ipad-crystal` высота сцены `100vh` (минимум 700px), вращение колец и масштаб кристалла усиливаются лёгкой прокруткой. Desktop/современный iPad не получают новых селекторов.
+- **КЭШ:** `living-art.js?v=5` в `index.html` и SW; регрессионные проверки добавлены в `tests/test-living-art.mjs`.
+- **ПРОВЕРКА:** исходники и diff PR просмотрены. GitHub statuses и PR workflow runs на момент записи пусты; фактический результат CI и реальная проверка iPhone/iPad/desktop НЕ подтверждены. Не ставить статус «ЗАВЕРШИЛ» без этих проверок.
+- PR: https://github.com/velardream-ctrl/velar-music-manager/pull/131
