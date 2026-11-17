@@ -66,7 +66,7 @@ assert.match(publicHTML,/landing-public\.js\?v=56/);
 assert.match(studioHTML,/artist-image-editor\.js\?v=1/);
 assert.match(studioHTML,/landing-editor\.js\?v=45/);
 assert.match(studioHTML,/landing-schema\.js\?v=30/);
-assert.match(sw,/STUDIO_PREFIX\+'v56'/);
+assert.match(sw,/STUDIO_PREFIX\+'v57'/);
 assert.match(sw,/CACHE_PREFIX \+ 'v94'/);
 assert.doesNotMatch(sw,/data:image\/webp/);
 // RUN-116: an inline preview link wrapped its padded border on narrow iPhones.
