@@ -13,3 +13,6 @@ window.VELAR_FIREBASE_CONFIG = {
 /* RUN-186: leave empty until a protected, rate-limited analytics backend is deployed.
    This is a PUBLIC endpoint location, never put secrets/API keys here. */
 window.VELAR_ANALYTICS_ENDPOINT = '';
+
+/* RUN-187: public GA4 measurement ID, not an API secret. No Google tag loads before consent. */
+window.VELAR_GA4_MEASUREMENT_ID = 'G-ZD640V3VQ1';
