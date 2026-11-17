@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const html=read('studio/index.html'),editor=read('studio/landing-editor.js'),sw=read('sw.js');
+assert.match(html,/data-landing-tab="analytics"/);
+assert.match(editor,/analytics:'Статистика посещений'/);
+assert.match(editor,/}else if\(tab==='analytics'\)\{/);
+assert.match(editor,/analyticsEditor\(panel\)/);
+assert.match(editor,/Настройки не удалось показать/);
+assert.match(html,/landing-editor\.js\?v=46&fix=185&analytics=189/);
+assert.match(sw,/landing-editor\.js\?v=46&fix=185&analytics=189/);
+assert.match(sw,/tab189/);
+console.log('PASS RUN-189 analytics tab route, cached script revision and error guard');
