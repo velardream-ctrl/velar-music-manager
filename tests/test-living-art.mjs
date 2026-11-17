@@ -123,12 +123,12 @@ assert.doesNotMatch(ipad.doc.documentElement.className,/ios-scroll-stable/,
 assert.doesNotMatch(desktop.doc.documentElement.className,/ios-scroll-stable/);
 assert.equal(iphone.api.scrollProgress(-100,650,844),100/422,
  'A short, non-sticky crystal chapter must animate smoothly on downward scroll');
-assert.match(css,/html\\.ios-scroll-stable\\.has-living-art \\.crystal-journey-stage\\{[\\s\\S]*?position:relative;top:auto;height:auto/,
+assert.match(css,/html\.ios-scroll-stable\.has-living-art \.crystal-journey-stage\{[\s\S]*?position:relative;top:auto;height:auto/,
  'iPhone scene must avoid sticky 100vh scroll blanking');
-assert.match(css,/html\\.ios-scroll-stable body\\.public-site\\{overflow-x:visible\\}/,
+assert.match(css,/html\.ios-scroll-stable body\.public-site\{overflow-x:visible\}/,
  'Remove the body clipping scroll container on iPhone only');
-assert.match(css,/html\\.ios-scroll-stable \\.velar-radio,[\\s\\S]*?html\\.ios-scroll-stable \\.velar-assistant\\{/,
+assert.match(css,/html\.ios-scroll-stable \.velar-radio,[\s\S]*?html\.ios-scroll-stable \.velar-assistant\{/,
  'Keep the radio and assistant on separate composited fixed layers');
-assert.match(css,/html\\.ios-scroll-stable\\.has-living-art \\.art-reveal\\{[\\s\\S]*?opacity:1/,
+assert.match(css,/html\.ios-scroll-stable\.has-living-art \.art-reveal\{[\s\S]*?opacity:1/,
  'Section headings must remain visible if iPhone observer callbacks are lost');
 console.log('PASS: RUN-071/171 desktop and iPad unchanged; iPhone crystal always visible in nonsticky scrolling scene and fixed radio/assistant retain compositor layers');
