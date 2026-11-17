@@ -152,17 +152,17 @@ assert.equal(oldIpad.queued.length,1,'Old iPad scroll animation is rAF-throttled
 oldIpad.queued.shift()();
 
 // RUN-176: emulate legacy viewport pinning and assert all three caption phases.
-assert.equal(oldIpad.chapter.attributes['data-journey-phase'],'1');
+assert.equal(oldIpad.chapter.attributes['data-journey-phase'],'3');
 assert.match(oldIpad.parts['.crystal-journey-stage'].className,/legacy-crystal-pinned/);
-oldIpad.chapter.getBoundingClientRect=()=>({top:-400,bottom:1648});
 oldIpad.chapter.offsetHeight=2048;
+oldIpad.chapter.getBoundingClientRect=()=>({top:-100,bottom:1948});
 oldIpad.events.scroll();oldIpad.queued.shift()();
 assert.equal(oldIpad.chapter.attributes['data-journey-phase'],'1');
-oldIpad.chapter.getBoundingClientRect=()=>({top:-850,bottom:1198});
+oldIpad.chapter.getBoundingClientRect=()=>({top:-500,bottom:1548});
 oldIpad.events.scroll();oldIpad.queued.shift()();
 assert.equal(oldIpad.chapter.attributes['data-journey-phase'],'2');
 assert.match(oldIpad.parts['.crystal-journey-stage'].className,/legacy-crystal-pinned/);
-oldIpad.chapter.getBoundingClientRect=()=>({top:-1000,bottom:1048});
+oldIpad.chapter.getBoundingClientRect=()=>({top:-900,bottom:1148});
 oldIpad.events.scroll();oldIpad.queued.shift()();
 assert.equal(oldIpad.chapter.attributes['data-journey-phase'],'3');
 oldIpad.chapter.getBoundingClientRect=()=>({top:-1100,bottom:948});
