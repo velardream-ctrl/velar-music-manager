@@ -68,6 +68,44 @@
        preview.appendChild(line);
      });
    }
+   // RUN-198: an authenticated on-demand counter in Assistant settings.
+   // No token or usage report is stored in browser persistence or Firestore.
+   var budgetBox=make("div");budgetBox.className="landing-card";
+   var budgetTitle=make("strong","Счётчик DJ Velar AI — сегодня (UTC)");
+   var budgetInfo=make("p","Данные не загружены. Счётчик станет доступен после настройки Cloudflare.");
+   budgetInfo.className="sync-note";
+   var budgetButton=make("button","Обновить счётчик AI");
+   budgetButton.type="button";budgetButton.className="landing-add";
+   budgetButton.onclick=function(){
+     if(!validEndpoint(endpoint.value)||token.value.length<32){
+       budgetInfo.textContent="Введите адрес Worker и секрет владельца в лаборатории выше.";
+       return;
+     }
+     if(typeof window.fetch!=="function"){budgetInfo.textContent="Нет поддержки сетевого запроса.";return;}
+     budgetButton.disabled=true;budgetInfo.textContent="Получаем защищённый счётчик Cloudflare…";
+     var statsUrl=endpoint.value.replace(/\/v1\/owner-test$/,"/v1/owner-stats");
+     window.fetch(statsUrl,{method:"GET",mode:"cors",credentials:"omit",
+       headers:{"Authorization":"Bearer "+token.value},"cache":"no-store"
+     }).then(function(response){
+       return response.json().then(function(data){
+         if(!response.ok)throw new Error(data&&data.error||"http_"+response.status);
+         return data;
+       });
+     }).then(function(data){
+       if(typeof data.used!=="number"||typeof data.day!=="string")
+         throw new Error("Некорректные данные счётчика.");
+       budgetInfo.textContent="Дата "+data.day+" (UTC) · запросов AI: "+data.used+
+         " · успешных: "+data.succeeded+" · ошибок: "+data.failed+
+         (typeof data.limit==="number"?" · лимит: "+data.limit+
+           " · осталось: "+data.remaining:" · лимит не задан")+
+         ". Считаются попытки вызова модели, а не токены или стоимость.";
+     }).catch(function(error){
+       budgetInfo.textContent="Счётчик недоступен: "+String(error&&error.message||error).slice(0,100)+
+         ". Локальный DJ Velar от этого не зависит.";
+     }).then(function(){budgetButton.disabled=false;});
+   };
+   budgetBox.appendChild(budgetTitle);budgetBox.appendChild(budgetInfo);
+   budgetBox.appendChild(budgetButton);section.appendChild(budgetBox);
    var button=make("button","Проверить ответ модели");
    button.type="button";button.className="landing-add";
    var fallbackTest=make("button","Проверить отказ ИИ и резервный ответ");
