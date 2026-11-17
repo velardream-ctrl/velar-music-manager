@@ -250,7 +250,18 @@
       about:{
         heading:'VELARDREAM RECORDS',
         intro:'Музыкальный проект, объединяющий разных исполнителей, жанры и творческие идеи. Сейчас мы создаём его официальный дом в интернете.',
-        notice:'Сайт находится в разработке. Публичные страницы артистов, релизы и плейлисты будут появляться постепенно.'
+        notice:'Сайт находится в разработке. Публичные страницы артистов, релизы и плейлисты будут появляться постепенно.',
+        progress:{enabled:false,title:'Наша музыкальная коллекция',intro:'Музыкальный каталог продолжает пополняться. Показатели обновляются владельцем после проверки.',
+          metrics:[
+            {label:'Композиции в каталоге',value:0,visible:true},
+            {label:'Ссылки на площадки',value:0,visible:true},
+            {label:'Spotify',value:0,visible:true},
+            {label:'Apple Music',value:0,visible:true},
+            {label:'YouTube',value:0,visible:true},
+            {label:'Готовятся к публикации',value:0,visible:false},
+            {label:'Альбомы в работе',value:0,visible:false}],
+          showBar:true,barLabel:'Заполненность ссылок на музыкальные площадки',completed:0,total:0,
+          note:'Часть песен и альбомов ещё находится в подготовке и пока не представлена в публичных подборках.',updatedAt:''}
       }
     };
   }
@@ -936,6 +947,37 @@
     }
     return result;
   }
+  // RUN-184: explicitly approved PUBLIC aggregate snapshot only. Never publish
+  // private catalog documents, song titles, IDs, unreleased URLs or drafts.
+  function progressConfig(raw){
+    var d=defaults().about.progress;
+    var p=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+    var metrics=typeof p.metrics==='undefined'?d.metrics:p.metrics;
+    if(!Array.isArray(metrics)||metrics.length>12)throw new Error('Статистика сайта: максимум 12 показателей.');
+    function nonNegative(v,name){
+      if(typeof v!=='number'||!isFinite(v)||v<0||v>1000000||Math.floor(v)!==v)
+        throw new Error(name+': необходимо целое число от 0 до 1000000.');
+      return v;
+    }
+    var clean=metrics.map(function(row,i){
+      if(!row||typeof row!=='object'||Array.isArray(row))throw new Error('Показатель '+(i+1)+': неверная запись.');
+      return {label:plain(row.label,'Название показателя '+(i+1),80,true),
+        value:nonNegative(row.value,'Показатель '+(i+1)),visible:row.visible===true};
+    });
+    var total=nonNegative(typeof p.total==='undefined'?d.total:p.total,'Общий объём ссылок');
+    var completed=nonNegative(typeof p.completed==='undefined'?d.completed:p.completed,'Заполненные ссылки');
+    if(completed>total)throw new Error('Заполненных ссылок не может быть больше общего числа.');
+    var updatedAt=plain(typeof p.updatedAt==='string'?p.updatedAt:d.updatedAt,'Дата обновления',10,false);
+    if(updatedAt&&!/^\d{4}-\d{2}-\d{2}$/.test(updatedAt))throw new Error('Дата обновления: формат YYYY-MM-DD.');
+    return {enabled:p.enabled===true,
+      title:plain(typeof p.title==='string'?p.title:d.title,'Название статистики',110,true),
+      intro:plain(typeof p.intro==='string'?p.intro:d.intro,'Описание статистики',350,false),
+      metrics:clean,showBar:p.showBar!==false,
+      barLabel:plain(typeof p.barLabel==='string'?p.barLabel:d.barLabel,'Название прогресса',100,true),
+      completed:completed,total:total,
+      note:plain(typeof p.note==='string'?p.note:d.note,'Пояснение статистики',550,false),
+      updatedAt:updatedAt};
+  }
   function section(value,key,def){
     var x=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
     return {
@@ -1019,6 +1061,7 @@
     result.genres.topics=topicsConfig(genres.topics,d.genres.topics);
     result.genres.assistant=assistantConfig(genres.assistant,d.genres.assistant);
     result.about.notice=plain(typeof about.notice==='string'?about.notice:d.about.notice,'О проекте — объявление',600,false);
+    result.about.progress=progressConfig(about.progress);
     if(JSON.stringify(result).length>780000)throw new Error('Изображений слишком много: уменьшай фотографии или используй меньше карточек (ограничение размера страницы).');
     return result;
   }
