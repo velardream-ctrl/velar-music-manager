@@ -19,6 +19,8 @@ assert.equal(win.VMM_ANALYTICS.configure({enabled:true}).ready,false);
 assert.equal(win.VMM_ANALYTICS.record('player_open',{provider:'spotify',title:'Test'}),false);
 assert.equal(calls,0,'No collection without server endpoint and consent');
 assert.equal(win.VMM_ANALYTICS.record('confirmed_play',{provider:'spotify'}),false,'Never invent true playback events');
+assert.equal(win.VMM_ANALYTICS.record('youtube_play_start',{mediaId:'invalid',provider:'youtube'}),false,'Player start requires provider media ID');
+assert.match(read('landing-public.js'),/VMM_ANALYTICS\.record\('youtube_play_start'/);
 assert.equal(read('landing-public.js').includes("VMM_ANALYTICS.record('radio_open'"),true);
 assert.equal(read('landing-public.js').includes("VMM_ANALYTICS.record('radio_next'"),true);
 assert.equal(read('public-song-ui.js').includes("VMM_ANALYTICS.record('player_open'"),true);
