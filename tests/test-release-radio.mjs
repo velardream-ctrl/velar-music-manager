@@ -279,7 +279,7 @@ assert.match(css,/\.velar-radio--bubble/);
 assert.match(css,/min-height:200px/);
 assert.match(html,/universe\.js\?v=7/);
 assert.match(html,/style\.css\?v=82/);
-assert.match(sw,/CACHE_PREFIX \+ 'v96'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v97'/);
 assert.match(sw,/STUDIO_PREFIX\+'v58'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);

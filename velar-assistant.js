@@ -582,9 +582,6 @@
    dialog.appendChild(form);
    dialog.appendChild(el('p','velar-assistant-privacy',
      'Не сохраняем и не отправляем автору'));
-   // Transparent notice: unknown questions may be processed by Cloudflare AI.
-   dialog.appendChild(el('p','velar-assistant-ai-notice',
-     'Неизвестные вопросы могут передаваться Cloudflare AI для ответа.'));
    root.appendChild(dialog);
    if(window.addEventListener)window.addEventListener('scroll',updateBrowsingState,false);
    function toggle(open){
