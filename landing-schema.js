@@ -973,6 +973,12 @@
     if(['classic','covers','tiles'].indexOf(featuredView)<0)
       throw new Error('Лучшие песни: неверный вариант отображения.');
     result.artists.featuredView=featuredView;
+    // The separate artist profile has its own listing mode, independent
+    // from homepage artist highlights and the main page sections.
+    var detailTrackView=typeof artists.detailTrackView==='undefined'?'compact':artists.detailTrackView;
+    if(['compact','covers','tiles'].indexOf(detailTrackView)<0)
+      throw new Error('Страница артиста: неверный способ показа песен.');
+    result.artists.detailTrackView=detailTrackView;
     result.releases.cards=cards(releases,'Релизы');
     result.releases.radio=radioConfig(typeof releases.radio==='undefined'?d.releases.radio:releases.radio);
     result.releases.playlists=safeList(releases.playlists,8,'Плейлисты',playlistCard,d.releases.playlists);
