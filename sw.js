@@ -1,11 +1,11 @@
 /* VELAR public shell only. NEVER cache authenticated API responses or personal lyrics here. ES5 compatible. */
 'use strict';
 var CACHE_PREFIX = 'velar-public-shell-';
-var CACHE_NAME = CACHE_PREFIX + 'v96';
+var CACHE_NAME = CACHE_PREFIX + 'v96' + '-progress184';
 /* Only private studio SOURCE FILES are cached. Never cache Firestore, Drive files,
    authenticated responses, user lyrics or audio through this Service Worker. */
 var STUDIO_PREFIX='velar-studio-shell-';
-var STUDIO_CACHE=STUDIO_PREFIX+'v58';
+var STUDIO_CACHE=STUDIO_PREFIX+'v58'+'-progress184';
 var STUDIO_ASSETS=[
   './studio/','./studio/index.html','./studio/studio.css?v=31','./studio/artist-choices.js?v=1','./studio/artist-track-links.js?v=1','./studio/artist-image-editor.js?v=1','./studio/title-language.js?v=2', './studio/landing-merge.js?v=1',
   './studio/song-distribution.js?v=3','./studio/existing-links-reconcile.js?v=1','./studio/landing-editor.js?v=46',
