@@ -112,6 +112,77 @@
    });
    return groups;
  }
+
+ // RUN-183: use the SAME public Spotify artwork service as topic/genre/song
+ // cards. Never infer artwork from a similar title or query the private catalog.
+ function artTrack(track){
+   var found={title:track.title};
+   var keys=[['provider','url'],['alternateProvider','alternateUrl'],['thirdProvider','thirdUrl']];
+   (track.sources||[]).slice(0,3).forEach(function(src,i){
+     found[keys[i][0]]=src.provider;found[keys[i][1]]=src.url;
+   });
+   return found;
+ }
+ function approvedArt(track,safe){
+   var songs={},api=window.VMM_LANDING_SCHEMA,art='';
+   (track.sources||[]).forEach(function(src){songs[src.url]=true;});
+   function match(record){
+     if(!record)return false;
+     return [['provider','url'],['alternateProvider','alternateUrl'],['thirdProvider','thirdUrl']]
+       .some(function(pair){
+         var provider=record[pair[0]],url=api.songUrl(record[pair[1]]||'',provider);
+         return !!url&&!!songs[url];
+       });
+   }
+   (safe.albums.entries||[]).forEach(function(album){
+     if(art||!album.visible||!(album.imageData||album.imageUrl))return;
+     if((album.tracks||[]).some(match))art=album.imageData||album.imageUrl;
+   });
+   (safe.releases.cards||[]).forEach(function(release){
+     if(art||!release.visible||!(release.imageData||release.imageUrl))return;
+     var link=api.songUrl(release.mediaUrl||'',release.mediaProvider);
+     if(link&&songs[link])art=release.imageData||release.imageUrl;
+   });
+   return art;
+ }
+ function requestSongArtwork(track,safe,holder,index){
+   var note=make('span','artist-track-artwork-note','♫');
+   note.setAttribute('aria-hidden','true');holder.appendChild(note);
+   var pending='',loaded=false,spotifyRequested=false;
+   function requestSpotify(){
+     if(spotifyRequested)return;
+     spotifyRequested=true;
+     if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.requestArtwork)
+       window.VELAR_PUBLIC_SONGS.requestArtwork(artTrack(track),put);
+   }
+   function put(url){
+     if(!url||loaded||pending===url)return;
+     // Album art is already validated through the public page schema.
+     // Spotify oEmbed supplies only validated official cover hosts.
+     pending=url;
+     var img=make('img','artist-track-artwork-image');
+     img.alt='Обложка: '+track.title;
+     img.decoding='async';img.referrerPolicy='no-referrer';
+     if(window.VELAR_IMAGE_LOADING&&window.VELAR_IMAGE_LOADING.apply)
+       window.VELAR_IMAGE_LOADING.apply(img,index);
+     else img.loading='eager';
+     img.onload=function(){
+       loaded=true;
+       img.className+=' is-loaded';
+       note.hidden=true;
+     };
+     img.onerror=function(){
+       if(img.parentNode)img.parentNode.removeChild(img);
+       if(pending===url)pending='';
+       note.hidden=false;
+       if(url===cover)requestSpotify(); // approved album cover failed; try official Spotify
+     };
+     holder.appendChild(img);img.src=url;
+   }
+   var cover=approvedArt(track,safe);
+   if(cover){put(cover);return;}
+   requestSpotify();
+ }
  function render(content){
    if(!window.VMM_LANDING_SCHEMA)return false;
    var safe;
@@ -205,14 +276,16 @@
      pageRows.forEach(function(track,index){
        var item=make('div','artist-track-card');
        var headline=make('div','artist-track-headline');
+       var artwork=null;
        if(layout!=='compact'){
-         var artwork=make('span','artist-track-artwork','♫');
-         artwork.setAttribute('aria-hidden','true');
+         artwork=make('span','artist-track-artwork');
          headline.appendChild(artwork);
        }
        headline.appendChild(make('strong','artist-track-name',track.title));
        var sources=make('div','artist-track-sources'),controls=[];
        track.sources.forEach(function(src){
+         // Same branded Spotify/YouTube/Apple Music icon geometry as the
+         // main site's public-song-source controls, not generic notes.
          var button=make('button','artist-track-source artist-track-source--'+src.provider,
            src.provider==='spotify'?'♫':src.provider==='youtube'?'▶':'♪');
          button.type='button';button.setAttribute('data-provider',src.provider);
@@ -225,6 +298,9 @@
          button.onclick=function(){play(item,holder,controls,track,track.sources[i]);};
        });
        item.appendChild(headline);item.appendChild(holder);item.appendChild(sources);list.appendChild(item);
+       // Attach the placeholder before fetching so slow connections still
+       // show a stable note. Never use YouTube/Apple thumbnails as substitutes.
+       if(artwork)requestSongArtwork(track,safe,artwork,index);
      });
      if(!pageRows.length)list.appendChild(make('p','artist-hint','Песни не найдены.'));
      var footer=node('artist-track-pagination');
