@@ -185,10 +185,10 @@ assert.match(css,/html\.ios-scroll-stable\.has-living-art \.crystal-journey-stag
 assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-stage\{\s*height:100vh;min-height:700px;/);
 assert.match(art,/RUN-174: clearly perceptible but lightweight scroll feedback/);
 // RUN-175: old-iPad-only sticky scene with the correct scroll progress.
-assert.match(css,/html\\.legacy-ipad-crystal body\\.public-site\\{overflow-x:visible\\}/);
-assert.match(css,/html\\.legacy-ipad-crystal \\.crystal-journey\\{\\s*position:relative;height:200vh;/);
-assert.match(css,/html\\.legacy-ipad-crystal \\.crystal-journey-stage\\{\\s*position:-webkit-sticky;position:sticky;top:0;/);
-assert.match(art,/var duration=Math.max\\(1,chapter.offsetHeight-window.innerHeight\\)/);
+assert.match(css,/html\.legacy-ipad-crystal body\.public-site\{overflow-x:visible\}/);
+assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey\{\s*position:relative;height:200vh;/);
+assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-stage\{\s*position:-webkit-sticky;position:sticky;top:0;/);
+assert.match(art,/var duration=Math.max\(1,chapter.offsetHeight-window.innerHeight\)/);
 assert.doesNotMatch(iphone.doc.documentElement.className,/legacy-ipad-crystal/);
 assert.doesNotMatch(desktop.doc.documentElement.className,/legacy-ipad-crystal/);
 assert.doesNotMatch(newIpad.doc.documentElement.className,/legacy-ipad-crystal/);
