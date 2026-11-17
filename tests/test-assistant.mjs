@@ -73,7 +73,7 @@ assert.match(publicCode,/velar-radio-panel--mini/);
 assert.doesNotMatch(publicCode,/localStorage\.setItem\('velar-radio-hidden'/);
 assert.match(publicCode,/VELAR_ASSISTANT\.render\(value\)/);
 assert.doesNotMatch(code,/firebase|XMLHttpRequest|setInterval\(|WebSocket|autoplay=|\.play\(/);
-assert.match(code,/https:\/\/ai\.velardream\.com\/v1\/public-chat/);
+assert.match(code,/https:\/\/dj-velar-private-lab\.velardream\.workers\.dev\/v1\/public-chat/);
 assert.match(code,/window\.setTimeout\(step,/,'typing uses one cancellable local timer');
 assert.match(code,/window\.clearTimeout\(session\.timer\)/,'typing must cancel on close');
 assert.match(css,/\.velar-assistant\{[\s\S]*?bottom:0;/);
