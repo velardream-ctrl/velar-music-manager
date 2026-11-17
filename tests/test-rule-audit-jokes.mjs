@@ -83,7 +83,7 @@ assert.match(editor,/Добавить 6 особых ответов/);
 assert.match(editor,/Музыкальные анекдоты/);
 assert.match(editor,/Редактировать анекдоты/);
 assert.match(editor,/Сохрани и опубликуй/);
-assert.match(read('index.html'),/landing-schema\.js\?v=30/);
+assert.match(read('index.html'),/landing-schema\.js\?v=31/);
 assert.match(read('index.html'),/velar-assistant\.js\?v=14/);
 assert.match(read('studio/index.html'),/landing-editor\.js\?v=45/);
 assert.match(read('sw.js'),/CACHE_PREFIX \+ 'v95'/);
