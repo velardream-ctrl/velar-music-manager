@@ -556,7 +556,8 @@ assert.equal(records.get('vmm_public_pages/landing').content.albums.entries.leng
  'Album and cover remain PRIVATE until owner publishes');
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.albums.entries[0].tracks.length,1);
-const albumView=findInput('Вид песен в альбомах, языках и темах');
+nav[0].onclick();await flush();
+const albumView=findInput('Показ: Песни в альбомах');
 albumView.value='covers';albumView.onchange.call(albumView);
 get('landing-save').onclick();await flush();
 assert.equal(records.get('vmm_public_drafts/landing').content.albums.trackView,'covers');
@@ -564,12 +565,20 @@ assert.equal(records.get('vmm_public_pages/landing').content.albums.trackView,'r
  'Design settings are also draft-only until published');
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.albums.trackView,'covers');
-nav[1].onclick();await flush();
-const featuredDisplay=findInput('Форма лучших песен артистов (когда карусель выключена)');
+nav[0].onclick();await flush();
+const featuredDisplay=findInput('Показ лучших песен на главной');
 featuredDisplay.value='tiles';featuredDisplay.onchange.call(featuredDisplay);
 get('landing-save').onclick();await flush();
 assert.equal(records.get('vmm_public_drafts/landing').content.artists.featuredView,'tiles');
 get('landing-publish').onclick();await flush();
+// RUN-181: artist profile presentation belongs in the Artist tab, not homepage settings.
+nav[1].onclick();await flush();
+const profileStyle=findInput('Песни в профиле артиста');
+profileStyle.value='tiles';profileStyle.onchange.call(profileStyle);
+get('landing-save').onclick();await flush();
+assert.equal(records.get('vmm_public_drafts/landing').content.artists.detailTrackView,'tiles');
+get('landing-publish').onclick();await flush();
+assert.equal(records.get('vmm_public_pages/landing').content.artists.detailTrackView,'tiles');
 // RUN-178: a genre has one song checkbox. All three links are built at publish.
 const genreTab=nav.find(x=>x.attributes['data-landing-tab']==='genres');
 assert.ok(genreTab,'Genre tab exists');
