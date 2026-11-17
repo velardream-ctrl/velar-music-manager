@@ -213,11 +213,15 @@ assert.match(host.children[0].children[1].children[1].className,/cms-music-list-
  'The Cover Rows setting must change the public artist songs.');
 const carouselPage=api.normalize({...original,artists:{...original.artists,
  featuredView:'tiles',songViewMode:'carousel',cards:[profile,other]}});
+var observedArtistView='';
+w.VELAR_PUBLIC_SONGS={mount:function(list,tracks,opts){observedArtistView=opts.view;list.className+=' public-song-carousel';return {close:function(){}};}};
 listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:carouselPage})});
 assert.match(host.children[0].children[1].children[1].className,/public-artist-song-list/,
  'The explicit Carousel setting must override square/covers.');
 assert.match(host.children[0].children[1].children[1].className,/public-song-carousel/,
  'The Carousel setting must be interactive and horizontally scrollable.');
+assert.equal(observedArtistView,'carousel');
+delete w.VELAR_PUBLIC_SONGS;
 // Restore classic before checking the empty-song card presentation.
 const plain=api.normalize({...original,artists:{...original.artists,cards:[
  {...profile,featuredTracks:[]},{...other,featuredTracks:[]}
