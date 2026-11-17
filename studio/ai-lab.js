@@ -45,6 +45,29 @@
    var question=field(section,"Тестовый вопрос","textarea","Подбери музыку для спокойного вечера");
    question.value="Расскажи, как ты поможешь выбрать музыку по настроению.";
    question.maxLength=500;
+   var catalogRow=make('label');catalogRow.className='landing-field';
+   var catalogToggle=make('input');catalogToggle.type='checkbox';
+   catalogToggle.checked=false;
+   catalogRow.appendChild(catalogToggle);
+   catalogRow.appendChild(make('span',' Подбирать из реально опубликованных песен VELARDREAM'));
+   section.appendChild(catalogRow);
+   section.appendChild(make('p','Если включено, лаборатория по запросу читает только общедоступную опубликованную страницу и передаёт модели короткий перечень до 4 проверенных песен. Приватные записи, черновики, ссылки и личные данные модели не отправляются.'));
+   var preview=make('div');preview.className='landing-ai-catalog-preview';
+   section.appendChild(preview);
+   function showVerified(rows){
+     preview.textContent='';
+     if(!rows||!rows.length){preview.appendChild(make('p','Подходящих опубликованных песен пока нет.'));return;}
+     preview.appendChild(make('p','Проверенные ссылки из опубликованного сайта (не из ответа модели):'));
+     rows.forEach(function(row){
+       var line=make('p');
+       var a=make('a',row.title+(row.artist?' — '+row.artist:'')+
+         ' · '+row.provider);
+       a.href=row.url;a.target='_blank';a.rel='noopener noreferrer';
+       line.appendChild(a);
+       if(row.category)line.appendChild(make('span',' · '+row.category));
+       preview.appendChild(line);
+     });
+   }
    var button=make("button","Проверить ответ модели");
    button.type="button";button.className="landing-add";
    var status=make("p","Не подключено. Сначала разверни Worker в своём бесплатном Cloudflare.");
@@ -62,8 +85,28 @@
      var q=question.value.trim();
      if(q.length<2||q.length>500){status.textContent="Вопрос: 2–500 символов.";return;}
      if(typeof window.fetch!=="function"){status.textContent="Браузер не поддерживает безопасное обращение к Worker.";return;}
-     button.disabled=true;result.textContent="";
-     status.textContent="Запрос к Cloudflare… Первый ответ модели может занять больше 12 секунд.";
+     button.disabled=true;result.textContent="";preview.textContent="";
+     status.textContent=catalogToggle.checked?'Загружаем только опубликованные песни…':
+       "Запрос к Cloudflare… Первый ответ модели может занять больше 12 секунд.";
+     var source=window.VELAR_AI_PUBLIC_CATALOG;
+     var context=catalogToggle.checked?
+       (source&&source.readPublished?source.readPublished():
+         Promise.reject(new Error('Модуль опубликованных песен не загружен.'))):
+       Promise.resolve(null);
+     context.then(function(rows){
+       var message=q;
+       if(catalogToggle.checked){
+         if(!rows||!rows.length)throw new Error('В опубликованных подборках нет доступных песен. Запрос модели не отправлен.');
+         var choices=source.shortlist(rows,q,4);
+         showVerified(choices);
+         message=source.prompt(q,choices);
+       }
+       return askModel(message);
+     }).catch(function(error){
+       status.textContent='Подборка не получена: '+String(error&&error.message||error).slice(0,180);
+       button.disabled=false;
+     });
+     function askModel(message){
      // A 12-second browser timeout caused false negatives on iPhone.
      // Allow the first model response up to 60s, show the countdown, and
      // always release the button even on a failed request.
@@ -79,7 +122,7 @@
      window.fetch(endpoint.value,{
        method:"POST",mode:"cors",credentials:"omit",
        headers:{"Content-Type":"application/json","Authorization":"Bearer "+token.value},
-       body:JSON.stringify({message:q,language:language.value}),
+       body:JSON.stringify({message:message,language:language.value}),
        signal:controller?controller.signal:undefined
      }).then(function(response){
        return response.json().then(function(body){
@@ -108,6 +151,7 @@
        if(progressTimer)clearInterval(progressTimer);
        button.disabled=false;
      });
+     }
    };
    section.appendChild(button);section.appendChild(status);section.appendChild(result);
    var doc=make("p");
