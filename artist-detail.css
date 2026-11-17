@@ -59,3 +59,77 @@ main{width:min(1080px,calc(100% - 36px));margin:50px auto 85px}
 .artist-track-pagination{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;margin-top:15px;color:#d4c4a5}
 @media(max-width:680px){.artist-tracks--tiles .artist-track-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:390px){.artist-tracks--tiles .artist-track-list{grid-template-columns:1fr}}
+
+/* RUN-183: the artist detail uses the same official button symbols and
+   geometry as the shared song renderer; fallback glyphs are screen-reader
+   labeled. No remote icon font and no browser-dependent emoji. */
+.artist-track-source{
+ position:relative;display:inline-flex;align-items:center;justify-content:center;
+ flex:0 0 40px;width:40px;height:40px;min-width:40px;min-height:40px;
+ padding:0;border-radius:9px;font-size:0!important;line-height:1;
+ box-sizing:border-box;touch-action:manipulation;cursor:pointer;
+ transition:filter .16s,transform .16s,box-shadow .16s;
+}
+.artist-track-source--spotify{background:#1db954;border:1px solid #1db954;color:#092b18}
+.artist-track-source--youtube{background:#e11928;border:1px solid #e11928;color:#fff}
+.artist-track-source--appleMusic{
+ background:linear-gradient(135deg,#fa6d77,#e53e78);
+ border:1px solid #fa6d77;color:#fff
+}
+.artist-track-source--spotify::after{
+ content:"";width:23px;height:23px;display:block;background:currentColor;
+ -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.59 14.46a.63.63 0 0 1-.87.21c-2.4-1.46-5.43-1.79-9.01-.98a.63.63 0 1 1-.28-1.23c3.91-.9 7.25-.52 9.95 1.13.3.18.39.57.21.87zm1.22-2.72a.79.79 0 0 1-1.08.26c-2.75-1.69-6.94-2.18-10.19-1.19a.79.79 0 1 1-.46-1.5c3.71-1.13 8.32-.59 11.48 1.35.37.23.49.71.25 1.08zm.11-2.84C14.62 8.94 9.17 8.76 6 9.73a.95.95 0 1 1-.56-1.82c3.64-1.1 9.66-.89 13.46 1.37a.95.95 0 0 1-.98 1.62z'/%3E%3C/svg%3E") center/contain no-repeat;
+ mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.59 14.46a.63.63 0 0 1-.87.21c-2.4-1.46-5.43-1.79-9.01-.98a.63.63 0 1 1-.28-1.23c3.91-.9 7.25-.52 9.95 1.13.3.18.39.57.21.87zm1.22-2.72a.79.79 0 0 1-1.08.26c-2.75-1.69-6.94-2.18-10.19-1.19a.79.79 0 1 1-.46-1.5c3.71-1.13 8.32-.59 11.48 1.35.37.23.49.71.25 1.08zm.11-2.84C14.62 8.94 9.17 8.76 6 9.73a.95.95 0 1 1-.56-1.82c3.64-1.1 9.66-.89 13.46 1.37a.95.95 0 0 1-.98 1.62z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+.artist-track-source--youtube::after{
+ content:"";display:block;width:0;height:0;
+ border-top:7px solid transparent;border-bottom:7px solid transparent;
+ border-left:12px solid #fff;margin-left:3px
+}
+.artist-track-source--appleMusic::after{
+ content:"";display:block;width:21px;height:21px;background:currentColor;
+ -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 3 8 5.3v11.4a3.1 3.1 0 1 0 2 2.9V9l7-1.5v6.1a3.1 3.1 0 1 0 2 2.9V3z'/%3E%3C/svg%3E") center/contain no-repeat;
+ mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M19 3 8 5.3v11.4a3.1 3.1 0 1 0 2 2.9V9l7-1.5v6.1a3.1 3.1 0 1 0 2 2.9V3z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+.artist-track-source:hover,.artist-track-source:focus-visible{
+ filter:brightness(1.18);transform:translateY(-2px);
+ box-shadow:0 0 0 2px #f4d9a5,0 0 16px rgba(244,217,165,.5);
+ outline:none
+}
+.artist-track-source[aria-pressed="true"]{
+ outline:2px solid #fff0c6;outline-offset:2px;
+ box-shadow:0 0 12px rgba(244,217,165,.55)
+}
+/* A persistent note stays underneath an official cover until it has fully
+   loaded, and is shown again after network/image errors. */
+.artist-track-artwork{
+ position:relative;display:inline-flex;flex:none;
+ width:50px;height:50px;min-width:50px;
+ overflow:hidden;border-radius:9px;align-items:center;justify-content:center;
+ background:linear-gradient(140deg,#1e355b,#122344);color:#e6c88e
+}
+.artist-track-artwork-note{display:inline-flex;align-items:center;justify-content:center;
+ font-size:1.4rem;width:100%;height:100%;line-height:1}
+.artist-track-artwork-note[hidden]{display:none}
+.artist-track-artwork-image{
+ position:absolute;left:0;top:0;display:block;width:100%;height:100%;
+ object-fit:cover;opacity:0;transition:opacity .2s ease
+}
+.artist-track-artwork-image.is-loaded{opacity:1}
+.artist-tracks--tiles .artist-track-artwork{
+ width:100%;max-width:100%;min-width:0;height:auto;
+ aspect-ratio:1/1;max-height:none
+}
+@supports not (aspect-ratio:1 / 1){
+ .artist-tracks--tiles .artist-track-artwork{height:170px}
+}
+.artist-tracks--covers .artist-track-artwork{width:50px;height:50px}
+@media(max-width:680px){
+ .artist-track-sources{gap:8px}
+ .artist-tracks--tiles .artist-track-artwork{min-height:100px}
+}
+@media(prefers-reduced-motion:reduce){
+ .artist-track-source,.artist-track-artwork-image{transition:none}
+}
