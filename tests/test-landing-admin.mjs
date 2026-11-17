@@ -560,11 +560,11 @@ nav[0].onclick();await flush();
 const albumView=findInput('Показ: Песни в альбомах');
 albumView.value='covers';albumView.onchange.call(albumView);
 get('landing-save').onclick();await flush();
-assert.equal(records.get('vmm_public_drafts/landing').content.albums.trackView,'covers');
-assert.equal(records.get('vmm_public_pages/landing').content.albums.trackView,'rows',
+assert.equal(records.get('vmm_public_drafts/landing').content.genres.displayModes.albums,'covers');
+assert.equal(records.get('vmm_public_pages/landing').content.genres.displayModes.albums,'rows',
  'Design settings are also draft-only until published');
 get('landing-publish').onclick();await flush();
-assert.equal(records.get('vmm_public_pages/landing').content.albums.trackView,'covers');
+assert.equal(records.get('vmm_public_pages/landing').content.genres.displayModes.albums,'covers');
 nav[0].onclick();await flush();
 const featuredDisplay=findInput('Показ лучших песен на главной');
 featuredDisplay.value='tiles';featuredDisplay.onchange.call(featuredDisplay);
