@@ -116,13 +116,34 @@
      offlineTimer=null;snapshotLocal().catch(function(){});
    },250);
  }
+ // RUN-185: targeted correction of a common ambiguity: three official
+ // links per song, not one. Only repair when denominator exactly equals
+ // the clearly labelled song count; never overwrite any other user number.
+ function normalizeWithLinkCapacity(raw){
+   try{return API.normalize(raw);}
+   catch(err){
+     if(String(err.message||'').indexOf('Заполненных ссылок не может быть больше общего числа')<0)throw err;
+     var candidate=clone(raw),progress=candidate.about&&candidate.about.progress;
+     if(!progress||!Array.isArray(progress.metrics))throw err;
+     var songs=null;
+     progress.metrics.forEach(function(m){
+       if(m&&m.label==='Композиции в каталоге'&&
+         typeof m.value==='number'&&m.value>=0&&Math.floor(m.value)===m.value)songs=m.value;
+     });
+     if(songs===null||progress.total!==songs||
+       typeof progress.completed!=='number'||progress.completed>songs*3)throw err;
+     progress.total=songs*3;
+     var clean=API.normalize(candidate);
+     return clean;
+   }
+ }
  function recoverLocal(){
    if(!offlineStore||!uid)return Promise.resolve(null);
    return offlineStore.get(uid,pendingName()).then(function(saved){
      if(!saved||!saved.value)return null;
      var value=saved.value;
      if(!value.content)return null;
-     var clean=API.normalize(value.content);
+     var clean=normalizeWithLinkCapacity(value.content);
      // An offline revision may be older than the currently fetched server doc;
      // retain it visibly, but don't blindly overwrite the cloud.
      data=clean;
@@ -140,7 +161,7 @@
      return offlineStore.get(uid,pendingName());
    }).then(function(saved){
      if(!saved||!saved.value)return null;
-     var payload=saved.value,clean=API.normalize(payload.content),account=uid,nonce=saved.nonce;
+     var payload=saved.value,clean=normalizeWithLinkCapacity(payload.content),account=uid,nonce=saved.nonce;
      // Always reverify online authority and revision in a server transaction.
      return authorized().then(function(auth){
        if(auth.user.uid!==account)throw new Error('Смена аккаунта: синхронизация отменена.');
@@ -162,6 +183,10 @@
          if(uid===account){
            if(offlineNonce===nonce){
              draftRev=revision;baseline=JSON.stringify(clean);
+             // If the saved outbox was corrected from songs to three link slots,
+             // reflect the successful server snapshot in the visible editor.
+             // A newer local edit must remain untouched.
+             if(JSON.stringify(data)===JSON.stringify(payload.content))data=clone(clean);
              if(ack)showOfflineConflict(false);
              offlineStatus(ack?'Синхронизировано с облачным черновиком (версия '+revision+'). Для посетителей ещё не опубликовано.':
                'Облачный черновик сохранён; более свежие правки остались в очереди.');
@@ -2621,7 +2646,20 @@
    toggle('Показывать полосу готовности ссылок',p,'showBar');
    field(section,'Название полосы готовности',p.barLabel||'',function(v){p.barLabel=v;});
    numberControl(section,'Ссылок заполнено',p,'completed');
-   numberControl(section,'Всего возможных ссылок',p,'total');
+   numberControl(section,'Всего возможных ссылок (число песен × 3)',p,'total');
+   var capacityHint=document.createElement('p');capacityHint.className='sync-note';
+   capacityHint.textContent='Одна песня может иметь 3 ссылки: Spotify, Apple Music, YouTube. Например: 280 песен × 3 = 840 возможных ссылок. 682 из 840 = 81%.';
+   section.appendChild(capacityHint);
+   var autoCapacity=button('Рассчитать максимум по числу песен × 3',function(){
+     var songs=null;
+     (p.metrics||[]).forEach(function(m){if(m.label==='Композиции в каталоге')songs=m.value;});
+     if(typeof songs!=='number'||songs<0||Math.floor(songs)!==songs){
+       info('Укажи число композиций в показателе «Композиции в каталоге».');return;
+     }
+     p.total=songs*3;render();
+     info('Максимум ссылок: '+songs+' × 3 = '+p.total+'. Сохрани черновик и затем опубликуй.');
+   },'landing-small');
+   section.appendChild(autoCapacity);
    field(section,'Что ещё готовится к публикации',p.note||'',function(v){p.note=v;},true);
    field(section,'Дата снимка (YYYY-MM-DD, можно оставить пустой)',p.updatedAt||'',function(v){p.updatedAt=v;});
    var foot=document.createElement('p');foot.className='sync-note';
@@ -2946,7 +2984,7 @@
        .catch(function(e){info('Ошибка локального черновика: '+e.message);});
      return;
    }
-   var cleanData;try{cleanData=API.normalize(data);}catch(e){info('Проверь поля: '+e.message);return;}
+   var cleanData;try{cleanData=normalizeWithLinkCapacity(data);if(cleanData.about.progress.total!==data.about.progress.total){data=clone(cleanData);render();info('Исправлено: максимальное число ссылок = число композиций × 3. Проверь данные и снова нажми «Сохранить черновик».');return;}}catch(e){info('Проверь поля: '+e.message);return;}
    var savedRevision=draftRev,account=uid;
    busy=true;updateButtons();info('Сохраняем черновик…');
    authorized().then(function(a){
