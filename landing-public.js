@@ -777,6 +777,7 @@
    if(!host.getBoundingClientRect||!window.addEventListener)return {sync:function(){},ignoreClick:function(){return false;}};
    var anchor=null,drag=null,ignoreUntil=0;
    var movedByListener=false,initialWidth=window.innerWidth;
+   var pendingHeroAnchor=false,heroImg=null,heroFrame=null;
    function clamp(n,max){return Math.max(0,Math.min(n,max));}
    function point(e){return e.touches?(e.touches[0]||e.changedTouches[0]):e;}
    // RUN-169: position a fresh floating orb alongside the hero crystal,
@@ -792,13 +793,29 @@
      var onscreen=art&&art.height>40&&art.right>0&&
        art.left<window.innerWidth&&art.top<window.innerHeight&&art.bottom>navBottom;
      var gap=Math.max(8,Math.min(28,window.innerWidth*.02));
+     pendingHeroAnchor=!onscreen;
      var right=onscreen?window.innerWidth-art.right-gap-68:
        Math.max(16,Math.min(34,window.innerWidth*.075));
+     // RUN-172: on phones always begin on the RIGHT-hand edge beside the
+     // crystal artwork, even if the hero image measured zero at first paint.
+     // Leave wide-screen/iPad placement and all manual drag choices intact.
+     if(window.innerWidth<=740)
+       right=Math.max(12,Math.min(24,window.innerWidth*.045));
      var top=onscreen?art.top+(art.height-68)/2:window.innerHeight*.32;
      // Reserve space for at least the gold 20% default glow and avoid
      // the navigation even if the crystal shrinks on a compact phone.
      return {right:Math.max(12,clamp(right,Math.max(0,window.innerWidth-80))),
        top:clamp(Math.max(top,navBottom+16),Math.max(0,window.innerHeight-80))};
+   }
+   function settleHeroAnchor(){
+     if(movedByListener||!pendingHeroAnchor)return;
+     var hero=document&&document.getElementById?
+       document.getElementById('hero-crystal-link'):null;
+     var rect=hero&&hero.getBoundingClientRect?hero.getBoundingClientRect():null;
+     if(!rect||rect.height<=40||rect.top>=window.innerHeight||rect.bottom<=0)return;
+     // The image has now acquired its final layout. Align at its height
+     // without moving any previously dragged radio.
+     anchor=defaultAnchor();fit();
    }
    // Preserve a logical right-side anchor while wide and narrow panels change size.
    // A large panel is allowed to shift onscreen while the saved orb position survives.
@@ -879,9 +896,20 @@
      window.removeEventListener('mousemove',move);window.removeEventListener('touchmove',move);
      window.removeEventListener('mouseup',up);window.removeEventListener('touchend',up);window.removeEventListener('touchcancel',up);
      window.removeEventListener('resize',resized);
+     if(heroImg&&heroImg.removeEventListener)
+       heroImg.removeEventListener('load',settleHeroAnchor);
+     if(heroFrame&&window.cancelAnimationFrame)
+       window.cancelAnimationFrame(heroFrame);
    };
    // The first paint uses the crystal position instead of CSS top:12px.
    fit();
+   var hero=document&&document.getElementById?
+     document.getElementById('hero-crystal-link'):null;
+   heroImg=hero&&hero.querySelector?hero.querySelector('img'):null;
+   if(heroImg&&heroImg.addEventListener)
+     heroImg.addEventListener('load',settleHeroAnchor);
+   if(pendingHeroAnchor&&window.requestAnimationFrame)
+     heroFrame=window.requestAnimationFrame(settleHeroAnchor);
    return {sync:fit,ignoreClick:function(){
      if(Date.now()<ignoreUntil){ignoreUntil=0;return true;}return false;
    }};
