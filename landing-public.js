@@ -166,7 +166,10 @@
      function playFor(provider,link){
        var validated=window.VMM_LANDING_SCHEMA.songUrl(link,provider);
        if(!validated)return;
-       if(provider==='youtube'&&legacyYouTubeModal(validated,track.title))return;
+       if(provider==='youtube'&&legacyYouTubeModal(validated,track.title)){
+         if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.record('player_open',{title:track.title,artist:track.artist||'',provider:provider,section:'featured'});
+         return;
+       }
        if(active===index&&activeProvider===provider&&hasEmbed(player)){
          empty(player);active=null;activeProvider='';
          entry.className=entry.className.replace(/ is-playing/g,'');
@@ -194,6 +197,7 @@
        frame.setAttribute('allowfullscreen','');
        frame.referrerPolicy='strict-origin-when-cross-origin';
        appendOfficialFrame(player,frame,provider,true);
+       if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.record('player_open',{title:track.title,artist:track.artist||'',provider:provider,section:'featured'});
        var external=create('a','cms-music-external','Открыть в '+(provider==='spotify'?'Spotify':provider==='appleMusic'?'Apple Music':'YouTube'));
        external.href=validated;external.rel='noopener noreferrer';external.target='_blank';
        player.appendChild(external);
@@ -609,7 +613,9 @@
      listen.setAttribute('aria-pressed','false');
      listen.onclick=function(){
        if(isVideo&&item.mediaProvider==='youtube'&&legacyIpadVideo()){
-         showLegacyVideoModal(media,item.title);return;
+         showLegacyVideoModal(media,item.title);
+         if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.record('player_open',{title:item.title,artist:item.subtitle||'',provider:item.mediaProvider,section:'releases'});
+         return;
        }
        if(hasEmbed(player)){
          empty(player);listen.setAttribute('aria-pressed','false');return;
@@ -621,6 +627,7 @@
        frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
        frame.setAttribute('allowfullscreen','');
        appendOfficialFrame(player,frame,item.mediaProvider,false);
+       if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.record('player_open',{title:item.title,artist:item.subtitle||'',provider:item.mediaProvider,section:'releases'});
        var close=create('button','cms-release-close','Закрыть плеер');close.type='button';
        close.onclick=function(){empty(player);listen.setAttribute('aria-pressed','false');};player.appendChild(close);
        if(isVideo)revealInlineVideo();
@@ -1155,11 +1162,13 @@
      frame.setAttribute('allow','autoplay; encrypted-media; fullscreen; picture-in-picture');
      frame.setAttribute('allowfullscreen','');
      appendOfficialFrame(player,frame,provider,false);
+     if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.record('radio_open',{section:'radio',provider:provider});
      host.setAttribute('data-radio-player-open','true');
      if(provider==='youtube')radioYoutube=cueCatalog(frame,ids||[],panel.children[1],startSeconds);
      if(provider==='youtube'||(sources.length&&catalog[provider]&&catalog[provider].length>1)){
        var next=create('button','velar-radio-next','Следующая песня');next.type='button';
        next.onclick=function(){
+         if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.record('radio_next',{section:'radio',provider:provider});
          if(provider==='youtube'){if(radioYoutube)radioYoutube.next();return;}
          // A Spotify/Apple embed cannot reliably report the end of a single track.
          // Replacing it only happens after a listener explicitly requests Next.
@@ -1279,6 +1288,7 @@
      return true;
    }
    if(imagePolicy()&&imagePolicy().configure)imagePolicy().configure(value.hero.imageLoadingLevel);
+   if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.configure(value.hero.analytics);
    assign('public-hero-subtitle',value.hero.subtitle);
    assign('public-hero-intro',value.hero.intro);
    assign('artists-title',value.artists.heading);
