@@ -494,8 +494,8 @@
        reactionChoice(t,out.text),true);
      if(log&&log.lastChild&&log.lastChild.setAttribute)
        log.lastChild.setAttribute('data-response-source',source||'local');
-     if(source==='local'&&reason&&root)root.setAttribute('data-ai-fallback',reason);
-     else if(root)root.removeAttribute('data-ai-fallback');
+     if(source==='local'&&reason&&root&&root.setAttribute)root.setAttribute('data-ai-fallback',reason);
+     else if(root&&root.removeAttribute)root.removeAttribute('data-ai-fallback');
    }
    if(!unresolved||!router||typeof window.fetch!=='function'){
      show(result,'local','');return;
