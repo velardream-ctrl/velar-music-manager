@@ -71,3 +71,11 @@ assert.equal(r.status,401,'Dashboard counts are owner-only');
 console.log('PASS RUN-196: server-side opt-in, origin, per-client and global rate-limit, model, public fallback wiring');
 
 assert.doesNotMatch(assistant,/velar-assistant-ai-notice|Неизвестные вопросы могут передаваться Cloudflare AI/);
+// RUN-199: Health must accurately distinguish deployed bindings from client toggle.
+let health=await context.worker.fetch(new Request('https://ai.velardream.com/health',{method:'GET'}),env);
+assert.equal((await health.json()).publicEnabled,false,'Missing budget must not show ready');
+env.PUBLIC_AI_BUDGET={idFromName:()=>1,get:()=>({fetch:async()=>Response.json({ok:true})})};
+health=await context.worker.fetch(new Request('https://ai.velardream.com/health',{method:'GET'}),env);
+assert.equal((await health.json()).publicEnabled,true,'Configured server should report ready');
+assert.doesNotMatch(await (await context.worker.fetch(new Request('https://ai.velardream.com/health',{method:'GET'}),env)).text(),/OWNER_TEST_TOKEN|Bearer|198\.51/);
+
