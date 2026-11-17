@@ -7,7 +7,7 @@ const labSrc=read('studio/ai-lab.js');
 const studioSrc=read('studio/landing-editor.js');
 const studioHTML=read('studio/index.html');
 const sw=read('sw.js');
-const workerScript=workerSrc.replace('export default {','const worker = {')+'\n;globalThis.worker = worker;';
+const workerScript=workerSrc.replace(/^import .*ai-budget\.js";\nexport \{ VelarAiBudget \};\n/,'').replace('export default {','const worker = {')+'\n;globalThis.worker = worker;';
 new vm.Script(workerScript);
 new vm.Script(labSrc);
 assert.match(studioSrc,/window\.VELAR_AI_LAB\.attach\(parent\)/);
