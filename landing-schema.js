@@ -420,7 +420,7 @@
     var intensity=Number(visual.intensity);
     if(!(intensity>=1&&intensity<=5&&Math.floor(intensity)===intensity))intensity=3;
     var spread=Number(visual.spread);
-    if([50,75,100].indexOf(spread)<0)spread=50;
+    if(!(spread>=1&&spread<=100&&Math.floor(spread)===spread))spread=50;
     if(enabled&&!link&&!tracks.length&&!sources.length)throw new Error('VELAR RADIO: сначала укажи ссылку на плейлист.');
     return {enabled:enabled,controlVersion:2,title:plain(typeof x.title==='string'?x.title:'VELAR RADIO','Название радио',70,true),
       provider:provider,url:link,tracks:tracks,sources:sources,catalog:catalog,visual:{mode:mode,intensity:intensity,spread:spread}};

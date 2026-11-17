@@ -1010,6 +1010,8 @@
    toggle.appendChild(dot);toggle.appendChild(create('span','',config.title));
    var icon=create('span','velar-radio-chevron');icon.setAttribute('aria-hidden','true');toggle.appendChild(icon);
    host.appendChild(toggle);
+   // RUN-168: apply exact radius after the halo node is mounted.
+   applyRadioVisual(config);
    var cover=create('img','velar-radio-cover');cover.alt='';
    if(tracks.length){
      toggle.insertBefore(cover,toggle.firstChild);
@@ -1181,7 +1183,24 @@
    var visual=config.visual||{};
    host.setAttribute('data-radio-effect',visual.mode||'heartbeat');
    host.setAttribute('data-radio-intensity',String(visual.intensity||3));
-   host.setAttribute('data-radio-spread',String(visual.spread||50));
+   var spread=Number(visual.spread);
+   if(!(spread>=1&&spread<=100&&Math.floor(spread)===spread))spread=50;
+   host.setAttribute('data-radio-spread',String(spread));
+   // RUN-168: 68px approved emblem; precise radius for any integer 1–100.
+   // Inline styles override legacy 75/100 CSS presets without touching
+   // the iframe, the drag position or the radio's playback signature.
+   var toggle=host.children&&host.children[0];
+   var nodes=toggle&&toggle.children,halo=null;
+   for(var i=0;nodes&&i<nodes.length;i++){
+     if(nodes[i].className==='velar-radio-halo'){halo=nodes[i];break;}
+   }
+   if(halo&&halo.style){
+     var offset=-(68*spread/100)+'px';
+     halo.style.top=offset;
+     halo.style.right=offset;
+     halo.style.bottom=offset;
+     halo.style.left=offset;
+   }
  }
  var stationSettings=null,landingRadioSettings=null;
  function render(content){
