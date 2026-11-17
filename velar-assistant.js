@@ -441,7 +441,7 @@
      var span=prompt.querySelector('.velar-assistant-greeting-text');
      if(span)span.textContent='Добро пожаловать во вселенную VELARDREAM! Поможешь нам понять, какие песни интересны гостям? Разрешить Google Analytics учитывать посещения и открытия плееров? Данные передаются Google. Отказ не ограничивает музыку.';
      actions.style.display='flex';
-     prompt.className='velar-assistant-greeting';
+     prompt.className='velar-assistant-greeting is-consent';
      root.className='velar-assistant';
    }else{
      actions.style.display='none';
