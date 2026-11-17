@@ -141,7 +141,7 @@ assert.ok(!(answer('какая твоя любимая песня',noLeaks).acti
 const sampleSection=api.normalize({...defaults,genres:{...defaults.genres,assistant:settings}});
 assert.equal(sampleSection.genres.assistant.faq.length,113);
 assert.match(html,/velar-faq-engine\.js\?v=3/);
-assert.ok(html.indexOf('velar-faq-engine.js?v=3')<html.indexOf('velar-assistant.js?v=14'));
+assert.ok(html.indexOf('velar-faq-engine.js?v=3')<html.indexOf('velar-assistant.js?v=15'));
 assert.match(sw,/'\.\/velar-faq-engine\.js\?v=3'/);
 assert.match(sw,/CACHE_PREFIX \+ 'v96'/);
 assert.match(read('style.css'),/velar-chat-actions/);
