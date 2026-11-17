@@ -2115,16 +2115,39 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
   transition:width .30s cubic-bezier(.22,.75,.3,1);
 }
 .velar-radio--bubble>.velar-radio-toggle{
-  background:transparent url('assets/velar-radio-icon-gold.webp') center/contain no-repeat;
+  background:transparent url('assets/velar-radio-icon-gold-bold.webp') center/contain no-repeat;
   touch-action:none;
   -webkit-user-select:none;user-select:none;
   cursor:grab;
-  animation:velar-radio-gold-breathe 4.2s ease-in-out infinite;
+  transform-origin:center center;
+  animation:velar-radio-heartbeat 2.65s ease-in-out infinite;
 }
-.velar-radio--bubble>.velar-radio-toggle:active{cursor:grabbing}
-@keyframes velar-radio-gold-breathe{
-  0%,100%{filter:brightness(1) drop-shadow(0 0 2px #eed39a55)}
-  50%{filter:brightness(1.08) drop-shadow(0 0 7px #eed39aa0)}
+.velar-radio--bubble>.velar-radio-toggle:active{
+  cursor:grabbing;animation-play-state:paused;
+}
+/* RUN-165: two gentle gold beats followed by a longer quiet pause.
+   No changes to the logo file or to the actual audio/video iframe. */
+@keyframes velar-radio-heartbeat{
+  0%,38%,100%{
+    transform:scale(1);
+    filter:brightness(1) drop-shadow(0 0 2px #eed39a55);
+  }
+  8%{
+    transform:scale(1.045);
+    filter:brightness(1.08) drop-shadow(0 0 7px #eed39a99);
+  }
+  15%{
+    transform:scale(1);
+    filter:brightness(1.02) drop-shadow(0 0 3px #eed39a66);
+  }
+  25%{
+    transform:scale(1.065);
+    filter:brightness(1.12) drop-shadow(0 0 10px #eed39abc);
+  }
+  33%{
+    transform:scale(1);
+    filter:brightness(1.01) drop-shadow(0 0 3px #eed39a55);
+  }
 }
 .velar-radio:not(.velar-radio--bubble)>.velar-radio-panel:not(.hidden){
   animation:velar-radio-panel-appear .27s ease-out both;
