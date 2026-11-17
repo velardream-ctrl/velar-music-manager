@@ -14,7 +14,7 @@ assert.match(assistant,/VELAR_AI_FALLBACK/);
 assert.match(assistant,/window\.VELAR_PUBLIC_AI_ENABLED!==true/);
 assert.match(assistant,/data-response-source/);
 assert.match(assistant,/replyText\(config,'fallbackDisabled'\)/);
-assert.match(assistant,/https:\/\/ai\.velardream\.com\/v1\/public-chat/);
+assert.match(assistant,/https:\/\/dj-velar-private-lab\.velardream\.workers\.dev\/v1\/public-chat/);
 assert.doesNotMatch(assistant,/VELAR_OWNER_TEST_TOKEN/);
 const code=workerSource.replace(/^import .*ai-budget\.js";\nexport \{ VelarAiBudget \};\n/,'').replace('export default {','const worker = {')+'\n;globalThis.worker = worker;';
 new vm.Script(code);
@@ -71,3 +71,12 @@ assert.equal(r.status,401,'Dashboard counts are owner-only');
 console.log('PASS RUN-196: server-side opt-in, origin, per-client and global rate-limit, model, public fallback wiring');
 
 assert.doesNotMatch(assistant,/velar-assistant-ai-notice|Неизвестные вопросы могут передаваться Cloudflare AI/);
+// RUN-199: Health must accurately distinguish deployed bindings from client toggle.
+delete env.PUBLIC_AI_BUDGET;
+let health=await context.worker.fetch(new Request('https://ai.velardream.com/health',{method:'GET'}),env);
+assert.equal((await health.json()).publicEnabled,false,'Missing budget must not show ready');
+env.PUBLIC_AI_BUDGET={idFromName:()=>1,get:()=>({fetch:async()=>Response.json({ok:true})})};
+health=await context.worker.fetch(new Request('https://ai.velardream.com/health',{method:'GET'}),env);
+assert.equal((await health.json()).publicEnabled,true,'Configured server should report ready');
+assert.doesNotMatch(await (await context.worker.fetch(new Request('https://ai.velardream.com/health',{method:'GET'}),env)).text(),/OWNER_TEST_TOKEN|Bearer|198\.51/);
+
