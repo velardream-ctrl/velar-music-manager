@@ -12,7 +12,7 @@
    // RUN-171: a non-sticky iPhone chapter can be shorter than the visual
    // viewport. Animate over at least half a viewport instead of jumping
    // immediately from progress 0 to 1 on the first downward scroll.
-   return clamp(-top/Math.max(1,height-viewport,viewport*.5));
+   return clamp(-top/Math.max(1,height-viewport,isIPhoneWebKit()?viewport*.5:1));
  }
  function isIPhoneWebKit(){
    var ua=window.navigator&&window.navigator.userAgent||'';
