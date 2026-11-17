@@ -2247,3 +2247,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .velar-radio-next{display:block;min-height:38px;max-width:100%;margin:9px auto 3px;padding:7px 15px;border:1px solid #dcb97e;border-radius:11px;color:#172640;background:#f2d49b;font:700 .82rem -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;cursor:pointer}
 .velar-radio-next:focus-visible{outline:3px solid #fff0cb;outline-offset:2px}
 .velar-radio-panel--mini .velar-radio-next{display:block;margin:7px auto 3px}
+
+/* RUN-169: the default orb is placed beside the hero crystal in JS. */
+/* A mini player attached to a right-hand orb opens LEFT via right:0 (base rule). */
+/* The popup-left modifier is now applied only when the orb is on the left half. */
