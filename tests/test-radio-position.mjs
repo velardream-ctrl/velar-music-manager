@@ -69,9 +69,10 @@ function scenario(width,height,artRect,headerBottom){
  e.host.className='velar-radio velar-radio--bubble';e.controller.sync();
  assert.equal(e.host.getBoundingClientRect().right,custom.right,
    'Collapsing returns the orb to the manually selected point');
+ const manualRightInset=e.host.style.right;
  e.win.innerWidth=800;e.events.resize();
- assert.equal(e.host.style.right,custom.right+'px',
-   'Later rotation must not discard manual drag preference');
+ assert.equal(e.host.style.right,manualRightInset,
+   'Later rotation must preserve manual right-side inset, not absolute screen coordinates');
  e.context.stopRadioMove();
  assert.equal(Object.keys(e.events).length,0,'Position listeners are disposed');
 }
