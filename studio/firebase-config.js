@@ -9,3 +9,7 @@ window.VELAR_FIREBASE_CONFIG = {
   messagingSenderId: "880625703377",
   appId: "1:880625703377:web:fc799a186054276d28a8f0"
 };
+
+/* RUN-186: leave empty until a protected, rate-limited analytics backend is deployed.
+   This is a PUBLIC endpoint location, never put secrets/API keys here. */
+window.VELAR_ANALYTICS_ENDPOINT = '';

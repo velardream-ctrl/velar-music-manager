@@ -189,6 +189,7 @@
    try{safe=window.VMM_LANDING_SCHEMA.normalize(content);}catch(ignore){return false;}
    if(window.VELAR_IMAGE_LOADING&&window.VELAR_IMAGE_LOADING.configure)
      window.VELAR_IMAGE_LOADING.configure(safe.hero.imageLoadingLevel);
+   if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.configure(safe.hero.analytics);
    var artist=selectedArtist(safe,query());
    if(!artist){
      show('artist-content',false);
@@ -259,6 +260,7 @@
      frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
      frame.setAttribute('allowfullscreen','');
      holder.appendChild(frame);
+     if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.record('player_open',{title:track.title,artist:artist.title,provider:src.provider,section:'artist'});
      var open=external(holder,url,'Открыть в '+platformName(src.provider),'','artist-track-external');
      var close=make('button','artist-track-close','Закрыть плеер');close.type='button';close.onclick=closePlayer;
      holder.appendChild(close);

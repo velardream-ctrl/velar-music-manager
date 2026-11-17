@@ -153,7 +153,10 @@
         intro:'Здесь рождается пространство для артистов, авторских релизов и музыкальных историй — от оперы и этно до рока, поп-музыки и кроссоверов.',
         imageLoadingLevel:0, // RUN-123: existing published pages remain eager.
          coverSourcePriority:'spotify-first', // RUN-125: preserve current behavior.
-        socialBar:{enabled:false,shareEnabled:false,links:[]} // RUN-183: opt-in only.
+        socialBar:{enabled:false,shareEnabled:false,links:[]}, // RUN-183: opt-in only.
+        analytics:{enabled:false,showPublic:false,showVisits:true,showActions:true,
+          title:'Музыкальная статистика VELARDREAM',showTopTracks:false,
+          consentRequired:true,retentionDays:90} // RUN-186: disabled until backend + consent.
       },
       artists:{
         heading:'У каждого голоса — своя история',
@@ -978,6 +981,18 @@
       note:plain(typeof p.note==='string'?p.note:d.note,'Пояснение статистики',550,false),
       updatedAt:updatedAt};
   }
+  // RUN-186: public-safe DISPLAY configuration, not counters or visitor data.
+  function analyticsSettings(value){
+    var a=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
+    var d=defaults().hero.analytics;
+    var retention=typeof a.retentionDays==='undefined'?d.retentionDays:a.retentionDays;
+    if([30,90,180].indexOf(retention)<0)throw new Error('Аналитика: срок хранения 30, 90 или 180 дней.');
+    return {enabled:a.enabled===true,showPublic:a.showPublic===true,
+      showVisits:a.showVisits!==false,showActions:a.showActions!==false,
+      showTopTracks:a.showTopTracks===true,
+      title:plain(typeof a.title==='string'?a.title:d.title,'Аналитика — название',100,true),
+      consentRequired:true,retentionDays:retention};
+  }
   function section(value,key,def){
     var x=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
     return {
@@ -1004,6 +1019,7 @@
           return candidate;
         }()),
         socialBar:siteSocialBar(hero.socialBar),
+        analytics:analyticsSettings(hero.analytics),
         coverSourcePriority:(function(){
           var choice=typeof hero.coverSourcePriority==='undefined'?'spotify-first':hero.coverSourcePriority;
           if(choice!=='spotify-first'&&choice!=='youtube-first')
