@@ -2667,6 +2667,40 @@
    section.appendChild(foot);parent.appendChild(section);
  }
 
+ // RUN-186: telemetry preferences are owner-only draft/published settings.
+ // Collection is deliberately blocked until an authenticated aggregation service
+ // is deployed; UI must never invent visit/play totals.
+ function analyticsEditor(parent){
+   if(!data.hero.analytics)data.hero.analytics=API.defaults().hero.analytics;
+   var a=data.hero.analytics,section=document.createElement('section');
+   section.className='landing-display-group';
+   heading(section,'Счётчик посещений и интереса к песням',
+     'Настройки будущей аналитики. Никакие реальные счётчики не собираются, пока не установлен защищённый серверный обработчик и не получено согласие посетителя. Это не регистрация пользователей.');
+   function check(label,key){
+     var row=document.createElement('label');row.className='landing-checkbox';
+     var input=document.createElement('input');input.type='checkbox';input.checked=a[key]===true;
+     input.onchange=function(){a[key]=this.checked;updateButtons();};
+     var name=document.createElement('span');name.textContent=label;
+     row.appendChild(input);row.appendChild(name);section.appendChild(row);
+   }
+   check('Разрешить аналитику после установки защищённого сервиса и согласия посетителей','enabled');
+   check('Разрешить показ публичного счётчика (отдельно от сбора данных)','showPublic');
+   check('Показывать посещения сайта','showVisits');
+   check('Показывать открытия музыкальных плееров','showActions');
+   check('Показывать рейтинг популярных треков','showTopTracks');
+   field(section,'Заголовок публичного блока',a.title,function(v){a.title=v;});
+   selectField(section,'Хранение детализированных событий',
+     [['30','30 дней'],['90','90 дней'],['180','180 дней']],String(a.retentionDays||90),
+     function(v){a.retentionDays=Number(v);});
+   var status=document.createElement('p');status.className='sync-note';
+   status.textContent='Состояние: сервер сбора событий и чтение достоверных агрегатов ещё не подключены. Поэтому статистика не будет показывать придуманные нули или создавать записи в Firestore из браузера. Счётчик остаётся скрытым до появления подтверждённых данных.';
+   section.appendChild(status);
+   var explain=document.createElement('p');explain.className='sync-note';
+   explain.textContent='Будущие показатели: просмотры страниц, приблизительное число посетителей с согласия, клики по Spotify / Apple Music / YouTube, переходы и действия в радио. Внешний iframe не позволяет доказать, что песню полностью прослушали. Рейтинг будет называться «Чаще открывают», пока нет подтверждения воспроизведения.';
+   section.appendChild(explain);
+   parent.appendChild(section);
+ }
+
  // RUN-181: all homepage display choices live in ONE place.
  // Artist profile settings are intentionally not here: they belong to Artists.
  function homepageDisplaySettings(parent){
@@ -2925,6 +2959,8 @@
      assistantEditor(panel);
    }else if(tab==='genres'){
      genreEditor(panel);
+   }else if(tab==='analytics'){
+     analyticsEditor(panel);
    }else if(tab==='about'){
      heading(panel,'О проекте','Информация, видимая всем посетителям.');
      sectionFields(panel,tab);
