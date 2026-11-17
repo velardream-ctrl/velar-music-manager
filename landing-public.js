@@ -1290,8 +1290,12 @@
    assign('about-title',value.about.heading);
    assign('public-about-intro',value.about.intro);
    assign('public-about-notice',value.about.notice);
-   var tags=byId('public-genres-tags');if(tags){empty(tags);
-     value.genres.tags.forEach(function(tag){tags.appendChild(create('span','',tag));});
+   if(window.VELAR_GENRES&&window.VELAR_GENRES.render)
+     window.VELAR_GENRES.render(value.genres);
+   else{
+     var tags=byId('public-genres-tags');if(tags){empty(tags);
+       value.genres.tags.forEach(function(tag){tags.appendChild(create('span','',tag));});
+     }
    }
    if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.configure)
      window.VELAR_PUBLIC_SONGS.configure(

@@ -151,7 +151,7 @@ assert.equal(elements['velar-universe-details'].children[1].textContent,'Мой 
 assert.equal(elements['velar-universe-details'].children.at(-1).href,'#languages');
 assert.match(admin,/function universeEditor/);
 assert.match(admin,/function languageEditor/);
-assert.match(admin,/API\.songUrl\(urls\.spotify/);
+assert.match(admin,/API\.songUrl\(links\.spotify/);
 assert.match(html,/id="languages"/);
 assert.match(html,/src="assets\/velardream-symbol.svg"/);
 assert.match(html,/languages-public\.js\?v=3/);

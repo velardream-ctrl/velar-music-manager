@@ -2410,3 +2410,15 @@ html.legacy-ipad-crystal .velar-radio > .station-help > .station-help-button{
 html.legacy-ipad-crystal .velar-radio > .station-help > .station-help-button::-webkit-details-marker{
  display:none;
 }
+
+/* RUN-178: clickable genre labels, accessible to iOS 12 Safari and keyboard users.
+   Shared topic-detail styles keep the presentation consistent with song themes. */
+.genre-tags .genre-select{display:inline-flex;align-items:center;justify-content:center;
+ min-height:44px;color:#ebdcc5;background:rgba(33,47,80,.7);
+ border:1px solid rgba(230,210,174,.27);border-radius:100px;
+ padding:8px 16px;font:inherit;font-size:.88rem;cursor:pointer}
+.genre-tags .genre-select:hover,.genre-tags .genre-select[aria-pressed="true"]{
+ color:#17223c;background:#e9ca93;border-color:#ffe7b7}
+.genre-tags .genre-select:focus-visible{outline:2px solid #ffe7b7;outline-offset:3px}
+.genre-detail{margin-top:20px}
+.genre-detail-title{font:400 1.6rem Georgia,serif;color:#fbeacb;margin:0 0 9px}

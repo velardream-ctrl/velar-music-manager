@@ -77,6 +77,7 @@
  }
  var languageEditorCode='',languageCatalogSearch='',languageTrackFilter='',languageCatalogPage=0;
  var topicEditorSlug='',topicCatalogSearch='',topicTrackFilter='',topicCatalogPage=0;
+ var genreEditorId='',genreCatalogSearch='',genreTrackFilter='',genreCatalogPage=0;
  var albumEditorId='',albumCatalogSearch='',albumTrackFilter='',albumCatalogPage=0;
  var faqSearch='',faqGroup='',faqPage=0;
  // Offline admin: private IndexedDB outbox, no publication without explicit click.
@@ -340,7 +341,7 @@
    var generation=loadGeneration,account=uid;
    catalogLoading=true;catalogError='';
    // Show a real loading state immediately, rather than the stale 'not loaded' label.
-   if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
+   if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics'||tab==='genres')render();
    if(navigator.onLine===false&&offlineStore){
      return offlineStore.get(uid,'cache:artist-catalog').then(function(saved){
        if(!saved||!saved.value||!Array.isArray(saved.value.catalog))
@@ -368,11 +369,11 @@
          offlineStatus('Не удалось сохранить каталог для офлайн: '+err.message);
        });
      restoreArtistLinks().then(function(){if(pendingArtistLinks)syncArtistLinks();});
-     if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
+     if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics'||tab==='genres')render();
    }).catch(function(err){
      if(generation!==loadGeneration||account!==uid)return;
      catalogLoading=false;catalogError=err&&err.message||'Каталог или связи песен временно недоступны.';
-     if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
+     if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics'||tab==='genres')render();
    });
  }
  function artistPicker(parent){
@@ -1115,47 +1116,54 @@
 
  // RUN-090: ONE attachment editor shared by language and topic constellations.
  // A song has one row and one primary official player, optionally a second.
+ // RUN-179: all genres, topics, languages and albums share three official sources.
  function attachedSongSources(t){
-   var result={spotify:'',youtube:''};
-   if(t&&result.hasOwnProperty(t.provider))result[t.provider]=t.url||'';
-   if(t&&t.alternateUrl&&result.hasOwnProperty(t.alternateProvider))
-     result[t.alternateProvider]=t.alternateUrl;
-   return result;
- }
- function attachedSongMode(t){
-   return t&&t.alternateUrl?t.provider+'+'+t.alternateProvider:t&&t.provider||'spotify';
+   var sources={spotify:'',youtube:'',appleMusic:''};
+   if(!t)return sources;
+   [['provider','url'],['alternateProvider','alternateUrl'],['thirdProvider','thirdUrl']].forEach(function(keys){
+     if(sources.hasOwnProperty(t[keys[0]]))sources[t[keys[0]]]=t[keys[1]]||'';
+   });
+   return sources;
  }
  function attachedCatalogOptions(){
-   var result=[];
+   var rows=[];
    (catalogArtists||[]).forEach(function(song){
-     var urls=song.links||{};
-     var spotify=API.songUrl(urls.spotify||'','spotify'),
-       youtube=API.songUrl(urls.youtube||'','youtube');
-     if(spotify||youtube)result.push({title:String(song.title||'Без названия'),
-       artist:String(song.artist||''),spotify:spotify,youtube:youtube});
+     var links=song.links||{};
+     var spotify=API.songUrl(links.spotify||'','spotify'),
+       youtube=API.songUrl(links.youtube||'','youtube'),
+       appleMusic=API.songUrl(links.appleMusic||'','appleMusic');
+     if(spotify||youtube||appleMusic)rows.push({
+       title:String(song.title||'Без названия'),artist:String(song.artist||''),
+       spotify:spotify,youtube:youtube,appleMusic:appleMusic
+     });
    });
-   return result.sort(compareSong);
+   return rows.sort(compareSong);
  }
  function attachedSongKey(t){
    return String(t.title||'').trim().toLocaleLowerCase('ru')+'|'+
      String(t.artist||'').trim().toLocaleLowerCase('ru');
  }
  function attachedFind(target,song){
-   var key=attachedSongKey(song),urls=[song.spotify,song.youtube].filter(function(u){return !!u;});
+   var key=attachedSongKey(song),urls=[song.spotify,song.youtube,song.appleMusic].filter(function(u){return !!u;});
    for(var i=0;i<target.tracks.length;i++){
      var row=target.tracks[i],links=attachedSongSources(row);
-     if(attachedSongKey(row)===key||(urls.some(function(url){
-       return url===links.spotify||url===links.youtube;
-     })))return row;
+     if(attachedSongKey(row)===key||urls.some(function(url){
+       return url===links.spotify||url===links.youtube||url===links.appleMusic;
+     }))return row;
    }
    return null;
  }
- // RUN-097: visual checkbox picker only; RUN-090's single-track data model stays intact.
- function attachedCheckMode(currentPrimary,spotifyChecked,youtubeChecked){
-   if(!spotifyChecked&&!youtubeChecked)return '';
-   if(spotifyChecked&&youtubeChecked)
-     return currentPrimary==='youtube'?'youtube+spotify':'spotify+youtube';
-   return spotifyChecked?'spotify':'youtube';
+ function attachedCheckMode(primary,spotify,youtube,appleMusic){
+   var checked=[];
+   if(spotify)checked.push('spotify');
+   if(youtube)checked.push('youtube');
+   if(appleMusic)checked.push('appleMusic');
+   if(!checked.length)return '';
+   if(checked.indexOf(primary)>=0){
+     checked.splice(checked.indexOf(primary),1);
+     checked.unshift(primary); // existing primary remains unchanged when possible
+   }
+   return checked.join('+');
  }
  function attachedSourceCheckbox(parent,provider,checked,disabled){
    var label=document.createElement('label');label.className='landing-source-check'+(disabled?' is-disabled':'');
@@ -1166,11 +1174,11 @@
    label.appendChild(title);parent.appendChild(label);return box;
  }
  function attachedBuildSong(song,mode,sources){
-   var parts=String(mode||'').split('+'),primary=parts[0],second=parts[1]||'';
-   var raw={title:song.title,artist:song.artist,provider:primary,url:sources[primary]||''};
-   if(second){raw.alternateProvider=second;raw.alternateUrl=sources[second]||'';}
-   // Never allow a Drive/Storage URL or a provider with no verified track.
-   return API.languageTrack(raw,1);
+   var parts=String(mode||'').split('+'),raw={title:song.title,artist:song.artist,
+     provider:parts[0],url:sources[parts[0]]||''};
+   if(parts[1]){raw.alternateProvider=parts[1];raw.alternateUrl=sources[parts[1]]||'';}
+   if(parts[2]){raw.thirdProvider=parts[2];raw.thirdUrl=sources[parts[2]]||'';}
+   return API.languageTrack(raw,1); // one shared whitelist, no private URLs
  }
  function attachedReplace(target,old,song,mode,sources){
    var clean=attachedBuildSong(song,mode,sources);
@@ -1182,18 +1190,16 @@
      var existing=attachedSongSources(t);
      if(attachedSongKey(t)===identity)
        throw new Error('Такая песня уже назначена. Измени существующую строку.');
-     if((links.spotify&&links.spotify===existing.spotify)||
-        (links.spotify&&links.spotify===existing.youtube)||
-        (links.youtube&&links.youtube===existing.youtube)||
-        (links.youtube&&links.youtube===existing.spotify))
-       throw new Error('Одна ссылка уже назначена другой композиции.');
+     if(['spotify','youtube','appleMusic'].some(function(p){
+       return !!links[p]&&['spotify','youtube','appleMusic'].some(function(k){return links[p]===existing[k];});
+     }))throw new Error('Одна ссылка уже назначена другой композиции.');
    });
    if(!old&&target.tracks.length>=300)throw new Error('Максимум 300 песен на подборку.');
    if(old){
-     // Preserve exact list position; never remove/push when switching player.
      old.title=clean.title;old.artist=clean.artist;old.provider=clean.provider;old.url=clean.url;
-     delete old.alternateProvider;delete old.alternateUrl;
+     delete old.alternateProvider;delete old.alternateUrl;delete old.thirdProvider;delete old.thirdUrl;
      if(clean.alternateUrl){old.alternateProvider=clean.alternateProvider;old.alternateUrl=clean.alternateUrl;}
+     if(clean.thirdUrl){old.thirdProvider=clean.thirdProvider;old.thirdUrl=clean.thirdUrl;}
    }else target.tracks.push(clean);
    return clean;
  }
@@ -1212,7 +1218,7 @@
    assignedSection.className='landing-assigned-block';
    heading(assignedSection,isLanguage?'Подтверждённые песни ('+entry.tracks.length+')':
      'Назначенные песни ('+entry.tracks.length+')',
-     'Найди композицию по названию или выбери из списка. Галочками отметь Spotify, YouTube или оба источника. Одна песня остаётся одной строкой. Изменения сохраняются сначала в черновике.');
+     'Найди композицию по названию или выбери из списка. Отметь Spotify, YouTube и/или Apple Music. Все площадки относятся к одной песне. Изменения сохраняются сначала в черновике.');
    var search=document.createElement('input');search.type='search';search.className='landing-release-search';
    search.placeholder='Поиск среди назначенных песен…';search.value=filter();
    var assigned=document.createElement('div');assigned.className='landing-language-songs';
@@ -1235,8 +1241,10 @@
        var outer=document.createElement('div');outer.className='landing-attached-song';
        var line=document.createElement('div');line.className='landing-language-song-row';
        var title=document.createElement('span');
-       title.textContent=t.title+' · '+t.artist+' · '+(t.provider==='spotify'?'Spotify':'YouTube')+
-         (t.alternateUrl?' + '+(t.alternateProvider==='spotify'?'Spotify':'YouTube'):'');
+       var platforms=[t.provider,t.alternateProvider,t.thirdProvider].filter(function(p){return !!p;});
+       title.textContent=t.title+' · '+t.artist+' · '+platforms.map(function(p){
+         return p==='appleMusic'?'Apple Music':p==='spotify'?'Spotify':'YouTube';
+       }).join(' + ');
        line.appendChild(title);
        var edit=button('Изменить плеер',function(){
          clear(editArea);
@@ -1248,6 +1256,7 @@
          if(catalog){
            if(!sources.spotify)sources.spotify=catalog.spotify;
            if(!sources.youtube)sources.youtube=catalog.youtube;
+           if(!sources.appleMusic)sources.appleMusic=catalog.appleMusic;
          }
          var wrap=document.createElement('div');wrap.className='landing-attached-fields';
          var activeSources=attachedSongSources(t);
@@ -1256,6 +1265,7 @@
          checks.setAttribute('aria-label','Источники записи: '+t.title);
          var spotifyCheck=attachedSourceCheckbox(checks,'spotify',!!activeSources.spotify,false);
          var youtubeCheck=attachedSourceCheckbox(checks,'youtube',!!activeSources.youtube,false);
+         var appleCheck=attachedSourceCheckbox(checks,'appleMusic',!!activeSources.appleMusic,false);
          wrap.appendChild(checks);
          function urlField(label,url){
            var holder=document.createElement('label');holder.className='landing-attached-url';
@@ -1266,13 +1276,14 @@
          }
          var spotify=urlField('Spotify — прямая ссылка на песню',sources.spotify);
          var youtube=urlField('YouTube — прямая ссылка на видео',sources.youtube);
+         var apple=urlField('Apple Music — прямая ссылка на песню',sources.appleMusic);
          var buttons=document.createElement('div');buttons.className='landing-item-actions';
          buttons.appendChild(button('Применить',function(){
            try{
-             var chosen=attachedCheckMode(t.provider,spotifyCheck.checked,youtubeCheck.checked);
-             if(!chosen)throw new Error('Отметь Spotify, YouTube или оба источника.');
+             var chosen=attachedCheckMode(t.provider,spotifyCheck.checked,youtubeCheck.checked,appleCheck.checked);
+             if(!chosen)throw new Error('Отметь хотя бы одну площадку: Spotify, YouTube или Apple Music.');
              attachedReplace(entry,t,t,chosen,
-               {spotify:spotify.value.trim(),youtube:youtube.value.trim()});
+               {spotify:spotify.value.trim(),youtube:youtube.value.trim(),appleMusic:apple.value.trim()});
            }catch(e){info('Не удалось изменить плеер: '+e.message);return;}
            drawAssigned();drawCatalog();updateButtons();
            info('Источники обновлены в черновике. Нажми «Сохранить черновик», затем «Опубликовать».');
@@ -1307,7 +1318,7 @@
    assignedSection.appendChild(assigned);
    drawAssigned();
    heading(parent,'Каталог песен — быстрый выбор',
-     'Найди песню по названию или исполнителю и нажми на неё. Spotify и YouTube выбираются отдельными галочками; обе площадки относятся к одной песне.');
+     'Найди песню по названию или исполнителю, затем выбери Spotify, YouTube и Apple Music. Песня остаётся одной строкой.');
    // Keep the MAIN song search visible even while the private catalog loads.
    // Preserve typed text across re-renders so a delayed 4G response cannot erase it.
    var catalogSearch=document.createElement('input');catalogSearch.type='search';
@@ -1338,7 +1349,7 @@
      clear(results);
      var q=getCatalogSearch().toLocaleLowerCase('ru').replace(/ё/g,'е');
      var matches=options.filter(function(song){
-       return !!(song.spotify||song.youtube)&&
+       return !!(song.spotify||song.youtube||song.appleMusic)&&
          (!q||(song.title+' '+song.artist).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)>=0);
      });
      var size=40,total=matches.length,pages=Math.max(1,Math.ceil(total/size));
@@ -1346,24 +1357,26 @@
      if(page!==getCatalogPage())setCatalogPage(page);
      var start=page*size;
      matches.slice(start,start+size).forEach(function(song){
-       var existing=attachedFind(entry,song),sources={spotify:song.spotify,youtube:song.youtube};
+       var existing=attachedFind(entry,song),sources={spotify:song.spotify,youtube:song.youtube,appleMusic:song.appleMusic};
        if(existing){
          var old=attachedSongSources(existing);
          if(!sources.spotify)sources.spotify=old.spotify;
          if(!sources.youtube)sources.youtube=old.youtube;
+         if(!sources.appleMusic)sources.appleMusic=old.appleMusic;
        }
-       if(!sources.spotify&&!sources.youtube)return;
+       if(!sources.spotify&&!sources.youtube&&!sources.appleMusic)return;
        var row=document.createElement('div');row.className='landing-topic-catalog-row';
        var holder=document.createElement('label');holder.className='landing-checkbox';
        var check=document.createElement('input');check.type='checkbox';check.checked=!!existing;
        holder.appendChild(check);
        var name=document.createElement('span');name.textContent=song.title+' · '+song.artist;
        holder.appendChild(name);row.appendChild(holder);
-       var currentSources=existing?attachedSongSources(existing):{spotify:'',youtube:''};
+       var currentSources=existing?attachedSongSources(existing):{spotify:'',youtube:'',appleMusic:''};
        var choices=document.createElement('div');choices.className='landing-song-sources';
        choices.setAttribute('role','group');choices.setAttribute('aria-label','Источники: '+song.title);
        var spotifyCheck=attachedSourceCheckbox(choices,'spotify',!!currentSources.spotify,!sources.spotify);
        var youtubeCheck=attachedSourceCheckbox(choices,'youtube',!!currentSources.youtube,!sources.youtube);
+       var appleCheck=attachedSourceCheckbox(choices,'appleMusic',!!currentSources.appleMusic,!sources.appleMusic);
        row.appendChild(choices);
        // Local feedback: the checkbox and this text change without redrawing the catalog.
        var assignmentState=document.createElement('span');
@@ -1372,7 +1385,7 @@
        row.appendChild(assignmentState);
        function applySources(){
          var current=attachedFind(entry,song);
-         var mode=attachedCheckMode(current&&current.provider,spotifyCheck.checked,youtubeCheck.checked);
+         var mode=attachedCheckMode(current&&current.provider,spotifyCheck.checked,youtubeCheck.checked,appleCheck.checked);
          if(!mode){
            if(current)entry.tracks.splice(entry.tracks.indexOf(current),1);
            check.checked=false;assignmentState.textContent='';
@@ -1382,9 +1395,10 @@
          }
          try{attachedReplace(entry,current,song,mode,sources);}
          catch(e){
-           var restore=current?attachedSongSources(current):{spotify:'',youtube:''};
+           var restore=current?attachedSongSources(current):{spotify:'',youtube:'',appleMusic:''};
            spotifyCheck.checked=!!restore.spotify;
            youtubeCheck.checked=!!restore.youtube;
+           appleCheck.checked=!!restore.appleMusic;
            check.checked=!!current;
            info('Нельзя прикрепить песню: '+e.message);return;
          }
@@ -1393,15 +1407,17 @@
          info('Привязка обновлена в черновике. Сохрани и опубликуй, чтобы изменения увидели слушатели.');
        }
        check.onchange=function(){
-         if(!this.checked){spotifyCheck.checked=false;youtubeCheck.checked=false;}
-         else if(!spotifyCheck.checked&&!youtubeCheck.checked){
+         if(!this.checked){spotifyCheck.checked=false;youtubeCheck.checked=false;appleCheck.checked=false;}
+         else if(!spotifyCheck.checked&&!youtubeCheck.checked&&!appleCheck.checked){
            if(sources.spotify)spotifyCheck.checked=true;
-           else youtubeCheck.checked=true;
+           else if(sources.youtube)youtubeCheck.checked=true;
+           else appleCheck.checked=true;
          }
          applySources();
        };
        spotifyCheck.onchange=applySources;
        youtubeCheck.onchange=applySources;
+       appleCheck.onchange=applySources;
        results.appendChild(row);
      });
      if(total>size){
@@ -1585,6 +1601,130 @@
      setCatalogPage:function(v){albumCatalogPage=v;}
    });
    parent.appendChild(box);
+ }
+
+ // RUN-178: genres share the validated topic/language/album song picker.
+ // RUN-178: exactly one checkbox per catalog song; official sources are
+ // resolved automatically at publication, never selected in this UI.
+ function genreEditor(parent){
+   var groups=data.genres.entries||[];
+   heading(parent,'Жанры и песни',
+     'Выбери жанр и отметь композиции одной галочкой. Spotify, YouTube и Apple Music подтягиваются из каталога автоматически. Можно назначать одну песню нескольким жанрам.');
+   sectionFields(parent,'genres');
+   var menu=document.createElement('div');menu.className='landing-language-menu';
+   groups.forEach(function(group,index){
+     var row=document.createElement('div');row.className='landing-language-menu-item';
+     var select=button(group.label+' · '+(group.songIds||[]).length+' песен',function(){
+       genreEditorId=group.id;genreCatalogSearch='';genreCatalogPage=0;render();
+     },'landing-small');
+     if(genreEditorId===group.id)select.className+=' is-active';
+     row.appendChild(select);
+     var actions=document.createElement('div');actions.className='landing-item-actions';
+     var up=button('↑',function(){
+       if(!index)return;
+       var item=groups.splice(index,1)[0];groups.splice(index-1,0,item);render();
+     });
+     var down=button('↓',function(){
+       if(index===groups.length-1)return;
+       var item=groups.splice(index,1)[0];groups.splice(index+1,0,item);render();
+     });
+     var remove=button('Удалить',function(){
+       if(!window.confirm('Удалить жанр «'+group.label+'» и его назначения из черновика? Песни и ссылки в каталоге не изменятся.'))return;
+       groups.splice(index,1);
+       if(genreEditorId===group.id)genreEditorId='';
+       data.genres.tags=groups.map(function(g){return g.label;});render();
+     },'landing-danger');
+     up.disabled=index===0;down.disabled=index===groups.length-1;
+     actions.appendChild(up);actions.appendChild(down);actions.appendChild(remove);
+     row.appendChild(actions);menu.appendChild(row);
+   });
+   parent.appendChild(menu);
+   parent.appendChild(button('+ Добавить жанр',function(){
+     if(groups.length>=20){info('Не более 20 жанров.');return;}
+     var n=1,code;
+     do{code='genre-'+n++;}while(groups.some(function(g){return g.id===code;}));
+     groups.push({id:code,label:'Новый жанр '+(n-1),visible:false,songIds:[],tracks:[]});
+     data.genres.tags=groups.map(function(g){return g.label;});
+     genreEditorId=code;genreCatalogSearch='';genreCatalogPage=0;render();
+   },'landing-add'));
+   var current=groups.filter(function(g){return g.id===genreEditorId;})[0];
+   if(!current){current=groups[0];if(current)genreEditorId=current.id;}
+   if(!current)return;
+   if(!Array.isArray(current.songIds))current.songIds=[];
+   var card=document.createElement('section');card.className='landing-card landing-genre-editor';
+   heading(card,'Жанр: '+current.label,
+     'Каждая песня берётся из единого каталога. Связи с жанрами сохраняются в черновике и становятся общедоступны только после публикации.');
+   field(card,'Название жанра',current.label,function(v){
+     current.label=v;data.genres.tags=groups.map(function(g){return g.label;});
+   });
+   var visibility=document.createElement('label');visibility.className='landing-checkbox';
+   var check=document.createElement('input');check.type='checkbox';check.checked=current.visible===true;
+   check.onchange=function(){current.visible=this.checked;updateButtons();};
+   visibility.appendChild(check);
+   var label=document.createElement('span');label.textContent='Показывать жанр на сайте';
+   visibility.appendChild(label);card.appendChild(visibility);
+   var summary=document.createElement('p');summary.className='sync-note';
+   card.appendChild(summary);
+   var search=document.createElement('input');search.type='search';
+   search.className='landing-language-catalog-search';
+   search.placeholder='Найти песню по названию или исполнителю…';
+   search.value=genreCatalogSearch;card.appendChild(search);
+   if(!catalogLoaded){
+     var msg=document.createElement('p');msg.className='sync-note';
+     msg.textContent=catalogLoading?'Загружаем каталог…':catalogError?
+       'Ошибка каталога: '+catalogError:'Каталог ещё не загружен.';
+     card.appendChild(msg);
+     var retry=button('Загрузить каталог',function(){catalogLoaded=false;loadCatalogArtists(true);});
+     retry.disabled=catalogLoading;card.appendChild(retry);
+     parent.appendChild(card);return;
+   }
+   var results=document.createElement('div');results.className='landing-track-list';
+   card.appendChild(results);
+   function draw(){
+     clear(results);
+     summary.textContent='Назначено песен: '+current.songIds.length+' · Ссылки на площадки подключаются автоматически.';
+     var q=String(genreCatalogSearch||'').trim().toLocaleLowerCase('ru').replace(/ё/g,'е');
+     var found=catalogArtists.filter(function(t){
+       return !q||(String(t.title||'')+' '+String(t.artist||'')).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)>=0;
+     }).sort(compareSong);
+     var limit=40,pages=Math.max(1,Math.ceil(found.length/limit));
+     genreCatalogPage=Math.max(0,Math.min(pages-1,genreCatalogPage));
+     var first=genreCatalogPage*limit;
+     found.slice(first,first+limit).forEach(function(song){
+       if(!song.id)return;
+       var row=document.createElement('label');row.className='landing-track-row';
+       var checkbox=document.createElement('input');checkbox.type='checkbox';
+       checkbox.checked=current.songIds.indexOf(song.id)>=0;
+       checkbox.onchange=function(){
+         var idx=current.songIds.indexOf(song.id);
+         if(this.checked&&idx<0){
+           if(current.songIds.length>=300){this.checked=false;info('Максимум 300 песен на жанр.');return;}
+           current.songIds.push(song.id);
+         }else if(!this.checked&&idx>=0)current.songIds.splice(idx,1);
+         summary.textContent='Назначено песен: '+current.songIds.length+' · Ссылки на площадки подключаются автоматически.';
+         updateButtons();
+       };
+       row.appendChild(checkbox);
+       var title=document.createElement('span');title.textContent=String(song.title||'Без названия')+
+         ' — '+String(song.artist||'Исполнитель не указан');
+       row.appendChild(title);results.appendChild(row);
+     });
+     if(found.length>limit){
+       var pageNav=document.createElement('div');pageNav.className='landing-song-pagination';
+       var status=document.createElement('span');status.className='landing-song-page-status';
+       status.textContent=(first+1)+'–'+Math.min(first+limit,found.length)+' из '+found.length+
+         ' · страница '+(genreCatalogPage+1)+' из '+pages;
+       pageNav.appendChild(status);
+       var prev=button('← Назад',function(){genreCatalogPage--;draw();});
+       var next=button('Вперёд →',function(){genreCatalogPage++;draw();});
+       prev.disabled=genreCatalogPage===0;next.disabled=genreCatalogPage===pages-1;
+       pageNav.appendChild(prev);pageNav.appendChild(next);results.appendChild(pageNav);
+     }
+     if(!found.length){var none=document.createElement('p');none.className='sync-note';
+       none.textContent='Песен не найдено. Измени запрос.';results.appendChild(none);}
+   }
+   search.oninput=function(){genreCatalogSearch=this.value;genreCatalogPage=0;draw();};
+   draw();parent.appendChild(card);
  }
  function topicEditor(parent){
    var config=data.genres.topics,topics=config.entries;
@@ -2488,11 +2628,7 @@
    }else if(tab==='assistant'){
      assistantEditor(panel);
    }else if(tab==='genres'){
-     heading(panel,'Жанры и подборки','Публичные названия музыкальных направлений.');
-     sectionFields(panel,tab);
-     field(panel,'Жанры (через запятую или с новой строки)',data.genres.tags.join(', '),function(v){
-       data.genres.tags=v.split(/[,\n]/).map(function(x){return x.trim();}).filter(Boolean);
-     },true);
+     genreEditor(panel);
    }else if(tab==='about'){
      heading(panel,'О проекте','Информация, видимая всем посетителям.');
      sectionFields(panel,tab);
@@ -2515,9 +2651,9 @@
  }
  function load(force){
    if(busy)return Promise.resolve();
-   if(loaded&&!force){render();if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();return Promise.resolve();}
+   if(loaded&&!force){render();if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics'||tab==='genres')loadCatalogArtists();return Promise.resolve();}
    if(force&&dirty()&&!window.confirm('Есть несинхронизированные изменения. Обновление может их перезаписать в редакторе. Обновить?'))return Promise.resolve();
-   if(force){trackEditorArtist='';trackChecked={};trackSearch='';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;albumCatalogPage=0;catalogLoaded=false;catalogLoading=false;catalogError='';trackLinksLoaded=false;}
+   if(force){trackEditorArtist='';trackChecked={};trackSearch='';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;genreEditorId='';genreCatalogSearch='';genreTrackFilter='';genreCatalogPage=0;albumCatalogPage=0;catalogLoaded=false;catalogLoading=false;catalogError='';trackLinksLoaded=false;}
    var currentLoad=++loadGeneration;
    busy=true;updateButtons();info('Проверяем права и загружаем черновик…');
    return authorized().then(function(auth){
@@ -2533,7 +2669,7 @@
        data=API.normalize(draft&&draft.content?draft.content:published||API.defaults());
        baseline=JSON.stringify(data);loaded=true;busy=false;render();
        recoverLocal().then(function(){if(navigator.onLine)syncOffline();});
-       if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();
+       if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics'||tab==='genres')loadCatalogArtists();
        info(draft?'Черновик загружен. Изменения пока не опубликованы.':
           (published?'Загружена последняя публикация. Сохрани черновик, прежде чем публиковать изменения.':
           'Публикаций пока нет. Подготовь разделы и сохрани первый черновик.'));
@@ -2592,14 +2728,43 @@
    authorized().then(function(a){
      if(a.user.uid!==account)throw new Error('Учётная запись изменилась.');
      var sources=cleanData.releases.radio.sources;
-     if(!sources.length)return;
-     return a.db.collection('vmm_catalog').get({source:'server'}).then(function(snapshot){
-       var rows=[];snapshot.forEach(function(doc){rows.push(doc.data());});
+     var groups=cleanData.genres.entries||[];
+     var needsGenres=groups.some(function(g){return g.songIds&&g.songIds.length;});
+     if(!sources.length&&!needsGenres)return;
+     // RUN-178: single read from protected catalog supplies both radio and
+     // public genre metadata. No catalog writes, private fields or credentials.
+     return a.db.collection('vmm_catalog').limit(1200).get({source:'server'}).then(function(snapshot){
+       var rows=[],byId={};
+       snapshot.forEach(function(doc){
+         var track=doc.data()||{};rows.push(track);byId[doc.id]=track;
+       });
+       if(rows.length>=1200)throw new Error('Каталог достиг лимита 1200 записей. Публикация остановлена, чтобы не потерять назначения.');
        liveData=clone(cleanData);
-       liveData.releases.radio.catalog=API.radioCatalog(cleanData,rows,sources);
-       liveData=API.normalize(liveData);
-       if(!sources.some(function(p){return liveData.releases.radio.catalog[p].length;}))
-         throw new Error('В каталоге пока нет ссылок выбранных площадок.');
+       if(sources.length){
+         liveData.releases.radio.catalog=API.radioCatalog(cleanData,rows,sources);
+         if(!sources.some(function(p){return liveData.releases.radio.catalog[p].length;}))
+           throw new Error('В каталоге пока нет ссылок выбранных площадок.');
+       }
+       (liveData.genres.entries||[]).forEach(function(g){
+         g.tracks=[];
+         (g.songIds||[]).forEach(function(songId){
+           if(!Object.prototype.hasOwnProperty.call(byId,songId))
+             throw new Error('Жанр «'+g.label+'»: песня '+songId+' не найдена в каталоге. Обнови каталог.');
+           var song=byId[songId],links=song.links||{},sourcesFound=[];
+           ['spotify','youtube','appleMusic'].forEach(function(p){
+             var verified=API.songUrl(links[p]||'',p);
+             if(verified)sourcesFound.push({provider:p,url:verified});
+           });
+           if(!sourcesFound.length)return; // retain ID for future publication
+           var first=sourcesFound[0];
+           var row={title:String(song.title||'Без названия'),artist:String(song.artist||''),
+             provider:first.provider,url:first.url};
+           if(sourcesFound[1]){row.alternateProvider=sourcesFound[1].provider;row.alternateUrl=sourcesFound[1].url;}
+           if(sourcesFound[2]){row.thirdProvider=sourcesFound[2].provider;row.thirdUrl=sourcesFound[2].url;}
+           g.tracks.push(API.languageTrack(row,1));
+         });
+       });
+       liveData=API.normalize(liveData); // enforce public-data whitelist
      });
    }).then(function(){
      if(uid!==account)throw new Error('Учётная запись изменилась.');
@@ -2664,12 +2829,12 @@
    catalogArtists=[];catalogLoaded=false;catalogLoading=false;catalogError='';
    trackLinks={revision:0,overrides:{}};trackLinksLoaded=false;pendingArtistLinks=false;trackEditorArtist='';trackChecked={};trackSearch='';trackSaving=false;
    if(window.VMM_SONG_DISTRIBUTION)window.VMM_SONG_DISTRIBUTION.reset();
-   data=API.defaults();baseline='';published=null;tab='hero';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;albumCatalogPage=0;hide();updateButtons();
+   data=API.defaults();baseline='';published=null;tab='hero';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;genreEditorId='';genreCatalogSearch='';genreTrackFilter='';genreCatalogPage=0;albumCatalogPage=0;hide();updateButtons();
  }
  var nav=document.querySelectorAll('#landing-tabs [data-landing-tab]');
  for(var i=0;i<nav.length;i++)nav[i].onclick=function(){
    tab=this.getAttribute('data-landing-tab');render();
-   if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();
+   if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics'||tab==='genres')loadCatalogArtists();
  };
  id('landing-save').onclick=save;
  id('landing-merge-offline').onclick=reconcileOffline;

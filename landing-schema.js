@@ -541,52 +541,64 @@
       'Описание вселенной',450,true),
       nodes:cleaned};
   }
+  // RUN-179: public collections support up to three verified official sources.
+  // Old Spotify-only and Spotify+YouTube published rows remain valid unchanged.
   function languageTrack(raw,i){
-    if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('Песня языка '+i+': неверная запись.');
-    var provider=plain(raw.provider||'','Площадка языковой песни '+i,20,true);
-    if(provider!=='spotify'&&provider!=='youtube')
-      throw new Error('Языковая песня: только Spotify и YouTube.');
+    if(!raw||typeof raw!=='object'||Array.isArray(raw))
+      throw new Error('Песня '+i+': неверная запись.');
+    var valid={spotify:true,youtube:true,appleMusic:true};
+    var provider=plain(raw.provider||'','Площадка песни '+i,20,true);
+    if(!valid[provider])
+      throw new Error('Песня: допускаются только Spotify, YouTube и Apple Music.');
     var link=songUrl(raw.url,provider);
-    if(!link)throw new Error('Языковая песня: требуется прямая ссылка Spotify/YouTube на трек.');
+    if(!link)throw new Error('Для песни нужна прямая ссылка Spotify/YouTube/Apple Music.');
     var track={title:plain(raw.title||'','Название песни '+i,110,true),
       artist:plain(raw.artist||'','Исполнитель '+i,100,false),
       provider:provider,url:link};
-    // RUN-090: one composition may have a second official source, but only
-    // one primary playback choice. Legacy 4-field entries remain unchanged.
     if(raw.alternateUrl||raw.alternateProvider){
-      var alt=plain(raw.alternateProvider||'','Дополнительная площадка песни '+i,20,true);
-      if(alt!=='spotify'&&alt!=='youtube'||alt===provider)
+      var alt=plain(raw.alternateProvider||'','Вторая площадка песни '+i,20,true);
+      if(!valid[alt]||alt===provider)
         throw new Error('Дополнительная площадка должна отличаться от основной.');
       var altUrl=songUrl(raw.alternateUrl||'',alt);
-      if(!altUrl)throw new Error('Для дополнительной площадки нужна прямая ссылка Spotify/YouTube.');
+      if(!altUrl)throw new Error('Для дополнительной площадки нужна прямая ссылка Spotify/YouTube/Apple Music.');
       track.alternateProvider=alt;track.alternateUrl=altUrl;
+    }
+    if(raw.thirdUrl||raw.thirdProvider){
+      var third=plain(raw.thirdProvider||'','Третья площадка песни '+i,20,true);
+      if(!track.alternateProvider||!valid[third]||third===provider||third===track.alternateProvider)
+        throw new Error('Третья площадка должна отличаться от остальных и идти после второй.');
+      var thirdUrl=songUrl(raw.thirdUrl||'',third);
+      if(!thirdUrl)throw new Error('Для третьей площадки нужна прямая ссылка Spotify/YouTube/Apple Music.');
+      track.thirdProvider=third;track.thirdUrl=thirdUrl;
     }
     return track;
   }
   function consolidateAttachedTracks(rows,label){
     var result=[],seenUrl={};
+    function providers(track){
+      var entries=[{provider:track.provider,url:track.url}];
+      if(track.alternateUrl)entries.push({provider:track.alternateProvider,url:track.alternateUrl});
+      if(track.thirdUrl)entries.push({provider:track.thirdProvider,url:track.thirdUrl});
+      return entries;
+    }
     rows.forEach(function(raw,i){
       var t=languageTrack(raw,i+1);
-      var urls=[t.url];if(t.alternateUrl)urls.push(t.alternateUrl);
-      urls.forEach(function(url){
-        if(seenUrl[url])throw new Error(label+': повтор одной песни.');
-        seenUrl[url]=true;
+      providers(t).forEach(function(src){
+        if(seenUrl[src.url])throw new Error(label+': повтор одной песни.');
+        seenUrl[src.url]=true;
       });
-      var key=(t.title+'\u0000'+t.artist).toLowerCase(),paired=null;
-      // Older saved lists may contain Spotify and YouTube as separate tracks.
-      // Pair ONLY complementary providers with identical title and artist,
-      // keeping their first occurrence/order; preserve same-provider versions.
+      var key=(t.title+'\u0000'+t.artist).toLowerCase(),paired=null,ours=providers(t);
       result.forEach(function(existing){
-        if((existing.title+'\u0000'+existing.artist).toLowerCase()!==key)return;
-        var theirs=[existing.provider];
-        if(existing.alternateProvider)theirs.push(existing.alternateProvider);
-        var ours=[t.provider];
-        if(t.alternateProvider)ours.push(t.alternateProvider);
-        var overlaps=ours.some(function(p){return theirs.indexOf(p)>=0;});
-        if(!overlaps&&theirs.length+ours.length<=2&&!paired)paired=existing;
+        if(paired||(existing.title+'\u0000'+existing.artist).toLowerCase()!==key)return;
+        var theirs=providers(existing);
+        var overlaps=ours.some(function(src){return theirs.some(function(one){return one.provider===src.provider;});});
+        if(!overlaps&&theirs.length+ours.length<=3)paired=existing;
       });
       if(paired){
-        paired.alternateProvider=t.provider;paired.alternateUrl=t.url;
+        ours.forEach(function(src){
+          if(!paired.alternateUrl){paired.alternateProvider=src.provider;paired.alternateUrl=src.url;}
+          else {paired.thirdProvider=src.provider;paired.thirdUrl=src.url;}
+        });
       }else result.push(t);
     });
     return result;
@@ -612,6 +624,44 @@
       'Языковые миры — заголовок',160,true),
       intro:plain(typeof item.intro==='string'?item.intro:def.intro,
       'Языковые миры — описание',450,true),entries:results};
+  }
+
+  // RUN-178 — genres are curated song collections, not decorative text tags.
+  // Legacy published documents only have genres.tags; migrate them in-memory
+  // with stable ids, without inventing any song assignment.
+  function genreEntries(raw,tags){
+    var rows=typeof raw.entries==='undefined'?
+      tags.map(function(label,i){return {id:'genre-'+(i+1),label:label,visible:true,tracks:[]};}):raw.entries;
+    if(!Array.isArray(rows)||rows.length>20)throw new Error('Жанры: максимум 20 направлений.');
+    var ids={},labels={};
+    return rows.map(function(item,i){
+      if(!item||typeof item!=='object'||Array.isArray(item))
+        throw new Error('Жанр '+(i+1)+': неверная запись.');
+      var code=plain(item.id||'','Код жанра '+(i+1),35,true).toLowerCase();
+      if(!/^[a-z0-9-]{2,35}$/.test(code)||ids[code])
+        throw new Error('Жанры: каждому направлению нужен уникальный код латиницей.');
+      ids[code]=true;
+      var name=plain(item.label||'','Название жанра '+(i+1),35,true);
+      var key=name.toLocaleLowerCase('ru').replace(/ё/g,'е');
+      if(labels[key])throw new Error('Жанры: одинаковые названия недопустимы.');
+      labels[key]=true;
+      // Only catalog song IDs are edited by the owner. Public song metadata is
+      // regenerated from the protected catalog during an explicit publication.
+      var idsList=typeof item.songIds==='undefined'?[]:item.songIds,seenSongs={};
+      if(!Array.isArray(idsList)||idsList.length>300)
+        throw new Error('Жанр '+name+': максимум 300 песен.');
+      var chosen=idsList.map(function(rawId){
+        if(typeof rawId!=='string'||!rawId||rawId==='.'||rawId==='..'||
+           rawId.length>150||rawId.indexOf('/')>=0||/[\x00-\x1f\x7f]/.test(rawId)||
+           seenSongs[rawId])throw new Error('Жанр '+name+': неверный или повторяющийся ID песни.');
+        seenSongs[rawId]=true;return rawId;
+      });
+      var tracks=typeof item.tracks==='undefined'?[]:item.tracks;
+      if(!Array.isArray(tracks)||tracks.length>300)
+        throw new Error('Жанр '+name+': максимум 300 публичных песен.');
+      return {id:code,label:name,visible:item.visible===true,
+        songIds:chosen,tracks:consolidateAttachedTracks(tracks,'Жанр '+name)};
+    });
   }
   function topicsConfig(raw,def){
     var x=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
@@ -929,7 +979,8 @@
     result.releases.subscriptions=safeList(releases.subscriptions,6,'Подписки',subscriptionCard,d.releases.subscriptions);
     var tags=typeof genres.tags==='undefined'?d.genres.tags:genres.tags;
     if(!Array.isArray(tags)||tags.length>20)throw new Error('Жанры: максимум 20 меток.');
-    result.genres.tags=tags.map(function(tag,i){return plain(tag,'Жанр '+(i+1),35,true);});
+    result.genres.entries=genreEntries(genres,tags);
+    result.genres.tags=result.genres.entries.map(function(g){return g.label;});
     var songViewMode=typeof genres.songViewMode==='undefined'?'standard':genres.songViewMode;
     if(songViewMode!=='standard'&&songViewMode!=='carousel')
       throw new Error('Оформление песен: выбери обычный показ или карусель.');
@@ -951,7 +1002,7 @@
     universeConfig:universeConfig,languagesConfig:languagesConfig,
     languageTrack:languageTrack,consolidateAttachedTracks:consolidateAttachedTracks,
     defaultUniverseNodes:defaultUniverseNodes,defaultLanguages:defaultLanguages,
-    defaultTopics:defaultTopics,topicsConfig:topicsConfig,
+    defaultTopics:defaultTopics,topicsConfig:topicsConfig,genreEntries:genreEntries,
     assistantConfig:assistantConfig,auditAssistantRules:auditAssistantRules,
     recommendedAssistantRules:recommendedAssistantRules,
     addRecommendedAssistantRules:addRecommendedAssistantRules};
