@@ -439,7 +439,7 @@
    try{closed=window.sessionStorage&&window.sessionStorage.getItem('velar-analytics-bubble-dismissed')==='1';}catch(ignore){}
    if(shouldOffer&&!closed){
      var span=prompt.querySelector('.velar-assistant-greeting-text');
-     if(span)span.textContent='DJ Velar: поможешь узнать, какая музыка интересна гостям? Разрешить статистику Google Analytics? Отказ не мешает слушать.';
+     if(span)span.textContent='Добро пожаловать во вселенную VELARDREAM! Поможешь нам понять, какие песни интересны гостям? Разрешить Google Analytics учитывать посещения и открытия плееров? Данные передаются Google. Отказ не ограничивает музыку.';
      actions.style.display='flex';
      prompt.className='velar-assistant-greeting';
      root.className='velar-assistant';
