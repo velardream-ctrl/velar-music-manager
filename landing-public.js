@@ -809,7 +809,7 @@
    }
    function settleHeroAnchor(){
      if(movedByListener||!pendingHeroAnchor)return;
-     var hero=document&&document.getElementById?
+     var hero=typeof document!=='undefined'&&document.getElementById?
        document.getElementById('hero-crystal-link'):null;
      var rect=hero&&hero.getBoundingClientRect?hero.getBoundingClientRect():null;
      if(!rect||rect.height<=40||rect.top>=window.innerHeight||rect.bottom<=0)return;
@@ -903,7 +903,7 @@
    };
    // The first paint uses the crystal position instead of CSS top:12px.
    fit();
-   var hero=document&&document.getElementById?
+   var hero=typeof document!=='undefined'&&document.getElementById?
      document.getElementById('hero-crystal-link'):null;
    heroImg=hero&&hero.querySelector?hero.querySelector('img'):null;
    if(heroImg&&heroImg.addEventListener)
