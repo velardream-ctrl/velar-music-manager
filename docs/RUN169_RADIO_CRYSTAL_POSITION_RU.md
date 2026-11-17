@@ -15,3 +15,8 @@
 
 ## Журнал
 - НАЧАЛ: branch feat/run169-radio-crystal-initial-position-20261117 от main c84f90775d80c67ec5683b305543b2ad40558ce8.
+
+## ЗАВЕРШИЛ — 17.11.2026
+- PR #127 https://github.com/velardream-ctrl/velar-music-manager/pull/127, squash-MERGED в main: SHA 534e870e5608709c87fe7777f94a7b1a5cb601c4.
+- CI push #44005500725 SUCCESS; CI PR #44005507062 SUCCESS; main #44005562337 SUCCESS; Pages deploy #44005561877 SUCCESS.
+- Отдельные новые тесты на начальный якорь у кристалла, перемещение, ротацию, deep-link и выравнивание мини-плеера прошли. Автоматические тесты не заменяют реальный осмотр на iPhone/iPad.
