@@ -26,6 +26,14 @@ assert.match(publicSrc,/renderCatalogProgress\(value\.about\.progress\)/);
 assert.match(publicSrc,/role','progressbar'/);
 assert.match(studioSrc,/publicProgressEditor\(panel\)/);
 assert.match(studioSrc,/loadCatalogArtists\(true\)/);
+assert.match(studioSrc,/function normalizeWithLinkCapacity\(raw\)/);
+assert.match(studioSrc,/progress\.total=songs\*3/);
+assert.match(studioSrc,/progress\.total!==songs/);
+assert.match(studioSrc,/Рассчитать максимум по числу песен × 3/);
+assert.match(studioSrc,/normalizeWithLinkCapacity\(value\.content\)/);
+assert.match(studioSrc,/normalizeWithLinkCapacity\(payload\.content\)/);
+assert.match(studioSrc,/normalizeWithLinkCapacity\(data\)/);
+
 assert.match(read('index.html'),/id="public-catalog-progress"[^>]*hidden/);
 assert.doesNotMatch(publicSrc,/collection\('vmm_catalog'\)/,'Public UI cannot query private catalog');
 console.log('PASS public aggregate progress: hidden default, numbers, guards, editor, public-only');
