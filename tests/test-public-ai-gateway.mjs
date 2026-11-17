@@ -72,6 +72,7 @@ console.log('PASS RUN-196: server-side opt-in, origin, per-client and global rat
 
 assert.doesNotMatch(assistant,/velar-assistant-ai-notice|Неизвестные вопросы могут передаваться Cloudflare AI/);
 // RUN-199: Health must accurately distinguish deployed bindings from client toggle.
+delete env.PUBLIC_AI_BUDGET;
 let health=await context.worker.fetch(new Request('https://ai.velardream.com/health',{method:'GET'}),env);
 assert.equal((await health.json()).publicEnabled,false,'Missing budget must not show ready');
 env.PUBLIC_AI_BUDGET={idFromName:()=>1,get:()=>({fetch:async()=>Response.json({ok:true})})};
