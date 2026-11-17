@@ -35,7 +35,7 @@
    if(src.provider==='appleMusic')return src.url.replace('https://music.apple.com/','https://embed.music.apple.com/');
    return '';
  }
- var activeMount=null,defaultView='rows',coverMap={},globalMode='standard',coverPriority='spotify-first';
+ var activeMount=null,defaultView='rows',coverMap={},globalMode='standard',coverPriority='spotify-first',sectionModes={};
  var artworkCache={};
  // RUN-121: every rendered song card requests its cover immediately.
  // Owner-approved artwork still takes precedence over official oEmbed.
@@ -85,7 +85,8 @@
        }).catch(function(){settle('');});
    }catch(e){settle('');}
  }
- function configure(view,albums,mode,releases,priority){
+ function configure(view,albums,mode,releases,priority,modes){
+   sectionModes=modes&&typeof modes==='object'?modes:{};
    coverPriority=priority==='youtube-first'?'youtube-first':'spotify-first';
    defaultView=['rows','covers','tiles'].indexOf(view)>=0?view:'rows';
    globalMode=mode==='carousel'?'carousel':'standard';
@@ -123,8 +124,66 @@
    if(!opts.keepOrder)tracks.sort(function(a,b){return compareSong(a.track,b.track)||a.index-b.index;});
    tracks=tracks.map(function(row){return row.track;});
    var classes=opts.prefix==='language'?'language':opts.prefix==='album'?'album':'topic';
-   var view=opts.prefix==='artist'?(opts.view||'rows'):(globalMode==='carousel'?'carousel':(opts.view||defaultView));
-   if(['rows','covers','tiles','carousel'].indexOf(view)<0)view='rows';
+   var configured=sectionModes[opts.prefix]||
+     (globalMode==='carousel'?'carousel':(opts.view||defaultView));
+   var view=opts.forceView||(opts.prefix==='artist'?(opts.view||'rows'):configured);
+   if(['compact','rows','covers','tiles','carousel'].indexOf(view)<0)view='rows';
+   // 200-track carousels make discovery impractical. Keep them searchable.
+   if(view==='carousel'&&tracks.length>40)view='compact';
+   if(view==='compact'&&!opts._compactInternal){
+     clear(list);list.className+=' public-song-compact';
+     var toolbar=el('div','public-song-compact-toolbar');
+     var search=el('input','public-song-compact-search');
+     search.type='search';search.placeholder='Найти песню или исполнителя…';
+     search.setAttribute('aria-label','Поиск песни по названию или исполнителю');
+     var state=el('span','public-song-compact-status');
+     toolbar.appendChild(search);toolbar.appendChild(state);
+     var rows=el('div','public-song-compact-results');
+     var pages=el('div','public-song-compact-pages');
+     var prev=el('button','public-song-page-button','← Назад');
+     var next=el('button','public-song-page-button','Вперёд →');
+     prev.type='button';next.type='button';
+     var progress=el('span','public-song-compact-progress');
+     pages.appendChild(prev);pages.appendChild(progress);pages.appendChild(next);
+     list.appendChild(toolbar);list.appendChild(rows);list.appendChild(pages);
+     var currentPage=0,current=null,filtered=[],size=25;
+     function redraw(){
+       if(current)current.close();
+       clear(rows);filtered=tracks.filter(function(track){
+         var needle=String(search.value||'').trim().toLocaleLowerCase('ru').replace(/ё/g,'е');
+         return !needle||(String(track.title||'')+' '+String(track.artist||'')).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(needle)>=0;
+       });
+       var totalPages=Math.max(1,Math.ceil(filtered.length/size));
+       currentPage=Math.min(Math.max(0,currentPage),totalPages-1);
+       var first=currentPage*size;
+       state.textContent='Найдено: '+filtered.length+' из '+tracks.length;
+       progress.textContent=filtered.length?(first+1)+'–'+Math.min(first+size,filtered.length):'0';
+       progress.textContent+=' / '+filtered.length;
+       prev.disabled=currentPage===0;next.disabled=currentPage>=totalPages-1;
+       pages.hidden=filtered.length<=size;
+       var selected=filtered.slice(first,first+size);
+       if(selected.length)current=mount(rows,selected,{
+         prefix:opts.prefix,forceView:'rows',view:'rows',batch:25,keepOrder:true,_compactInternal:true
+       });
+       else {current=null;rows.appendChild(el('p','topic-empty','Песни не найдены. Измени запрос.'));}
+     }
+     prev.onclick=function(){currentPage--;redraw();};
+     next.onclick=function(){currentPage++;redraw();};
+     search.oninput=function(){currentPage=0;redraw();};
+     var outer={
+       close:function(){if(current)current.close();},
+       openByUrl:function(url){
+         for(var i=0;i<tracks.length;i++){
+           if(approved(tracks[i]).some(function(source){return source.url===url;})){
+             search.value='';currentPage=Math.floor(i/size);redraw();
+             return current&&current.openByUrl(url);
+           }
+         }
+         return false;
+       }
+     };
+     redraw();return outer;
+   }
    if(view==='tiles')list.className+=' public-song-list--tiles';
    var isCarousel=view==='carousel';
    var amount=opts.batch||12,index=-1,source='',slots=[],buttons=[],titles=[],entries=[],
