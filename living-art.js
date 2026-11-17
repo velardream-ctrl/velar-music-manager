@@ -122,9 +122,11 @@
      if(r.bottom<0||r.top>window.innerHeight)return;
      var total=window.innerHeight+(chapter.offsetHeight||r.bottom-r.top);
      var p=clamp((window.innerHeight-r.top)/Math.max(1,total));
-     image.style.transform='translate(-50%,-50%) scale('+(1+.08*p).toFixed(3)+')';
-     outerRing.style.transform='translate(-50%,-50%) rotate('+Math.round(25*p)+'deg)';
-     innerRing.style.transform='translate(-50%,-50%) rotate('+Math.round(-31*p)+'deg)';
+     // RUN-174: clearly perceptible but lightweight scroll feedback on Safari 12.
+     // This branch is only called for pre-iPadOS-14 iPads.
+     image.style.transform='translate(-50%,-50%) scale('+(0.90+.27*p).toFixed(3)+')';
+     outerRing.style.transform='translate(-50%,-50%) rotate('+Math.round(65*p)+'deg)';
+     innerRing.style.transform='translate(-50%,-50%) rotate('+Math.round(-75*p)+'deg)';
    }
    function schedule(){if(!queued){queued=true;window.requestAnimationFrame(draw);}}
    window.addEventListener('scroll',schedule,false);
