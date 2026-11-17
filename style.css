@@ -2422,3 +2422,18 @@ html.legacy-ipad-crystal .velar-radio > .station-help > .station-help-button::-w
 .genre-tags .genre-select:focus-visible{outline:2px solid #ffe7b7;outline-offset:3px}
 .genre-detail{margin-top:20px}
 .genre-detail-title{font:400 1.6rem Georgia,serif;color:#fbeacb;margin:0 0 9px}
+
+/* RUN-181 — compact search for large published genre/topic/language/album lists. */
+.public-song-compact{width:100%;min-width:0;max-width:100%;display:block}
+.public-song-compact-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:7px 0 12px}
+.public-song-compact-search{flex:1 1 210px;min-width:0;min-height:44px;
+ border:1px solid #d8c39b77;border-radius:10px;background:#0b1932;
+ color:#fff0cf;padding:8px 12px;font:inherit;font-size:16px}
+.public-song-compact-status{color:#c4d0e3;font-size:.8rem}
+.public-song-compact-results{display:flex;flex-direction:column;gap:7px;width:100%;min-width:0}
+.public-song-compact-pages{display:flex;justify-content:center;align-items:center;gap:13px;
+ flex-wrap:wrap;margin:16px 0 7px;font-size:.83rem}
+.public-song-compact-pages[hidden]{display:none}
+.public-song-page-button{min-height:44px;padding:8px 13px;border-radius:10px;
+ background:#1b2d4e;border:1px solid #d1af76;color:#f6deb1;cursor:pointer;font:inherit}
+.public-song-page-button:disabled{opacity:.4;cursor:default}
