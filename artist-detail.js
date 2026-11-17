@@ -148,7 +148,13 @@
  function requestSongArtwork(track,safe,holder,index){
    var note=make('span','artist-track-artwork-note','♫');
    note.setAttribute('aria-hidden','true');holder.appendChild(note);
-   var pending='',loaded=false;
+   var pending='',loaded=false,spotifyRequested=false;
+   function requestSpotify(){
+     if(spotifyRequested)return;
+     spotifyRequested=true;
+     if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.requestArtwork)
+       window.VELAR_PUBLIC_SONGS.requestArtwork(artTrack(track),put);
+   }
    function put(url){
      if(!url||loaded||pending===url)return;
      // Album art is already validated through the public page schema.
@@ -169,13 +175,13 @@
        if(img.parentNode)img.parentNode.removeChild(img);
        if(pending===url)pending='';
        note.hidden=false;
+       if(url===cover)requestSpotify(); // approved album cover failed; try official Spotify
      };
      holder.appendChild(img);img.src=url;
    }
    var cover=approvedArt(track,safe);
    if(cover){put(cover);return;}
-   if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.requestArtwork)
-     window.VELAR_PUBLIC_SONGS.requestArtwork(artTrack(track),put);
+   requestSpotify();
  }
  function render(content){
    if(!window.VMM_LANDING_SCHEMA)return false;
