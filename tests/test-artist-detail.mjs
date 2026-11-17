@@ -3,8 +3,13 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const schemaSrc=read('landing-schema.js'),src=read('artist-detail.js'),
- html=read('artist.html'),sw=read('sw.js');
+ html=read('artist.html'),sw=read('sw.js'),css=read('artist-detail.css'),
+ shared=read('public-song-ui.js');
 const window={location:{search:'?id=velar'}},elements={};
+const artworkCalls=[],verifiedCover='https://i.scdn.co/image/1234567890abcdef';
+window.VELAR_PUBLIC_SONGS={requestArtwork(track,onCover){
+ artworkCalls.push(track);onCover(verifiedCover);
+}};
 function el(tag='div'){
  const obj={tagName:tag,children:[],className:'',textContent:'',style:{},hidden:false,attributes:{},
   setAttribute(k,v){this.attributes[k]=v;this[k]=v;},
@@ -60,6 +65,9 @@ assert.equal(platforms.length,3,'Spotify, YouTube and Apple Music share one song
 assert.equal(platforms[0].attributes['data-provider'],'spotify');
 assert.equal(platforms[1].attributes['data-provider'],'youtube');
 assert.equal(platforms[2].attributes['data-provider'],'appleMusic');
+assert.ok(platforms[0].className.includes('artist-track-source--spotify'));
+assert.ok(platforms[1].className.includes('artist-track-source--youtube'));
+assert.ok(platforms[2].className.includes('artist-track-source--appleMusic'));
 assert.equal(card.children[1].children.length,0,'No audio player before user interaction');
 platforms[2].onclick();
 assert.equal(card.children[1].children[0].tagName,'iframe');
@@ -71,6 +79,26 @@ assert.equal(elements['artist-portrait'].src,profile.imageUrl);
 data.artists.detailTrackView='tiles';
 assert.equal(renderer.render(data),true);
 assert.match(elements['artist-tracks'].className,/artist-tracks--tiles/);
+assert.equal(artworkCalls.length,1,'Cover request made exactly once for grouped song');
+assert.equal(artworkCalls[0].provider,'spotify','Art lookup uses verified Spotify URL');
+assert.equal(artworkCalls[0].alternateProvider,'youtube');
+assert.equal(artworkCalls[0].thirdProvider,'appleMusic');
+const tileCard=elements['artist-tracks'].children[0].children[0];
+const imageHolder=tileCard.children[0].children[0];
+assert.ok(imageHolder.className.includes('artist-track-artwork'));
+assert.equal(imageHolder.children[0].textContent,'♫','Note remains until art loads');
+assert.equal(imageHolder.children[1].tagName,'img');
+assert.equal(imageHolder.children[1].src,verifiedCover);
+imageHolder.children[1].onload();
+assert.equal(imageHolder.children[0].hidden,true,'Note disappears after official cover loads');
+assert.match(imageHolder.children[1].className,/is-loaded/);
+data.artists.detailTrackView='covers';
+assert.equal(renderer.render(data),true);
+const coverRow=elements['artist-tracks'].children[0].children[0];
+assert.match(coverRow.children[0].children[0].className,/artist-track-artwork/);
+coverRow.children[0].children[0].children[1].onerror();
+assert.equal(coverRow.children[0].children[0].children.length,1,'On image failure note stays visible');
+assert.equal(coverRow.children[0].children[0].children[0].hidden,false);
 data.artists.detailTrackView='compact';
 assert.equal(renderer.render(data),true);
 assert.match(elements['artist-tracks'].className,/artist-tracks--compact/);
@@ -85,8 +113,15 @@ assert.equal(renderer.render({...data,artists:{...data.artists,cards:[{...profil
 assert.equal(elements['artist-content'].hidden,true);
 assert.match(elements['artist-message'].textContent,/не опубликован/);
 assert.match(html,/noindex,nofollow/);
-assert.match(html,/artist-detail\.js\?v=4/);
-assert.match(sw,/artist-detail\.js\?v=4/);
+assert.match(html,/artist-detail\.js\?v=5/);
+assert.match(sw,/artist-detail\.js\?v=5/);
+assert.match(html,/public-song-ui\.js\?v=25/,'Same public art module is loaded before profile');
+assert.ok(html.indexOf('public-song-ui.js')<html.indexOf('artist-detail.js'));
+assert.match(sw,/artist-detail\.css\?v=3/);
+assert.match(css,/artist-track-source--spotify::after/);
+assert.match(css,/artist-track-source--appleMusic::after/);
+assert.match(css,/artist-track-source--youtube::after/);
+assert.match(shared,/requestArtwork:requestArtwork/);
 assert.doesNotMatch(src,/\.collection\(['"]vmm_(?:lyrics|catalog|recordings|public_drafts)['"]\)/);
 assert.doesNotMatch(src,/\.set\(|\.add\(|\.update\(|\.delete\(/);
 console.log('PASS: individual artist pages render only published allowed profile information, with safe external links');
