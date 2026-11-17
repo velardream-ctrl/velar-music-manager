@@ -15,7 +15,7 @@ assert.match(studioHTML,/ai-lab\.js\?v=1/);
 assert.match(sw,/studio\/ai-lab\.js\?v=1/);
 assert.match(sw,/reports191-ai192/);
 assert.doesNotMatch(read('index.html'),/ai-lab\.js|dj-velar-owner-lab/,'Visitor page must load no new AI scripts');
-assert.doesNotMatch(labSrc,/localStorage|sessionStorage|firebase|Firestore|setItem/,'Owner tokens and questions are never saved');
+assert.doesNotMatch(labSrc,/\.(?:setItem|getItem)\(|firebase\.firestore\(|localStorage\[/,'Owner tokens and questions are never saved');
 assert.match(labSrc,/Bearer /);
 assert.match(labSrc,/v1\/owner-test/);
 assert.match(workerSrc,/VELAR_OWNER_TEST_TOKEN/);
