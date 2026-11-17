@@ -436,7 +436,7 @@
          analyticsRespond(accept);
          actions.style.display='none';
          var line=prompt.querySelector&&prompt.querySelector('.velar-assistant-greeting-text');
-         if(line)line.textContent=accept?'Спасибо! Статистика включена по вашему согласию.':'Ваш выбор сохранён. Музыка доступна без аналитики.';
+         if(line)line.textContent=accept?'Спасибо за согласие! Какую музыку послушаем? Выберите настроение или откройте DJ Velar.':'Спасибо за ответ! Какую музыку послушаем? Выберите настроение или откройте DJ Velar.';
          prompt.className='velar-assistant-greeting';
        };
        actions.appendChild(b);
