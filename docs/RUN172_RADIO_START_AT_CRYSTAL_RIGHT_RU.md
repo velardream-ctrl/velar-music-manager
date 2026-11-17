@@ -16,3 +16,10 @@ tests/test-radio-position.mjs: 414px и 320px, начальная правая �
 ## Хронология
 - НАЧАЛ: 17.11.2026, в PR #129, ветка fix/run171-ios-scroll-crystal-floating-20261117.
 - ЗАВЕРШЕНИЕ: внести SHA, результаты CI и GitHub Pages после публикации.
+
+## ЗАВЕРШИЛ — 17.11.2026
+- PR #129 MERGED: https://github.com/velardream-ctrl/velar-music-manager/pull/129
+- main 804d6954440a14ff161c6422c4ebac25b341634e
+- Автоматические проверки: branch #44035676416 SUCCESS, PR #44035684228 SUCCESS, main #44035785577 SUCCESS.
+- GitHub Pages #44035785328 SUCCESS. Публичные версии landing-public.js?v=53 и SW v90 опубликованы.
+- На реальном iPhone требуется проверить стартовое положение рядом с верхним кристаллом. Автотесты не являются заменой физической проверки.

@@ -24,3 +24,9 @@
 
 ## Уточнение RUN-172 до выпуска
 Владелец подтвердил улучшение скролла iPhone и попросил сместить начальную позицию радио справа от кристалла. В том же PR #129 добавлена страховка для загрузки hero изображения, приоритет ручного drag и новый cache JS. Подробнее: docs/RUN172_RADIO_START_AT_CRYSTAL_RIGHT_RU.md.
+
+## ЗАВЕРШИЛ — 17.11.2026
+- PR #129 MERGED: https://github.com/velardream-ctrl/velar-music-manager/pull/129
+- main 804d6954440a14ff161c6422c4ebac25b341634e
+- branch CI #44035676416 SUCCESS, PR CI #44035684228 SUCCESS, main CI #44035785577 SUCCESS, Pages #44035785328 SUCCESS.
+- Скролл iPhone и ранний/поздний render радио опубликованы в одной проверенной сборке. Физическое поведение нового расположения RADIO проверить владельцу на iPhone.
