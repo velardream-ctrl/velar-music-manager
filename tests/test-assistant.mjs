@@ -72,7 +72,8 @@ assert.match(sw,/'\.\/velar-assistant\.js\?v=15&consent=190&typing=191&ai=196'/)
 assert.match(publicCode,/velar-radio-panel--mini/);
 assert.doesNotMatch(publicCode,/localStorage\.setItem\('velar-radio-hidden'/);
 assert.match(publicCode,/VELAR_ASSISTANT\.render\(value\)/);
-assert.doesNotMatch(code,/fetch\(|firebase|XMLHttpRequest|setInterval\(|WebSocket|autoplay=|\.play\(/);
+assert.doesNotMatch(code,/firebase|XMLHttpRequest|setInterval\(|WebSocket|autoplay=|\.play\(/);
+assert.match(code,/https:\/\/ai\.velardream\.com\/v1\/public-chat/);
 assert.match(code,/window\.setTimeout\(step,/,'typing uses one cancellable local timer');
 assert.match(code,/window\.clearTimeout\(session\.timer\)/,'typing must cancel on close');
 assert.match(css,/\.velar-assistant\{[\s\S]*?bottom:0;/);
