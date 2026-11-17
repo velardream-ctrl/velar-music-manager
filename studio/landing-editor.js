@@ -928,7 +928,7 @@
    parent.appendChild(note);
    field(parent,'Название радио',radio.title||'VELAR RADIO',function(v){radio.title=v;});
    heading(parent,'Анимация и свечение логотипа','Золотое сияние вокруг значка. Выбери режим, яркость и размер ореола. Сохрани черновик и отдельно опубликуй.');
-   var visual=radio.visual||(radio.visual={mode:'heartbeat',intensity:3,spread:50});
+   var visual=radio.visual||(radio.visual={mode:'heartbeat',intensity:3,spread:20});
    selectField(parent,'Режим анимации радио',[
      ['heartbeat','Сердцебиение — двойной удар и мягкое послесвечение'],
      ['shimmer','Мерцание — спокойная музыка'],

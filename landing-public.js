@@ -1184,7 +1184,7 @@
    host.setAttribute('data-radio-effect',visual.mode||'heartbeat');
    host.setAttribute('data-radio-intensity',String(visual.intensity||3));
    var spread=Number(visual.spread);
-   if(!(spread>=1&&spread<=100&&Math.floor(spread)===spread))spread=50;
+   if(!(spread>=1&&spread<=100&&Math.floor(spread)===spread))spread=20;
    host.setAttribute('data-radio-spread',String(spread));
    // RUN-168: 68px approved emblem; precise radius for any integer 1–100.
    // Inline styles override legacy 75/100 CSS presets without touching

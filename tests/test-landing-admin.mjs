@@ -237,6 +237,7 @@ assert.ok(glowSlider&&spreadSlider);
 assert.equal(spreadSlider.min,'1');
 assert.equal(spreadSlider.max,'100');
 assert.equal(spreadSlider.step,'1');
+assert.equal(spreadSlider.value,'20','New sites should begin with the gentler 20% halo');
 glowSlider.value='5';glowSlider.oninput.call(glowSlider);
 spreadSlider.value='100';spreadSlider.oninput.call(spreadSlider);
 assert.equal(radioTitle.value,'VELAR RADIO');

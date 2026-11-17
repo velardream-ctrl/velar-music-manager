@@ -23,7 +23,7 @@ const d=api.defaults();
 assert.equal(d.releases.radio.enabled,false,'RADIO is disabled by default');
 assert.equal(d.releases.radio.controlVersion,2);
 assert.equal(d.releases.radio.visual.mode,'heartbeat');
-assert.equal(d.releases.radio.visual.spread,50);
+assert.equal(d.releases.radio.visual.spread,20);
 const legacy={...d.releases.radio,enabled:true};delete legacy.controlVersion;
 assert.equal(api.radioConfig(legacy).enabled,false,'Legacy published enabled:true does NOT reactivate radio');
 assert.equal(api.radioConfig({...legacy,controlVersion:2}).enabled,true,'Owner can re-enable radio explicitly');
@@ -137,8 +137,8 @@ assert.equal(musicBtn.attributes['aria-pressed'],'false');
 musicBtn.onclick();
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1,'Third release click reopens it');
 const radio=map['velar-radio'];assert.equal(radio.className,'velar-radio velar-radio--bubble');
-assert.equal(radio.children[0].children.find(c=>c.className==='velar-radio-halo').style.top,'-34px',
- 'The previously published default 50% spread has exactly the old 34px radius');
+assert.equal(radio.children[0].children.find(c=>c.className==='velar-radio-halo').style.top,'-13.6px',
+ 'New default 20% equals a 13.6px halo radius on a 68px emblem');
 assert.equal(radio.attributes['data-radio-effect'],'heartbeat');
 assert.equal(radio.attributes['data-radio-player-open'],'false');
 assert.ok(radio.children[0].children.some(c=>c.className==='velar-radio-halo'));
