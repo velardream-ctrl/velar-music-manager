@@ -5,7 +5,7 @@ const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const code=read('ai-fallback.js'),lab=read('studio/ai-lab.js'),html=read('studio/index.html'),sw=read('sw.js');
 new vm.Script(code);
 assert.match(html,/\.\.\/ai-fallback\.js\?v=1/);
-assert.match(html,/ai-lab\.js\?v=4/);
+assert.match(html,/ai-lab\.js\?v=5/);
 assert.match(sw,/ai-fallback\.js\?v=1/);
 assert.match(sw,/fallback195/);
 assert.match(read('index.html'),/ai-fallback\.js\?v=1/,'Public assistant loads fallback router');
