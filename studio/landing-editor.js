@@ -246,7 +246,7 @@
    });
  }
  var openedArtistDetails={};
- var tabs={hero:'Первый экран',distribution:'Распределение песен',artists:'Артисты',releases:'Музыка и релизы',albums:'Альбомы',playlists:'Плейлисты и подписки',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',about:'О проекте',publish:'Публикация'};
+ var tabs={hero:'Оформление главной',distribution:'Распределение песен',artists:'Артисты',releases:'Музыка и релизы',albums:'Альбомы',playlists:'Плейлисты и подписки',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',about:'О проекте',publish:'Публикация'};
  function id(k){return document.getElementById(k);}
  function clear(el){while(el.firstChild)el.removeChild(el.firstChild);}
  function text(el,t){if(el)el.textContent=String(t==null?'':t);}
