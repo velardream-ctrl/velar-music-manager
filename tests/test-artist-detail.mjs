@@ -14,8 +14,8 @@ function el(tag='div'){
  const obj={tagName:tag,children:[],className:'',textContent:'',style:{},hidden:false,attributes:{},
   setAttribute(k,v){this.attributes[k]=v;this[k]=v;},
   getAttribute(k){return this.attributes[k]||'';},
-  appendChild(x){this.children.push(x);return x;},
-  removeChild(x){this.children.splice(this.children.indexOf(x),1);},
+  appendChild(x){this.children.push(x);x.parentNode=this;return x;},
+  removeChild(x){this.children.splice(this.children.indexOf(x),1);x.parentNode=null;},
   get firstChild(){return this.children[0]||null;}};
  return obj;
 }
