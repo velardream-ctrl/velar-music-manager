@@ -48,6 +48,9 @@ function environment(opts={}){
  const names2=['#artists .section-heading','#releases .section-heading','#playlists .section-heading',
   '#universe .universe-overline','#languages .universe-overline','#genres .section-heading','#about .section-heading'];
  const map=Object.fromEntries(names2.map((key,i)=>[key,headings[i]]));
+ const hero=node('hero'),header=node('site-header');
+ hero.style={};header.offsetHeight=96;header.getBoundingClientRect=()=>({height:96});
+ map['.hero']=hero;map['.site-header']=header;
  const doc={readyState:'complete',hidden:false,documentElement:{className:''},
   getElementById:id=>id==='crystal-journey'?chapter:null,querySelector:q=>map[q]||null,
   events:{},addEventListener(type,fn){this.events[type]=fn;}};
@@ -65,7 +68,7 @@ function environment(opts={}){
    cancelAnimationFrame:()=>{},
    addEventListener:(k,fn)=>events[k]=fn,removeEventListener:k=>delete events[k]};
  vm.runInNewContext(art,{window:win,document:doc,Array,Math,Number,String,Error},{timeout:1000});
- return {win,doc,parts,chapter,beams,stanzas,headings,observers,queued,events,api:win.VELAR_LIVING_ART};
+ return {win,doc,parts,chapter,hero,header,beams,stanzas,headings,observers,queued,events,api:win.VELAR_LIVING_ART};
 }
 const r=environment();
 assert.equal(r.api.scrollProgress(-380,1520,800),380/720);
@@ -135,6 +138,7 @@ assert.match(css,/html\.ios-scroll-stable\.has-living-art \.art-reveal\{[\s\S]*?
 // scroll animation. Modern devices keep exactly their previous CSS and JS.
 const oldIpad=environment({width:768,height:1024,clip:false,
  userAgent:'Mozilla/5.0 (iPad; CPU OS 12_5_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/90.0 Mobile/15E148 Safari/604.1'});
+assert.equal(oldIpad.hero.style.minHeight,'928px','iPad header and hero should fill exactly one portrait viewport');
 assert.match(oldIpad.doc.documentElement.className,/legacy-ipad-crystal/,
  'Old Safari 12 iPad must receive the narrowly scoped sky/size fallbacks');
 assert.doesNotMatch(oldIpad.doc.documentElement.className,/ios-scroll-stable/,
@@ -202,7 +206,7 @@ assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-ring--outer\{[^}]*
 assert.match(css,/html\.ios-scroll-stable\.has-living-art \.crystal-journey\{\s*height:200vh;/);
 assert.match(css,/html\.ios-scroll-stable\.has-living-art \.crystal-journey-stage\{\s*position:-webkit-sticky;position:sticky;top:0;\s*height:100vh;/);
 assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-stage\{\s*height:100vh;min-height:700px;/);
-assert.match(art,/RUN-174: clearly perceptible but lightweight scroll feedback/);
+assert.match(art,/RUN-176: Safari 12 old iPad uses a scroll-synchronized fixed stage/);
 // RUN-175: old-iPad-only sticky scene with the correct scroll progress.
 assert.match(css,/html\.legacy-ipad-crystal body\.public-site\{overflow-x:visible\}/);
 assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey\{\s*position:relative;height:200vh;/);
@@ -215,5 +219,6 @@ assert.doesNotMatch(newIpad.doc.documentElement.className,/legacy-ipad-crystal/)
 assert.match(css,/html\\.legacy-ipad-crystal \\.crystal-journey-stage\\.legacy-crystal-pinned\\{/);
 assert.match(css,/html\\.legacy-ipad-crystal \\.crystal-journey-stage\\.legacy-crystal-ended\\{/);
 assert.match(art,/legacy-crystal-pinned/);
+assert.match(art,/legacyIpadFirstScreen\(\)/);
 assert.match(art,/data-journey-phase/);
 console.log('PASS: RUN-071/171/173 iPhone and modern iPad untouched; Safari12 iPad receives the missing crystal, rings and throttled scroll motion');
