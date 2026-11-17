@@ -918,10 +918,17 @@
    var station=byId('station-page');
    // RUN-162: start collapsed as a real floating logo, no playback until user chooses.
    host.className=station?'velar-radio':'velar-radio velar-radio--bubble';
+   var visual=config.visual||{};
+   host.setAttribute('data-radio-effect',visual.mode||'heartbeat');
+   host.setAttribute('data-radio-intensity',String(visual.intensity||3));
+   host.setAttribute('data-radio-spread',String(visual.spread||50));
+   host.setAttribute('data-radio-player-open','false');
    var toggle=create('button','velar-radio-toggle','');
    toggle.type='button';toggle.setAttribute('aria-expanded','false');
    toggle.setAttribute('aria-label',station?'Свернуть VELAR RADIO':'Развернуть VELAR RADIO (можно перетащить)');
    toggle.setAttribute('aria-controls','velar-radio-panel');
+   var halo=create('span','velar-radio-halo');
+   halo.setAttribute('aria-hidden','true');toggle.appendChild(halo);
    var dot=create('span','velar-radio-dot');dot.setAttribute('aria-hidden','true');
    toggle.appendChild(dot);toggle.appendChild(create('span','',config.title));
    var icon=create('span','velar-radio-chevron');icon.setAttribute('aria-hidden','true');toggle.appendChild(icon);
@@ -955,14 +962,14 @@
      if(available.length>1){
        var select=create('select','');select.setAttribute('aria-label','Площадка радио');
        available.forEach(function(p){var option=create('option','',names[p]+' · '+catalog[p].length);option.value=p;select.appendChild(option);});
-       select.onchange=function(){selected=select.value;queue=[];cursor=0;empty(player);open.setAttribute('aria-pressed','false');};
+       select.onchange=function(){selected=select.value;queue=[];cursor=0;empty(player);host.setAttribute('data-radio-player-open','false');open.setAttribute('aria-pressed','false');};
        panel.appendChild(select);
      }
    }
    open.type='button';open.setAttribute('aria-pressed','false');
    open.onclick=function(){
      if(hasEmbed(player)){
-       empty(player);open.setAttribute('aria-pressed','false');return;
+       empty(player);host.setAttribute('data-radio-player-open','false');open.setAttribute('aria-pressed','false');return;
      }
      var provider=config.provider,url=config.url,title=config.title,src;
      var ids=null;
@@ -996,10 +1003,11 @@
      frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
      frame.setAttribute('allowfullscreen','');
      appendOfficialFrame(player,frame,provider,false);
+     host.setAttribute('data-radio-player-open','true');
      if(ids&&ids.length>100)cueCatalog(frame,ids,panel.children[1]);
      if(sources.length&&provider!=='youtube'&&catalog[provider].length>1){
        var next=create('button','velar-radio-hide','Следующая песня');next.type='button';
-       next.onclick=function(){empty(player);open.onclick();};player.appendChild(next);
+       next.onclick=function(){empty(player);host.setAttribute('data-radio-player-open','false');open.onclick();};player.appendChild(next);
      }
      var link=create('a','velar-radio-external','Открыть в '+names[provider]);
      link.href=url;link.target='_blank';link.rel='noopener noreferrer';player.appendChild(link);

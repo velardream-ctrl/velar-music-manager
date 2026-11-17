@@ -34,10 +34,10 @@ assert.match(css,/\.universe-node-name\{word-wrap:break-word;overflow-wrap:break
 assert.match(css,/\.topic-planet-name\{line-height:1\.24;word-wrap:break-word;/);
 
 // Only public static assets change; Studio cache and audio remain untouched.
-assert.match(html,/href="style\.css\?v=74"/);
-assert.match(sw,/'\.\/style\.css\?v=74'/);
-assert.match(sw,/CACHE_PREFIX \+ 'v83'/);
-assert.match(sw,/STUDIO_PREFIX\+'v51'/);
+assert.match(html,/href="style\.css\?v=75"/);
+assert.match(sw,/'\.\/style\.css\?v=75'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v84'/);
+assert.match(sw,/STUDIO_PREFIX\+'v52'/);
 assert.match(css,/\.public-artist-song-list \.public-song-copy,[^}]*word-wrap:break-word;overflow-wrap:break-word;overflow-wrap:anywhere/);
 assert.match(css,/\.public-artist-song-list \.public-song-carousel,[^}]*max-width:100%;min-width:0;box-sizing:border-box/);
 assert.match(css,/\.public-song-index,\.cms-music-number,\.public-song-carousel-count\{display:none!important\}/);

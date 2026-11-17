@@ -228,6 +228,14 @@ const openRadio=traverse(get('landing-fields'),n=>n.textContent==='Настро�
 assert.ok(openRadio);
 openRadio.onclick();await flush();
 const radioTitle=findInput('Название радио');
+const radioMode=findInput('Режим анимации радио');
+assert.equal(radioMode.value,'heartbeat');
+radioMode.value='music';radioMode.onchange.call(radioMode);
+const glowSlider=traverse(get('landing-fields'),n=>n.type==='range'&&n.attributes['aria-label']==='Яркость свечения');
+const spreadSlider=traverse(get('landing-fields'),n=>n.type==='range'&&n.attributes['aria-label']==='Размер светового ореола');
+assert.ok(glowSlider&&spreadSlider);
+glowSlider.value='5';glowSlider.oninput.call(glowSlider);
+spreadSlider.value='100';spreadSlider.oninput.call(spreadSlider);
 assert.equal(radioTitle.value,'VELAR RADIO');
 assert.equal(findInput('Официальная ссылка на публичный плейлист радио').value,
  'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh');
@@ -237,7 +245,12 @@ assert.equal(radioToggle.checked,false,'No automatic radio opt-in');
 radioTitle.input('VELAR RADIO TEST');
 get('landing-save').onclick();await flush();
 assert.equal(records.get('vmm_public_drafts/landing').content.releases.radio.title,'VELAR RADIO TEST');
+assert.equal(records.get('vmm_public_drafts/landing').content.releases.radio.visual.mode,'music');
+assert.equal(records.get('vmm_public_drafts/landing').content.releases.radio.visual.intensity,5);
+assert.equal(records.get('vmm_public_drafts/landing').content.releases.radio.visual.spread,100);
 assert.equal(records.get('vmm_public_drafts/landing').content.releases.radio.enabled,false);
+assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.visual.mode,'heartbeat',
+ 'A draft-only visual change must not affect the public radio');
 assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.title,'VELAR RADIO',
   'Unpublished radio changes cannot affect the live site');
 radioToggle.checked=true;radioToggle.onchange.call(radioToggle);
@@ -248,6 +261,8 @@ get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.title,'VELAR RADIO TEST');
 assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.enabled,true);
 assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.controlVersion,2);
+assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.visual.mode,'music');
+assert.equal(records.get('vmm_public_pages/landing').content.releases.radio.visual.spread,100);
 assert.equal(records.get('vmm_public_pages/landing').content.releases.playlists.length,1);
 assert.equal(records.get('vmm_public_pages/landing').content.releases.subscriptions.length,1);
 radioToggle.checked=false;radioToggle.onchange.call(radioToggle);

@@ -2168,3 +2168,77 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
   .velar-radio--bubble>.velar-radio-toggle,
   .velar-radio:not(.velar-radio--bubble)>.velar-radio-panel:not(.hidden){animation:none}
 }
+
+/* RUN-166: golden afterglow extends at least half the logo diameter outward.
+   Media iframe, draggable orb and approved artwork remain untouched. */
+.velar-radio--bubble>.velar-radio-toggle{overflow:visible}
+.velar-radio--bubble>.velar-radio-toggle>.velar-radio-halo{
+ display:block;position:absolute;top:-34px;right:-34px;bottom:-34px;left:-34px;
+ border-radius:50%;pointer-events:none;z-index:1;
+ background:radial-gradient(circle,transparent 20%,#ffe1a12e 39%,#ffd18f58 59%,#ffd18f24 78%,transparent 100%);
+ box-shadow:0 0 22px 3px #f6c57440;
+ opacity:.8;transform:scale(1);transform-origin:center;
+ animation:velar-radio-afterglow 2.65s ease-in-out infinite;
+}
+.velar-radio--bubble[data-radio-spread="75"]>.velar-radio-toggle>.velar-radio-halo{top:-51px;right:-51px;bottom:-51px;left:-51px}
+.velar-radio--bubble[data-radio-spread="100"]>.velar-radio-toggle>.velar-radio-halo{top:-68px;right:-68px;bottom:-68px;left:-68px}
+.velar-radio--bubble[data-radio-intensity="1"]>.velar-radio-toggle>.velar-radio-halo{filter:brightness(.45)}
+.velar-radio--bubble[data-radio-intensity="2"]>.velar-radio-toggle>.velar-radio-halo{filter:brightness(.7)}
+.velar-radio--bubble[data-radio-intensity="3"]>.velar-radio-toggle>.velar-radio-halo{filter:brightness(1)}
+.velar-radio--bubble[data-radio-intensity="4"]>.velar-radio-toggle>.velar-radio-halo{filter:brightness(1.4)}
+.velar-radio--bubble[data-radio-intensity="5"]>.velar-radio-toggle>.velar-radio-halo{filter:brightness(1.85)}
+@keyframes velar-radio-afterglow{
+ 0%,16%,100%{opacity:.24;transform:scale(.96)}
+ 10%{opacity:.58;transform:scale(1.02)}
+ 28%{opacity:.76;transform:scale(1.04)}
+ 39%{opacity:1;transform:scale(1.11)}
+ 56%{opacity:.62;transform:scale(1.06)}
+ 78%{opacity:.25;transform:scale(.98)}
+}
+@keyframes velar-radio-shimmer{
+ 0%,100%{transform:scale(1);filter:brightness(1)}
+ 50%{transform:scale(1.025);filter:brightness(1.13)}
+}
+@keyframes velar-radio-halo-shimmer{
+ 0%,100%{opacity:.2;transform:scale(.94)}
+ 50%{opacity:.85;transform:scale(1.11)}
+}
+@keyframes velar-radio-broadcast{
+ 0%,100%{transform:scale(1);filter:brightness(1)}
+ 20%,62%{transform:scale(1.075);filter:brightness(1.3)}
+ 35%,78%{transform:scale(1.012);filter:brightness(1.05)}
+}
+@keyframes velar-radio-halo-broadcast{
+ 0%,100%{opacity:.25;transform:scale(.94)}
+ 20%,62%{opacity:1;transform:scale(1.17)}
+ 35%,78%{opacity:.35;transform:scale(1.02)}
+}
+@keyframes velar-radio-music{
+ 0%,100%{transform:scale(1);filter:brightness(1)}
+ 18%{transform:scale(1.06);filter:brightness(1.2)}
+ 38%{transform:scale(1.01);filter:brightness(1.04)}
+ 58%{transform:scale(1.045);filter:brightness(1.15)}
+ 82%{transform:scale(1.015);filter:brightness(1.05)}
+}
+@keyframes velar-radio-halo-music{
+ 0%,100%{opacity:.28;transform:scale(.96)}
+ 22%{opacity:1;transform:scale(1.2)}
+ 47%{opacity:.35;transform:scale(1)}
+ 67%{opacity:.85;transform:scale(1.13)}
+}
+.velar-radio--bubble[data-radio-effect="shimmer"]>.velar-radio-toggle{animation:velar-radio-shimmer 5.7s ease-in-out infinite}
+.velar-radio--bubble[data-radio-effect="shimmer"]>.velar-radio-toggle>.velar-radio-halo{animation:velar-radio-halo-shimmer 5.7s ease-in-out infinite}
+.velar-radio--bubble[data-radio-effect="broadcast"]>.velar-radio-toggle{animation:velar-radio-broadcast 1.35s ease-in-out infinite}
+.velar-radio--bubble[data-radio-effect="broadcast"]>.velar-radio-toggle>.velar-radio-halo{animation:velar-radio-halo-broadcast 1.35s ease-in-out infinite}
+.velar-radio--bubble[data-radio-effect="music"]>.velar-radio-toggle,
+.velar-radio--bubble[data-radio-effect="off"]>.velar-radio-toggle{animation:none}
+.velar-radio--bubble[data-radio-effect="music"]>.velar-radio-toggle>.velar-radio-halo{animation:none;opacity:.18}
+.velar-radio--bubble[data-radio-effect="music"][data-radio-player-open="true"]>.velar-radio-toggle{animation:velar-radio-music 1.06s ease-in-out infinite}
+.velar-radio--bubble[data-radio-effect="music"][data-radio-player-open="true"]>.velar-radio-toggle>.velar-radio-halo{animation:velar-radio-halo-music 1.06s ease-in-out infinite}
+.velar-radio--bubble[data-radio-effect="off"]>.velar-radio-toggle>.velar-radio-halo{animation:none;opacity:.28}
+.velar-radio--bubble>.velar-radio-toggle:active,
+.velar-radio--bubble>.velar-radio-toggle:active>.velar-radio-halo{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){
+ .velar-radio--bubble>.velar-radio-toggle,
+ .velar-radio--bubble>.velar-radio-toggle>.velar-radio-halo{animation:none!important;transition:none!important}
+}
