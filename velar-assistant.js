@@ -387,7 +387,7 @@
  function analyticsApi(){return window.VMM_ANALYTICS;}
  function analyticsPending(){
    var api=analyticsApi(),state=api&&api.status&&api.status();
-   return !!(config&&config.enabled&&state&&state.configured&&state.consentChoice===undefined&&
+   return !!(config&&config.enabled&&state&&state.configured&&state.enabled&&
      api.consentChoice&&api.consentChoice()==='');
  }
  function analyticsAlreadyAsked(){
