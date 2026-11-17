@@ -62,12 +62,12 @@ assert.match(publicJS,/cms-artist-photo--/);
 assert.match(publicJS,/portraitShape=item.imageShape==='circle'\?'circle':'square'/);
 assert.match(read('style.css'),/cms-artist-photo--square/);
 assert.match(read('style.css'),/cms-artist-photo--circle/);
-assert.match(publicHTML,/landing-public\.js\?v=49/);
+assert.match(publicHTML,/landing-public\.js\?v=50/);
 assert.match(studioHTML,/artist-image-editor\.js\?v=1/);
 assert.match(studioHTML,/landing-editor\.js\?v=40/);
 assert.match(studioHTML,/landing-schema\.js\?v=27/);
 assert.match(sw,/STUDIO_PREFIX\+'v52'/);
-assert.match(sw,/CACHE_PREFIX \+ 'v84'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v85'/);
 assert.doesNotMatch(sw,/data:image\/webp/);
 // RUN-116: an inline preview link wrapped its padded border on narrow iPhones.
 assert.ok(editor.includes("live.className='landing-small landing-artist-profile-link'"));

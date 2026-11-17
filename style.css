@@ -2242,3 +2242,8 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .velar-radio--bubble>.velar-radio-toggle,
  .velar-radio--bubble>.velar-radio-toggle>.velar-radio-halo{animation:none!important;transition:none!important}
 }
+
+/* RUN-167: manual Next remains accessible even in the compact radio panel. */
+.velar-radio-next{display:block;min-height:38px;max-width:100%;margin:9px auto 3px;padding:7px 15px;border:1px solid #dcb97e;border-radius:11px;color:#172640;background:#f2d49b;font:700 .82rem -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;cursor:pointer}
+.velar-radio-next:focus-visible{outline:3px solid #fff0cb;outline-offset:2px}
+.velar-radio-panel--mini .velar-radio-next{display:block;margin:7px auto 3px}

@@ -760,6 +760,7 @@
  }
  var radioTimer=null;
  var stopRadioMove=null;
+ var radioYoutube=null;
  function radioSchedule(tracks,time){
    var total=tracks.reduce(function(sum,t){return sum+t.seconds;},0);
    var cycle=Math.floor(time/total),offset=time%total,order=tracks.slice();
@@ -882,25 +883,104 @@
    }
    return queue;
  }
- function cueCatalog(frame,ids,status){
-   function ready(){
-     if(!frame.parentNode)return;
-     new window.YT.Player(frame,{events:{onReady:function(e){e.target.cuePlaylist(ids);},
-       onError:function(){status.textContent='YouTube не смог открыть клип. Выберите следующую песню в плеере.';}}});
+ // RUN-167: YouTube IFrame API keeps user-started playlists playing and allows
+ // manual skips. Long shuffled catalogs are loaded in chunks of at most 100 IDs.
+ function cueCatalog(frame,ids,status,startSeconds){
+   var active=true,api=null,previous=null,callback=null;
+   var order=ids.slice(),offset=0,limit=100,fallbackIndex=0,errors=0,loopEnabled=false;
+   function chunk(){return order.slice(offset,offset+limit);}
+   function nextChunk(){
+     offset+=chunk().length;
+     if(offset>=order.length){
+       offset=0;
+       var last=order[order.length-1];order=shuffledRadioUrls(order);
+       if(order.length>1&&order[0]===last){
+         var swap=order[0];order[0]=order[1];order[1]=swap;
+       }
+     }
+     fallbackIndex=offset;
+     if(!api||typeof api.loadPlaylist!=='function')return false;
+     api.loadPlaylist(chunk(),0,0);return true;
    }
-   if(window.YT&&window.YT.Player){ready();return;}
-   var prior=window.onYouTubeIframeAPIReady;
-   window.onYouTubeIframeAPIReady=function(){
-     window.onYouTubeIframeAPIReady=prior;
-     if(prior)prior();ready();
-   };
-   if(!byId('velar-youtube-iframe-api')){
-     var script=create('script','');script.id='velar-youtube-iframe-api';script.src='https://www.youtube.com/iframe_api';
-     script.onerror=function(){status.textContent='Не удалось загрузить очередь YouTube. Обновите страницу для повтора.';script.parentNode.removeChild(script);};
-     document.head.appendChild(script);
+   function next(){
+     if(!active)return false;
+     if(api&&typeof api.nextVideo==='function'){
+       if(!order.length||order.length<=limit){api.nextVideo();return true;}
+       var index=typeof api.getPlaylistIndex==='function'?Number(api.getPlaylistIndex()):-1;
+       if(index>=0&&index>=chunk().length-1)return nextChunk();
+       api.nextVideo();return true;
+     }
+     // Explicit user click fallback, never a timer-driven iframe reload.
+     if(!order.length)return false;
+     fallbackIndex=(fallbackIndex+1)%order.length;
+     var id=order[fallbackIndex],remaining=order.slice(fallbackIndex+1,fallbackIndex+limit);
+     var src='https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&enablejsapi=1&origin='+
+       encodeURIComponent((window.location&&window.location.origin)||'https://velardream.com');
+     if(remaining.length)src+='&playlist='+remaining.join(',');
+     frame.src=src;return true;
    }
+   function attach(){
+     if(!active||!frame.parentNode||!window.YT||!window.YT.Player)return;
+     try{
+       new window.YT.Player(frame,{events:{
+         onReady:function(e){
+           if(!active)return;
+           api=e.target;
+           if(order.length&&api&&typeof api.cuePlaylist==='function'){
+             // Do not interrupt a visitor who started playback before the API loaded.
+             var alreadyPlaying=typeof api.getPlayerState==='function'&&api.getPlayerState()===1;
+             if(!alreadyPlaying)api.cuePlaylist(chunk(),0,Number(startSeconds)||0);
+             if(order.length<=limit&&typeof api.setLoop==='function'){
+               api.setLoop(true);loopEnabled=true;
+             }
+           }
+         },
+         onStateChange:function(e){
+           if(!active)return;
+           if(e.data===1)errors=0;
+           if(e.data!==0||!order.length)return;
+           var i=e.target&&e.target.getPlaylistIndex?Number(e.target.getPlaylistIndex()):-1;
+           if(i>=chunk().length-1&&(order.length>limit||!loopEnabled))nextChunk();
+         },
+         onError:function(e){
+           if(!active)return;
+           if([100,101,150].indexOf(e.data)>=0&&errors++<3&&next())return;
+           if(status)status.textContent='YouTube не смог открыть клип. Нажмите «Следующая песня» или смените площадку.';
+         },
+         onAutoplayBlocked:function(){
+           if(status)status.textContent='Браузер заблокировал запуск. Нажмите ▶ внутри YouTube.';
+         }
+       }});
+     }catch(err){
+       if(status)status.textContent='Управление YouTube недоступно. Ручной пропуск остаётся доступен.';
+     }
+   }
+   if(window.YT&&window.YT.Player)attach();
+   else if(document.head&&document.head.appendChild){
+     previous=window.onYouTubeIframeAPIReady;
+     callback=function(){
+       if(typeof previous==='function')previous();
+       attach();
+     };
+     window.onYouTubeIframeAPIReady=callback;
+     if(!byId('velar-youtube-iframe-api')){
+       var script=create('script','');script.id='velar-youtube-iframe-api';
+       script.src='https://www.youtube.com/iframe_api';
+       script.onerror=function(){
+         if(status)status.textContent='API YouTube недоступен. Ручной пропуск работает; автопереход ограничен встроенным плейлистом.';
+         if(script.parentNode)script.parentNode.removeChild(script);
+       };
+       document.head.appendChild(script);
+     }
+   }
+   return {next:next,dispose:function(){
+     active=false;api=null;
+     if(callback&&window.onYouTubeIframeAPIReady===callback)
+       window.onYouTubeIframeAPIReady=previous;
+   }};
  }
  function renderRadio(config){
+   if(radioYoutube){radioYoutube.dispose();radioYoutube=null;}
    if(radioTimer!==null){window.clearTimeout(radioTimer);radioTimer=null;}
    if(stopRadioMove){stopRadioMove();stopRadioMove=null;}
    var sources=config.sources||[],catalog=config.catalog||{},available=sources.filter(function(p){return catalog[p]&&catalog[p].length;});
@@ -959,17 +1039,18 @@
      if(available.length>1){
        var select=create('select','');select.setAttribute('aria-label','Площадка радио');
        available.forEach(function(p){var option=create('option','',names[p]+' · '+catalog[p].length);option.value=p;select.appendChild(option);});
-       select.onchange=function(){selected=select.value;queue=[];cursor=0;empty(player);host.setAttribute('data-radio-player-open','false');open.setAttribute('aria-pressed','false');};
+       select.onchange=function(){selected=select.value;queue=[];cursor=0;if(radioYoutube){radioYoutube.dispose();radioYoutube=null;}empty(player);host.setAttribute('data-radio-player-open','false');open.setAttribute('aria-pressed','false');};
        panel.appendChild(select);
      }
    }
    open.type='button';open.setAttribute('aria-pressed','false');
    open.onclick=function(){
      if(hasEmbed(player)){
+       if(radioYoutube){radioYoutube.dispose();radioYoutube=null;}
        empty(player);host.setAttribute('data-radio-player-open','false');open.setAttribute('aria-pressed','false');return;
      }
      var provider=config.provider,url=config.url,title=config.title,src;
-     var ids=null;
+     var ids=null,startSeconds=0;
      if(sources.length){
        if(!selected)return;
        if(cursor>=queue.length){queue=shuffledRadioUrls(catalog[selected]);cursor=0;}
@@ -977,9 +1058,9 @@
        if(provider==='youtube'){
          ids=queue.map(function(link){return link.split('v=')[1];});
          src=officialEmbed(queue[0],provider,'release');
-         if(ids.length>1&&ids.length<=100)src+='?playlist='+ids.slice(1).join(',');
+         var firstIds=ids.slice(0,100);
+         if(firstIds.length>1)src+='?playlist='+firstIds.slice(1).join(',');
          if(legacyIpadVideo()){showLegacyVideoModal(src,title,ids);return;}
-         if(ids.length>100)src+='?enablejsapi=1&origin='+encodeURIComponent(window.location.origin);
          cursor=queue.length;
        }else if(provider==='appleMusic')src=url.replace('https://music.apple.com/','https://embed.music.apple.com/');
        else src=officialEmbed(url,provider,'release');
@@ -987,24 +1068,38 @@
        var slot=radioSchedule(tracks,Math.floor(Date.now()/1000));
        url=slot.track.url;title=slot.track.title;provider='youtube';
        src=officialEmbed(url,provider,'release')+'?start='+slot.offset;
-       if(slot.remaining.length)src+='&playlist='+slot.remaining.map(function(t){return t.url.split('v=')[1];}).join(',');
-       if(legacyIpadVideo()){showLegacyVideoModal(src,title);return;}
+       ids=[slot.track.url.split('v=')[1]].concat(slot.remaining.map(function(t){return t.url.split('v=')[1];}));
+       startSeconds=slot.offset;
+       if(ids.length>1)src+='&playlist='+ids.slice(1,100).join(',');
+       if(legacyIpadVideo()){showLegacyVideoModal(src,title,ids);return;}
      }else{
        src=officialEmbed(url,provider,'playlist');if(!src)return;
        if(provider==='youtube'&&legacyYouTubeModal(url,title))return;
      }
-     pauseOtherEmbeds();empty(player);open.setAttribute('aria-pressed','true');
+     pauseOtherEmbeds();if(radioYoutube){radioYoutube.dispose();radioYoutube=null;}
+     empty(player);open.setAttribute('aria-pressed','true');
+     if(provider==='youtube'){
+       src+=(src.indexOf('?')>=0?'&':'?')+'enablejsapi=1&origin='+
+         encodeURIComponent((window.location&&window.location.origin)||'https://velardream.com');
+       if(ids&&ids.length<=100)src+='&loop=1';
+     }
      var frame=create('iframe','velar-radio-iframe'+(provider==='youtube'?' velar-radio-iframe--video':''));
      frame.src=src;frame.title=title+' — '+provider;
      frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
-     frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
+     frame.setAttribute('allow','autoplay; encrypted-media; fullscreen; picture-in-picture');
      frame.setAttribute('allowfullscreen','');
      appendOfficialFrame(player,frame,provider,false);
      host.setAttribute('data-radio-player-open','true');
-     if(ids&&ids.length>100)cueCatalog(frame,ids,panel.children[1]);
-     if(sources.length&&provider!=='youtube'&&catalog[provider].length>1){
-       var next=create('button','velar-radio-hide','Следующая песня');next.type='button';
-       next.onclick=function(){empty(player);host.setAttribute('data-radio-player-open','false');open.onclick();};player.appendChild(next);
+     if(provider==='youtube')radioYoutube=cueCatalog(frame,ids||[],panel.children[1],startSeconds);
+     if(provider==='youtube'||(sources.length&&catalog[provider]&&catalog[provider].length>1)){
+       var next=create('button','velar-radio-next','Следующая песня');next.type='button';
+       next.onclick=function(){
+         if(provider==='youtube'){if(radioYoutube)radioYoutube.next();return;}
+         // A Spotify/Apple embed cannot reliably report the end of a single track.
+         // Replacing it only happens after a listener explicitly requests Next.
+         empty(player);host.setAttribute('data-radio-player-open','false');open.onclick();
+       };
+       player.appendChild(next);
      }
      var link=create('a','velar-radio-external','Открыть в '+names[provider]);
      link.href=url;link.target='_blank';link.rel='noopener noreferrer';player.appendChild(link);
