@@ -70,6 +70,9 @@
    }
    var button=make("button","Проверить ответ модели");
    button.type="button";button.className="landing-add";
+   var fallbackTest=make("button","Проверить отказ ИИ и резервный ответ");
+   fallbackTest.type="button";fallbackTest.className="landing-add";
+   fallbackTest.style.marginLeft="8px";
    var status=make("p","Не подключено. Сначала разверни Worker в своём бесплатном Cloudflare.");
    status.className="sync-note";
    var result=make("pre");result.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;font:inherit;line-height:1.5";
@@ -153,7 +156,24 @@
      });
      }
    };
-   section.appendChild(button);section.appendChild(status);section.appendChild(result);
+   fallbackTest.onclick=function(){
+     var router=window.VELAR_AI_FALLBACK;
+     if(!router){status.textContent="Резервный модуль не загрузился.";return;}
+     // Simulate an exhausted Cloudflare quota without sending a network request.
+     // Production visitor DJ Velar still uses its own published local rules.
+     router.reset();
+     router.offer(function(){
+       return {text:'DJ Velar продолжает работать на своих правилах. Можно выбирать музыку по настроению, открывать артистов, жанры, плейлисты и радио. Внешний ИИ сейчас недоступен.'};
+     },function(){return Promise.reject({code:'quota_exhausted'});},
+       {enabled:true,timeoutMs:3000}).then(function(out){
+       status.textContent=out.source==='local'?
+         'Резервный режим сработал: внешний ИИ недоступен, локальный ответ появился. Это симуляция без обращения к Cloudflare.':
+         'Ошибка проверки: резервный режим не активировался.';
+       result.textContent=out.answer.text;
+       router.reset();
+     });
+   };
+   section.appendChild(button);section.appendChild(fallbackTest);section.appendChild(status);section.appendChild(result);
    var doc=make("p");
    doc.textContent="Секрет нельзя помещать в публичный JavaScript или опубликованные настройки Studio. Для подключения его нужно создать как Secret в Cloudflare. Облачный Worker не управляет сайтом и не имеет доступа к Firestore.";
    doc.className="sync-note";section.appendChild(doc);
