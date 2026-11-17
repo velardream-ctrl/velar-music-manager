@@ -7,8 +7,8 @@ const assistant=read('velar-assistant.js');
 const html=read('index.html'),sw=read('sw.js');
 new vm.Script(assistant);
 assert.match(html,/ai-fallback\.js\?v=1/);
-assert.match(html,/velar-assistant\.js\?v=15/);
-assert.match(sw,/velar-assistant\.js\?v=15/);
+assert.match(html,/velar-assistant\.js\?v=16/);
+assert.match(sw,/velar-assistant\.js\?v=16/);
 assert.match(sw,/ai196/);
 assert.match(assistant,/VELAR_AI_FALLBACK/);
 assert.match(assistant,/window\.VELAR_PUBLIC_AI_ENABLED!==true/);
@@ -44,3 +44,5 @@ r=await context.worker.fetch(req(),env);
 assert.equal(r.status,200);assert.match((await r.json()).reply,/подобрать музыку/);
 assert.equal(calls,1);assert.ok(limits>0);
 console.log('PASS RUN-196: server-side opt-in, origin, mandatory rate-limit, model, public fallback wiring');
+
+assert.doesNotMatch(assistant,/velar-assistant-ai-notice|Неизвестные вопросы могут передаваться Cloudflare AI/);
