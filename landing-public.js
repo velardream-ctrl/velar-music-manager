@@ -1008,7 +1008,17 @@
          },
          onStateChange:function(e){
            if(!active)return;
-           if(e.data===1)errors=0;
+           if(e.data===1){
+             errors=0;
+             // YouTube IFrame Player API confirms an actual start (not a full
+             // play). Spotify/Apple iframe clicks must never use this event.
+             var details=e.target&&typeof e.target.getVideoData==='function'?
+               e.target.getVideoData():null;
+             var videoId=details&&details.video_id||'';
+             if(window.VMM_ANALYTICS&&/^[A-Za-z0-9_-]{11}$/.test(videoId))
+               window.VMM_ANALYTICS.record('youtube_play_start',{
+                 section:'radio',provider:'youtube',mediaId:videoId});
+           }
            if(e.data!==0||!order.length)return;
            var i=e.target&&e.target.getPlaylistIndex?Number(e.target.getPlaylistIndex()):-1;
            if(i>=chunk().length-1&&(order.length>limit||!loopEnabled))nextChunk();
