@@ -56,7 +56,7 @@ const clean=JSON.stringify(api.normalize(privateObject));
 assert.doesNotMatch(clean,/secretToken|не публиковать/);
 assert.match(html,/landing-public\.js\?v=56/);
 assert.match(html,/landing-schema\.js\?v=30/);
-assert.match(studio,/landing-editor\.js\?v=44/);
+assert.match(studio,/landing-editor\.js\?v=45/);
 assert.match(studio,/data-panel="landing"/);
 assert.match(studio,/data-landing-tab="universe"/);
 assert.match(studio,/data-landing-tab="languages"/);
