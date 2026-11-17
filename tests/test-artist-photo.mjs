@@ -81,7 +81,7 @@ assert.ok(profileLinkRule.includes('white-space:normal;'));
 assert.ok(profileLinkRule.includes('min-height:44px;'));
 assert.ok(studioStyles.includes('@media(max-width:520px)'));
 assert.ok(studioHTML.includes('studio.css?v=31'));
-assert.ok(studioHTML.includes('landing-editor.js?v=45'));
+assert.ok(studioHTML.includes('landing-editor.js?v=46'));
 assert.ok(sw.includes('./studio/studio.css?v=31'));
 assert.ok(sw.includes('./studio/landing-editor.js?v=45'));
 console.log('PASS: local crop geometry, WebP/JPEG compression, image MIME/size validation, circle/square, public-only opt-in and no new Storage costs');
