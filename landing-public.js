@@ -1321,6 +1321,10 @@
  }
  // RUN-183: optional footer row, no third-party SDK, no automatic sharing.
  function renderSocialFooter(config){
+   if(!config||config.enabled!==true){
+     var existing=byId('public-social-footer');if(existing)existing.style.display='none';
+     return;
+   }
    var footer=document.querySelector('.site-footer');if(!footer)return;
    var host=byId('public-social-footer');
    if(!host){
