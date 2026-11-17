@@ -776,12 +776,34 @@
  function radioMove(host,grip,orb){
    if(!host.getBoundingClientRect||!window.addEventListener)return {sync:function(){},ignoreClick:function(){return false;}};
    var anchor=null,drag=null,ignoreUntil=0;
+   var movedByListener=false,initialWidth=window.innerWidth;
    function clamp(n,max){return Math.max(0,Math.min(n,max));}
    function point(e){return e.touches?(e.touches[0]||e.changedTouches[0]):e;}
+   // RUN-169: position a fresh floating orb alongside the hero crystal,
+   // below the navigation; keep the viewport-fixed behavior after scroll.
+   // Existing manual drag and keyboard positions take precedence until reload.
+   function defaultAnchor(){
+     var doc=typeof document==='undefined'?null:document;
+     var crystal=doc&&doc.getElementById?doc.getElementById('hero-crystal-link'):null;
+     var header=doc&&doc.getElementById?doc.getElementById('top'):null;
+     var art=crystal&&crystal.getBoundingClientRect?crystal.getBoundingClientRect():null;
+     var nav=header&&header.getBoundingClientRect?header.getBoundingClientRect():null;
+     var navBottom=nav&&nav.bottom>0?nav.bottom:0;
+     var onscreen=art&&art.height>40&&art.right>0&&
+       art.left<window.innerWidth&&art.top<window.innerHeight&&art.bottom>navBottom;
+     var gap=Math.max(8,Math.min(28,window.innerWidth*.02));
+     var right=onscreen?window.innerWidth-art.right-gap-68:
+       Math.max(16,Math.min(34,window.innerWidth*.075));
+     var top=onscreen?art.top+(art.height-68)/2:window.innerHeight*.32;
+     // Reserve space for at least the gold 20% default glow and avoid
+     // the navigation even if the crystal shrinks on a compact phone.
+     return {right:Math.max(12,clamp(right,Math.max(0,window.innerWidth-80))),
+       top:clamp(Math.max(top,navBottom+16),Math.max(0,window.innerHeight-80))};
+   }
    // Preserve a logical right-side anchor while wide and narrow panels change size.
    // A large panel is allowed to shift onscreen while the saved orb position survives.
    function fit(){
-     if(!anchor)return;
+     if(!anchor)anchor=defaultAnchor();
      var rect=host.getBoundingClientRect();
      // Use the FINAL CSS width rather than a mid-animation width, especially
      // on iOS 12 where ResizeObserver cannot help after transition.
@@ -792,6 +814,8 @@
      host.style.right=right+'px';host.style.left='auto';host.style.top=top+'px';
      if(host.className.indexOf('velar-radio--bubble')!==-1){
        host.className=host.className.replace(/\svelar-radio--popup-left|\svelar-radio--popup-above/g,'');
+       // A mini player on the RIGHT must expand toward the LEFT (right:0).
+       // Only bubbles on the left half need the alternate left:0 alignment.
        if(window.innerWidth-right-width<window.innerWidth/2)host.className+=' velar-radio--popup-left';
        if(window.innerHeight-top-rect.height<288)host.className+=' velar-radio--popup-above';
      }
@@ -807,12 +831,21 @@
      if(!drag)return;
      var p=point(e);if(!p)return;
      if(!drag.moved&&Math.abs(p.clientX-drag.x)+Math.abs(p.clientY-drag.y)<9)return;
-     drag.moved=true;
+     drag.moved=true;movedByListener=true;
      anchor={right:window.innerWidth-p.clientX-drag.dx,top:p.clientY-drag.dy};
      fit();
      if(e.cancelable)e.preventDefault();
    }
    function up(){if(drag&&drag.kind==='orb'&&drag.moved)ignoreUntil=Date.now()+650;drag=null;}
+   function resized(){
+     // Re-anchor only on an actual viewport-width/layout change and only
+     // before a visitor moves the orb. iOS address-bar height changes must
+     // not cause a floating radio to jump during scrolling.
+     if(!movedByListener&&window.innerWidth!==initialWidth){
+       initialWidth=window.innerWidth;anchor=defaultAnchor();
+     }
+     fit();
+   }
    function gripDown(e){down(e,'grip');}
    function orbDown(e){down(e,'orb');}
    grip.addEventListener('mousedown',gripDown);
@@ -824,13 +857,14 @@
    window.addEventListener('mouseup',up);
    window.addEventListener('touchend',up);
    window.addEventListener('touchcancel',up);
-   window.addEventListener('resize',fit);
+   window.addEventListener('resize',resized);
    var observer=window.ResizeObserver?new window.ResizeObserver(fit):null;
    if(observer)observer.observe(host);
    function keys(e){
      var step={ArrowLeft:[-24,0],ArrowRight:[24,0],ArrowUp:[0,-24],ArrowDown:[0,24]}[e.key];
      if(!step)return;
      var rect=host.getBoundingClientRect();
+     movedByListener=true;
      anchor={right:window.innerWidth-rect.right-step[0],top:rect.top+step[1]};
      fit();e.preventDefault();
    }
@@ -844,8 +878,10 @@
      orb.removeEventListener('mousedown',orbDown);orb.removeEventListener('touchstart',orbDown);
      window.removeEventListener('mousemove',move);window.removeEventListener('touchmove',move);
      window.removeEventListener('mouseup',up);window.removeEventListener('touchend',up);window.removeEventListener('touchcancel',up);
-     window.removeEventListener('resize',fit);
+     window.removeEventListener('resize',resized);
    };
+   // The first paint uses the crystal position instead of CSS top:12px.
+   fit();
    return {sync:fit,ignoreClick:function(){
      if(Date.now()<ignoreUntil){ignoreUntil=0;return true;}return false;
    }};
