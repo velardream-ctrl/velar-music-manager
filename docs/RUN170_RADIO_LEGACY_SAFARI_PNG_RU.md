@@ -16,3 +16,11 @@ tests/test-radio-legacy-icon.mjs: PNG byte signature, размер/прозра�
 ## Хронология
 - НАЧАЛ: 17.11.2026, ветка fix/run170-radio-png-legacy-ipad-20261117, base main 7c90132f67df23cdf01157a201c9ad69793e9707.
 - ЗАВЕРШЕНИЕ: добавить результаты PR/CI/Pages после реальной публикации.
+
+## ЗАВЕРШИЛ — 17.11.2026
+- PR #128 MERGED: https://github.com/velardream-ctrl/velar-music-manager/pull/128
+- Опубликованный SHA main: 2356d3ea2f5aedd7b5d8ce7ad1b755f31803718a.
+- GitHub Actions: branch #44031828651 SUCCESS, PR #44031836237 SUCCESS, main #44031919376 SUCCESS.
+- GitHub Pages deployment #44031918632 SUCCESS.
+- Проверены PNG-сигнатура, 112×112, прозрачность, обе подложки CSS, Service Worker caching, версии CSS/HTML, сохранение анимации и полный npm test.
+- На физическом старом iPad пользователь ещё не подтвердил результат; требуется визуальная проверка после обновления.
