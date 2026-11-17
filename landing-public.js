@@ -1287,6 +1287,7 @@
    assign('public-releases-intro',value.releases.intro);
    assign('genres-title',value.genres.heading);
    assign('public-genres-intro',value.genres.intro);
+   renderSocialFooter(value.hero.socialBar);
    assign('about-title',value.about.heading);
    assign('public-about-intro',value.about.intro);
    assign('public-about-notice',value.about.notice);
@@ -1317,6 +1318,50 @@
    if(window.VELAR_ASSISTANT&&window.VELAR_ASSISTANT.render)
      window.VELAR_ASSISTANT.render(value);
    return true;
+ }
+ // RUN-183: optional footer row, no third-party SDK, no automatic sharing.
+ function renderSocialFooter(config){
+   if(!config||config.enabled!==true){
+     var existing=byId('public-social-footer');if(existing)existing.style.display='none';
+     return;
+   }
+   var footer=document.querySelector('.site-footer');if(!footer)return;
+   var host=byId('public-social-footer');
+   if(!host){
+     host=document.createElement('nav');host.id='public-social-footer';
+     host.setAttribute('aria-label','Социальные сети VELARDREAM');
+     host.style.cssText='display:none;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;padding:16px 8px';
+     footer.insertBefore(host,footer.firstChild);
+   }
+   empty(host);
+   if(!config||config.enabled!==true){host.style.display='none';return;}
+   var names={facebook:'Facebook',vk:'ВКонтакте',instagram:'Instagram',
+     tiktok:'TikTok',linkedin:'LinkedIn',youtube:'YouTube',telegram:'Telegram',
+     spotify:'Spotify',apple:'Apple Music',soundcloud:'SoundCloud',
+     bandcamp:'Bandcamp',yandex:'Яндекс Музыка',deezer:'Deezer',website:'Сайт'};
+   (config.links||[]).forEach(function(item){
+     if(!item||!item.visible||!item.url||!names[item.platform])return;
+     var link=document.createElement('a');link.href=item.url;link.target='_blank';
+     link.rel='noopener noreferrer';link.textContent=names[item.platform];
+     link.style.cssText='display:inline-flex;min-height:40px;align-items:center;padding:7px 12px;border:1px solid rgba(226,190,117,.45);border-radius:24px;color:#f5d18c;text-decoration:none';
+     host.appendChild(link);
+   });
+   if(config.shareEnabled===true){
+     var share=document.createElement('button');share.type='button';
+     share.textContent='↗ Поделиться сайтом';
+     share.setAttribute('aria-label','Поделиться ссылкой на VELARDREAM');
+     share.style.cssText='min-height:40px;padding:7px 14px;border:1px solid #d9b875;border-radius:24px;background:transparent;color:#f5d18c;cursor:pointer;font:inherit';
+     share.onclick=function(){
+       var address='https://velardream.com/';
+       if(navigator.share){navigator.share({title:'VELARDREAM RECORDS',url:address}).catch(function(){});return;}
+       if(navigator.clipboard&&navigator.clipboard.writeText){
+         navigator.clipboard.writeText(address).then(function(){share.textContent='✓ Ссылка скопирована';})
+           .catch(function(){window.prompt('Скопируй ссылку:',address);});
+       }else window.prompt('Скопируй ссылку:',address);
+     };
+     host.appendChild(share);
+   }
+   host.style.display=host.children.length?'flex':'none';
  }
  function start(){
    var help=byId("standalone-help");if(help)help.appendChild(stationHelp(true));

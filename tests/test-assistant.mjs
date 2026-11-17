@@ -94,7 +94,7 @@ assert.match(css,/\.velar-assistant-suggestion\{min-height:28px;padding:2px 7px/
 assert.match(css,/\.velar-assistant-privacy\{padding:1px 7px 3px/);
 assert.match(css,/\.velar-assistant-header-note\{display:none\}/);
 assert.match(css,/\.velar-assistant-input\{height:36px;padding:6px 8px;font-size:16px\}/);
-assert.match(sw,/CACHE_PREFIX \+ 'v95'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v96'/);
 assert.match(html,/style\.css\?v=82/);
 assert.ok(code.includes("querySelector('.velar-assistant-launch')"));
 

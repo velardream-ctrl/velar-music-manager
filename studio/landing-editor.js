@@ -2370,7 +2370,7 @@
      ['spotify','Spotify'],['youtube','YouTube'],['instagram','Instagram'],
      ['tiktok','TikTok'],['telegram','Telegram'],['facebook','Facebook'],
      ['apple','Apple Music'],['soundcloud','SoundCloud'],['bandcamp','Bandcamp'],
-     ['vk','ВКонтакте'],['yandex','Яндекс Музыка'],['deezer','Deezer'],['website','Сайт артиста']
+     ['vk','ВКонтакте'],['linkedin','LinkedIn'],['yandex','Яндекс Музыка'],['deezer','Deezer'],['website','Сайт артиста']
    ];
    heading(details,'Официальные площадки',
      'Добавляй только принадлежащие этому артисту публичные страницы. Скрытые ссылки не увидят посетители. Прямая ссылка на песню здесь не подходит — нужен профиль исполнителя.');
@@ -2501,6 +2501,48 @@
      }
      parent.appendChild(item);
    });
+ }
+
+ // RUN-183: owner-managed social footer; disabled by default, never auto-publish.
+ function siteSocialEditor(parent){
+   if(!data.hero.socialBar)data.hero.socialBar={enabled:false,shareEnabled:false,links:[]};
+   var cfg=data.hero.socialBar;
+   if(!Array.isArray(cfg.links))cfg.links=[];
+   var block=document.createElement('section');block.className='landing-display-group';
+   heading(block,'Социальные сети и «Поделиться»',
+     'Нижняя панель сайта. Пока выключена: ты сам добавляешь официальные ссылки, сохраняешь черновик, публикуешь и отдельно включаешь показ. Работает и в приложении на iPhone/iPad.');
+   function checkbox(label,key){
+     var line=document.createElement('label');line.className='landing-checkbox';
+     var input=document.createElement('input');input.type='checkbox';input.checked=cfg[key]===true;
+     input.onchange=function(){cfg[key]=this.checked;updateButtons();};
+     var text=document.createElement('span');text.textContent=label;
+     line.appendChild(input);line.appendChild(text);block.appendChild(line);
+   }
+   checkbox('Показывать нижнюю панель на сайте','enabled');
+   checkbox('Показывать в панели кнопку «Поделиться сайтом»','shareEnabled');
+   var choices=[['facebook','Facebook'],['vk','ВКонтакте'],['instagram','Instagram'],
+     ['tiktok','TikTok'],['linkedin','LinkedIn'],['youtube','YouTube'],
+     ['telegram','Telegram'],['spotify','Spotify'],['apple','Apple Music'],
+     ['soundcloud','SoundCloud'],['bandcamp','Bandcamp'],['yandex','Яндекс Музыка'],
+     ['deezer','Deezer'],['website','Внешний сайт']];
+   cfg.links.forEach(function(link,i){
+     var item=document.createElement('div');item.className='landing-card';
+     selectField(item,'Площадка '+(i+1),choices,link.platform||'facebook',function(v){link.platform=v;});
+     field(item,'Полная HTTPS-ссылка на официальный профиль',link.url||'',function(v){link.url=v;});
+     var check=document.createElement('label');check.className='landing-checkbox';
+     var tick=document.createElement('input');tick.type='checkbox';tick.checked=link.visible===true;
+     tick.onchange=function(){link.visible=this.checked;updateButtons();};
+     var caption=document.createElement('span');caption.textContent='Показывать эту ссылку';check.appendChild(tick);check.appendChild(caption);item.appendChild(check);
+     item.appendChild(button('Удалить ссылку',function(){cfg.links.splice(i,1);render();},'landing-danger'));
+     block.appendChild(item);
+   });
+   block.appendChild(button('+ Добавить площадку',function(){
+     if(cfg.links.length>=12){info('Максимум 12 официальных ссылок.');return;}
+     cfg.links.push({platform:'facebook',url:'',visible:false});render();
+   },'landing-add'));
+   var note=document.createElement('p');note.className='sync-note';
+   note.textContent='Незаполненные и скрытые ссылки не отображаются. «Поделиться» использует системное меню устройства, а при его отсутствии — копирование адреса. Подключения к аккаунтам соцсетей и автопубликации нет.';
+   block.appendChild(note);parent.appendChild(block);
  }
 
  // RUN-181: all homepage display choices live in ONE place.
@@ -2697,6 +2739,7 @@
      loadPanel.appendChild(coverNotice);panel.appendChild(loadPanel);
      updateLoadLabel();
      homepageDisplaySettings(panel);
+     siteSocialEditor(panel);
    }else if(tab==='distribution'){
      if(window.VMM_SONG_DISTRIBUTION){
        var distributionContext={

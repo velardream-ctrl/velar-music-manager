@@ -152,7 +152,8 @@
         subtitle:'Разные голоса. Разные жанры. Одна вселенная музыки.',
         intro:'Здесь рождается пространство для артистов, авторских релизов и музыкальных историй — от оперы и этно до рока, поп-музыки и кроссоверов.',
         imageLoadingLevel:0, // RUN-123: existing published pages remain eager.
-         coverSourcePriority:'spotify-first' // RUN-125: preserve current behavior.
+         coverSourcePriority:'spotify-first', // RUN-125: preserve current behavior.
+        socialBar:{enabled:false,shareEnabled:false,links:[]} // RUN-183: opt-in only.
       },
       artists:{
         heading:'У каждого голоса — своя история',
@@ -854,6 +855,7 @@
       soundcloud:/^soundcloud\.com\/[A-Za-z0-9_-]+\/?$/i,
       bandcamp:/^[A-Za-z0-9-]+\.bandcamp\.com\/?$/i,
       vk:/^vk\.com\/[A-Za-z0-9_.-]{2,}\/?$/i,
+      linkedin:/^(?:www\.)?linkedin\.com\/(?:company|in)\/[A-Za-z0-9_-]{2,}\/?$/i,
       yandex:/^music\.yandex\.(?:ru|com)\/artist\/[0-9]+\/?$/i,
       deezer:/^(?:www\.)?deezer\.com\/(?:[A-Za-z]{2}\/)?artist\/[0-9]+\/?$/i,
       website:/^[A-Za-z0-9.-]+(?::443)?(?:\/[^?#]*)?\/?$/i
@@ -868,6 +870,13 @@
         throw new Error('Соцсеть '+i+': нужен публичный сайт.');
     }
     return {platform:platform,url:link,visible:x.visible===true};
+  }
+  // RUN-183: reusable profile validation; one settings block for the site itself.
+  function siteSocialBar(raw){
+    var s=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+    var links=safeList(s.links,12,'Социальные площадки сайта',socialProfile,[]),seen={};
+    links.forEach(function(link){if(link.url){if(seen[link.url])throw new Error('Повтор ссылки сайта: '+link.url);seen[link.url]=true;}});
+    return {enabled:s.enabled===true,shareEnabled:s.shareEnabled===true,links:links};
   }
   function card(x,type,index){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Карточка '+index+': неверный формат.');
@@ -952,6 +961,7 @@
             throw new Error('Ленивая загрузка изображений: выбери уровень от 0 до 3.');
           return candidate;
         }()),
+        socialBar:siteSocialBar(hero.socialBar),
         coverSourcePriority:(function(){
           var choice=typeof hero.coverSourcePriority==='undefined'?'spotify-first':hero.coverSourcePriority;
           if(choice!=='spotify-first'&&choice!=='youtube-first')
