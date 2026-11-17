@@ -928,7 +928,7 @@
    parent.appendChild(note);
    field(parent,'Название радио',radio.title||'VELAR RADIO',function(v){radio.title=v;});
    heading(parent,'Анимация и свечение логотипа','Золотое сияние вокруг значка. Выбери режим, яркость и размер ореола. Сохрани черновик и отдельно опубликуй.');
-   var visual=radio.visual||(radio.visual={mode:'heartbeat',intensity:3,spread:50});
+   var visual=radio.visual||(radio.visual={mode:'heartbeat',intensity:3,spread:20});
    selectField(parent,'Режим анимации радио',[
      ['heartbeat','Сердцебиение — двойной удар и мягкое послесвечение'],
      ['shimmer','Мерцание — спокойная музыка'],
@@ -948,7 +948,7 @@
      wrap.appendChild(slider);wrap.appendChild(value);parent.appendChild(wrap);
    }
    radioVisualSlider('Яркость свечения','intensity',1,5,1,' / 5');
-   radioVisualSlider('Размер светового ореола','spread',50,100,25,'% от диаметра значка');
+   radioVisualSlider('Размер светового ореола','spread',1,100,1,'% от диаметра значка');
    var visualHelp=document.createElement('p');visualHelp.className='sync-note';
    visualHelp.textContent='Светомузыка включается при открытом официальном плеере, в том числе свёрнутом. Это визуальная пульсация, а не точная синхронизация с аудиоволной YouTube, Spotify или Apple Music. Системное «Уменьшение движения» отключает анимацию.';
    parent.appendChild(visualHelp);

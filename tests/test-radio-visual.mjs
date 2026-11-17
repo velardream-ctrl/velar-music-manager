@@ -7,19 +7,26 @@ vm.runInNewContext(read('landing-schema.js'),{window,Array,String,Number,Object,
 const api=window.VMM_LANDING_SCHEMA,d=api.defaults().releases.radio;
 assert.equal(d.visual.mode,'heartbeat');
 assert.equal(d.visual.intensity,3);
-assert.equal(d.visual.spread,50);
+assert.equal(d.visual.spread,20);
 for(const mode of ['heartbeat','shimmer','broadcast','music','off']){
  const cfg=api.radioConfig({...d,visual:{mode,intensity:5,spread:100}});
  assert.equal(cfg.visual.mode,mode);assert.equal(cfg.visual.intensity,5);assert.equal(cfg.visual.spread,100);
 }
+for(const spread of [1,2,37,42,49,50,75,99,100]){
+ assert.equal(api.radioConfig({...d,visual:{mode:'heartbeat',intensity:3,spread}}).visual.spread,spread,
+  'Every integer from 1 to 100 must pass normalization');
+}
 const legacy=api.radioConfig({...d,visual:undefined});
 assert.equal(legacy.visual.mode,'heartbeat');
+assert.equal(legacy.visual.spread,20);
+assert.equal(api.radioConfig({...d,visual:{mode:'heartbeat',intensity:3,spread:50}}).visual.spread,50,'Previously saved 50% is respected');
 const bad=api.radioConfig({...d,visual:{mode:'evil',intensity:99,spread:-1}});
-assert.equal(bad.visual.mode,'heartbeat');assert.equal(bad.visual.intensity,3);assert.equal(bad.visual.spread,50);
+assert.equal(bad.visual.mode,'heartbeat');assert.equal(bad.visual.intensity,3);assert.equal(bad.visual.spread,20);
 const css=read('style.css'),ui=read('landing-public.js'),studio=read('studio/landing-editor.js');
 for(const mode of ['shimmer','broadcast','music','off'])assert.ok(css.includes('data-radio-effect="'+mode+'"'));
 assert.match(css,/velar-radio-afterglow/);assert.match(css,/top:-34px;right:-34px;bottom:-34px;left:-34px/);
 assert.match(css,/prefers-reduced-motion:reduce/);
 assert.match(ui,/data-radio-player-open/);assert.match(ui,/velar-radio-halo/);
 assert.match(studio,/Режим анимации радио/);assert.match(studio,/Размер светового ореола/);
+assert.match(studio,/radioVisualSlider\('Размер светового ореола','spread',1,100,1/);
 console.log('PASS: RUN-166 VELAR RADIO visual modes, gold glow and validated Studio controls');

@@ -23,7 +23,7 @@ const d=api.defaults();
 assert.equal(d.releases.radio.enabled,false,'RADIO is disabled by default');
 assert.equal(d.releases.radio.controlVersion,2);
 assert.equal(d.releases.radio.visual.mode,'heartbeat');
-assert.equal(d.releases.radio.visual.spread,50);
+assert.equal(d.releases.radio.visual.spread,20);
 const legacy={...d.releases.radio,enabled:true};delete legacy.controlVersion;
 assert.equal(api.radioConfig(legacy).enabled,false,'Legacy published enabled:true does NOT reactivate radio');
 assert.equal(api.radioConfig({...legacy,controlVersion:2}).enabled,true,'Owner can re-enable radio explicitly');
@@ -137,6 +137,8 @@ assert.equal(musicBtn.attributes['aria-pressed'],'false');
 musicBtn.onclick();
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1,'Third release click reopens it');
 const radio=map['velar-radio'];assert.equal(radio.className,'velar-radio velar-radio--bubble');
+assert.equal(radio.children[0].children.find(c=>c.className==='velar-radio-halo').style.top,'-13.6px',
+ 'New default 20% equals a 13.6px halo radius on a 68px emblem');
 assert.equal(radio.attributes['data-radio-effect'],'heartbeat');
 assert.equal(radio.attributes['data-radio-player-open'],'false');
 assert.ok(radio.children[0].children.some(c=>c.className==='velar-radio-halo'));
@@ -208,6 +210,17 @@ assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0],radioBeforeSna
 assert.equal(radio.attributes['data-radio-effect'],'broadcast');
 assert.equal(radio.attributes['data-radio-intensity'],'5');
 assert.equal(radio.attributes['data-radio-spread'],'100');
+assert.equal(radio.children[0].children.find(c=>c.className==='velar-radio-halo').style.top,'-68px');
+for(const spread of [1,37,42,75,99]){
+ const custom={...page,releases:{...page.releases,radio:{...page.releases.radio,
+   visual:{mode:'broadcast',intensity:5,spread}}}};
+ observer({exists:true,data:()=>({status:'published',schemaVersion:1,content:custom})});
+ assert.equal(radio.attributes['data-radio-spread'],String(spread));
+ assert.equal(radio.children[0].children.find(c=>c.className==='velar-radio-halo').style.top,
+   -(68*spread/100)+'px','The aura radius must match the selected percentage');
+ assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0],radioBeforeSnapshot,
+   'The current song cannot restart because the halo radius changed');
+}
 observer({exists:true,data:()=>({status:'published',schemaVersion:1,content:page})});
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0],radioBeforeSnapshot,
  'Restoring the default glow does not restart playback');
@@ -266,8 +279,8 @@ assert.match(css,/\.velar-radio--bubble/);
 assert.match(css,/min-height:200px/);
 assert.match(html,/universe\.js\?v=7/);
 assert.match(html,/style\.css\?v=76/);
-assert.match(sw,/CACHE_PREFIX \+ 'v85'/);
-assert.match(sw,/STUDIO_PREFIX\+'v52'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v86'/);
+assert.match(sw,/STUDIO_PREFIX\+'v53'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);
 console.log('PASS: RUN-069/070 safe releases, Spotify playlists, subscribers, opt-in radio, one active iframe and lazy 2.5D universe');

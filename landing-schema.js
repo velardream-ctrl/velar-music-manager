@@ -168,7 +168,7 @@
         heading:'Музыка, которую можно открыть заново',
         intro:'Синглы, альбомы, клипы и внешние плееры — без загрузки тяжёлых музыкальных файлов на собственный сервер.',
         cards:[],
-        radio:{enabled:false,controlVersion:2,title:'VELAR RADIO',provider:'spotify',url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh',visual:{mode:'heartbeat',intensity:3,spread:50}},
+        radio:{enabled:false,controlVersion:2,title:'VELAR RADIO',provider:'spotify',url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh',visual:{mode:'heartbeat',intensity:3,spread:20}},
         playlists:[{title:'Мой лучший плейлист',description:'Музыкальная подборка VELAR',provider:'spotify',
           url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh',visible:true}],
         subscriptions:[{title:'DJ Velar в Spotify',provider:'spotify',
@@ -420,7 +420,7 @@
     var intensity=Number(visual.intensity);
     if(!(intensity>=1&&intensity<=5&&Math.floor(intensity)===intensity))intensity=3;
     var spread=Number(visual.spread);
-    if([50,75,100].indexOf(spread)<0)spread=50;
+    if(!(spread>=1&&spread<=100&&Math.floor(spread)===spread))spread=20;
     if(enabled&&!link&&!tracks.length&&!sources.length)throw new Error('VELAR RADIO: сначала укажи ссылку на плейлист.');
     return {enabled:enabled,controlVersion:2,title:plain(typeof x.title==='string'?x.title:'VELAR RADIO','Название радио',70,true),
       provider:provider,url:link,tracks:tracks,sources:sources,catalog:catalog,visual:{mode:mode,intensity:intensity,spread:spread}};
