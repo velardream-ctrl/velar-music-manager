@@ -298,6 +298,8 @@
            window.location.hash=choice.kind==='language'?'languages':'topics';
            if(!openedSong&&choice.kind==='topic'&&window.VELAR_TOPICS&&window.VELAR_TOPICS.select)
              window.VELAR_TOPICS.select(choice.target);
+         }else if(choice.action==='analytics-yes'||choice.action==='analytics-no'){
+           analyticsRespond(choice.action==='analytics-yes');
          }else if(choice.action==='radio'){
            // One explicit click: reuse existing Spotify/YouTube embed path, no autoplay.
            var openedRadio=window.VMM_PUBLIC_LANDING&&window.VMM_PUBLIC_LANDING.openRadioFromChat&&
@@ -379,11 +381,56 @@
      markGreeting();
    }
  }
+ // RUN-188: DJ Velar offers a real, voluntary analytics choice.
+ // One invitation per chat visit, with durable local preference on this
+ // device. Refusal is final until visitor deliberately changes settings.
+ function analyticsApi(){return window.VMM_ANALYTICS;}
+ function analyticsPending(){
+   var api=analyticsApi(),state=api&&api.status&&api.status();
+   return !!(config&&config.enabled&&state&&state.configured&&state.consentChoice===undefined&&
+     api.consentChoice&&api.consentChoice()==='');
+ }
+ function analyticsAlreadyAsked(){
+   try{return window.sessionStorage&&window.sessionStorage.getItem('velar-analytics-asked')==='1';}
+   catch(ignore){return false;}
+ }
+ function markAnalyticsAsked(){
+   try{if(window.sessionStorage)window.sessionStorage.setItem('velar-analytics-asked','1');}
+   catch(ignore){}
+ }
+ function analyticsRespond(accept){
+   var api=analyticsApi();
+   if(!api||!api.choose)return;
+   api.choose(accept);
+   itemMessage('assistant',accept?
+     'Спасибо! Вы разрешили собирать статистику посещений и открытий музыкальных плееров. Настройку можно изменить по ссылке «Настройки статистики» внизу сайта.':
+     'Понимаю и уважаю ваш выбор. Аналитика для вас выключена. Музыка, радио и все разделы доступны без ограничений.',
+     null,accept?'heart':'okay',false);
+ }
+ function analyticsInvitation(){
+   if(!analyticsPending()||analyticsAlreadyAsked())return;
+   markAnalyticsAsked();
+   itemMessage('assistant',
+     'Можно маленькую просьбу? Мы развиваем VELARDREAM и хотим понимать, какие страницы и песни интересны гостям. Разрешите Google Analytics учитывать ваши посещения и открытия плееров? Данные передаются Google; это не регистрация. Отказ никак не ограничивает музыку. Выбор можно изменить позже.',
+     {actions:[{action:'analytics-yes',label:'Разрешить аналитику'},
+       {action:'analytics-no',label:'Отказаться'}]},'wave',false);
+ }
  function say(query){
    var t=String(query||'').trim().slice(0,MAX_INPUT);
    if(!t)return;
    finishTyping(); // complete prior reply before showing another visitor question
    itemMessage('visitor',t);
+   var lowered=t.toLocaleLowerCase('ru').replace(/[.!?]+$/,'').trim();
+   if(analyticsPending()&&/^(?:отказываюсь|отказаться|не согласен|не согласна|не разрешаю|отказ|нет,? спасибо)$/.test(lowered)){
+     analyticsRespond(false);
+     if(input)input.value='';
+     return;
+   }
+   if(analyticsPending()&&/^(?:согласен|согласна|разрешаю аналитику|согласен на аналитику|да,? разрешаю)$/.test(lowered)){
+     analyticsRespond(true);
+     if(input)input.value='';
+     return;
+   }
    var result=answer(t,published,config);
    itemMessage('assistant',result.text,(result.actions&&result.actions.length)||result.action?result:null,reactionChoice(t,result.text),true);
    if(input)input.value='';
@@ -450,6 +497,7 @@
      prompt.className='velar-assistant-greeting hidden';markGreeting();
      if(opened){
        if(!log.children.length)itemMessage('assistant',config.welcome,null,greetingChoice(),true);
+       analyticsInvitation();
        if(typeof navigator!=='undefined'&&navigator.onLine===false)notifyConnectivity();
        if(input&&input.focus&&(!window.matchMedia||!window.matchMedia('(max-width:590px)').matches))input.focus();
      }else{
