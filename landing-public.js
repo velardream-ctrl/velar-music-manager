@@ -1298,7 +1298,8 @@
      return true;
    }
    if(imagePolicy()&&imagePolicy().configure)imagePolicy().configure(value.hero.imageLoadingLevel);
-   if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.configure(value.hero.analytics);
+   if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.configure(value.hero.analytics,
+     !!(value.genres&&value.genres.assistant&&value.genres.assistant.enabled));
    assign('public-hero-subtitle',value.hero.subtitle);
    assign('public-hero-intro',value.hero.intro);
    assign('artists-title',value.artists.heading);

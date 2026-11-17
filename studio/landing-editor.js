@@ -2675,7 +2675,7 @@
    var a=data.hero.analytics,section=document.createElement('section');
    section.className='landing-display-group';
    heading(section,'Счётчик посещений и интереса к песням',
-     'Настройки будущей аналитики. Никакие реальные счётчики не собираются, пока не установлен защищённый серверный обработчик и не получено согласие посетителя. Это не регистрация пользователей.');
+     'Посетителей о разрешении спрашивает помощник DJ Velar в первом открытии чата. До согласия Google Analytics не загружается. Отказ не ограничивает музыку, IP для запоминания ответа не используется.');
    function check(label,key){
      var row=document.createElement('label');row.className='landing-checkbox';
      var input=document.createElement('input');input.type='checkbox';input.checked=a[key]===true;
@@ -2683,20 +2683,20 @@
      var name=document.createElement('span');name.textContent=label;
      row.appendChild(input);row.appendChild(name);section.appendChild(row);
    }
-   check('Разрешить аналитику после установки защищённого сервиса и согласия посетителей','enabled');
+   check('Включить GA4 (G-ZD640V3VQ1) с добровольным согласием через помощника Velar','enabled');
    check('Разрешить показ публичного счётчика (отдельно от сбора данных)','showPublic');
    check('Показывать посещения сайта','showVisits');
    check('Показывать открытия музыкальных плееров','showActions');
    check('Показывать рейтинг популярных треков','showTopTracks');
    field(section,'Заголовок публичного блока',a.title,function(v){a.title=v;});
-   selectField(section,'Хранение детализированных событий',
+   selectField(section,'Планируемый срок для собственного сервера (не изменяет хранение GA4)',
      [['30','30 дней'],['90','90 дней'],['180','180 дней']],String(a.retentionDays||90),
      function(v){a.retentionDays=Number(v);});
    var status=document.createElement('p');status.className='sync-note';
-   status.textContent='Состояние: сервер сбора событий и чтение достоверных агрегатов ещё не подключены. Поэтому статистика не будет показывать придуманные нули или создавать записи в Firestore из браузера. Счётчик остаётся скрытым до появления подтверждённых данных.';
+   status.textContent='Поток GA4 G-ZD640V3VQ1 готов. Чтобы начать измерять визиты, включи сбор, сохрани и опубликуй. DJ Velar предложит посетителю разрешить или отклонить аналитику; без выбора Google-тег не загружается. Отчёты доступны в Google Analytics → В реальном времени. Счётчики в админке и на публичной странице пока не подключены — настройки их видимости зарезервированы.';
    section.appendChild(status);
    var explain=document.createElement('p');explain.className='sync-note';
-   explain.textContent='Будущие показатели: просмотры страниц, приблизительное число посетителей с согласия, клики по Spotify / Apple Music / YouTube, переходы и действия в радио. Внешний iframe не позволяет доказать, что песню полностью прослушали. Рейтинг будет называться «Чаще открывают», пока нет подтверждения воспроизведения.';
+   explain.textContent='События GA4: page_view, velar_player_open, velar_radio_open, velar_radio_next, velar_youtube_start. Посетитель может отозвать согласие через «Настройки статистики» внизу сайта. Для песенных рейтингов потребуются настройки отчётов GA4 и сопоставление ID песен; открытие внешнего плеера не означает завершённое прослушивание.';
    section.appendChild(explain);
    parent.appendChild(section);
  }
