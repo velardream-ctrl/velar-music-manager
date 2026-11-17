@@ -107,6 +107,20 @@
  // because CSS sticky can fail even when transforms and rAF work.
  // The chapter keeps its 200vh placeholder; the art does not leave the
  // viewport until all three narrative phases have been displayed.
+ function legacyIpadFirstScreen(){
+   // RUN-176: on iPad the header and hero together fill the first viewport.
+   // The following crystal section starts BELOW it, never as a partial ring.
+   var hero=document.querySelector('.hero');
+   var header=document.querySelector('.site-header');
+   if(!hero||!header)return;
+   function fit(){
+     var headerHeight=header.getBoundingClientRect().height||header.offsetHeight||0;
+     hero.style.minHeight=Math.max(0,window.innerHeight-headerHeight)+'px';
+   }
+   window.addEventListener('resize',fit,false);
+   window.addEventListener('orientationchange',fit,false);
+   fit();
+ }
  function legacyIpadMotion(){
    var stage=chapter.querySelector('.crystal-journey-stage');
    var image=chapter.querySelector('.crystal-journey-crystal');
@@ -173,7 +187,7 @@
    chapter.setAttribute('data-motion-status',status);
    // Old iPad never gets has-living-art sticky heights. The ES5 scroll
    // animation is independent of IntersectionObserver and remains optional.
-   if(legacy){legacyIpadMotion();return;}
+   if(legacy){legacyIpadFirstScreen();legacyIpadMotion();return;}
    if(status!=='enabled')return;
    crystal=chapter.querySelector('.crystal-journey-crystal');
    outer=chapter.querySelector('.crystal-journey-ring--outer');
