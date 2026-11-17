@@ -12,7 +12,7 @@ new vm.Script(workerScript);
 new vm.Script(labSrc);
 assert.match(studioSrc,/window\.VELAR_AI_LAB\.attach\(parent\)/);
 assert.match(studioHTML,/ai-lab\.js\?v=5/);
-assert.match(sw,/studio\/ai-lab\.js\?v=4/);
+assert.match(sw,/studio\/ai-lab\.js\?v=5/);
 assert.match(sw,/reports191-ai192-run193-catalog194-fallback195-budget198/);
 assert.match(labSrc,/timeoutMs=60000/);
 assert.match(labSrc,/Превышено ожидание 60 секунд/);
