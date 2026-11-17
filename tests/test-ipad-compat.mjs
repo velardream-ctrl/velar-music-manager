@@ -34,8 +34,8 @@ assert.match(css,/\.universe-node-name\{word-wrap:break-word;overflow-wrap:break
 assert.match(css,/\.topic-planet-name\{line-height:1\.24;word-wrap:break-word;/);
 
 // Only public static assets change; Studio cache and audio remain untouched.
-assert.match(html,/href="style\.css\?v=80"/);
-assert.match(sw,/'\.\/style\.css\?v=80'/);
+assert.match(html,/href="style\.css\?v=81"/);
+assert.match(sw,/'\.\/style\.css\?v=81'/);
 assert.match(sw,/CACHE_PREFIX \+ 'v92'/);
 assert.match(sw,/STUDIO_PREFIX\+'v54'/);
 assert.match(css,/\.public-artist-song-list \.public-song-copy,[^}]*word-wrap:break-word;overflow-wrap:break-word;overflow-wrap:anywhere/);
