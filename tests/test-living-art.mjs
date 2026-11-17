@@ -216,8 +216,8 @@ assert.doesNotMatch(iphone.doc.documentElement.className,/legacy-ipad-crystal/);
 assert.doesNotMatch(desktop.doc.documentElement.className,/legacy-ipad-crystal/);
 assert.doesNotMatch(newIpad.doc.documentElement.className,/legacy-ipad-crystal/);
 
-assert.match(css,/html\\.legacy-ipad-crystal \\.crystal-journey-stage\\.legacy-crystal-pinned\\{/);
-assert.match(css,/html\\.legacy-ipad-crystal \\.crystal-journey-stage\\.legacy-crystal-ended\\{/);
+assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-stage\.legacy-crystal-pinned\{/);
+assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-stage\.legacy-crystal-ended\{/);
 assert.match(art,/legacy-crystal-pinned/);
 assert.match(art,/legacyIpadFirstScreen\(\)/);
 assert.match(art,/data-journey-phase/);
