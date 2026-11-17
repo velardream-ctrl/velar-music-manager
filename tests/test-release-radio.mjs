@@ -242,8 +242,8 @@ assert.match(css,/.cms-release-art::before/);
 assert.match(css,/\.velar-radio--bubble/);
 assert.match(css,/min-height:200px/);
 assert.match(html,/universe\.js\?v=7/);
-assert.match(html,/style\.css\?v=73/);
-assert.match(sw,/CACHE_PREFIX \+ 'v82'/);
+assert.match(html,/style\.css\?v=74/);
+assert.match(sw,/CACHE_PREFIX \+ 'v83'/);
 assert.match(sw,/STUDIO_PREFIX\+'v51'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);
@@ -309,6 +309,10 @@ assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src,apple.repl
 // RUN-164: gold logo, subtle animation and stable drag coordinates (desktop/touch).
 assert.match(css,/assets\/velar-radio-icon-gold\.webp/);
 assert.match(css,/@keyframes velar-radio-heartbeat/);
+const boldRadioLogo=fs.readFileSync(new URL('../assets/velar-radio-icon-gold-bold.webp',import.meta.url));
+assert.equal(boldRadioLogo.toString('ascii',0,4),'RIFF','Bold radio icon has a RIFF WebP header');
+assert.equal(boldRadioLogo.toString('ascii',8,12),'WEBP');
+assert.ok(boldRadioLogo.length<12000,'Small radio badge remains light to download');
 assert.match(css,/animation:velar-radio-heartbeat 2\\.65s/);
 assert.match(css,/animation-play-state:paused/);
 assert.match(css,/transform:scale\\(1\\.065\\)/);
