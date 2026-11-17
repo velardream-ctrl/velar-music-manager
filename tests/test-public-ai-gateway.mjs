@@ -23,6 +23,7 @@ vm.runInNewContext(code,context);
 let calls=0,limits=0;
 const env={AI:{run:async()=>{calls++;return {response:'Я помогу подобрать музыку.'};}},
  PUBLIC_RATE_LIMITER:{limit:async()=>{limits++;return {success:true};}},
+ PUBLIC_GLOBAL_RATE_LIMITER:{limit:async()=>({success:true})},
  PUBLIC_AI_ENABLED:'false',VELAR_OWNER_TEST_TOKEN:'x'.repeat(40)};
 function req({origin='https://velardream.com',method='POST',message='Что ты умеешь?',ip='198.51.100.10'}={}){
  return new Request('https://ai.velardream.com/v1/public-chat',{method,
@@ -38,11 +39,18 @@ env.PUBLIC_RATE_LIMITER={limit:async()=>({success:false})};
 r=await context.worker.fetch(req(),env);
 assert.equal(r.status,429);assert.equal(calls,0);
 env.PUBLIC_RATE_LIMITER={limit:async()=>{limits++;return {success:true};}};
+delete env.PUBLIC_GLOBAL_RATE_LIMITER;
+r=await context.worker.fetch(req(),env);
+assert.equal(r.status,503);assert.equal(calls,0,'No aggregate limiter must fail closed');
+env.PUBLIC_GLOBAL_RATE_LIMITER={limit:async()=>({success:false})};
+r=await context.worker.fetch(req(),env);
+assert.equal(r.status,429);assert.equal(calls,0,'Aggregate throttling must not invoke AI');
+env.PUBLIC_GLOBAL_RATE_LIMITER={limit:async()=>({success:true})};
 r=await context.worker.fetch(req({origin:'https://untrusted.example'}),env);
 assert.equal(r.status,403);assert.equal(calls,0);
 r=await context.worker.fetch(req(),env);
 assert.equal(r.status,200);assert.match((await r.json()).reply,/подобрать музыку/);
 assert.equal(calls,1);assert.ok(limits>0);
-console.log('PASS RUN-196: server-side opt-in, origin, mandatory rate-limit, model, public fallback wiring');
+console.log('PASS RUN-196: server-side opt-in, origin, per-client and global rate-limit, model, public fallback wiring');
 
 assert.doesNotMatch(assistant,/velar-assistant-ai-notice|Неизвестные вопросы могут передаваться Cloudflare AI/);
