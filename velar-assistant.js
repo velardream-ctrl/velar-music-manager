@@ -497,7 +497,7 @@
      if(source==='local'&&reason&&root&&root.setAttribute)root.setAttribute('data-ai-fallback',reason);
      else if(root&&root.removeAttribute)root.removeAttribute('data-ai-fallback');
    }
-   if(!unresolved||!router||typeof window.fetch!=='function'){
+   if(!unresolved||window.VELAR_PUBLIC_AI_ENABLED!==true||!router||typeof window.fetch!=='function'){
      show(result,'local','');return;
    }
    // A fixed non-secret endpoint. Until DNS route and Cloudflare public
