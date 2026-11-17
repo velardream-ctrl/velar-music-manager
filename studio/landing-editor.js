@@ -2728,14 +2728,43 @@
    authorized().then(function(a){
      if(a.user.uid!==account)throw new Error('Учётная запись изменилась.');
      var sources=cleanData.releases.radio.sources;
-     if(!sources.length)return;
-     return a.db.collection('vmm_catalog').get({source:'server'}).then(function(snapshot){
-       var rows=[];snapshot.forEach(function(doc){rows.push(doc.data());});
+     var groups=cleanData.genres.entries||[];
+     var needsGenres=groups.some(function(g){return g.songIds&&g.songIds.length;});
+     if(!sources.length&&!needsGenres)return;
+     // RUN-178: single read from protected catalog supplies both radio and
+     // public genre metadata. No catalog writes, private fields or credentials.
+     return a.db.collection('vmm_catalog').limit(1200).get({source:'server'}).then(function(snapshot){
+       var rows=[],byId={};
+       snapshot.forEach(function(doc){
+         var track=doc.data()||{};rows.push(track);byId[doc.id]=track;
+       });
+       if(rows.length>=1200)throw new Error('Каталог достиг лимита 1200 записей. Публикация остановлена, чтобы не потерять назначения.');
        liveData=clone(cleanData);
-       liveData.releases.radio.catalog=API.radioCatalog(cleanData,rows,sources);
-       liveData=API.normalize(liveData);
-       if(!sources.some(function(p){return liveData.releases.radio.catalog[p].length;}))
-         throw new Error('В каталоге пока нет ссылок выбранных площадок.');
+       if(sources.length){
+         liveData.releases.radio.catalog=API.radioCatalog(cleanData,rows,sources);
+         if(!sources.some(function(p){return liveData.releases.radio.catalog[p].length;}))
+           throw new Error('В каталоге пока нет ссылок выбранных площадок.');
+       }
+       (liveData.genres.entries||[]).forEach(function(g){
+         g.tracks=[];
+         (g.songIds||[]).forEach(function(songId){
+           if(!Object.prototype.hasOwnProperty.call(byId,songId))
+             throw new Error('Жанр «'+g.label+'»: песня '+songId+' не найдена в каталоге. Обнови каталог.');
+           var song=byId[songId],links=song.links||{},sourcesFound=[];
+           ['spotify','youtube','appleMusic'].forEach(function(p){
+             var verified=API.songUrl(links[p]||'',p);
+             if(verified)sourcesFound.push({provider:p,url:verified});
+           });
+           if(!sourcesFound.length)return; // retain ID for future publication
+           var first=sourcesFound[0];
+           var row={title:String(song.title||'Без названия'),artist:String(song.artist||''),
+             provider:first.provider,url:first.url};
+           if(sourcesFound[1]){row.alternateProvider=sourcesFound[1].provider;row.alternateUrl=sourcesFound[1].url;}
+           if(sourcesFound[2]){row.thirdProvider=sourcesFound[2].provider;row.thirdUrl=sourcesFound[2].url;}
+           g.tracks.push(API.languageTrack(row,1));
+         });
+       });
+       liveData=API.normalize(liveData); // enforce public-data whitelist
      });
    }).then(function(){
      if(uid!==account)throw new Error('Учётная запись изменилась.');
