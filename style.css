@@ -2099,7 +2099,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 .velar-radio--bubble{width:68px;min-width:68px;max-width:68px}
 .velar-radio--bubble > .velar-radio-toggle{
  width:68px;height:68px;min-height:68px;padding:0;border:0;
- background:transparent url('assets/velar-radio-icon.webp') center/contain no-repeat;
+ background:transparent url('assets/velar-radio-icon-gold-bold.png') center/contain no-repeat;
  border-radius:50%;box-shadow:none;overflow:hidden;
 }
 .velar-radio--bubble > .velar-radio-toggle::before,
@@ -2115,7 +2115,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
   transition:width .30s cubic-bezier(.22,.75,.3,1);
 }
 .velar-radio--bubble>.velar-radio-toggle{
-  background:transparent url('assets/velar-radio-icon-gold-bold.webp') center/contain no-repeat;
+  background:transparent url('assets/velar-radio-icon-gold-bold.png') center/contain no-repeat;
   touch-action:none;
   -webkit-user-select:none;user-select:none;
   cursor:grab;
@@ -2251,3 +2251,8 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 /* RUN-169: the default orb is placed beside the hero crystal in JS. */
 /* A mini player attached to a right-hand orb opens LEFT via right:0 (base rule). */
 /* The popup-left modifier is now applied only when the orb is on the left half. */
+
+/* RUN-170: VELAR RADIO's approved emblem uses a compact transparent PNG,
+   not WebP-only CSS. iOS Safari <14 shows the same gold logo and the halo.
+   Keep both CSS background declarations in sync: older Safari may ignore
+   modern selectors, and the circle must never be an empty glowing ring. */
