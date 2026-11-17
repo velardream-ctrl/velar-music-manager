@@ -816,7 +816,7 @@
        host.className=host.className.replace(/\svelar-radio--popup-left|\svelar-radio--popup-above/g,'');
        // A mini player on the RIGHT must expand toward the LEFT (right:0).
        // Only bubbles on the left half need the alternate left:0 alignment.
-       if(window.innerWidth-right-width>window.innerWidth/2)host.className+=' velar-radio--popup-left';
+       if(window.innerWidth-right-width<window.innerWidth/2)host.className+=' velar-radio--popup-left';
        if(window.innerHeight-top-rect.height<288)host.className+=' velar-radio--popup-above';
      }
    }
