@@ -307,18 +307,18 @@ assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src,apple.repl
 
 
 // RUN-164: gold logo, subtle animation and stable drag coordinates (desktop/touch).
-assert.match(css,/assets\/velar-radio-icon-gold\.webp/);
+assert.match(css,/assets\/velar-radio-icon-gold-bold\.webp/);
 assert.match(css,/@keyframes velar-radio-heartbeat/);
 const boldRadioLogo=fs.readFileSync(new URL('../assets/velar-radio-icon-gold-bold.webp',import.meta.url));
 assert.equal(boldRadioLogo.toString('ascii',0,4),'RIFF','Bold radio icon has a RIFF WebP header');
 assert.equal(boldRadioLogo.toString('ascii',8,12),'WEBP');
 assert.ok(boldRadioLogo.length<12000,'Small radio badge remains light to download');
-assert.match(css,/animation:velar-radio-heartbeat 2\\.65s/);
+assert.match(css,/animation:velar-radio-heartbeat 2\.65s/);
 assert.match(css,/animation-play-state:paused/);
-assert.match(css,/transform:scale\\(1\\.065\\)/);
+assert.match(css,/transform:scale\(1\.065\)/);
 assert.match(css,/velar-radio-panel-appear/);
 assert.match(css,/prefers-reduced-motion:reduce/);
-assert.match(sw,/assets\/velar-radio-icon-gold\.webp/);
+assert.match(sw,/assets\/velar-radio-icon-gold-bold\.webp/);
 const radioDragStart164=publicJS.indexOf(' function radioMove(');
 const radioDragEnd164=publicJS.indexOf(' function stationHelp(',radioDragStart164);
 assert.ok(radioDragStart164>=0&&radioDragEnd164>radioDragStart164);
