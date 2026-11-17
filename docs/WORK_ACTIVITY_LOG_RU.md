@@ -1953,3 +1953,11 @@
 - **ИСПРАВЛЕНИЕ:** только для `html.legacy-ipad-crystal .velar-radio > .station-help > .station-help-button` установлен `display:-webkit-flex;display:flex` + `align-items:center;justify-content:center`, сброшены padding/text-indent/appearance. Скрыт встроенный `::-webkit-details-marker`. Размер 40×40, положение круга и открытие справки не меняются.
 - **ПРОВЕРКА:** дополнен `tests/test-radio-visual.mjs` для реального summary и iPad-scoped CSS. Должны быть подтверждены CI и визуально на старом iPad. Не трогать iPhone, desktop, радио-iframe, плейлисты, Firestore и Studio.
 - **КЭШ:** версия CSS сохранена; общедоступный service worker уже использует network-first для stylesheet при подключении к сети.
+
+
+## RUN-178 / RUN-179 — 2026-11-17: жанры одной галочкой, Apple Music в темах
+- Получено уточнение владельца: в «Жанрах» только одна галочка для песни, без отдельного выбора Spotify, YouTube и Apple Music; ссылки автоматически из каталога при публикации; жанры можно создавать, переименовывать, перемещать, скрывать и удалять; одна песня может находиться в нескольких жанрах без повторов внутри жанра.
+- Для «Тем песен», «Языков песен» и «Альбомов» добавлен третий источник Apple Music, сохраняя 1 запись на композицию и существующие связи.
+- Исходная ветка: feat/run178-genre-song-assignments-20261117; legacy tags сохраняются; приватные данные и Firebase Rules не менялись; новая публикация требует явного действия владельца.
+- Подробный технический протокол: docs/RUN178_179_GENRES_APPLE_RU.md.
+- GitHub Actions #44070327108: полный npm test SUCCESS (SHA 3af5fccb63547f62f51972557a08a745dcfc2a63). После новых изменений журнала требуется повторный итоговый CI; аппаратная проверка iPad отдельно.
