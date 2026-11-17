@@ -242,8 +242,8 @@ assert.match(css,/.cms-release-art::before/);
 assert.match(css,/\.velar-radio--bubble/);
 assert.match(css,/min-height:200px/);
 assert.match(html,/universe\.js\?v=7/);
-assert.match(html,/style\.css\?v=72/);
-assert.match(sw,/CACHE_PREFIX \+ 'v81'/);
+assert.match(html,/style\.css\?v=73/);
+assert.match(sw,/CACHE_PREFIX \+ 'v82'/);
 assert.match(sw,/STUDIO_PREFIX\+'v51'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);
@@ -308,7 +308,10 @@ assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src,apple.repl
 
 // RUN-164: gold logo, subtle animation and stable drag coordinates (desktop/touch).
 assert.match(css,/assets\/velar-radio-icon-gold\.webp/);
-assert.match(css,/@keyframes velar-radio-gold-breathe/);
+assert.match(css,/@keyframes velar-radio-heartbeat/);
+assert.match(css,/animation:velar-radio-heartbeat 2\\.65s/);
+assert.match(css,/animation-play-state:paused/);
+assert.match(css,/transform:scale\\(1\\.065\\)/);
 assert.match(css,/velar-radio-panel-appear/);
 assert.match(css,/prefers-reduced-motion:reduce/);
 assert.match(sw,/assets\/velar-radio-icon-gold\.webp/);
