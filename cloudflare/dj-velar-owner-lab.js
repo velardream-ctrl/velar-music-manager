@@ -46,7 +46,8 @@ export default {
         "Access-Control-Max-Age":"600","Vary":"Origin","Cache-Control":"no-store"
       }});
       if(request.method!=="POST")return json({error:"method_not_allowed"},405);
-      if(env.PUBLIC_AI_ENABLED!=="true"||!env.AI||!env.PUBLIC_RATE_LIMITER)
+      if(env.PUBLIC_AI_ENABLED!=="true"||!env.AI||!env.PUBLIC_RATE_LIMITER||
+         !env.PUBLIC_GLOBAL_RATE_LIMITER)
         return json({error:"public_ai_disabled"},503);
       const ip=request.headers.get("CF-Connecting-IP");
       if(!ip)return json({error:"rate_limit_unavailable"},503);
@@ -55,6 +56,13 @@ export default {
       try {allowed=await env.PUBLIC_RATE_LIMITER.limit({key:ip});}
       catch(_){return json({error:"rate_limit_unavailable"},503);}
       if(!allowed||allowed.success!==true)return json({error:"rate_limited"},429);
+      // A second, shared per-location ceiling limits aggregate abuse beyond
+      // individual IPs. Cloudflare's Rate Limiting API is approximate and
+      // NOT a strict daily or global provider spending cap.
+      let aggregate;
+      try {aggregate=await env.PUBLIC_GLOBAL_RATE_LIMITER.limit({key:"dj-velar-public-ai"});}
+      catch(_){return json({error:"rate_limit_unavailable"},503);}
+      if(!aggregate||aggregate.success!==true)return json({error:"rate_limited"},429);
       if(Number(request.headers.get("Content-Length")||0)>1400)return json({error:"too_large"},413);
       let raw;
       try {raw=await request.text();}catch(_){return json({error:"invalid_json"},400);}
