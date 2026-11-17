@@ -114,8 +114,41 @@ const onlyArtwork=youtubeOnly.children[1].children[0].children[0].children[1];
 assert.equal(onlyArtwork.children.length,1,'YouTube-only song shows a local note');
 assert.equal(onlyArtwork.children[0].textContent,'♫','Never fetch YouTube thumbnails');
 assert.equal(read('public-song-ui.js').includes('requestArtwork:requestArtwork'),true);
-assert.match(read('studio/landing-editor.js'),/Оформление каталога песен/);
+assert.match(read('studio/landing-editor.js'),/Оформление блоков главной страницы/);
 assert.match(read('landing-public.js'),/value.genres.songViewMode/);
+// RUN-181: independent genres/topics/languages/albums settings override legacy global carousel.
+const publicModes={genres:'compact',topics:'compact',languages:'tiles',albums:'covers'};
+const legacy=API.normalize({...defaults,genres:{...defaults.genres,
+ displayModes:publicModes,songViewMode:'carousel'}});
+assert.equal(legacy.genres.displayModes.genres,'compact');
+assert.equal(legacy.genres.displayModes.languages,'tiles');
+engine.configure('rows',[],'carousel',[],undefined,publicModes);
+const fifty=Array.from({length:50},(_,i)=>({
+ title:'Трек '+String(i+1).padStart(2,'0'),artist:'Velar',provider:'spotify',
+ url:'https://open.spotify.com/track/'+String(i+1).padStart(22,'A')
+}));
+const compact=node();const controller=engine.mount(compact,fifty,{prefix:'topic'});
+assert.match(compact.className,/public-song-compact/);
+assert.equal(compact.children[1].children.length,25,'Only 25 visible rows, not 50');
+assert.equal(compact.children[2].children.length,3,'Accessible pagination controls');
+compact.children[2].children[2].onclick();
+assert.equal(compact.children[1].children.length,25);
+assert.equal(compact.children[2].children[1].textContent,'26–50 / 50');
+const filter=compact.children[0].children[0];
+filter.value='Трек 03';filter.oninput();
+assert.equal(compact.children[1].children.length,1,'Search filters 50 published songs');
+assert.equal(controller.openByUrl(fifty[1].url),true,'Deep link finds a song across pages');
+const genres=node();engine.mount(genres,fifty,{prefix:'genre'});
+assert.match(genres.className,/public-song-compact/);
+const lang=node();engine.mount(lang,[songs[1]],{prefix:'language'});
+assert.match(lang.className,/public-song-list--tiles/);
+const albums=node();engine.mount(albums,[songs[1]],{prefix:'album'});
+assert.doesNotMatch(albums.className,/public-song-carousel/);
+engine.configure('rows',[],'carousel',[],undefined,{topics:'carousel'});
+const hugeCarousel=node();engine.mount(hugeCarousel,fifty,{prefix:'topic'});
+assert.match(hugeCarousel.className,/public-song-compact/,
+ 'Over 40 songs must use searchable pages even when carousel is configured');
+
 const css=read('style.css');
 assert.match(css,/\.public-song-carousel-track\{/);
 assert.match(css,/scroll-snap-type:x mandatory/);
