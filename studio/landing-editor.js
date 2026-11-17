@@ -77,6 +77,7 @@
  }
  var languageEditorCode='',languageCatalogSearch='',languageTrackFilter='',languageCatalogPage=0;
  var topicEditorSlug='',topicCatalogSearch='',topicTrackFilter='',topicCatalogPage=0;
+ var genreEditorId='',genreCatalogSearch='',genreTrackFilter='',genreCatalogPage=0;
  var albumEditorId='',albumCatalogSearch='',albumTrackFilter='',albumCatalogPage=0;
  var faqSearch='',faqGroup='',faqPage=0;
  // Offline admin: private IndexedDB outbox, no publication without explicit click.
@@ -340,7 +341,7 @@
    var generation=loadGeneration,account=uid;
    catalogLoading=true;catalogError='';
    // Show a real loading state immediately, rather than the stale 'not loaded' label.
-   if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
+   if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics'||tab==='genres')render();
    if(navigator.onLine===false&&offlineStore){
      return offlineStore.get(uid,'cache:artist-catalog').then(function(saved){
        if(!saved||!saved.value||!Array.isArray(saved.value.catalog))
@@ -368,11 +369,11 @@
          offlineStatus('Не удалось сохранить каталог для офлайн: '+err.message);
        });
      restoreArtistLinks().then(function(){if(pendingArtistLinks)syncArtistLinks();});
-     if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
+     if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics'||tab==='genres')render();
    }).catch(function(err){
      if(generation!==loadGeneration||account!==uid)return;
      catalogLoading=false;catalogError=err&&err.message||'Каталог или связи песен временно недоступны.';
-     if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')render();
+     if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics'||tab==='genres')render();
    });
  }
  function artistPicker(parent){
@@ -1586,6 +1587,62 @@
    });
    parent.appendChild(box);
  }
+
+ // RUN-178: genres share the validated topic/language/album song picker.
+ function genreEditor(parent){
+   var groups=data.genres.entries||[];
+   heading(parent,'Жанры и песни','Выбери жанр и отметь песни из каталога. Одна композиция может относиться к нескольким жанрам. Сначала сохрани черновик, затем опубликуй.');
+   sectionFields(parent,'genres');
+   var menu=document.createElement('div');menu.className='landing-language-menu';
+   groups.forEach(function(g,i){
+     var row=document.createElement('div');row.className='landing-language-menu-item';
+     var select=button(g.label+' · '+g.tracks.length+' песен',function(){
+       genreEditorId=g.id;genreCatalogSearch='';genreTrackFilter='';genreCatalogPage=0;render();
+     },'landing-small');
+     if(genreEditorId===g.id)select.className+=' is-active';
+     row.appendChild(select);
+     var actions=document.createElement('div');actions.className='landing-item-actions';
+     var up=button('↑',function(){if(!i)return;var item=groups.splice(i,1)[0];groups.splice(i-1,0,item);render();});
+     var down=button('↓',function(){if(i>=groups.length-1)return;var item=groups.splice(i,1)[0];groups.splice(i+1,0,item);render();});
+     var remove=button('Удалить',function(){
+       if(!window.confirm('Удалить жанр «'+g.label+'» и его привязки из черновика? Каталог песен останется без изменений.'))return;
+       groups.splice(i,1);if(genreEditorId===g.id)genreEditorId='';
+       data.genres.tags=groups.map(function(x){return x.label;});render();
+     },'landing-danger');
+     up.disabled=i===0;down.disabled=i===groups.length-1;
+     actions.appendChild(up);actions.appendChild(down);actions.appendChild(remove);
+     row.appendChild(actions);menu.appendChild(row);
+   });
+   parent.appendChild(menu);
+   parent.appendChild(button('+ Добавить жанр',function(){
+     if(groups.length>=20){info('Максимум 20 жанров.');return;}
+     var n=1,code;
+     do{code='genre-'+n++;}while(groups.some(function(g){return g.id===code;}));
+     groups.push({id:code,label:'Новый жанр '+(n-1),visible:false,tracks:[]});
+     data.genres.tags=groups.map(function(x){return x.label;});
+     genreEditorId=code;genreCatalogSearch='';genreTrackFilter='';genreCatalogPage=0;render();
+   },'landing-add'));
+   var active=groups.filter(function(g){return g.id===genreEditorId;})[0];
+   if(!active){active=groups[0];if(active)genreEditorId=active.id;}
+   if(!active)return;
+   var card=document.createElement('section');card.className='landing-card landing-genre-editor';
+   heading(card,'Жанр: '+active.label,'Песни показываются на сайте только после публикации.');
+   field(card,'Название жанра',active.label,function(v){
+     active.label=v;data.genres.tags=groups.map(function(x){return x.label;});
+   });
+   var visibility=document.createElement('label');visibility.className='landing-checkbox';
+   var check=document.createElement('input');check.type='checkbox';check.checked=active.visible===true;
+   check.onchange=function(){active.visible=this.checked;updateButtons();};
+   visibility.appendChild(check);
+   var label=document.createElement('span');label.textContent='Показывать жанр на сайте';
+   visibility.appendChild(label);card.appendChild(visibility);
+   attachedSongsEditor(card,active,{mode:'genre',
+     getFilter:function(){return genreTrackFilter;},setFilter:function(v){genreTrackFilter=v;},
+     getCatalogSearch:function(){return genreCatalogSearch;},setCatalogSearch:function(v){genreCatalogSearch=v;},
+     getCatalogPage:function(){return genreCatalogPage;},setCatalogPage:function(v){genreCatalogPage=v;}
+   });
+   parent.appendChild(card);
+ }
  function topicEditor(parent){
    var config=data.genres.topics,topics=config.entries;
    heading(parent,'Темы и настроения',
@@ -2488,11 +2545,7 @@
    }else if(tab==='assistant'){
      assistantEditor(panel);
    }else if(tab==='genres'){
-     heading(panel,'Жанры и подборки','Публичные названия музыкальных направлений.');
-     sectionFields(panel,tab);
-     field(panel,'Жанры (через запятую или с новой строки)',data.genres.tags.join(', '),function(v){
-       data.genres.tags=v.split(/[,\n]/).map(function(x){return x.trim();}).filter(Boolean);
-     },true);
+     genreEditor(panel);
    }else if(tab==='about'){
      heading(panel,'О проекте','Информация, видимая всем посетителям.');
      sectionFields(panel,tab);
@@ -2515,9 +2568,9 @@
  }
  function load(force){
    if(busy)return Promise.resolve();
-   if(loaded&&!force){render();if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();return Promise.resolve();}
+   if(loaded&&!force){render();if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics'||tab==='genres')loadCatalogArtists();return Promise.resolve();}
    if(force&&dirty()&&!window.confirm('Есть несинхронизированные изменения. Обновление может их перезаписать в редакторе. Обновить?'))return Promise.resolve();
-   if(force){trackEditorArtist='';trackChecked={};trackSearch='';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;albumCatalogPage=0;catalogLoaded=false;catalogLoading=false;catalogError='';trackLinksLoaded=false;}
+   if(force){trackEditorArtist='';trackChecked={};trackSearch='';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;genreEditorId='';genreCatalogSearch='';genreTrackFilter='';genreCatalogPage=0;albumCatalogPage=0;catalogLoaded=false;catalogLoading=false;catalogError='';trackLinksLoaded=false;}
    var currentLoad=++loadGeneration;
    busy=true;updateButtons();info('Проверяем права и загружаем черновик…');
    return authorized().then(function(auth){
@@ -2533,7 +2586,7 @@
        data=API.normalize(draft&&draft.content?draft.content:published||API.defaults());
        baseline=JSON.stringify(data);loaded=true;busy=false;render();
        recoverLocal().then(function(){if(navigator.onLine)syncOffline();});
-       if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();
+       if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics'||tab==='genres')loadCatalogArtists();
        info(draft?'Черновик загружен. Изменения пока не опубликованы.':
           (published?'Загружена последняя публикация. Сохрани черновик, прежде чем публиковать изменения.':
           'Публикаций пока нет. Подготовь разделы и сохрани первый черновик.'));
@@ -2664,12 +2717,12 @@
    catalogArtists=[];catalogLoaded=false;catalogLoading=false;catalogError='';
    trackLinks={revision:0,overrides:{}};trackLinksLoaded=false;pendingArtistLinks=false;trackEditorArtist='';trackChecked={};trackSearch='';trackSaving=false;
    if(window.VMM_SONG_DISTRIBUTION)window.VMM_SONG_DISTRIBUTION.reset();
-   data=API.defaults();baseline='';published=null;tab='hero';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;albumCatalogPage=0;hide();updateButtons();
+   data=API.defaults();baseline='';published=null;tab='hero';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;genreEditorId='';genreCatalogSearch='';genreTrackFilter='';genreCatalogPage=0;albumCatalogPage=0;hide();updateButtons();
  }
  var nav=document.querySelectorAll('#landing-tabs [data-landing-tab]');
  for(var i=0;i<nav.length;i++)nav[i].onclick=function(){
    tab=this.getAttribute('data-landing-tab');render();
-   if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics')loadCatalogArtists();
+   if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics'||tab==='genres')loadCatalogArtists();
  };
  id('landing-save').onclick=save;
  id('landing-merge-offline').onclick=reconcileOffline;
