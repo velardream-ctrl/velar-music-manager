@@ -11,6 +11,7 @@ assert.match(html,/velar-assistant\.js\?v=15/);
 assert.match(sw,/velar-assistant\.js\?v=15/);
 assert.match(sw,/ai196/);
 assert.match(assistant,/VELAR_AI_FALLBACK/);
+assert.match(assistant,/window\.VELAR_PUBLIC_AI_ENABLED!==true/);
 assert.match(assistant,/data-response-source/);
 assert.match(assistant,/replyText\(config,'fallbackDisabled'\)/);
 assert.match(assistant,/https:\/\/ai\.velardream\.com\/v1\/public-chat/);
