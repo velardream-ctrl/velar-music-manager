@@ -8,6 +8,8 @@ workers_dev = true
 
 [vars]
 PUBLIC_AI_ENABLED = "false"
+# Strict UTC-day cap of AI model attempts, not tokens or fees.
+PUBLIC_AI_DAILY_LIMIT = "100"
 
 [ai]
 binding = "AI"
@@ -35,3 +37,14 @@ namespace_id = "19802"
 
 # Keep VELAR_OWNER_TEST_TOKEN as a Cloudflare Secret; NEVER in this file.
 # The global limiter is approximate/per-location, NOT a strict daily cap.
+
+# One singleton SQLite-backed Durable Object holds the authoritative daily count.
+[[durable_objects.bindings]]
+name = "PUBLIC_AI_BUDGET"
+class_name = "VelarAiBudget"
+
+[[migrations]]
+tag = "run198-ai-budget-v1"
+new_sqlite_classes = ["VelarAiBudget"]
+
+# Deploy only after confirming billing, CPU, daily quotas and protection.
