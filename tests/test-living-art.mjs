@@ -12,9 +12,9 @@ assert.match(html,/id="hero-crystal-link"/);
 assert.match(html,/class="crystal-journey-crystal"[\s\S]*?assets\/velardream-symbol\.svg/);
 assert.doesNotMatch(html,/class="crystal-journey-crystal"[\s\S]{0,250}assets\/velardream-crystal\.png/);
 assert.match(html,/href="#universe" id="hero-crystal-link"/);
-assert.match(html,/living-art\.js\?v=2/);
+assert.match(html,/living-art\.js\?v=3/);
 assert.match(html,/universe\.js\?v=7/);
-assert.match(html,/style\.css\?v=78/);
+assert.match(html,/style\.css\?v=79/);
 assert.match(universe,/crystal\.src='assets\/velardream-symbol\.svg'/);
 assert.match(universe,/var center=el\('button','universe-core'\)/);
 assert.match(universe,/universe-beam is-active/);
@@ -23,8 +23,8 @@ assert.match(css,/\.crystal-journey-ring--outer/);
 assert.match(css,/\.crystal-journey-stars--near/);
 assert.match(css,/\.has-living-art \.crystal-journey-stage\{/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
-assert.match(sw,/CACHE_PREFIX \+ 'v88'/);
-assert.match(sw,/'\.\/living-art\.js\?v=2'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v90'/);
+assert.match(sw,/'\.\/living-art\.js\?v=3'/);
 assert.match(sw,/'\.\/universe\.js\?v=7'/);
 assert.doesNotMatch(art,/setTimeout\(|setInterval\(|fetch\(|firebase|firestore\(|XMLHttpRequest|WebSocket|getContext\(/);
 assert.doesNotMatch(universe,/setTimeout\(|setInterval\(|fetch\(|firestore\(/);
@@ -53,7 +53,7 @@ function environment(opts={}){
   events:{},addEventListener(type,fn){this.events[type]=fn;}};
  const events={},observers=[],queued=[];
  const win={innerWidth:opts.width||1200,innerHeight:opts.height||800,
-   navigator:{connection:{saveData:!!opts.saveData}},
+   navigator:{userAgent:opts.userAgent||'Mozilla/5.0 (X11; Linux)',connection:{saveData:!!opts.saveData}},
    CSS:{supports:()=>opts.clip!==false},
    matchMedia:()=>({matches:!!opts.reduced}),
    IntersectionObserver:class {
@@ -110,4 +110,25 @@ for(const opt of [{reduced:true},{saveData:true},{clip:false},{height:490},{widt
  assert.equal(e.api.motionStatus(),expected);
  assert.equal(e.chapter.attributes['data-motion-status'],expected);
 }
-console.log('PASS: RUN-071 real crystal core, visible-only scroll layers, reduced motion/data saver/old browser fallback, no media or requests');
+// RUN-171: iPhone WebKit may scroll sticky scenes and viewport-fixed controls
+// up with the document. The targeted CSS fallback must never hit iPad/desktop.
+const iphone=environment({width:390,height:844,userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 26_1 like Mac OS X)'});
+const ipad=environment({width:768,height:1024,userAgent:'Mozilla/5.0 (iPad; CPU OS 12_5 like Mac OS X)'});
+const desktop=environment({width:1366,height:768,userAgent:'Mozilla/5.0 (Macintosh; Intel Mac OS X)'});
+assert.match(iphone.doc.documentElement.className,/ios-scroll-stable/);
+assert.match(iphone.doc.documentElement.className,/has-living-art/,
+ 'iPhone scroll artwork remains animated rather than disabled');
+assert.doesNotMatch(ipad.doc.documentElement.className,/ios-scroll-stable/,
+ 'Legacy iPad position and static fallback must remain unchanged');
+assert.doesNotMatch(desktop.doc.documentElement.className,/ios-scroll-stable/);
+assert.equal(iphone.api.scrollProgress(-100,650,844),100/422,
+ 'A short, non-sticky crystal chapter must animate smoothly on downward scroll');
+assert.match(css,/html\.ios-scroll-stable\.has-living-art \.crystal-journey-stage\{[\s\S]*?position:relative;top:auto;height:auto/,
+ 'iPhone scene must avoid sticky 100vh scroll blanking');
+assert.match(css,/html\.ios-scroll-stable body\.public-site\{overflow-x:visible\}/,
+ 'Remove the body clipping scroll container on iPhone only');
+assert.match(css,/html\.ios-scroll-stable \.velar-radio,[\s\S]*?html\.ios-scroll-stable \.velar-assistant\{/,
+ 'Keep the radio and assistant on separate composited fixed layers');
+assert.match(css,/html\.ios-scroll-stable\.has-living-art \.art-reveal\{[\s\S]*?opacity:1/,
+ 'Section headings must remain visible if iPhone observer callbacks are lost');
+console.log('PASS: RUN-071/171 desktop and iPad unchanged; iPhone crystal always visible in nonsticky scrolling scene and fixed radio/assistant retain compositor layers');

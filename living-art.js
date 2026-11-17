@@ -9,7 +9,16 @@
  var visibleWatcher=null,media=null;
  function clamp(x){return Math.max(0,Math.min(1,x));}
  function scrollProgress(top,height,viewport){
-   return clamp(-top/Math.max(1,height-viewport));
+   // RUN-171: a non-sticky iPhone chapter can be shorter than the visual
+   // viewport. Animate over at least half a viewport instead of jumping
+   // immediately from progress 0 to 1 on the first downward scroll.
+   return clamp(-top/Math.max(1,height-viewport,isIPhoneWebKit()?viewport*.5:1));
+ }
+ function isIPhoneWebKit(){
+   var ua=window.navigator&&window.navigator.userAgent||'';
+   // All iPhone browsers use WebKit. Deliberately EXCLUDE iPads:
+   // their static legacy fallback and successful layout must not change.
+   return /iPhone|iPod/.test(ua);
  }
  // RUN-088: readable, read-only diagnostics for desktop Edge/Windows.
  // Never override reduced-motion or Data Saver accessibility preferences.
@@ -91,6 +100,11 @@
    if(started)return;
    chapter=document.getElementById('crystal-journey');
    if(!chapter)return;
+   // RUN-171: iOS WebKit may scroll sticky/fixed layers as though they
+   // belong to the document. Limit the stable-layout override to iPhone.
+   // Keep the scroll-driven animations in JS; only the sticky CSS changes.
+   if(isIPhoneWebKit()&&document.documentElement.className.indexOf('ios-scroll-stable')===-1)
+     document.documentElement.className+=' ios-scroll-stable';
    var status=motionStatus();
    chapter.setAttribute('data-motion-status',status);
    if(status!=='enabled')return;

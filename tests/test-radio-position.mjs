@@ -11,9 +11,17 @@ function scenario(width,height,artRect,headerBottom){
  const events={},win={innerWidth:width,innerHeight:height,
    addEventListener(k,fn){events[k]=fn;},
    removeEventListener(k,fn){if(events[k]===fn)delete events[k];}};
+ const imageEvents={};
+ const image={
+  addEventListener(k,fn){imageEvents[k]=fn;},
+  removeEventListener(k,fn){if(imageEvents[k]===fn)delete imageEvents[k];}
+ };
  const elements={
   'top':{getBoundingClientRect(){return {bottom:headerBottom};}},
-  'hero-crystal-link':{getBoundingClientRect(){return artRect;}}
+  'hero-crystal-link':{
+    getBoundingClientRect(){return artRect;},
+    querySelector(){return image;}
+  }
  };
  const doc={getElementById:id=>elements[id]||null};
  const box=(className)=>({
@@ -33,7 +41,7 @@ function scenario(width,height,artRect,headerBottom){
  const context={window:win,document:doc,Date};
  const move=vm.runInNewContext(radioMoveSource,context,{timeout:1000});
  const controller=move(host,grip,orb);
- return {host,orb,grip,events,win,doc,elements,controller,context};
+ return {host,orb,grip,events,imageEvents,win,doc,elements,controller,context};
 }
 // Screenshot-sized phone: header ends at 124 CSS pixels, crystal occupies
 // y=184..369, and the radio must start BESIDE the crystal, never in the menu.
@@ -44,6 +52,7 @@ function scenario(width,height,artRect,headerBottom){
  assert.ok(Math.abs(rect.top+34-(184+185/2))<1,'Orb aligns with crystal middle');
  assert.ok(rect.left>=314,'The circular logo must not obscure the crystal');
  assert.ok(rect.right<=414-12,'The orb must remain inside the viewport');
+ assert.ok(rect.left>=414-90,'iPhone initial orb stays right of the crystal');
  assert.ok(!e.host.className.includes('popup-left'),
    'Right-hand orb uses right-aligned mini player to avoid overflow');
  // Rotation / layout width change re-anchors ONLY before a visitor drags.
@@ -82,6 +91,22 @@ function scenario(width,height,artRect,headerBottom){
  const r=e.host.getBoundingClientRect();
  assert.ok(r.top>134&&r.left>=0&&r.right<=320);
  e.context.stopRadioMove();
+}
+// Late hero-image sizing must recover a crystal-aligned HEIGHT instead of
+// retaining the fallback at 32% of the screen; initial X is always to the right.
+{
+ const e=scenario(390,844,{left:90,right:0,top:0,bottom:0,height:0},135);
+ assert.ok(e.host.getBoundingClientRect().left>=300,'Late image load still starts in the right column');
+ const fallback=e.host.getBoundingClientRect().top;
+ e.elements['hero-crystal-link'].getBoundingClientRect=()=>({
+   left:95,right:295,top:205,bottom:377,height:172
+ });
+ e.imageEvents.load();
+ assert.ok(Math.abs(e.host.getBoundingClientRect().top+34-(205+172/2))<1,
+  'Image load realigns the radio opposite the crystal');
+ assert.notEqual(e.host.getBoundingClientRect().top,fallback);
+ e.context.stopRadioMove();
+ assert.equal(Object.keys(e.imageEvents).length,0,'Image load listener is removed on cleanup');
 }
 // Deep link / return to an already-scrolled page: no offscreen crystal anchor.
 {

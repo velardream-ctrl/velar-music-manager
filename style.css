@@ -2256,3 +2256,31 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
    not WebP-only CSS. iOS Safari <14 shows the same gold logo and the halo.
    Keep both CSS background declarations in sync: older Safari may ignore
    modern selectors, and the circle must never be an empty glowing ring. */
+
+/* RUN-171: iPhone WebKit downward-scroll compatibility.
+   Historical overflow-x:clip on <body> + a 158vh sticky art scene can
+   strand the crystal behind a large blank area and detach viewport-fixed
+   UI from the visual viewport. Do NOT change desktop or legacy iPad rules.
+   The crystal remains visible and scroll-animated, but no longer sticky. */
+@media(max-width:1100px){
+ html.ios-scroll-stable body.public-site{overflow-x:visible}
+ html.ios-scroll-stable.has-living-art .crystal-journey{
+   position:relative;height:auto;min-height:0;padding:25px 10px 40px;
+ }
+ html.ios-scroll-stable.has-living-art .crystal-journey-stage{
+   position:relative;top:auto;height:auto;min-height:650px;
+   max-width:1300px;overflow:hidden;
+ }
+ /* Do not hide section headings when Safari drops an IntersectionObserver
+    callback during momentum scrolling. */
+ html.ios-scroll-stable.has-living-art .art-reveal{
+   opacity:1;transform:none;
+ }
+ /* Separate compositor layers for the two fixed controls; no position,
+    media iframe or user drag coordinates are changed. */
+ html.ios-scroll-stable .velar-radio,
+ html.ios-scroll-stable .velar-assistant{
+   -webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0);
+   -webkit-backface-visibility:hidden;backface-visibility:hidden;
+ }
+}
