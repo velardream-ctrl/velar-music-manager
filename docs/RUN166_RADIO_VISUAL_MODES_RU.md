@@ -6,3 +6,8 @@
 Реализация: схема radio.visual (mode, intensity 1–5, spread 50/75/100), редактор Studio → Главная страница → VELAR RADIO; CSS ореол и анимации на главной и отдельной странице. Старые настройки получают heartbeat/3/50. Медиа iframe, drag, цвета логотипа и управление воспроизведением не меняются. Music-режим переключается при открытии iframe; точной синхронизации с аудиоволной внешнего iframe нет. prefers-reduced-motion соблюдается.
 
 Верификация: tests/test-radio-visual.mjs добавлен в npm test. После проверки дополнить номером PR, результатом CI и фактом релиза.
+
+## Итог и публикация
+- PR #123: https://github.com/velardream-ctrl/velar-music-manager/pull/123 — MERGED 17.11.2026, SHA e902cad0213ad05d24f8a8c04b2fda4afb3584cb. CI #43999592984 SUCCESS, main CI #43999662960 SUCCESS, Pages #43999662509 SUCCESS.
+- PR #124: https://github.com/velardream-ctrl/velar-music-manager/pull/124 — MERGED в main, SHA da5a134942096f851dc5ee2c626144a62cb15397. Исправлена смена только визуальных настроек без разрушения активного iframe. Main CI #44000006954 SUCCESS, Pages #44000006759 SUCCESS.
+- Субъективное восприятие сияния и реальный iPad/iPhone остаются предметом проверки владельцем. Не заявлять проверку физического устройства по CI.
