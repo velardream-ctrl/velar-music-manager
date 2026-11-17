@@ -906,6 +906,9 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  border:1px solid #d7b17b;border-radius:15px;box-shadow:0 7px 22px #0008;
  font-size:.8rem;line-height:1.4;
 }
+.velar-assistant-greeting.is-consent{flex-wrap:wrap}
+.velar-assistant-greeting .velar-consent-actions{width:100%;flex-basis:100%;min-width:0}
+.velar-assistant-greeting .velar-consent-actions button{flex:1 1 110px;white-space:normal}
 .velar-assistant-greeting.hidden{display:none}
 .velar-assistant-greeting-text{flex:1}
 .velar-assistant-greeting-close,.velar-assistant-close{

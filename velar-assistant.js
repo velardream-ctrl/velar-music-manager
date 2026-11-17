@@ -402,10 +402,50 @@
    var api=analyticsApi();
    if(!api||!api.choose)return;
    api.choose(accept);
+   if(prompt)updateConsentGreeting();
    itemMessage('assistant',accept?
      'Спасибо! Вы разрешили собирать статистику посещений и открытий музыкальных плееров. Настройку можно изменить по ссылке «Настройки статистики» внизу сайта.':
      'Понимаю и уважаю ваш выбор. Аналитика для вас выключена. Музыка, радио и все разделы доступны без ограничений.',
      null,accept?'heart':'okay',false);
+ }
+ // RUN-190: visible, compact consent choices on the greeting bubble.
+ // The visitor need not open the chat first, and the classic welcome returns
+ // when consent is resolved. The decision is never inferred from silence.
+ function updateConsentGreeting(){
+   if(!prompt)return;
+   var actions=prompt.querySelector&&prompt.querySelector('.velar-consent-actions');
+   if(!actions){
+     actions=el('div','velar-consent-actions');
+     actions.style.cssText='display:none;flex:1 0 100%;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:5px';
+     function choice(label,accept){
+       var b=el('button','velar-chat-action',label);b.type='button';
+       b.style.cssText='flex:1;min-width:100px;min-height:40px;padding:7px;border:1px solid #d9bd85;border-radius:12px;background:#223653;color:#f8e5bf;font:inherit;cursor:pointer';
+       b.onclick=function(event){
+         if(event&&event.stopPropagation)event.stopPropagation();
+         markGreeting();markAnalyticsAsked();
+         analyticsRespond(accept);
+         actions.style.display='none';
+         var line=prompt.querySelector&&prompt.querySelector('.velar-assistant-greeting-text');
+         if(line)line.textContent=accept?'Спасибо! Статистика включена по вашему согласию.':'Ваш выбор сохранён. Музыка доступна без аналитики.';
+         prompt.className='velar-assistant-greeting';
+       };
+       actions.appendChild(b);
+     }
+     choice('Разрешить',true);choice('Отказаться',false);
+     prompt.appendChild(actions);
+   }
+   var shouldOffer=analyticsPending()&&!opened;
+   var closed=false;
+   try{closed=window.sessionStorage&&window.sessionStorage.getItem('velar-analytics-bubble-dismissed')==='1';}catch(ignore){}
+   if(shouldOffer&&!closed){
+     var span=prompt.querySelector('.velar-assistant-greeting-text');
+     if(span)span.textContent='Добро пожаловать во вселенную VELARDREAM! Поможешь нам понять, какие песни интересны гостям? Разрешить Google Analytics учитывать посещения и открытия плееров? Данные передаются Google. Отказ не ограничивает музыку.';
+     actions.style.display='flex';
+     prompt.className='velar-assistant-greeting is-consent';
+     root.className='velar-assistant';
+   }else{
+     actions.style.display='none';
+   }
  }
  function analyticsInvitation(){
    if(!analyticsPending()||analyticsAlreadyAsked())return;
@@ -452,7 +492,12 @@
    prompt.appendChild(el('span','velar-assistant-greeting-text','Добро пожаловать! Подобрать музыку?'));
    var dismiss=el('button','velar-assistant-greeting-close','×');
    dismiss.type='button';dismiss.setAttribute('aria-label','Скрыть приветствие');
-   dismiss.onclick=function(){prompt.className='velar-assistant-greeting hidden';markGreeting();};
+   dismiss.onclick=function(){
+     if(analyticsPending()){
+       try{if(window.sessionStorage)window.sessionStorage.setItem('velar-analytics-bubble-dismissed','1');}catch(ignore){}
+     }
+     prompt.className='velar-assistant-greeting hidden';markGreeting();
+   };
    prompt.appendChild(dismiss);root.appendChild(prompt);
    dialog=el('div','velar-assistant-dialog hidden');dialog.id='velar-assistant-dialog';
    dialog.setAttribute('role','region');dialog.setAttribute('aria-label','VELAR — музыкальный помощник');
@@ -599,11 +644,12 @@
      var title=header.querySelector('.velar-assistant-title');
      if(title)title.textContent=config.title;
    }
-   if(prompt&&config.greetingEnabled&&!greetingSeen()&&!opened){
+   if(prompt&&config.greetingEnabled&&!greetingSeen()&&!opened&&!analyticsPending()){
      prompt.className='velar-assistant-greeting';
      var span=prompt.querySelector&&prompt.querySelector('.velar-assistant-greeting-text');
      if(span)span.textContent=configLabel('greetingBubble',config.welcome);
    }
+   updateConsentGreeting();
    notifyConnectivity();
  }
  // Do not guess public visibility from schema defaults before the verified
