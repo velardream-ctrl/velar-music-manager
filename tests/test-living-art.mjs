@@ -211,7 +211,7 @@ assert.match(art,/RUN-176: Safari 12 old iPad uses a scroll-synchronized fixed s
 assert.match(css,/html\.legacy-ipad-crystal body\.public-site\{overflow-x:visible\}/);
 assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey\{\s*position:relative;height:200vh;/);
 assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-stage\{\s*position:-webkit-sticky;position:sticky;top:0;/);
-assert.match(art,/var duration=Math.max\(1,chapter.offsetHeight-window.innerHeight\)/);
+assert.match(art,/var duration=Math.max\(1,chapter.offsetHeight-viewport\)/);
 assert.doesNotMatch(iphone.doc.documentElement.className,/legacy-ipad-crystal/);
 assert.doesNotMatch(desktop.doc.documentElement.className,/legacy-ipad-crystal/);
 assert.doesNotMatch(newIpad.doc.documentElement.className,/legacy-ipad-crystal/);
