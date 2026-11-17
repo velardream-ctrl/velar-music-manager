@@ -91,7 +91,7 @@ function scenario(width,height,artRect,headerBottom){
  e.context.stopRadioMove();
 }
 const css=read('style.css');
-assert.match(css,/velar-radio--bubble\\.velar-radio--popup-left>\\.velar-radio-panel--mini/);
+assert.ok(css.includes('.velar-radio--bubble.velar-radio--popup-left>.velar-radio-panel--mini'));
 assert.match(code,/hero-crystal-link/);
 assert.match(code,/movedByListener/);
 console.log('PASS: RUN-169 hero-crystal initial radio position, menu clearance, rotation, manual drag, mini popup and cleanup');
