@@ -23,7 +23,7 @@
    var ua=window.navigator&&window.navigator.userAgent||'';
    if(!/iPad/.test(ua))return false;
    var os=ua.match(/\bOS\s+(\d+)[_.]/);
-   // RUN-172: on pre-iPadOS-14 iPad WebKit, CSS inset can collapse the
+   // RUN-173: on pre-iPadOS-14 iPad WebKit, CSS inset can collapse the
    // absolute sky to zero height. Leave every iPhone/new iPad untouched.
    return !!(os&&Number(os[1])<14);
  }
@@ -103,7 +103,7 @@
      if(visibleWatcher)visibleWatcher.unobserve(target);
    }
  }
- // RUN-172: low-cost scroll feedback for old iPads without sticky layout.
+ // RUN-173: low-cost scroll feedback for old iPads without sticky layout.
  // If rAF is unavailable the fixed-size crystal/rings remain visible.
  function legacyIpadMotion(){
    var image=chapter.querySelector('.crystal-journey-crystal');

@@ -131,7 +131,7 @@ assert.match(css,/html\.ios-scroll-stable \.velar-radio,[\s\S]*?html\.ios-scroll
  'Keep the radio and assistant on separate composited fixed layers');
 assert.match(css,/html\.ios-scroll-stable\.has-living-art \.art-reveal\{[\s\S]*?opacity:1/,
  'Section headings must remain visible if iPhone observer callbacks are lost');
-// RUN-172: only old iPads get the legacy crystal sky/layout and its small
+// RUN-173: only old iPads get the legacy crystal sky/layout and its small
 // scroll animation. Modern devices keep exactly their previous CSS and JS.
 const oldIpad=environment({width:768,height:1024,clip:false,
  userAgent:'Mozilla/5.0 (iPad; CPU OS 12_5_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/90.0 Mobile/15E148 Safari/604.1'});
@@ -178,4 +178,4 @@ assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-crystal\{[^}]*widt
  'Legacy crystal must have an explicit non-clamp width');
 assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-ring--outer\{[^}]*width:72vw;height:72vw;/,
  'Legacy ring must have normal CSS values without CSS min()');
-console.log('PASS: RUN-071/171/172 iPhone and modern iPad untouched; Safari12 iPad receives the missing crystal, rings and throttled scroll motion');
+console.log('PASS: RUN-071/171/173 iPhone and modern iPad untouched; Safari12 iPad receives the missing crystal, rings and throttled scroll motion');

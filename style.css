@@ -2285,7 +2285,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  }
 }
 
-/* RUN-172 — ONLY iPad iOS 13 and earlier (class assigned by living-art.js).
+/* RUN-173 — ONLY iPad iOS 13 and earlier (class assigned by living-art.js).
    Legacy WebKit does not understand inset:0, width:min() or width:clamp(),
    causing the sky box and its crystal/rings to collapse. Explicit bounds
    and plain vw/px sizes restore the original artwork on the old tablet.
