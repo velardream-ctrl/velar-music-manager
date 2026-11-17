@@ -272,7 +272,7 @@
    });
  }
  var openedArtistDetails={};
- var tabs={hero:'Оформление главной',distribution:'Распределение песен',artists:'Артисты',releases:'Музыка и релизы',albums:'Альбомы',playlists:'Плейлисты и подписки',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',about:'О проекте',publish:'Публикация'};
+ var tabs={hero:'Оформление главной',distribution:'Распределение песен',artists:'Артисты',releases:'Музыка и релизы',albums:'Альбомы',playlists:'Плейлисты и подписки',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',analytics:'Статистика посещений',about:'О проекте',publish:'Публикация'};
  function id(k){return document.getElementById(k);}
  function clear(el){while(el.firstChild)el.removeChild(el.firstChild);}
  function text(el,t){if(el)el.textContent=String(t==null?'':t);}
@@ -2960,7 +2960,15 @@
    }else if(tab==='genres'){
      genreEditor(panel);
    }else if(tab==='analytics'){
-     analyticsEditor(panel);
+     // Prevent an empty admin tab if a legacy offline draft lacks hero.analytics.
+     heading(panel,'Статистика посещений',
+       'GA4 G-ZD640V3VQ1 · Сбор включается в Studio и только после согласия гостя через DJ Velar.');
+     try{analyticsEditor(panel);}
+     catch(err){
+       var message=document.createElement('p');message.className='sync-note';
+       message.textContent='Настройки не удалось показать: '+String(err&&err.message||err)+'. Обнови Studio, не нажимая «Вернуть опубликованную версию».';
+       panel.appendChild(message);
+     }
    }else if(tab==='about'){
      heading(panel,'О проекте','Информация, видимая всем посетителям.');
      sectionFields(panel,tab);
