@@ -44,12 +44,26 @@
    button('Разрешить',true);button('Отказаться',false);
    document.body.appendChild(bar);
  }
+ function consentControl(){
+   if(!config.enabled||!validEndpoint(endpoint)||!document.createElement)return;
+   var footer=document.querySelector&&document.querySelector('footer');
+   if(!footer||document.getElementById('velar-analytics-settings'))return;
+   var change=document.createElement('button');change.type='button';
+   change.id='velar-analytics-settings';change.textContent='Настройки статистики';
+   change.style.cssText='display:block;margin:10px auto;background:transparent;border:0;color:#c9d4e5;text-decoration:underline;cursor:pointer;font:inherit;font-size:.85rem';
+   change.onclick=function(){
+     consented=false;pageSent=false;
+     try{window.localStorage.removeItem('velar-analytics-consent');}catch(ignore){}
+     displayConsent();
+   };
+   footer.appendChild(change);
+ }
  function configure(owner){
    config=owner&&typeof owner==='object'?owner:{enabled:false};
    endpoint=window.VELAR_ANALYTICS_ENDPOINT||'';
    consented=getConsent();
    if(config.enabled&&validEndpoint(endpoint)){
-     displayConsent();
+     displayConsent();consentControl();
      if(consented&&!pageSent){pageSent=true;record('page_view',{section:'site'});}
    }
    return status();
