@@ -103,6 +103,27 @@ data.artists.detailTrackView='compact';
 assert.equal(renderer.render(data),true);
 assert.match(elements['artist-tracks'].className,/artist-tracks--compact/);
 
+// A photo approved for the published album takes priority. If that image
+// fails, reuse the same official Spotify cover service as the main website.
+const beforeAlbum=artworkCalls.length;
+data.albums.entries=[{
+ id:'test-album',title:'Проверенный альбом',artist:'DJ Velar',
+ visible:true,kind:'collection',imageUrl:'https://example.com/approved-album.png',
+ tracks:[{title:'Песня',artist:'DJ Velar',provider:'spotify',
+ url:'https://open.spotify.com/track/4P1nQxu1C6WlL9OiZ0r5HL'}]
+}];
+data.artists.detailTrackView='tiles';
+assert.equal(renderer.render(data),true);
+const approvedHolder=elements['artist-tracks'].children[0].children[0].children[0].children[0];
+assert.equal(approvedHolder.children[1].src,'https://example.com/approved-album.png');
+assert.equal(artworkCalls.length,beforeAlbum,'Approved published album cover avoids external fetch');
+approvedHolder.children[1].onerror();
+assert.equal(artworkCalls.length,beforeAlbum+1,'Failed album image retries Spotify artwork');
+assert.equal(approvedHolder.children[1].src,verifiedCover);
+approvedHolder.children[1].onload();
+assert.equal(approvedHolder.children[0].hidden,true);
+data.albums.entries=[];
+
 const jsonLd=JSON.parse(elements['artist-jsonld'].textContent);
 assert.equal(jsonLd.mainEntity.name,'DJ Velar');
 assert.deepEqual(JSON.parse(JSON.stringify(jsonLd.mainEntity.sameAs)),[profile.socialLinks[0].url]);
