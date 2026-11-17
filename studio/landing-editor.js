@@ -927,6 +927,31 @@
    note.textContent='Отключение скрывает плавающее радио. Раздел обычных плейлистов и подписок остаётся доступным. Автозапуска музыки нет.';
    parent.appendChild(note);
    field(parent,'Название радио',radio.title||'VELAR RADIO',function(v){radio.title=v;});
+   heading(parent,'Анимация и свечение логотипа','Золотое сияние вокруг значка. Выбери режим, яркость и размер ореола. Сохрани черновик и отдельно опубликуй.');
+   var visual=radio.visual||(radio.visual={mode:'heartbeat',intensity:3,spread:50});
+   selectField(parent,'Режим анимации радио',[
+     ['heartbeat','Сердцебиение — двойной удар и мягкое послесвечение'],
+     ['shimmer','Мерцание — спокойная музыка'],
+     ['broadcast','Важный эфир — яркие импульсы'],
+     ['music','Светомузыка — ритмическое сияние при открытом плеере'],
+     ['off','Без анимации — мягкий постоянный ореол']
+   ],visual.mode||'heartbeat',function(v){visual.mode=v;});
+   function radioVisualSlider(label,key,min,max,step,suffix){
+     var wrap=document.createElement('label');wrap.className='landing-field';
+     var caption=document.createElement('span');caption.textContent=label;wrap.appendChild(caption);
+     var slider=document.createElement('input');slider.type='range';
+     slider.min=String(min);slider.max=String(max);slider.step=String(step);
+     slider.value=String(visual[key]);slider.setAttribute('aria-label',label);
+     var value=document.createElement('strong');value.className='landing-loading-value';
+     value.textContent=slider.value+suffix;
+     slider.oninput=function(){visual[key]=Number(this.value);value.textContent=this.value+suffix;updateButtons();};
+     wrap.appendChild(slider);wrap.appendChild(value);parent.appendChild(wrap);
+   }
+   radioVisualSlider('Яркость свечения','intensity',1,5,1,' / 5');
+   radioVisualSlider('Размер светового ореола','spread',50,100,25,'% от диаметра значка');
+   var visualHelp=document.createElement('p');visualHelp.className='sync-note';
+   visualHelp.textContent='Светомузыка включается при открытом официальном плеере, в том числе свёрнутом. Это визуальная пульсация, а не точная синхронизация с аудиоволной YouTube, Spotify или Apple Music. Системное «Уменьшение движения» отключает анимацию.';
+   parent.appendChild(visualHelp);
    heading(parent,'Эфир из каталога сайта','Отметь площадки. При публикации Studio собирает ссылки из каталога и видимых разделов сайта. Этот режим имеет приоритет перед плейлистом и расписанием.');
    var choices=radio.sources||(radio.sources=[]);
    ['youtube','spotify','appleMusic'].forEach(function(p){

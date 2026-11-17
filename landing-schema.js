@@ -168,7 +168,7 @@
         heading:'Музыка, которую можно открыть заново',
         intro:'Синглы, альбомы, клипы и внешние плееры — без загрузки тяжёлых музыкальных файлов на собственный сервер.',
         cards:[],
-        radio:{enabled:false,controlVersion:2,title:'VELAR RADIO',provider:'spotify',url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh'},
+        radio:{enabled:false,controlVersion:2,title:'VELAR RADIO',provider:'spotify',url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh',visual:{mode:'heartbeat',intensity:3,spread:50}},
         playlists:[{title:'Мой лучший плейлист',description:'Музыкальная подборка VELAR',provider:'spotify',
           url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh',visible:true}],
         subscriptions:[{title:'DJ Velar в Spotify',provider:'spotify',
@@ -414,9 +414,16 @@
         if(!url||known[url])return false;known[url]=true;return true;
       });
     });
+    // RUN-166: backward-compatible, strictly validated visual preferences.
+    var visual=x.visual&&typeof x.visual==='object'&&!Array.isArray(x.visual)?x.visual:{};
+    var mode=['heartbeat','shimmer','broadcast','music','off'].indexOf(visual.mode)>=0?visual.mode:'heartbeat';
+    var intensity=Number(visual.intensity);
+    if(!(intensity>=1&&intensity<=5&&Math.floor(intensity)===intensity))intensity=3;
+    var spread=Number(visual.spread);
+    if([50,75,100].indexOf(spread)<0)spread=50;
     if(enabled&&!link&&!tracks.length&&!sources.length)throw new Error('VELAR RADIO: сначала укажи ссылку на плейлист.');
     return {enabled:enabled,controlVersion:2,title:plain(typeof x.title==='string'?x.title:'VELAR RADIO','Название радио',70,true),
-      provider:provider,url:link,tracks:tracks,sources:sources,catalog:catalog};
+      provider:provider,url:link,tracks:tracks,sources:sources,catalog:catalog,visual:{mode:mode,intensity:intensity,spread:spread}};
   }
 
   // RUN-096: a curated collection of singles must NOT claim an official album release.
