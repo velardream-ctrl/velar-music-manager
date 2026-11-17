@@ -33,8 +33,14 @@ export default {
     const origin=request.headers.get("Origin")||"";
     const url=new URL(request.url);
     if (url.pathname==="/health" && request.method==="GET") {
-      return json({status:"private-lab", ready:!!(env.AI&&env.VELAR_OWNER_TEST_TOKEN),
-        model:MODEL, publicEnabled:false},200);
+      const dailyLimit=Number(env.PUBLIC_AI_DAILY_LIMIT);
+      const publicReady=env.PUBLIC_AI_ENABLED==="true"&&!!env.AI&&
+        !!env.PUBLIC_RATE_LIMITER&&!!env.PUBLIC_GLOBAL_RATE_LIMITER&&
+        !!env.PUBLIC_AI_BUDGET&&Number.isInteger(dailyLimit)&&
+        dailyLimit>=1&&dailyLimit<=1000;
+      // No secrets, account identifiers, quota counts or private diagnostics.
+      return json({status:"hybrid-gateway",ready:!!(env.AI&&env.VELAR_OWNER_TEST_TOKEN),
+        model:MODEL,publicEnabled:publicReady},200);
     }
     // RUN-198: only the authenticated owner may read the actual daily budget.
     if(url.pathname==="/v1/owner-stats"){
