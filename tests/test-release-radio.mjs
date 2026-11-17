@@ -200,6 +200,17 @@ assert.doesNotMatch(radio.className,/velar-radio--chat-open/);
 const radioBeforeSnapshot=doc.querySelectorAll('iframe.velar-radio-iframe')[0];
 observer({exists:true,data:()=>({status:'published',schemaVersion:1,content:page})});
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0],radioBeforeSnapshot,'Unchanged snapshot preserves playback');
+const liveVisual={...page,releases:{...page.releases,radio:{...page.releases.radio,
+  visual:{mode:'broadcast',intensity:5,spread:100}}}};
+observer({exists:true,data:()=>({status:'published',schemaVersion:1,content:liveVisual})});
+assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0],radioBeforeSnapshot,
+ 'Changing only the halo via published Studio settings must not restart a playing iframe');
+assert.equal(radio.attributes['data-radio-effect'],'broadcast');
+assert.equal(radio.attributes['data-radio-intensity'],'5');
+assert.equal(radio.attributes['data-radio-spread'],'100');
+observer({exists:true,data:()=>({status:'published',schemaVersion:1,content:page})});
+assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0],radioBeforeSnapshot,
+ 'Restoring the default glow does not restart playback');
 radio.children[0].onclick();
 assert.equal(map['public-playlists-cards'].children.length,1);
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0);

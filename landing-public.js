@@ -918,10 +918,7 @@
    var station=byId('station-page');
    // RUN-162: start collapsed as a real floating logo, no playback until user chooses.
    host.className=station?'velar-radio':'velar-radio velar-radio--bubble';
-   var visual=config.visual||{};
-   host.setAttribute('data-radio-effect',visual.mode||'heartbeat');
-   host.setAttribute('data-radio-intensity',String(visual.intensity||3));
-   host.setAttribute('data-radio-spread',String(visual.spread||50));
+   applyRadioVisual(config);
    host.setAttribute('data-radio-player-open','false');
    var toggle=create('button','velar-radio-toggle','');
    toggle.type='button';toggle.setAttribute('aria-expanded','false');
@@ -1077,14 +1074,29 @@
    if(!hasEmbed(controls.player))controls.start.onclick(); // Chat command means OPEN, not toggle.
    return true;
  }
+ // RUN-166: owner may change just the halo while an iframe is playing.
+ // Never tear down a live third-party embed for a visual-only publication.
+ function radioPlaybackSignature(config){
+   var core={};
+   Object.keys(config).forEach(function(key){if(key!=='visual')core[key]=config[key];});
+   return JSON.stringify(core);
+ }
+ function applyRadioVisual(config){
+   var host=byId('velar-radio');if(!host)return;
+   var visual=config.visual||{};
+   host.setAttribute('data-radio-effect',visual.mode||'heartbeat');
+   host.setAttribute('data-radio-intensity',String(visual.intensity||3));
+   host.setAttribute('data-radio-spread',String(visual.spread||50));
+ }
  var stationSettings=null,landingRadioSettings=null;
  function render(content){
    if(!window.VMM_LANDING_SCHEMA)return false;
    var value;
    try{value=window.VMM_LANDING_SCHEMA.normalize(content);}catch(e){return false;}
    if(byId('station-page')){
-     var config=value.releases.radio,signature=JSON.stringify(config);
+     var config=value.releases.radio,signature=radioPlaybackSignature(config);
      if(signature!==stationSettings){renderRadio(config);stationSettings=signature;}
+     else applyRadioVisual(config);
      byId('station-status').textContent=config.enabled?'':'Радио сейчас выключено владельцем.';
      return true;
    }
@@ -1111,10 +1123,10 @@
    releaseGallery(value.releases);
    playlistGallery(value.releases);
    // A new snapshot of another section must never restart an active radio iframe.
-   var radioSignature=JSON.stringify(value.releases.radio);
+   var radioSignature=radioPlaybackSignature(value.releases.radio);
    if(radioSignature!==landingRadioSettings){
      renderRadio(value.releases.radio);landingRadioSettings=radioSignature;
-   }
+   }else applyRadioVisual(value.releases.radio);
    if(window.VELAR_UNIVERSE&&window.VELAR_UNIVERSE.render)window.VELAR_UNIVERSE.render(value);
    if(window.VELAR_LANGUAGES&&window.VELAR_LANGUAGES.render)
      window.VELAR_LANGUAGES.render(value.genres.languages);
