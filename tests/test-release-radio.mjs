@@ -144,7 +144,7 @@ assert.equal(radio.attributes['data-radio-player-open'],'false');
 assert.ok(radio.children[0].children.some(c=>c.className==='velar-radio-halo'));
 assert.equal(radio.children[0].attributes['aria-expanded'],'false','Initial home radio is minimized');
 assert.match(radio.children[0].attributes['aria-label'],/Развернуть/,'Orb is accessible by name');
-assert.match(css,/assets\/velar-radio-icon\.webp/,'Approved circular logo is rendered');
+assert.match(css,/assets\/velar-radio-icon-gold-bold\.png/,'Approved circular logo is rendered even on old Safari');
 assert.equal(radio.children.length,4);
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0);
 radio.children[0].onclick();
@@ -350,10 +350,10 @@ assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src,apple.repl
 
 
 // RUN-164: gold logo, subtle animation and stable drag coordinates (desktop/touch).
-assert.match(css,/assets\/velar-radio-icon-gold-bold\.webp/);
+assert.match(css,/assets\/velar-radio-icon-gold-bold\.png/);
 assert.match(css,/@keyframes velar-radio-heartbeat/);
-const boldRadioLogo=fs.readFileSync(new URL('../assets/velar-radio-icon-gold-bold.webp',import.meta.url));
-assert.equal(boldRadioLogo.toString('ascii',0,4),'RIFF','Bold radio icon has a RIFF WebP header');
+const boldRadioLogo=fs.readFileSync(new URL('../assets/velar-radio-icon-gold-bold.png',import.meta.url));
+assert.equal(boldRadioLogo.toString('hex',0,8),'89504e470d0a1a0a','Bold radio icon uses old-Safari-compatible PNG');
 assert.equal(boldRadioLogo.toString('ascii',8,12),'WEBP');
 assert.ok(boldRadioLogo.length<12000,'Small radio badge remains light to download');
 assert.match(css,/animation:velar-radio-heartbeat 2\.65s/);
@@ -361,7 +361,7 @@ assert.match(css,/animation-play-state:paused/);
 assert.match(css,/transform:scale\(1\.065\)/);
 assert.match(css,/velar-radio-panel-appear/);
 assert.match(css,/prefers-reduced-motion:reduce/);
-assert.match(sw,/assets\/velar-radio-icon-gold-bold\.webp/);
+assert.match(sw,/assets\/velar-radio-icon-gold-bold\.png/);
 const radioDragStart164=publicJS.indexOf(' function radioMove(');
 const radioDragEnd164=publicJS.indexOf(' function stationHelp(',radioDragStart164);
 assert.ok(radioDragStart164>=0&&radioDragEnd164>radioDragStart164);
