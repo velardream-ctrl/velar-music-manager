@@ -2602,12 +2602,12 @@
      sectionFields(panel,tab);
      if(tab==='artists'){
        artistPicker(panel);
-       selectField(panel,'Вид лучших песен',
+       selectField(panel,'Форма лучших песен артистов (когда карусель выключена)',
          [['classic','Обычные строки (как сейчас)'],['covers','Строки с маленькими обложками'],['tiles','Квадратные карточки']],
          data.artists.featuredView||'classic',function(v){data.artists.featuredView=v;});
-       heading(panel,'Отображение песен артистов',
-         'Настройка действует только для лучших песен артистов. Каталог языков и тем управляется отдельно.');
-       selectField(panel,'Вид песен на сайте',
+       heading(panel,'Отображение лучших песен артистов',
+         'Эти настройки относятся только к блоку «Лучшие песни» рядом с артистами. При выборе карусели она заменяет строки и квадратные карточки. Темы, языки, жанры и альбомы настраиваются отдельно.');
+       selectField(panel,'Способ показа лучших песен артистов',
          [['standard','Обычный список песен'],
           ['carousel','Карусель с обложками']],
          data.artists.songViewMode||'standard',function(v){data.artists.songViewMode=v;});
