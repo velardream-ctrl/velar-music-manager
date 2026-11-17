@@ -5,7 +5,7 @@
 (function(){
  'use strict';
  var config={enabled:false},consented=false;
- var endpoint='',lastKey='',lastAt=0,pageSent=false;
+ var endpoint='',lastKey='',lastAt=0,pageSent=false,assistantAvailable=false;
  var allowed={page_view:true,player_open:true,radio_open:true,radio_next:true,youtube_play_start:true};
  function validEndpoint(s){
    // Endpoint must be injected by deployment; never from visitor or Firestore.
@@ -13,6 +13,10 @@
  }
  function platform(p){return /^(spotify|youtube|appleMusic)$/.test(p||'')?p:'';}
  function short(s){return String(s||'').replace(/[<>]/g,'').slice(0,110);}
+ function consentChoice(){
+   try{return window.localStorage&&window.localStorage.getItem('velar-analytics-consent')||'';}
+   catch(ignore){return '';}
+ }
  function getConsent(){
    try{return window.localStorage&&window.localStorage.getItem('velar-analytics-consent')==='yes';}
    catch(ignore){return false;}
@@ -22,7 +26,7 @@
      configured:validEndpoint(endpoint),consented:consented};
  }
  function displayConsent(){
-   if(!config.enabled||!validEndpoint(endpoint))return;
+   if(!config.enabled||!validEndpoint(endpoint)||assistantAvailable)return;
    var choice;try{choice=window.localStorage.getItem('velar-analytics-consent');}catch(ignore){}
    if(choice==='yes'||choice==='no')return;
    if(!document.body||document.getElementById('velar-analytics-consent'))return;
@@ -58,11 +62,22 @@
    };
    footer.appendChild(change);
  }
- function configure(owner){
+ function choose(accept){
+   consented=accept===true;
+   try{if(window.localStorage)window.localStorage.setItem('velar-analytics-consent',consented?'yes':'no');}catch(ignore){}
+   var banner=document.getElementById&&document.getElementById('velar-analytics-consent');
+   if(banner&&banner.parentNode)banner.parentNode.removeChild(banner);
+   if(consented&&!pageSent&&status().configured){pageSent=true;record('page_view',{section:'site'});}
+   return consented;
+ }
+ function configure(owner,helperActive){
    config=owner&&typeof owner==='object'?owner:{enabled:false};
+   assistantAvailable=helperActive===true;
    endpoint=window.VELAR_ANALYTICS_ENDPOINT||'';
    consented=getConsent();
    if(config.enabled&&validEndpoint(endpoint)){
+     var existing=document.getElementById&&document.getElementById('velar-analytics-consent');
+     if(assistantAvailable&&existing&&existing.parentNode)existing.parentNode.removeChild(existing);
      displayConsent();consentControl();
      if(consented&&!pageSent){pageSent=true;record('page_view',{section:'site'});}
    }
@@ -90,5 +105,6 @@
    }catch(ignore){}
    return false;
  }
- window.VMM_ANALYTICS={configure:configure,record:record,status:status};
+ window.VMM_ANALYTICS={configure:configure,record:record,status:status,
+   consentChoice:consentChoice,choose:choose};
 }());
