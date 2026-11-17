@@ -2115,7 +2115,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
   transition:width .30s cubic-bezier(.22,.75,.3,1);
 }
 .velar-radio--bubble>.velar-radio-toggle{
-  background:transparent url('assets/velar-radio-icon-gold.webp') center/contain no-repeat;
+  background:transparent url('assets/velar-radio-icon-gold-bold.webp') center/contain no-repeat;
   touch-action:none;
   -webkit-user-select:none;user-select:none;
   cursor:grab;
