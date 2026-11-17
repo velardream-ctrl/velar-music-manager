@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const helper=read('velar-assistant.js'),html=read('index.html'),css=read('style.css'),sw=read('sw.js');
+assert.match(helper,/function updateConsentGreeting\(/);
+assert.match(helper,/updateConsentGreeting\(\);/);
+assert.match(helper,/choice\('Разрешить',true\)/);
+assert.match(helper,/choice\('Отказаться',false\)/);
+assert.match(helper,/analyticsPending\(\)/);
+assert.match(helper,/velar-analytics-bubble-dismissed/);
+assert.match(helper,/Данные передаются Google/);
+assert.match(helper,/is-consent/);
+assert.match(css,/\.velar-assistant-greeting\.is-consent\{flex-wrap:wrap\}/);
+assert.match(html,/velar-assistant\.js\?v=14&consent=190/);
+assert.match(sw,/velar-assistant\.js\?v=14&consent=190/);
+assert.match(sw,/bubble190/);
+console.log('PASS RUN-190: consent invitation visible in initial assistant greeting with allow/refuse and iOS cache update');
