@@ -27,7 +27,7 @@ const database={
  collection(collection){return {
   limit(n){assert.equal(n,1200);return {get(){return Promise.resolve({
    forEach(cb){[
-    {id:'songVelar1',data:()=>({title:'Белая берёза',artist:'Velar',links:{spotify:'https://open.spotify.com/track/0123456789ABCDEFGHIJKL',youtube:'https://youtu.be/ABCDEFGHIjk'}})},
+    {id:'songVelar1',data:()=>({title:'Белая берёза',artist:'Velar',links:{spotify:'https://open.spotify.com/track/0123456789ABCDEFGHIJKL',youtube:'https://youtu.be/ABCDEFGHIjk',appleMusic:'https://music.apple.com/fi/album/white-birch/1234567890?i=1234567891'}})},
     {id:'songVelar2',data:()=>({title:'Crazy Bobr Party',artist:'Velar'})},
     {id:'songIlya',data:()=>({title:'Север',artist:'Илья Дмитриев'})}
    ].forEach(cb);}
@@ -570,6 +570,52 @@ featuredDisplay.value='tiles';featuredDisplay.onchange.call(featuredDisplay);
 get('landing-save').onclick();await flush();
 assert.equal(records.get('vmm_public_drafts/landing').content.artists.featuredView,'tiles');
 get('landing-publish').onclick();await flush();
+// RUN-178: a genre has one song checkbox. All three links are built at publish.
+const genreTab=nav.find(x=>x.attributes['data-landing-tab']==='genres');
+assert.ok(genreTab,'Genre tab exists');
+genreTab.onclick();await flush();
+const genreName=findInput('Название жанра');
+genreName.input('Новая опера');
+const firstGenreRow=traverse(get('landing-fields'),n=>n.className==='landing-track-row');
+assert.ok(firstGenreRow,'Genre uses a simple catalog checkbox');
+assert.equal(traverse(get('landing-fields'),n=>n.className==='landing-song-sources'),null,
+ 'Genres must not ask users to check Spotify, YouTube, or Apple Music individually');
+const firstGenreCheckbox=firstGenreRow.children[0];
+firstGenreCheckbox.checked=true;firstGenreCheckbox.onchange.call(firstGenreCheckbox);
+assert.equal(api.isDirty(),true);
+const addGenre=traverse(get('landing-fields'),n=>n.textContent==='+ Добавить жанр');
+assert.ok(addGenre);addGenre.onclick();await flush();
+findInput('Название жанра').input('Новый жанр');
+const showNew=traverse(get('landing-fields'),n=>n.className==='landing-checkbox');
+showNew.children[0].checked=true;showNew.children[0].onchange.call(showNew.children[0]);
+const secondGenreRow=traverse(get('landing-fields'),n=>n.className==='landing-track-row');
+secondGenreRow.children[0].checked=true;secondGenreRow.children[0].onchange.call(secondGenreRow.children[0]);
+get('landing-save').onclick();await flush();
+const genreDraft=records.get('vmm_public_drafts/landing').content.genres.entries;
+assert.equal(genreDraft.length,8);
+assert.equal(genreDraft[0].label,'Новая опера');
+assert.equal(genreDraft[0].songIds.length,1);
+assert.equal(genreDraft[7].label,'Новый жанр');
+assert.equal(genreDraft[7].songIds[0],genreDraft[0].songIds[0],
+ 'One catalog song can belong to two genres without entering links twice');
+assert.equal(genreDraft[0].tracks.length,0,
+ 'Draft stores a single song ID, not independently edited platform links');
+assert.equal(records.get('vmm_public_pages/landing').content.genres.entries.length,7,
+ 'Genre edits stay draft-only until manual publication');
+get('landing-publish').onclick();await flush();
+const liveGenres=records.get('vmm_public_pages/landing').content.genres.entries;
+assert.equal(liveGenres.length,8);
+assert.equal(liveGenres[0].label,'Новая опера');
+assert.equal(liveGenres[0].tracks.length,1);
+assert.equal(liveGenres[0].tracks[0].provider,'spotify');
+assert.equal(liveGenres[0].tracks[0].alternateProvider,'youtube');
+assert.equal(liveGenres[0].tracks[0].thirdProvider,'appleMusic',
+ 'Apple Music is attached automatically at publication');
+assert.match(liveGenres[0].tracks[0].thirdUrl,/^https:\/\/music\.apple\.com/);
+assert.equal(liveGenres[7].tracks.length,1);
+assert.equal(liveGenres[0].songIds.length,1,
+ 'The same selected catalog song is never duplicated inside a genre');
+
 // Remote write must never be overwritten by stale admin tab.
 nav[0].onclick();
 findInput('Подзаголовок').input('Несохранённый локальный текст');
