@@ -12,7 +12,7 @@ assert.match(html,/id="hero-crystal-link"/);
 assert.match(html,/class="crystal-journey-crystal"[\s\S]*?assets\/velardream-symbol\.svg/);
 assert.doesNotMatch(html,/class="crystal-journey-crystal"[\s\S]{0,250}assets\/velardream-crystal\.png/);
 assert.match(html,/href="#universe" id="hero-crystal-link"/);
-assert.match(html,/living-art\.js\?v=6/);
+assert.match(html,/living-art\.js\?v=7/);
 assert.match(html,/universe\.js\?v=7/);
 assert.match(html,/style\.css\?v=80/);
 assert.match(universe,/crystal\.src='assets\/velardream-symbol\.svg'/);
@@ -24,7 +24,7 @@ assert.match(css,/\.crystal-journey-stars--near/);
 assert.match(css,/\.has-living-art \.crystal-journey-stage\{/);
 assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 assert.match(sw,/CACHE_PREFIX \+ 'v91'/);
-assert.match(sw,/'\.\/living-art\.js\?v=6'/);
+assert.match(sw,/'\.\/living-art\.js\?v=7'/);
 assert.match(sw,/'\.\/universe\.js\?v=7'/);
 assert.doesNotMatch(art,/setTimeout\(|setInterval\(|fetch\(|firebase|firestore\(|XMLHttpRequest|WebSocket|getContext\(/);
 assert.doesNotMatch(universe,/setTimeout\(|setInterval\(|fetch\(|firestore\(/);
@@ -38,7 +38,7 @@ function node(className){
 function environment(opts={}){
  const beams=[node('crystal-journey-beam'),node('crystal-journey-beam')];
  const stanzas=['crystal-journey-stanza is-current','crystal-journey-stanza','crystal-journey-stanza'].map(node);
- const names=['.crystal-journey-crystal','.crystal-journey-ring--outer','.crystal-journey-ring--inner',
+ const names=['.crystal-journey-stage','.crystal-journey-crystal','.crystal-journey-ring--outer','.crystal-journey-ring--inner',
   '.crystal-journey-stars--far','.crystal-journey-stars--near'];
  const parts=Object.fromEntries(names.map(n=>[n,node(n)]));
  const chapter=node('crystal-journey');
@@ -150,6 +150,25 @@ assert.equal(typeof oldIpad.events.scroll,'function');
 oldIpad.events.scroll();oldIpad.events.scroll();
 assert.equal(oldIpad.queued.length,1,'Old iPad scroll animation is rAF-throttled');
 oldIpad.queued.shift()();
+
+// RUN-176: emulate legacy viewport pinning and assert all three caption phases.
+assert.equal(oldIpad.chapter.attributes['data-journey-phase'],'1');
+assert.match(oldIpad.parts['.crystal-journey-stage'].className,/legacy-crystal-pinned/);
+oldIpad.chapter.getBoundingClientRect=()=>({top:-400,bottom:1648});
+oldIpad.chapter.offsetHeight=2048;
+oldIpad.events.scroll();oldIpad.queued.shift()();
+assert.equal(oldIpad.chapter.attributes['data-journey-phase'],'1');
+oldIpad.chapter.getBoundingClientRect=()=>({top:-850,bottom:1198});
+oldIpad.events.scroll();oldIpad.queued.shift()();
+assert.equal(oldIpad.chapter.attributes['data-journey-phase'],'2');
+assert.match(oldIpad.parts['.crystal-journey-stage'].className,/legacy-crystal-pinned/);
+oldIpad.chapter.getBoundingClientRect=()=>({top:-1000,bottom:1048});
+oldIpad.events.scroll();oldIpad.queued.shift()();
+assert.equal(oldIpad.chapter.attributes['data-journey-phase'],'3');
+oldIpad.chapter.getBoundingClientRect=()=>({top:-1100,bottom:948});
+oldIpad.events.scroll();oldIpad.queued.shift()();
+assert.match(oldIpad.parts['.crystal-journey-stage'].className,/legacy-crystal-ended/);
+assert.doesNotMatch(oldIpad.parts['.crystal-journey-stage'].className,/legacy-crystal-pinned/);
 const newIpad=environment({width:768,height:1024,
  userAgent:'Mozilla/5.0 (iPad; CPU OS 16_7_10 like Mac OS X)'});
 assert.doesNotMatch(newIpad.doc.documentElement.className,/legacy-ipad-crystal/,
@@ -192,4 +211,9 @@ assert.match(art,/var duration=Math.max\(1,chapter.offsetHeight-window.innerHeig
 assert.doesNotMatch(iphone.doc.documentElement.className,/legacy-ipad-crystal/);
 assert.doesNotMatch(desktop.doc.documentElement.className,/legacy-ipad-crystal/);
 assert.doesNotMatch(newIpad.doc.documentElement.className,/legacy-ipad-crystal/);
+
+assert.match(css,/html\\.legacy-ipad-crystal \\.crystal-journey-stage\\.legacy-crystal-pinned\\{/);
+assert.match(css,/html\\.legacy-ipad-crystal \\.crystal-journey-stage\\.legacy-crystal-ended\\{/);
+assert.match(art,/legacy-crystal-pinned/);
+assert.match(art,/data-journey-phase/);
 console.log('PASS: RUN-071/171/173 iPhone and modern iPad untouched; Safari12 iPad receives the missing crystal, rings and throttled scroll motion');
