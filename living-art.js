@@ -22,7 +22,7 @@
  function isLegacyIpad(){
    var ua=window.navigator&&window.navigator.userAgent||'';
    if(!/iPad/.test(ua))return false;
-   var os=ua.match(/\\bOS\\s+(\\d+)[_.]/);
+   var os=ua.match(/\bOS\s+(\d+)[_.]/);
    // RUN-172: on pre-iPadOS-14 iPad WebKit, CSS inset can collapse the
    // absolute sky to zero height. Leave every iPhone/new iPad untouched.
    return !!(os&&Number(os[1])<14);
