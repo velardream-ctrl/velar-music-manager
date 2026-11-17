@@ -15,6 +15,7 @@
  var tab='hero',data=API.defaults(),baseline='',published=null;
  var uid='',db=null,loaded=false,busy=false,draftRev=0,publishedRev=0,loadGeneration=0;
  var catalogArtists=[],catalogLoaded=false,catalogLoading=false,catalogError='';
+ var linksAudit=null,linksAuditSignature='',linksAuditLoading=false;
  var trackLinks={revision:0,overrides:{}},trackLinksLoaded=false;
  var trackEditorArtist='',trackChecked={},trackSearch='',trackSaving=false;
  var pendingArtistLinks=false;
@@ -2548,6 +2549,95 @@
    warn.textContent='Если в подборке больше 40 песен, карусель автоматически заменяется компактным списком с поиском и страницами. Изменения сначала сохрани в черновике, затем опубликуй.';
    headingBlock.appendChild(warn);parent.appendChild(headingBlock);
  }
+
+ // RUN-182: admin-only, explicit, read-only live scan. The result remains
+ // local until the owner clicks "Apply", saves the draft, and publishes.
+ function existingLinkAuditEditor(parent){
+   var box=document.createElement('section');box.className='landing-display-group';
+   heading(box,'Сверка уже добавленных музыкальных ссылок',
+     'Сравнивает опубликованные подборки черновика с текущим приватным каталогом Firebase. Проверяет совпадения по точным Spotify/YouTube/Apple Music ID, а не по похожим названиям. Интернет-поиск новых треков не выполняется.');
+   var scan=button(linksAuditLoading?'Сканирование…':'Проверить все прикреплённые песни',function(){
+     if(linksAuditLoading||busy||!loaded||navigator.onLine===false){
+       info('Для сверки требуется открытый редактор, интернет и доступ администратора.');
+       return;
+     }
+     var signature;
+     try{signature=JSON.stringify(API.normalize(data));}
+     catch(err){info('Сначала исправь данные черновика: '+err.message);return;}
+     if(!window.VMM_EXISTING_LINKS){info('Модуль сверки не загрузился. Перезагрузи Studio.');return;}
+     linksAuditLoading=true;linksAudit=null;linksAuditSignature='';
+     render();info('Читаем только приватный каталог Firebase для сравнения ссылок…');
+     var owner=uid;
+     authorized().then(function(auth){
+       if(auth.user.uid!==owner)throw new Error('Пользователь сменился.');
+       return auth.db.collection('vmm_catalog').limit(1200).get({source:'server'});
+     }).then(function(snapshot){
+       if(uid!==owner)throw new Error('Пользователь сменился.');
+       if(JSON.stringify(API.normalize(data))!==signature)
+         throw new Error('Редактор изменился во время сканирования. Повтори проверку.');
+       var rows=[];snapshot.forEach(function(doc){
+         var song=doc.data()||{};song.id=doc.id;rows.push(song);
+       });
+       linksAudit=window.VMM_EXISTING_LINKS.audit(data,rows,API);
+       linksAuditSignature=signature;
+       info('Сверка готова: '+linksAudit.summary.addedLinks+
+         ' отсутствующих привязок найдены среди уже существующих ссылок.');
+     }).catch(function(err){linksAudit=null;info('Сверка не выполнена: '+safeStatus(err));})
+       .then(function(){linksAuditLoading=false;if(uid===owner&&tab==='publish')render();});
+   },'landing-small');
+   scan.disabled=linksAuditLoading||busy;
+   box.appendChild(scan);
+   var note=document.createElement('p');note.className='sync-note';
+   note.textContent='Сканирование ничего не записывает. Уверенные совпадения можно перенести только в черновик, затем отдельно сохранить и опубликовать. Неоднозначные записи остаются без изменений.';
+   box.appendChild(note);
+   if(linksAudit){
+     var stats=linksAudit.summary;
+     var counter=document.createElement('p');counter.className='sync-note';
+     counter.textContent='В текущем каталоге: '+stats.catalogSongs+
+       ' песен · проверено прикреплённых строк: '+stats.linked+
+       ' · можно дополнить песен: '+stats.addedSongs+
+       ' · добавить кнопок площадок: '+stats.addedLinks+
+       ' · не найдено в каталоге: '+stats.unmatched+
+       ' · неоднозначно: '+stats.ambiguous+
+       ' · конфликт источников: '+stats.conflict+
+       ' · привязок жанров по ID: '+stats.genreIds+
+       ' (обновляются при публикации автоматически).';
+     box.appendChild(counter);
+     var by=Object.keys(stats.bySection).filter(function(k){return stats.bySection[k].improved>0;});
+     by.slice(0,25).forEach(function(k){
+       var item=document.createElement('p');item.className='sync-note';
+       item.textContent=k+': '+stats.bySection[k].newLinks+' новых значков';
+       box.appendChild(item);
+     });
+     if(stats.examples.length){
+       var examples=document.createElement('div');examples.className='landing-link-audit-examples';
+       var subtitle=document.createElement('p');subtitle.className='sync-note';
+       subtitle.textContent='Примеры добавлений (первые '+stats.examples.length+'):';
+       examples.appendChild(subtitle);
+       stats.examples.forEach(function(row){
+         var item=document.createElement('p');item.className='sync-note';
+         item.textContent=row.section+' — '+row.title+' → '+row.added;
+         examples.appendChild(item);
+       });
+       box.appendChild(examples);
+     }
+     var buttonApply=button('Перенести точные совпадения в черновик',function(){
+       if(!linksAudit||!linksAudit.summary.addedLinks)return;
+       try{
+         if(JSON.stringify(API.normalize(data))!==linksAuditSignature){
+           info('Данные поменялись после сверки. Запусти сканирование заново.');return;
+         }
+         if(!window.confirm('Дополнить '+linksAudit.summary.addedSongs+
+           ' прикреплённых песен '+linksAudit.summary.addedLinks+
+           ' уже существующими ссылками? Будет изменён только НЕСОХРАНЁННЫЙ черновик, не каталог и не опубликованный сайт.'))return;
+         data=clone(linksAudit.next);linksAudit=null;linksAuditSignature='';
+         render();info('Точные ссылки перенесены в черновик. Теперь нажми «Сохранить черновик», затем «Опубликовать».');
+       }catch(e){info('Применение остановлено: '+e.message);}
+     },'landing-add');
+     buttonApply.disabled=!stats.addedLinks;box.appendChild(buttonApply);
+   }
+   parent.appendChild(box);
+ }
  function render(){
    var host=id('landing-fields');if(!host)return;
    clear(host);
@@ -2676,6 +2766,7 @@
      field(panel,'Объявление внизу раздела',data.about.notice,function(v){data.about.notice=v;},true);
    }else if(tab==='publish'){
      heading(panel,'Проверить и опубликовать','Сначала сохрани черновик. Кнопка «Опубликовать» обновит только отдельный публичный документ.');
+     existingLinkAuditEditor(panel);
      preview(panel);
    }
    var buttons=document.querySelectorAll('#landing-tabs [data-landing-tab]');
@@ -2694,7 +2785,7 @@
    if(busy)return Promise.resolve();
    if(loaded&&!force){render();if(tab==='distribution'||tab==='artists'||tab==='releases'||tab==='albums'||tab==='languages'||tab==='topics'||tab==='genres')loadCatalogArtists();return Promise.resolve();}
    if(force&&dirty()&&!window.confirm('Есть несинхронизированные изменения. Обновление может их перезаписать в редакторе. Обновить?'))return Promise.resolve();
-   if(force){trackEditorArtist='';trackChecked={};trackSearch='';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;genreEditorId='';genreCatalogSearch='';genreTrackFilter='';genreCatalogPage=0;albumCatalogPage=0;catalogLoaded=false;catalogLoading=false;catalogError='';trackLinksLoaded=false;}
+   if(force){linksAudit=null;linksAuditSignature='';linksAuditLoading=false;trackEditorArtist='';trackChecked={};trackSearch='';languageEditorCode='';languageCatalogSearch='';languageTrackFilter='';languageCatalogPage=0;topicEditorSlug='';topicCatalogSearch='';topicTrackFilter='';topicCatalogPage=0;genreEditorId='';genreCatalogSearch='';genreTrackFilter='';genreCatalogPage=0;albumCatalogPage=0;catalogLoaded=false;catalogLoading=false;catalogError='';trackLinksLoaded=false;}
    var currentLoad=++loadGeneration;
    busy=true;updateButtons();info('Проверяем права и загружаем черновик…');
    return authorized().then(function(auth){
@@ -2863,6 +2954,7 @@
  }
  function hide(){show(root,false);}
  function reset(){
+   linksAudit=null;linksAuditSignature='';linksAuditLoading=false;
    loadGeneration++;
    uid='';db=null;loaded=false;busy=false;draftRev=0;publishedRev=0;
    offlineNonce='';offlineSyncing=false;offlineSavedSignature='';showOfflineConflict(false);
