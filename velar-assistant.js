@@ -425,7 +425,9 @@
          markGreeting();markAnalyticsAsked();
          analyticsRespond(accept);
          actions.style.display='none';
-         prompt.className='velar-assistant-greeting hidden';
+         var line=prompt.querySelector&&prompt.querySelector('.velar-assistant-greeting-text');
+         if(line)line.textContent=accept?'Спасибо! Статистика включена по вашему согласию.':'Ваш выбор сохранён. Музыка доступна без аналитики.';
+         prompt.className='velar-assistant-greeting';
        };
        actions.appendChild(b);
      }
