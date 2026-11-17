@@ -2545,6 +2545,90 @@
    block.appendChild(note);parent.appendChild(block);
  }
 
+ // RUN-184: curator-approved public aggregates, independent of the private overview.
+ function publicProgressEditor(parent){
+   if(!data.about.progress)data.about.progress=API.defaults().about.progress;
+   var p=data.about.progress;
+   var section=document.createElement('section');section.className='landing-display-group';
+   heading(section,'Публичная статистика музыкальной коллекции',
+     'Счётчики для посетителей под описанием проекта. Сайт НЕ читает приватный каталог: только выбранные числа, опубликованные тобой. «Готовность ссылок» не означает готовность всего сайта.');
+   function toggle(label,obj,key){
+     var row=document.createElement('label');row.className='landing-checkbox';
+     var check=document.createElement('input');check.type='checkbox';check.checked=obj[key]===true;
+     check.onchange=function(){obj[key]=this.checked;updateButtons();};
+     var caption=document.createElement('span');caption.textContent=label;
+     row.appendChild(check);row.appendChild(caption);section.appendChild(row);
+   }
+   function numberControl(host,label,obj,key){
+     var row=document.createElement('label');row.className='landing-field';
+     var caption=document.createElement('span');caption.textContent=label;row.appendChild(caption);
+     var input=document.createElement('input');input.type='number';input.min='0';input.max='1000000';input.step='1';
+     input.value=String(obj[key]||0);input.setAttribute('aria-label',label);
+     input.oninput=function(){
+       if(this.value==='')return;
+       var n=Number(this.value);if(isFinite(n)&&n>=0&&n<=1000000&&Math.floor(n)===n){obj[key]=n;updateButtons();}
+     };
+     row.appendChild(input);host.appendChild(row);
+   }
+   toggle('Показывать статистику посетителям',p,'enabled');
+   field(section,'Заголовок публичного блока',p.title||'',function(v){p.title=v;});
+   field(section,'Пояснение под заголовком',p.intro||'',function(v){p.intro=v;},true);
+   var tip=document.createElement('p');tip.className='sync-note';
+   tip.textContent='Заполни показатели вручную либо однократно возьми итоговые числа из защищённого каталога. Кнопка не публикует данные и не передаёт названия/ссылки песен.';
+   section.appendChild(tip);
+   section.appendChild(button('↻ Заполнить числа из каталога',function(){
+     if(!loaded||busy||!navigator.onLine){info('Нужны интернет и доступ к каталогу администратора.');return;}
+     info('Читаем только итоговые числа из защищённого каталога…');
+     loadCatalogArtists(true).then(function(){
+       if(!catalogLoaded){info('Каталог пока не загружен; числа не изменены.');return;}
+       var stats={songs:catalogArtists.length,spotify:0,appleMusic:0,youtube:0};
+       catalogArtists.forEach(function(song){
+         var links=song.links||{};
+         ['spotify','appleMusic','youtube'].forEach(function(k){
+           if(typeof links[k]==='string'&&/^https:\/\//i.test(links[k]))stats[k]++;
+         });
+       });
+       var count=stats.spotify+stats.appleMusic+stats.youtube;
+       var values=[stats.songs,count,stats.spotify,stats.appleMusic,stats.youtube];
+       var labels=['Композиции в каталоге','Ссылки на площадки','Spotify','Apple Music','YouTube'];
+       labels.forEach(function(label,i){
+         var row=(p.metrics||[]).filter(function(x){return x.label===label;})[0];
+         if(row)row.value=values[i];
+         else if(p.metrics.length<12)p.metrics.push({label:label,value:values[i],visible:true});
+       });
+       p.completed=count;p.total=stats.songs*3;
+       p.updatedAt=new Date().toISOString().slice(0,10);
+       render();info('В черновик перенесены только суммарные числа: '+stats.songs+
+         ' песен, '+count+' ссылок. Перед публикацией проверь видимость и добавь сведения о будущих альбомах вручную.');
+     }).catch(function(e){info('Не удалось обновить статистику: '+safeStatus(e));});
+   },'landing-small'));
+   (p.metrics||[]).forEach(function(metric,i){
+     var row=document.createElement('div');row.className='landing-card';
+     field(row,'Название показателя '+(i+1),metric.label||'',function(v){metric.label=v;});
+     numberControl(row,'Значение',metric,'value');
+     var check=document.createElement('label');check.className='landing-checkbox';
+     var tick=document.createElement('input');tick.type='checkbox';tick.checked=metric.visible===true;
+     tick.onchange=function(){metric.visible=this.checked;updateButtons();};
+     var title=document.createElement('span');title.textContent='Показать этот показатель';
+     check.appendChild(tick);check.appendChild(title);row.appendChild(check);
+     row.appendChild(button('Удалить показатель',function(){p.metrics.splice(i,1);render();},'landing-danger'));
+     section.appendChild(row);
+   });
+   section.appendChild(button('+ Добавить свой показатель',function(){
+     if(p.metrics.length>=12){info('Допускается до 12 публичных показателей.');return;}
+     p.metrics.push({label:'Новый показатель',value:0,visible:false});render();
+   },'landing-add'));
+   toggle('Показывать полосу готовности ссылок',p,'showBar');
+   field(section,'Название полосы готовности',p.barLabel||'',function(v){p.barLabel=v;});
+   numberControl(section,'Ссылок заполнено',p,'completed');
+   numberControl(section,'Всего возможных ссылок',p,'total');
+   field(section,'Что ещё готовится к публикации',p.note||'',function(v){p.note=v;},true);
+   field(section,'Дата снимка (YYYY-MM-DD, можно оставить пустой)',p.updatedAt||'',function(v){p.updatedAt=v;});
+   var foot=document.createElement('p');foot.className='sync-note';
+   foot.textContent='Важно: это публичный снимок, а не живой доступ к Firebase. После пополнения каталога повтори обновление чисел, сохрани черновик и отдельно опубликуй. Счётчики «альбомы» и «готовятся» заполняются вручную, если нет надёжного статуса в базе.';
+   section.appendChild(foot);parent.appendChild(section);
+ }
+
  // RUN-181: all homepage display choices live in ONE place.
  // Artist profile settings are intentionally not here: they belong to Artists.
  function homepageDisplaySettings(parent){
@@ -2807,6 +2891,7 @@
      heading(panel,'О проекте','Информация, видимая всем посетителям.');
      sectionFields(panel,tab);
      field(panel,'Объявление внизу раздела',data.about.notice,function(v){data.about.notice=v;},true);
+     publicProgressEditor(panel);
    }else if(tab==='publish'){
      heading(panel,'Проверить и опубликовать','Сначала сохрани черновик. Кнопка «Опубликовать» обновит только отдельный публичный документ.');
      existingLinkAuditEditor(panel);
