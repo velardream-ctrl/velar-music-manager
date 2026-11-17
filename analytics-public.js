@@ -22,7 +22,7 @@
  function validId(s){return typeof s==='string'&&/^G-[A-Z0-9]{7,16}$/.test(s);}
  function status(){return {ready:!!(config.enabled&&consented&&initialized),
    configured:validId(gaId),consented:consented,provider:'ga4'};}
- function command(){window.dataLayer.push(Array.prototype.slice.call(arguments));}
+ function command(){window.dataLayer.push(arguments);}
  function setConsent(value){
    if(!initialized)return;
    command('consent','update',{analytics_storage:value?'granted':'denied',
@@ -108,7 +108,7 @@
        remember(value);consented=value;
        if(!value)revoke();
        if(node.parentNode)node.parentNode.removeChild(node);
-       if(value){init();pageView();}
+       if(value){if(initialized)setConsent(true);else init();pageView();}
      };
      node.appendChild(b);
    }
@@ -136,8 +136,8 @@
    if(!config.enabled){revoke();return status();}
    consented=consentValue()==='yes';
    control();
-   if(consented){init();pageView();}
-   else banner();
+   if(consented){if(initialized)setConsent(true);else init();pageView();}
+   else {setConsent(false);banner();}
    return status();
  }
  window.VMM_ANALYTICS={configure:configure,record:record,status:status};
