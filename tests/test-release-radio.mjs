@@ -22,6 +22,8 @@ assert.throws(()=>api.radioConfig({enabled:true,url:'https://example.com/playlis
 const d=api.defaults();
 assert.equal(d.releases.radio.enabled,false,'RADIO is disabled by default');
 assert.equal(d.releases.radio.controlVersion,2);
+assert.equal(d.releases.radio.visual.mode,'heartbeat');
+assert.equal(d.releases.radio.visual.spread,50);
 const legacy={...d.releases.radio,enabled:true};delete legacy.controlVersion;
 assert.equal(api.radioConfig(legacy).enabled,false,'Legacy published enabled:true does NOT reactivate radio');
 assert.equal(api.radioConfig({...legacy,controlVersion:2}).enabled,true,'Owner can re-enable radio explicitly');
@@ -135,6 +137,9 @@ assert.equal(musicBtn.attributes['aria-pressed'],'false');
 musicBtn.onclick();
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1,'Third release click reopens it');
 const radio=map['velar-radio'];assert.equal(radio.className,'velar-radio velar-radio--bubble');
+assert.equal(radio.attributes['data-radio-effect'],'heartbeat');
+assert.equal(radio.attributes['data-radio-player-open'],'false');
+assert.ok(radio.children[0].children.some(c=>c.className==='velar-radio-halo'));
 assert.equal(radio.children[0].attributes['aria-expanded'],'false','Initial home radio is minimized');
 assert.match(radio.children[0].attributes['aria-label'],/Развернуть/,'Orb is accessible by name');
 assert.match(css,/assets\/velar-radio-icon\.webp/,'Approved circular logo is rendered');
@@ -147,6 +152,7 @@ assert.match(help.children[0].attributes['aria-label'],/установить/);
 const radioPanel=radio.children[1];
 const startRadio=radioPanel.children[2];
 startRadio.onclick();
+assert.equal(radio.attributes['data-radio-player-open'],'true');
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,1);
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0,'Opening radio closes the release player');
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src,
@@ -154,6 +160,7 @@ assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src,
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0].parentNode.className,
  'spotify-embed-viewport','Spotify radio uses the same masking component');
 startRadio.onclick();
+assert.equal(radio.attributes['data-radio-player-open'],'false');
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0,'Repeat radio start click unloads iframe');
 assert.equal(startRadio.attributes['aria-pressed'],'false');
 startRadio.onclick();
