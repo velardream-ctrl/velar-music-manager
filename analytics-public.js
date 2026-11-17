@@ -6,7 +6,7 @@
  'use strict';
  var config={enabled:false},consented=false;
  var endpoint='',lastKey='',lastAt=0,pageSent=false;
- var allowed={page_view:true,player_open:true,radio_open:true,radio_next:true};
+ var allowed={page_view:true,player_open:true,radio_open:true,radio_next:true,youtube_play_start:true};
  function validEndpoint(s){
    // Endpoint must be injected by deployment; never from visitor or Firestore.
    return typeof s==='string'&&/^https:\/\/[-a-zA-Z0-9.]+\/(?:[^?#]*\/)?events$/.test(s);
@@ -71,8 +71,10 @@
  function record(kind,details){
    if(!allowed[kind]||!status().ready)return false;
    var d=details||{},section=short(d.section||'other'),p=platform(d.provider);
-   var title=short(d.title),artist=short(d.artist),payload={
-     kind:kind,section:section,provider:p,title:title,artist:artist,
+   var title=short(d.title),artist=short(d.artist),mediaId=/^[A-Za-z0-9_-]{11}$/.test(d.mediaId||'')?d.mediaId:'';
+   if(kind==='youtube_play_start'&&!mediaId)return false;
+   var payload={
+     kind:kind,section:section,provider:p,title:title,artist:artist,mediaId:mediaId,
      day:(new Date()).toISOString().slice(0,10)
    };
    // Prevent a double click from being counted as two plays. No durable ID.
