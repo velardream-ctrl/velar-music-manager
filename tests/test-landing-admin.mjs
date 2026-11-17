@@ -565,7 +565,7 @@ assert.equal(records.get('vmm_public_pages/landing').content.albums.trackView,'r
 get('landing-publish').onclick();await flush();
 assert.equal(records.get('vmm_public_pages/landing').content.albums.trackView,'covers');
 nav[1].onclick();await flush();
-const featuredDisplay=findInput('Вид лучших песен');
+const featuredDisplay=findInput('Форма лучших песен артистов (когда карусель выключена)');
 featuredDisplay.value='tiles';featuredDisplay.onchange.call(featuredDisplay);
 get('landing-save').onclick();await flush();
 assert.equal(records.get('vmm_public_drafts/landing').content.artists.featuredView,'tiles');
