@@ -66,7 +66,7 @@
  }
  function shortlist(rows,question,max){
    var q=clean(question,500).toLocaleLowerCase('ru').replace(/ё/g,'е');
-   var words=q.split(/[^\p{L}\p{N}]+/u).filter(function(x){return x.length>2;}).slice(0,20);
+   var words=q.split(/[^a-zа-яёäöå0-9]+/i).filter(function(x){return x.length>2;}).slice(0,20);
    var ranked=rows.map(function(t,i){
      var hay=(t.title+' '+t.artist+' '+t.category).toLocaleLowerCase('ru').replace(/ё/g,'е');
      var score=0;
