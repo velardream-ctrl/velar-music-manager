@@ -1291,6 +1291,7 @@
    assign('about-title',value.about.heading);
    assign('public-about-intro',value.about.intro);
    assign('public-about-notice',value.about.notice);
+   renderCatalogProgress(value.about.progress);
    if(window.VELAR_GENRES&&window.VELAR_GENRES.render)
      window.VELAR_GENRES.render(value.genres);
    else{
@@ -1320,6 +1321,44 @@
    return true;
  }
  // RUN-183: optional footer row, no third-party SDK, no automatic sharing.
+ // RUN-184: render only curated published aggregate snapshot, never the private catalog.
+ function renderCatalogProgress(p){
+   var host=byId('public-catalog-progress');if(!host)return;
+   empty(host);
+   if(!p||p.enabled!==true){host.hidden=true;return;}
+   var title=create('h3','',p.title);title.id='public-catalog-progress-title';host.appendChild(title);
+   if(p.intro)host.appendChild(create('p','catalog-progress-intro',p.intro));
+   var grid=create('div','catalog-progress-grid');
+   (p.metrics||[]).forEach(function(item){
+     if(!item.visible)return;
+     var card=create('div','catalog-progress-item');
+     card.appendChild(create('strong','catalog-progress-number',String(item.value)));
+     card.appendChild(create('span','catalog-progress-label',item.label));
+     grid.appendChild(card);
+   });
+   if(grid.children.length)host.appendChild(grid);
+   if(p.showBar&&p.total>0){
+     var progress=create('div','catalog-progress-summary');
+     var header=create('div','catalog-progress-barhead');
+     header.appendChild(create('span','',p.barLabel));
+     var percent=Math.round(p.completed*100/p.total);
+     header.appendChild(create('strong','',percent+'%'));
+     progress.appendChild(header);
+     var track=create('div','catalog-progress-track');
+     var fill=create('span','catalog-progress-fill');
+     fill.style.width=percent+'%';track.appendChild(fill);
+     track.setAttribute('role','progressbar');track.setAttribute('aria-valuemin','0');
+     track.setAttribute('aria-valuemax',String(p.total));
+     track.setAttribute('aria-valuenow',String(p.completed));
+     track.setAttribute('aria-label',p.barLabel);
+     progress.appendChild(track);
+     progress.appendChild(create('p','catalog-progress-intro',p.completed+' из '+p.total+' ссылок добавлено'));
+     host.appendChild(progress);
+   }
+   if(p.note)host.appendChild(create('p','catalog-progress-note',p.note));
+   if(p.updatedAt)host.appendChild(create('p','catalog-progress-date','Данные на '+p.updatedAt));
+   host.hidden=false;
+ }
  function renderSocialFooter(config){
    if(!config||config.enabled!==true){
      var existing=byId('public-social-footer');if(existing)existing.style.display='none';
