@@ -32,9 +32,9 @@ for(const versioned of [
   assert.ok(index.includes(versioned),'Homepage must load '+versioned);
   assert.ok(sw.includes('./'+versioned),'Service worker should precache '+versioned);
 }
-assert.ok(artist.includes('artist-detail.js?v=4'));
-assert.ok(sw.includes('./artist-detail.js?v=4'));
-assert.ok(sw.includes("CACHE_PREFIX + 'v94'"));
+assert.ok(artist.includes('artist-detail.js?v=5'));
+assert.ok(sw.includes('./artist-detail.js?v=5'));
+assert.ok(sw.includes("CACHE_PREFIX + 'v95'"));
 assert.match(read('public-song-ui.js'),/frame\.loading='lazy'/,
   'Music players remain click-to-open without preloading');
 const window={location:{search:''}};const promises=[],requests=[];
