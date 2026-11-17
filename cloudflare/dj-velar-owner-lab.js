@@ -88,6 +88,14 @@ export default {
       try {aggregate=await env.PUBLIC_GLOBAL_RATE_LIMITER.limit({key:"dj-velar-public-ai"});}
       catch(_){return json({error:"rate_limit_unavailable"},503);}
       if(!aggregate||aggregate.success!==true)return json({error:"rate_limited"},429);
+      if(Number(request.headers.get("Content-Length")||0)>1400)return json({error:"too_large"},413);
+      let raw;
+      try {raw=await request.text();}catch(_){return json({error:"invalid_json"},400);}
+      if(raw.length>1400)return json({error:"too_large"},413);
+      let body;
+      try {body=JSON.parse(raw);}catch(_){return json({error:"invalid_json"},400);}
+      if(!body||typeof body.message!=="string"||body.message.trim().length<2||
+         body.message.length>360)return json({error:"invalid_message"},400);
       // Atomic global UTC-day reservation; no model call if unavailable.
       const dailyLimit=Number(env.PUBLIC_AI_DAILY_LIMIT);
       if(!Number.isInteger(dailyLimit)||dailyLimit<1||dailyLimit>1000)
@@ -109,14 +117,6 @@ export default {
           body:JSON.stringify({ok,day:reservation.day})
         });}catch(_){/* Reservation remains counted even when completion fails. */}
       }
-      if(Number(request.headers.get("Content-Length")||0)>1400)return json({error:"too_large"},413);
-      let raw;
-      try {raw=await request.text();}catch(_){return json({error:"invalid_json"},400);}
-      if(raw.length>1400)return json({error:"too_large"},413);
-      let body;
-      try {body=JSON.parse(raw);}catch(_){return json({error:"invalid_json"},400);}
-      if(!body||typeof body.message!=="string"||body.message.trim().length<2||
-         body.message.length>360)return json({error:"invalid_message"},400);
       const language=["ru","fi","en"].includes(body.language)?body.language:"ru";
       const system="You are DJ Velar, a friendly music guide of VELARDREAM Records. "+
         "Answer in "+language+". Respond concisely. You have no access to private catalog, "+
