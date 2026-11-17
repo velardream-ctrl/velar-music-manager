@@ -63,9 +63,19 @@
      if(q.length<2||q.length>500){status.textContent="Вопрос: 2–500 символов.";return;}
      if(typeof window.fetch!=="function"){status.textContent="Браузер не поддерживает безопасное обращение к Worker.";return;}
      button.disabled=true;result.textContent="";
-     status.textContent="Запрос к Cloudflare…";
-     var timer=null,controller=typeof AbortController!=="undefined"?new AbortController():null;
-     if(controller)timer=setTimeout(function(){controller.abort();},12000);
+     status.textContent="Запрос к Cloudflare… Первый ответ модели может занять больше 12 секунд.";
+     // A 12-second browser timeout caused false negatives on iPhone.
+     // Allow the first model response up to 60s, show the countdown, and
+     // always release the button even on a failed request.
+     var timeoutMs=60000,started=Date.now(),timedOut=false;
+     var timer=null,progressTimer=null;
+     var controller=typeof AbortController!=="undefined"?new AbortController():null;
+     if(controller)timer=setTimeout(function(){timedOut=true;controller.abort();},timeoutMs);
+     progressTimer=setInterval(function(){
+       var seconds=Math.max(0,Math.round((Date.now()-started)/1000));
+       status.textContent="Ожидаем Cloudflare Workers AI: "+seconds+
+         " с. Максимальное ожидание — 60 с. Можно оставить эту вкладку открытой.";
+     },3000);
      window.fetch(endpoint.value,{
        method:"POST",mode:"cors",credentials:"omit",
        headers:{"Content-Type":"application/json","Authorization":"Bearer "+token.value},
@@ -81,9 +91,23 @@
        status.textContent="Модель ответила. Это только тест: никакие команды сайта не выполнялись.";
        result.textContent=body.reply.slice(0,1300);
      }).catch(function(error){
-       status.textContent="Ответ не получен: "+String(error.message||error).slice(0,120)+
-         ". Проверь адрес Worker, секрет, AI binding и бесплатную квоту.";
-     }).then(function(){if(timer)clearTimeout(timer);button.disabled=false;});
+       var detail=String(error&&error.message||error).slice(0,120);
+       if(timedOut||error&&error.name==="AbortError"){
+         status.textContent="Превышено ожидание 60 секунд. Worker готов по /health, "+
+           "но модель могла отвечать медленно. Проверь запрос в Cloudflare → "+
+           "Workers → dj-velar-private-lab → Observability → Logs, затем попробуй снова.";
+       }else if(error&&error.name==="TypeError"){
+         status.textContent="Нет соединения с Worker или браузер заблокировал запрос: "+detail+
+           ". Проверь адрес /v1/owner-test и CORS, затем Worker Logs.";
+       }else{
+         status.textContent="Ответ не получен: "+detail+
+           ". Проверь адрес Worker, секрет, AI binding и бесплатную квоту.";
+       }
+     }).then(function(){
+       if(timer)clearTimeout(timer);
+       if(progressTimer)clearInterval(progressTimer);
+       button.disabled=false;
+     });
    };
    section.appendChild(button);section.appendChild(status);section.appendChild(result);
    var doc=make("p");
