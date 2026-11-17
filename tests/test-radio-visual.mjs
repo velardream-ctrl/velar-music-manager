@@ -29,4 +29,10 @@ assert.match(css,/prefers-reduced-motion:reduce/);
 assert.match(ui,/data-radio-player-open/);assert.match(ui,/velar-radio-halo/);
 assert.match(studio,/Режим анимации радио/);assert.match(studio,/Размер светового ореола/);
 assert.match(studio,/radioVisualSlider\('Размер светового ореола','spread',1,100,1/);
+
+ // RUN-177: the help control is <summary>, NOT a button. Safari 12 must
+ // use flex instead of unsupported place-items; do not alter other devices.
+assert.match(ui,/create\('summary','station-help-button','\?'\)/);
+assert.match(css,/html\.legacy-ipad-crystal \.velar-radio > \.station-help > \.station-help-button\{[^}]*display:-webkit-flex;display:flex;[^}]*align-items:center;[^}]*justify-content:center;/);
+assert.match(css,/html\.legacy-ipad-crystal \.velar-radio > \.station-help > \.station-help-button::-webkit-details-marker\{[^}]*display:none;/);
 console.log('PASS: RUN-166 VELAR RADIO visual modes, gold glow and validated Studio controls');

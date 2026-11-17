@@ -2394,3 +2394,19 @@ html.legacy-ipad-crystal .crystal-journey-stage.legacy-crystal-ended{
   position:relative;top:auto;left:auto;right:auto;
  }
 }
+
+
+/* RUN-177: Safari 12 lacks reliable place-items on summary's list-item box.
+   Centre the existing '?' within its 40px circle on old iPads ONLY.
+   No geometry/behaviour changes to the radio panel or modern devices. */
+html.legacy-ipad-crystal .velar-radio > .station-help > .station-help-button{
+ -webkit-appearance:none;appearance:none;
+ display:-webkit-flex;display:flex;
+ -webkit-align-items:center;align-items:center;
+ -webkit-justify-content:center;justify-content:center;
+ padding:0;text-align:center;text-indent:0;line-height:1;
+ list-style:none;
+}
+html.legacy-ipad-crystal .velar-radio > .station-help > .station-help-button::-webkit-details-marker{
+ display:none;
+}
