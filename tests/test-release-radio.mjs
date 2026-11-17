@@ -354,7 +354,7 @@ assert.match(css,/assets\/velar-radio-icon-gold-bold\.png/);
 assert.match(css,/@keyframes velar-radio-heartbeat/);
 const boldRadioLogo=fs.readFileSync(new URL('../assets/velar-radio-icon-gold-bold.png',import.meta.url));
 assert.equal(boldRadioLogo.toString('hex',0,8),'89504e470d0a1a0a','Bold radio icon uses old-Safari-compatible PNG');
-assert.equal(boldRadioLogo.toString('ascii',8,12),'WEBP');
+assert.equal(boldRadioLogo.toString('ascii',12,16),'IHDR','PNG image contains IHDR header');
 assert.ok(boldRadioLogo.length<12000,'Small radio badge remains light to download');
 assert.match(css,/animation:velar-radio-heartbeat 2\.65s/);
 assert.match(css,/animation-play-state:paused/);
