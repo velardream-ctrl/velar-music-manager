@@ -124,7 +124,9 @@
    if(!opts.keepOrder)tracks.sort(function(a,b){return compareSong(a.track,b.track)||a.index-b.index;});
    tracks=tracks.map(function(row){return row.track;});
    var classes=opts.prefix==='language'?'language':opts.prefix==='album'?'album':'topic';
-   var configured=sectionModes[opts.prefix]||
+   var displayKey=opts.prefix==='language'?'languages':opts.prefix==='topic'?'topics':
+     opts.prefix==='genre'?'genres':opts.prefix==='album'?'albums':opts.prefix;
+   var configured=sectionModes[displayKey]||
      (globalMode==='carousel'?'carousel':(opts.view||defaultView));
    var view=opts.forceView||(opts.prefix==='artist'?(opts.view||'rows'):configured);
    if(['compact','rows','covers','tiles','carousel'].indexOf(view)<0)view='rows';
