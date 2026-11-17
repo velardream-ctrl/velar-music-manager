@@ -272,7 +272,7 @@
    row.appendChild(paragraph);
    function addAction(){
      var list=action&&action.actions?action.actions:(action&&action.label?[action]:[]);
-     if(!list.length)return;
+     if(!list.length){if(typeof onComplete==='function')onComplete();return;}
      var group=list.length>1?el('div','velar-chat-actions'):row;
      list.slice(0,3).forEach(function(choice){
        if(!choice||!choice.label)return;
