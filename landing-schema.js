@@ -645,11 +645,22 @@
       var key=name.toLocaleLowerCase('ru').replace(/ё/g,'е');
       if(labels[key])throw new Error('Жанры: одинаковые названия недопустимы.');
       labels[key]=true;
+      // Only catalog song IDs are edited by the owner. Public song metadata is
+      // regenerated from the protected catalog during an explicit publication.
+      var idsList=typeof item.songIds==='undefined'?[]:item.songIds,seenSongs={};
+      if(!Array.isArray(idsList)||idsList.length>300)
+        throw new Error('Жанр '+name+': максимум 300 песен.');
+      var chosen=idsList.map(function(rawId){
+        if(typeof rawId!=='string'||!rawId||rawId==='.'||rawId==='..'||
+           rawId.length>150||rawId.indexOf('/')>=0||/[\x00-\x1f\x7f]/.test(rawId)||
+           seenSongs[rawId])throw new Error('Жанр '+name+': неверный или повторяющийся ID песни.');
+        seenSongs[rawId]=true;return rawId;
+      });
       var tracks=typeof item.tracks==='undefined'?[]:item.tracks;
       if(!Array.isArray(tracks)||tracks.length>300)
-        throw new Error('Жанр '+name+': максимум 300 песен.');
+        throw new Error('Жанр '+name+': максимум 300 публичных песен.');
       return {id:code,label:name,visible:item.visible===true,
-        tracks:consolidateAttachedTracks(tracks,'Жанр '+name)};
+        songIds:chosen,tracks:consolidateAttachedTracks(tracks,'Жанр '+name)};
     });
   }
   function topicsConfig(raw,def){
