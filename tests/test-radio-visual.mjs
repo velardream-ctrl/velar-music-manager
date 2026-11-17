@@ -12,6 +12,10 @@ for(const mode of ['heartbeat','shimmer','broadcast','music','off']){
  const cfg=api.radioConfig({...d,visual:{mode,intensity:5,spread:100}});
  assert.equal(cfg.visual.mode,mode);assert.equal(cfg.visual.intensity,5);assert.equal(cfg.visual.spread,100);
 }
+for(const spread of [1,2,37,42,49,50,75,99,100]){
+ assert.equal(api.radioConfig({...d,visual:{mode:'heartbeat',intensity:3,spread}}).visual.spread,spread,
+  'Every integer from 1 to 100 must pass normalization');
+}
 const legacy=api.radioConfig({...d,visual:undefined});
 assert.equal(legacy.visual.mode,'heartbeat');
 const bad=api.radioConfig({...d,visual:{mode:'evil',intensity:99,spread:-1}});
@@ -22,4 +26,5 @@ assert.match(css,/velar-radio-afterglow/);assert.match(css,/top:-34px;right:-34p
 assert.match(css,/prefers-reduced-motion:reduce/);
 assert.match(ui,/data-radio-player-open/);assert.match(ui,/velar-radio-halo/);
 assert.match(studio,/Режим анимации радио/);assert.match(studio,/Размер светового ореола/);
+assert.match(studio,/radioVisualSlider\('Размер светового ореола','spread',1,100,1/);
 console.log('PASS: RUN-166 VELAR RADIO visual modes, gold glow and validated Studio controls');
