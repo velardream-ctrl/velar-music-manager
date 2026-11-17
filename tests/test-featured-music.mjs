@@ -200,6 +200,25 @@ dualEntry.children[0].children[0].onclick();
 assert.equal(mediaFrame(dualEntry.children[1]).src,
   'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
 assert.equal(youtubeButton.attributes['aria-pressed'],'false');
+// RUN-180: selected featured layout must reach the actual public artist panel.
+const squarePage=api.normalize({...original,artists:{...original.artists,
+ featuredView:'tiles',songViewMode:'standard',cards:[profile,other]}});
+listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:squarePage})});
+assert.match(host.children[0].children[1].children[1].className,/cms-music-list--tiles/,
+ 'The Square Cards setting must change the public artist songs, not just the draft.');
+const coverPage=api.normalize({...original,artists:{...original.artists,
+ featuredView:'covers',songViewMode:'standard',cards:[profile,other]}});
+listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:coverPage})});
+assert.match(host.children[0].children[1].children[1].className,/cms-music-list--covers/,
+ 'The Cover Rows setting must change the public artist songs.');
+const carouselPage=api.normalize({...original,artists:{...original.artists,
+ featuredView:'tiles',songViewMode:'carousel',cards:[profile,other]}});
+listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:carouselPage})});
+assert.match(host.children[0].children[1].children[1].className,/public-artist-song-list/,
+ 'The explicit Carousel setting must override square/covers.');
+assert.match(host.children[0].children[1].children[1].className,/public-song-carousel/,
+ 'The Carousel setting must be interactive and horizontally scrollable.');
+// Restore classic before checking the empty-song card presentation.
 const plain=api.normalize({...original,artists:{...original.artists,cards:[
  {...profile,featuredTracks:[]},{...other,featuredTracks:[]}
 ]}});
