@@ -127,7 +127,7 @@ assert.doesNotMatch(mobileCSS,/\.public-song-platforms\{flex:1 1 100%/,
  'Mobile sources cannot turn into a full-width Spotify button');
 assert.doesNotMatch(mobileCSS,/\.public-song-source\{flex:1 1 100px/,
  'Mobile source buttons cannot grow to the entire width');
-assert.match(read('index.html'),/public-song-ui\.js\?v=24/);
+assert.match(read('index.html'),/public-song-ui\.js\?v=25/);
 console.log('PASS: RUN-090 Spotify/YouTube inline single-row player, long lists, safe deep links, one active iframe');
 
 // RUN-155: legacy YouTube opens the shared page-local modal.
