@@ -5,7 +5,7 @@
 (function(){
  'use strict';
  var config={enabled:false},consented=false;
- var endpoint='',sessionId='',lastKey='',lastAt=0;
+ var endpoint='',lastKey='',lastAt=0,pageSent=false;
  var allowed={page_view:true,player_open:true,radio_open:true,radio_next:true};
  function validEndpoint(s){
    // Endpoint must be injected by deployment; never from visitor or Firestore.
@@ -38,7 +38,7 @@
        consented=value;
        try{window.localStorage.setItem('velar-analytics-consent',value?'yes':'no');}catch(ignore){}
        if(bar.parentNode)bar.parentNode.removeChild(bar);
-       if(value)record('page_view',{section:'site'});
+       if(value&&!pageSent){pageSent=true;record('page_view',{section:'site'});}
      };bar.appendChild(b);
    }
    button('Разрешить',true);button('Отказаться',false);
@@ -48,7 +48,10 @@
    config=owner&&typeof owner==='object'?owner:{enabled:false};
    endpoint=window.VELAR_ANALYTICS_ENDPOINT||'';
    consented=getConsent();
-   if(config.enabled&&validEndpoint(endpoint))displayConsent();
+   if(config.enabled&&validEndpoint(endpoint)){
+     displayConsent();
+     if(consented&&!pageSent){pageSent=true;record('page_view',{section:'site'});}
+   }
    return status();
  }
  function record(kind,details){
