@@ -14,7 +14,7 @@ assert.match(assistant,/VELAR_AI_FALLBACK/);
 assert.match(assistant,/window\.VELAR_PUBLIC_AI_ENABLED!==true/);
 assert.match(assistant,/data-response-source/);
 assert.match(assistant,/replyText\(config,'fallbackDisabled'\)/);
-assert.match(assistant,/https:\/\/ai\.velardream\.com\/v1\/public-chat/);
+assert.match(assistant,/https:\/\/dj-velar-private-lab\.velardream\.workers\.dev\/v1\/public-chat/);
 assert.doesNotMatch(assistant,/VELAR_OWNER_TEST_TOKEN/);
 const code=workerSource.replace(/^import .*ai-budget\.js";\nexport \{ VelarAiBudget \};\n/,'').replace('export default {','const worker = {')+'\n;globalThis.worker = worker;';
 new vm.Script(code);
