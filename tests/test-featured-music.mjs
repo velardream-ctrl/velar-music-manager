@@ -218,7 +218,7 @@ assert.match(editor,/markChanged\(\)/);
 assert.match(studio,/show\(el\('vmm-workflows'\),false\)/);
 assert.match(workflows,/show\(id\('panel-landing'\),false\)/);
 assert.match(html,/style\.css\?v=75/);
-assert.match(html,/landing-public\.js\?v=48/);
+assert.match(html,/landing-public\.js\?v=49/);
 assert.match(sw,/CACHE_PREFIX \+ 'v84'/);
 assert.match(css,/\.cms-music-play-icon::before\{/);
 assert.match(css,/border-left:10px solid currentColor/);
