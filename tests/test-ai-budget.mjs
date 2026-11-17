@@ -35,6 +35,6 @@ assert.equal(stats.used,2);assert.equal(stats.succeeded,1);assert.equal(stats.fa
 r=await post('/reserve',{limit:0});assert.equal(r.status,400);
 r=await post('/complete',{day:'1900-01-01',ok:true});assert.equal((await r.json()).ignored,true);
 assert.equal((await (await budget.fetch(new Request(url+'/stats'))).json()).used,2);
-assert.match(src,/storage\.put/);
+assert.match(src,/store\.put/);
 assert.doesNotMatch(src,/message|CF-Connecting-IP|visitorText|localStorage/,'No questions or IP stored');
 console.log('PASS RUN-198: daily reservation cap, counters, failure tracking, no visitor data');
