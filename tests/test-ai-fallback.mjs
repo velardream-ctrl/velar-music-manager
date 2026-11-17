@@ -8,7 +8,7 @@ assert.match(html,/\.\.\/ai-fallback\.js\?v=1/);
 assert.match(html,/ai-lab\.js\?v=4/);
 assert.match(sw,/ai-fallback\.js\?v=1/);
 assert.match(sw,/fallback195/);
-assert.match(read('index.html'),/ai-fallback\\.js\\?v=1/,'Public assistant loads fallback router');
+assert.match(read('index.html'),/ai-fallback\.js\?v=1/,'Public assistant loads fallback router');
 const ctx={module:{exports:{}},window:{},Promise,Date,setTimeout,clearTimeout};
 vm.runInNewContext(code,ctx);
 const router=ctx.module.exports;
