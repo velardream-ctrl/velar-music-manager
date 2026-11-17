@@ -22,7 +22,7 @@
  function validId(s){return typeof s==='string'&&/^G-[A-Z0-9]{7,16}$/.test(s);}
  function consentChoice(){return consentValue();}
  function status(){return {ready:!!(config.enabled&&consented&&initialized),
-   configured:validId(gaId),consented:consented,provider:'ga4'};}
+   configured:validId(gaId),enabled:config.enabled===true,consented:consented,provider:'ga4'};}
  function command(){window.dataLayer.push(arguments);}
  function setConsent(value){
    if(!initialized)return;
