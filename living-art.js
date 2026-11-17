@@ -16,9 +16,16 @@
  }
  function isIPhoneWebKit(){
    var ua=window.navigator&&window.navigator.userAgent||'';
-   // All iPhone browsers use WebKit. Deliberately EXCLUDE iPads:
-   // their static legacy fallback and successful layout must not change.
+   // All iPhone browsers use WebKit. Deliberately EXCLUDE iPads.
    return /iPhone|iPod/.test(ua);
+ }
+ function isLegacyIpad(){
+   var ua=window.navigator&&window.navigator.userAgent||'';
+   if(!/iPad/.test(ua))return false;
+   var os=ua.match(/\\bOS\\s+(\\d+)[_.]/);
+   // RUN-172: on pre-iPadOS-14 iPad WebKit, CSS inset can collapse the
+   // absolute sky to zero height. Leave every iPhone/new iPad untouched.
+   return !!(os&&Number(os[1])<14);
  }
  // RUN-088: readable, read-only diagnostics for desktop Edge/Windows.
  // Never override reduced-motion or Data Saver accessibility preferences.
@@ -96,6 +103,35 @@
      if(visibleWatcher)visibleWatcher.unobserve(target);
    }
  }
+ // RUN-172: low-cost scroll feedback for old iPads without sticky layout.
+ // If rAF is unavailable the fixed-size crystal/rings remain visible.
+ function legacyIpadMotion(){
+   var image=chapter.querySelector('.crystal-journey-crystal');
+   var outerRing=chapter.querySelector('.crystal-journey-ring--outer');
+   var innerRing=chapter.querySelector('.crystal-journey-ring--inner');
+   if(!image||!outerRing||!innerRing||!window.requestAnimationFrame)return;
+   var reduced=false;
+   try{reduced=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);}
+   catch(ignore){}
+   if(reduced||(window.navigator&&window.navigator.connection&&window.navigator.connection.saveData))return;
+   var queued=false;
+   function draw(){
+     queued=false;
+     if(document.hidden)return;
+     var r=chapter.getBoundingClientRect();
+     if(r.bottom<0||r.top>window.innerHeight)return;
+     var total=window.innerHeight+(chapter.offsetHeight||r.bottom-r.top);
+     var p=clamp((window.innerHeight-r.top)/Math.max(1,total));
+     image.style.transform='translate(-50%,-50%) scale('+(1+.08*p).toFixed(3)+')';
+     outerRing.style.transform='translate(-50%,-50%) rotate('+Math.round(25*p)+'deg)';
+     innerRing.style.transform='translate(-50%,-50%) rotate('+Math.round(-31*p)+'deg)';
+   }
+   function schedule(){if(!queued){queued=true;window.requestAnimationFrame(draw);}}
+   window.addEventListener('scroll',schedule,false);
+   window.addEventListener('resize',schedule,false);
+   window.addEventListener('orientationchange',schedule,false);
+   schedule();
+ }
  function init(){
    if(started)return;
    chapter=document.getElementById('crystal-journey');
@@ -105,8 +141,14 @@
    // Keep the scroll-driven animations in JS; only the sticky CSS changes.
    if(isIPhoneWebKit()&&document.documentElement.className.indexOf('ios-scroll-stable')===-1)
      document.documentElement.className+=' ios-scroll-stable';
+   var legacy=isLegacyIpad();
+   if(legacy&&document.documentElement.className.indexOf('legacy-ipad-crystal')===-1)
+     document.documentElement.className+=' legacy-ipad-crystal';
    var status=motionStatus();
    chapter.setAttribute('data-motion-status',status);
+   // Old iPad never gets has-living-art sticky heights. The ES5 scroll
+   // animation is independent of IntersectionObserver and remains optional.
+   if(legacy){legacyIpadMotion();return;}
    if(status!=='enabled')return;
    crystal=chapter.querySelector('.crystal-journey-crystal');
    outer=chapter.querySelector('.crystal-journey-ring--outer');

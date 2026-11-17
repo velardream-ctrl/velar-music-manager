@@ -2284,3 +2284,43 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
    -webkit-backface-visibility:hidden;backface-visibility:hidden;
  }
 }
+
+/* RUN-172 — ONLY iPad iOS 13 and earlier (class assigned by living-art.js).
+   Legacy WebKit does not understand inset:0, width:min() or width:clamp(),
+   causing the sky box and its crystal/rings to collapse. Explicit bounds
+   and plain vw/px sizes restore the original artwork on the old tablet.
+   Modern iPhone, current iPad, desktop, radio and assistant are unchanged. */
+html.legacy-ipad-crystal .crystal-journey-stage{
+ position:relative;min-height:700px;overflow:hidden;
+}
+html.legacy-ipad-crystal .crystal-journey-sky{
+ position:absolute;top:0;right:0;bottom:0;left:0;
+ width:100%;height:100%;
+}
+html.legacy-ipad-crystal .crystal-journey-stars{
+ top:-15%;right:-15%;bottom:-15%;left:-15%;
+}
+html.legacy-ipad-crystal .crystal-journey-crystal{
+ position:absolute;top:34%;left:50%;width:140px;
+ max-width:none;height:auto;
+ -webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);
+}
+html.legacy-ipad-crystal .crystal-journey-crystal img{
+ display:block;width:100%;height:auto;max-width:none;
+}
+html.legacy-ipad-crystal .crystal-journey-crystal::before{
+ top:-35%;right:-35%;bottom:-35%;left:-35%;
+}
+html.legacy-ipad-crystal .crystal-journey-ring--outer{
+ top:34%;width:72vw;height:72vw;max-width:570px;max-height:570px;
+}
+html.legacy-ipad-crystal .crystal-journey-ring--inner{
+ top:34%;width:50vw;height:50vw;max-width:405px;max-height:405px;
+}
+html.legacy-ipad-crystal .crystal-journey-ring--outer::before,
+html.legacy-ipad-crystal .crystal-journey-ring--inner::after{
+ top:8%;right:8%;bottom:8%;left:8%;
+}
+html.legacy-ipad-crystal .crystal-journey-beam{
+ top:34%;width:40vw;max-width:420px;
+}
