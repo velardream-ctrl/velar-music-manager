@@ -73,7 +73,7 @@ assert.match(read('studio/landing-editor.js'),/imageLoadingTest/);
 assert.match(read('studio/landing-editor.js'),/imageLoadingLevel/);
 assert.match(read('landing-public.js'),/\.configure\(value\.hero\.imageLoadingLevel\)/);
 assert.match(read('artist-detail.js'),/\.configure\(safe\.hero\.imageLoadingLevel\)/);
-assert.match(studio,/landing-editor\.js\?v=42/);
+assert.match(studio,/landing-editor\.js\?v=43/);
 assert.match(read('public-song-ui.js'),/images\.near\(item,function\(\)\{requestArtwork/);
 assert.match(read('public-song-ui.js'),/frame\.loading='lazy'/,'Embedded music players remain on click');
 console.log('PASS RUN-123: four loading levels, owner publish safety, preview-only URL, Safari fallback, gated Spotify thumbnails');
