@@ -287,7 +287,7 @@
      if(stories){
        var row=create('div','cms-artist-story'+(index%2?' cms-artist-story--reverse':''));
        row.appendChild(card);
-       row.appendChild(musicPanel(item,songMode==='carousel'?'carousel':'classic',albums));
+       row.appendChild(musicPanel(item,songMode==='carousel'?'carousel':(featuredView||'classic'),albums));
        target.appendChild(row);
      }else target.appendChild(card);
    });
