@@ -33,3 +33,29 @@ main{width:min(1080px,calc(100% - 36px));margin:50px auto 85px}
 .artist-footer{padding:30px;text-align:center;color:#8d9eb9;font-size:.76rem;border-top:1px solid #d6bd8f21}
 @media(max-width:680px){main{width:calc(100% - 28px);margin:28px auto 55px}.artist-topbar{padding:19px 16px}.artist-brand{letter-spacing:.13em}.artist-hero{grid-template-columns:1fr!important;gap:22px} .artist-portrait{width:75vw;max-width:310px;height:75vw;max-height:310px;margin:auto}.artist-kicker{font-size:.61rem;margin-bottom:24px}.artist-section{border-radius:16px}.artist-share{width:100%}}
 @media(prefers-reduced-motion:no-preference){.artist-link,.artist-track,.artist-album{transition:background .18s,border-color .18s}}
+
+/* RUN-181: one song per card, official source glyphs below the title.
+   The page reads published data only; no large playlist carousel. */
+.artist-tracks{display:block}
+.artist-track-list{display:grid;grid-template-columns:1fr;gap:9px}
+.artist-tracks--tiles .artist-track-list{grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr))}
+.artist-track-card{min-width:0;background:#0c1830;border:1px solid #dac28f55;border-radius:12px;padding:12px 15px}
+.artist-track-headline{display:flex;align-items:center;gap:12px;min-width:0;margin-bottom:8px}
+.artist-track-name{font-size:.96rem;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
+.artist-track-artwork{display:inline-flex;flex:none;width:50px;height:50px;border-radius:9px;align-items:center;justify-content:center;background:linear-gradient(140deg,#1e355b,#122344);color:#e6c88e;font-size:1.4rem}
+.artist-tracks--tiles .artist-track-headline{flex-direction:column;align-items:flex-start}
+.artist-tracks--tiles .artist-track-artwork{width:100%;height:auto;aspect-ratio:1;max-height:160px}
+.artist-track-sources{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+.artist-track-source{width:44px;height:44px;min-width:44px;border:1px solid #e6ca9555;border-radius:11px;font-size:21px;cursor:pointer;color:#fff;background:#192a48}
+.artist-track-source--spotify{background:#126c3b}.artist-track-source--youtube{background:#991d27}
+.artist-track-source--appleMusic{background:#e6e6ec;color:#2b2b32}
+.artist-track-source[aria-pressed="true"]{outline:2px solid #f3d89d;outline-offset:2px}
+.artist-track-inline-player:not(:empty){margin:10px 0 12px;display:flex;flex-direction:column;gap:10px}
+.artist-track-player{display:block;width:100%;border:0;border-radius:10px;height:160px;background:#091528}
+.artist-track-player--video{height:auto;aspect-ratio:16/9;min-height:190px}
+.artist-track-external{font-size:.86rem;color:#e8c994;text-decoration:underline}
+.artist-track-close,.artist-track-page-button{background:#1b2d50;color:#f4dfb7;border:1px solid #d9bb8270;border-radius:10px;min-height:44px;padding:8px 14px;cursor:pointer;font:inherit}
+.artist-track-search{display:block;width:100%;min-height:46px;padding:9px 13px;margin-bottom:13px;background:#0c1830;color:#fff;border:1px solid #a8bad3;border-radius:10px;font:inherit;font-size:16px}
+.artist-track-pagination{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;margin-top:15px;color:#d4c4a5}
+@media(max-width:680px){.artist-tracks--tiles .artist-track-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:390px){.artist-tracks--tiles .artist-track-list{grid-template-columns:1fr}}
