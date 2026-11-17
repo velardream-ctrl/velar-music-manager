@@ -46,7 +46,7 @@ assert.match(css, /\.art-wrap\{max-width:215px;margin:-5px auto 12px/);
 assert.ok(!css.includes('margin:-12px auto -30px') && !css.includes('margin:-12px auto -32px'), 'Logo must not overlap title');
 assert.match(homepage, /href="style\.css\?v=82&consent=190"/);
 assert.match(sw, /url\.pathname\.slice\(-10\) === '\/style\.css'/);
-assert.match(sw, /'\.\/style\.css\?v=82'/);
+assert.match(sw, /'\.\/style\.css\?v=82&consent=190'/);
 assert.match(homepage, /max-width:215px!important;margin:-5px auto 12px!important/);
 assert.ok(!sw.includes('cache.put(req, response)'), 'Never cache unfiltered responses');
 assert.match(read('firestore.rules'), /allow read, write: if false;/);
