@@ -2351,3 +2351,24 @@ html.legacy-ipad-crystal .crystal-journey-stage{
    height:100vh;min-height:700px;
  }
 }
+
+
+/* RUN-175: Safari 12/13 iPads only. Keep the artwork pinned to the viewport
+   through a full scroll chapter, then release it naturally.
+   The vertical scroll container must be the document, not body overflow-x:hidden.
+   iPhone's RUN-174 rules and desktop/modern iPad selectors remain untouched. */
+html.legacy-ipad-crystal body.public-site{overflow-x:visible}
+html.legacy-ipad-crystal .crystal-journey{
+ position:relative;height:200vh;min-height:0;padding:0;overflow:visible;
+}
+html.legacy-ipad-crystal .crystal-journey-stage{
+ position:-webkit-sticky;position:sticky;top:0;
+ height:100vh;min-height:0;max-width:none;overflow:hidden;
+}
+/* Respect the accessibility setting: don't trap a static image for 200vh. */
+@media(prefers-reduced-motion:reduce){
+ html.legacy-ipad-crystal .crystal-journey{height:auto;min-height:0}
+ html.legacy-ipad-crystal .crystal-journey-stage{
+   position:relative;top:auto;height:100vh;min-height:700px;
+ }
+}
