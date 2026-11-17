@@ -183,6 +183,10 @@
          if(uid===account){
            if(offlineNonce===nonce){
              draftRev=revision;baseline=JSON.stringify(clean);
+             // If the saved outbox was corrected from songs to three link slots,
+             // reflect the successful server snapshot in the visible editor.
+             // A newer local edit must remain untouched.
+             if(JSON.stringify(data)===JSON.stringify(payload.content))data=clone(clean);
              if(ack)showOfflineConflict(false);
              offlineStatus(ack?'Синхронизировано с облачным черновиком (версия '+revision+'). Для посетителей ещё не опубликовано.':
                'Облачный черновик сохранён; более свежие правки остались в очереди.');
