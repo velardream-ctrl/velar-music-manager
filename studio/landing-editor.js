@@ -1537,12 +1537,9 @@
      'Официальный альбом имеет собственную страницу у дистрибьютора. Собранные на сайте синглы называются авторской коллекцией; их исходные релизы не изменяются.');
    field(parent,'Название раздела',cfg.heading,function(v){cfg.heading=v;});
    field(parent,'Описание раздела',cfg.intro,function(v){cfg.intro=v;},true);
-   selectField(parent,'Показ обложек альбомов',
-     [['grid','Квадратные обложки — сетка'],['list','Обложка + описание — список']],
-     cfg.view,function(v){cfg.view=v;});
-   selectField(parent,'Вид песен в альбомах, языках и темах',
-     [['rows','Обычные строки без миниатюр'],['covers','Строки с миниатюрой обложки'],['tiles','Квадратные карточки']],
-     cfg.trackView,function(v){cfg.trackView=v;});
+   var note=document.createElement('p');note.className='sync-note';
+   note.textContent='Вид обложек и список песен альбомов настраиваются в «Оформление главной» → «Альбомы». Здесь редактируются сами альбомы и их песни.';
+   parent.appendChild(note);
    var menu=document.createElement('div');menu.className='landing-language-menu';
    entries.forEach(function(album,index){
      var group=document.createElement('div');group.className='landing-language-menu-item';
@@ -2504,6 +2501,53 @@
      parent.appendChild(item);
    });
  }
+
+ // RUN-181: all homepage display choices live in ONE place.
+ // Artist profile settings are intentionally not here: they belong to Artists.
+ function homepageDisplaySettings(parent){
+   var headingBlock=document.createElement('section');
+   headingBlock.className='landing-display-settings';
+   heading(headingBlock,'Оформление блоков главной страницы',
+     'Здесь собраны все способы показа песен посетителям на главной. Каждый блок независим. Для длинных подборок рекомендуется компактный список с поиском и страницами.');
+   var artistBlock=document.createElement('section');artistBlock.className='landing-display-group';
+   heading(artistBlock,'Артисты на главной',
+     'Только подборка «Лучшие песни» рядом с карточками артистов. Отдельная страница артиста настраивается в разделе «Артисты».');
+   var featured=data.artists.songViewMode==='carousel'?'carousel':data.artists.featuredView||'classic';
+   selectField(artistBlock,'Показ лучших песен на главной',
+     [['classic','Компактные строки'],['covers','Строки с обложками'],
+      ['tiles','Квадратные карточки'],['carousel','Карусель (до 30 песен)']],featured,function(v){
+       if(v==='carousel'){data.artists.songViewMode='carousel';}
+       else{data.artists.songViewMode='standard';data.artists.featuredView=v;}
+     });
+   headingBlock.appendChild(artistBlock);
+   if(!data.genres.displayModes)data.genres.displayModes={};
+   var choices=[['compact','Компактный список · поиск · страницы по 25'],
+     ['rows','Обычный список'],['covers','Строки с обложками'],
+     ['tiles','Квадратные карточки'],['carousel','Карусель (для коротких подборок)']];
+   [['genres','Жанры'],['topics','Темы песен'],['languages','Языки песен'],
+    ['albums','Песни в альбомах']].forEach(function(entry){
+     var block=document.createElement('section');block.className='landing-display-group';
+     heading(block,entry[1],entry[0]==='albums'?
+       'Только песни внутри альбома после раскрытия. Обложки самих альбомов настраиваются ниже.':
+       'Вид песен после выбора '+(entry[0]==='languages'?'языка':entry[0]==='topics'?'темы':'жанра')+'.');
+     var selected=data.genres.displayModes[entry[0]]||
+       (data.genres.songViewMode==='carousel'?'carousel':data.albums.trackView||'rows');
+     selectField(block,'Вид списка',choices,selected,function(v){
+       data.genres.displayModes[entry[0]]=v;
+     });
+     headingBlock.appendChild(block);
+   });
+   var albums=document.createElement('section');albums.className='landing-display-group';
+   heading(albums,'Обложки альбомов',
+     'Отдельно от песен внутри альбома.');
+   selectField(albums,'Вид альбомов',
+     [['grid','Сетка квадратных обложек'],['list','Список: обложка и описание']],
+     data.albums.view||'grid',function(v){data.albums.view=v;});
+   headingBlock.appendChild(albums);
+   var warn=document.createElement('p');warn.className='sync-note';
+   warn.textContent='Если в подборке больше 40 песен, карусель автоматически заменяется компактным списком с поиском и страницами. Изменения сначала сохрани в черновике, затем опубликуй.';
+   headingBlock.appendChild(warn);parent.appendChild(headingBlock);
+ }
  function render(){
    var host=id('landing-fields');if(!host)return;
    clear(host);
@@ -2562,12 +2606,7 @@
      coverNotice.textContent='Обложка, загруженная вручную, имеет высший приоритет. При отказе источника используется второй, затем значок ♫. Сохрани черновик и опубликуй, чтобы изменить настройки для посетителей.';
      loadPanel.appendChild(coverNotice);panel.appendChild(loadPanel);
      updateLoadLabel();
-     heading(panel,'Оформление каталога песен',
-       'Отдельная настройка для языков, тем и альбомов. Песни артистов настраиваются независимо.');
-     selectField(panel,'Вид каталога песен',
-       [['standard','Обычный показ (сохранить оформление разделов)'],
-        ['carousel','Карусель с обложками: свайп на телефоне, стрелки на компьютере']],
-       data.genres.songViewMode||'standard',function(v){data.genres.songViewMode=v;});
+     homepageDisplaySettings(panel);
    }else if(tab==='distribution'){
      if(window.VMM_SONG_DISTRIBUTION){
        var distributionContext={
@@ -2602,15 +2641,17 @@
      sectionFields(panel,tab);
      if(tab==='artists'){
        artistPicker(panel);
-       selectField(panel,'Форма лучших песен артистов (когда карусель выключена)',
-         [['classic','Обычные строки (как сейчас)'],['covers','Строки с маленькими обложками'],['tiles','Квадратные карточки']],
-         data.artists.featuredView||'classic',function(v){data.artists.featuredView=v;});
-       heading(panel,'Отображение лучших песен артистов',
-         'Эти настройки относятся только к блоку «Лучшие песни» рядом с артистами. При выборе карусели она заменяет строки и квадратные карточки. Темы, языки, жанры и альбомы настраиваются отдельно.');
-       selectField(panel,'Способ показа лучших песен артистов',
-         [['standard','Обычный список песен'],
-          ['carousel','Карусель с обложками']],
-         data.artists.songViewMode||'standard',function(v){data.artists.songViewMode=v;});
+       var profilePresentation=document.createElement('section');
+       profilePresentation.className='landing-display-group';
+       heading(profilePresentation,'Отдельная страница артиста',
+         'Только профиль, который посетитель открывает кнопкой «Подробнее». Оформление артистов на главной странице регулируется в «Оформление главной».');
+       selectField(profilePresentation,'Песни в профиле артиста',
+         [['compact','Компактный список с поиском (рекомендуется)'],
+          ['covers','Строки с обложками'],['tiles','Карточки с обложками']],
+         data.artists.detailTrackView||'compact',function(v){data.artists.detailTrackView=v;});
+       var separateNote=document.createElement('p');separateNote.className='sync-note';
+       separateNote.textContent='Одна композиция — одна карточка; Spotify, YouTube и Apple Music — значки под названием. Профиль показывает опубликованные лучшие песни (до 30), не читая закрытый каталог.';
+       profilePresentation.appendChild(separateNote);panel.appendChild(profilePresentation);
      }
      cardFields(panel,tab);
    }else if(tab==='albums'){
