@@ -2695,6 +2695,19 @@
    var status=document.createElement('p');status.className='sync-note';
    status.textContent='Поток GA4 G-ZD640V3VQ1 готов. Чтобы начать измерять визиты, включи сбор, сохрани и опубликуй. DJ Velar предложит посетителю разрешить или отклонить аналитику; без выбора Google-тег не загружается. Отчёты доступны в Google Analytics → В реальном времени. Счётчики в админке и на публичной странице пока не подключены — настройки их видимости зарезервированы.';
    section.appendChild(status);
+   // RUN-191: real visit/event reports remain in owner's GA4 console, not
+   // the consent control at the public footer. This is a navigational link.
+   var reports=document.createElement('a');
+   reports.href='https://analytics.google.com/';
+   reports.target='_blank';
+   reports.rel='noopener noreferrer';
+   reports.className='landing-add';
+   reports.textContent='Открыть отчёты Google Analytics';
+   reports.style.cssText='display:inline-block;margin:12px 0;padding:12px 16px;text-decoration:underline';
+   section.appendChild(reports);
+   var help=document.createElement('p');help.className='sync-note';
+   help.textContent='Для первых событий: Google Analytics → Отчёты → В реальном времени. В этом разделе Studio пока нет отдельной таблицы с реальными посещениями; кнопка на сайте «Настройки статистики» служит только для согласия посетителей.';
+   section.appendChild(help);
    var explain=document.createElement('p');explain.className='sync-note';
    explain.textContent='События GA4: page_view, velar_player_open, velar_radio_open, velar_radio_next, velar_youtube_start. Посетитель может отозвать согласие через «Настройки статистики» внизу сайта. Для песенных рейтингов потребуются настройки отчётов GA4 и сопоставление ID песен; открытие внешнего плеера не означает завершённое прослушивание.';
    section.appendChild(explain);
