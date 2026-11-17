@@ -117,19 +117,45 @@
    button('Разрешить аналитику',true);button('Отказаться',false);
    document.body.appendChild(node);
  }
+ // RUN-191: explicit privacy settings dialog works even when DJ Velar is
+ // active. Opening settings must NOT revoke consent or cause data collection.
+ function privacySettings(){
+   if(!document.body||!document.createElement)return;
+   var old=document.getElementById&&document.getElementById('velar-analytics-settings-dialog');
+   if(old)return;
+   var panel=document.createElement('section');panel.id='velar-analytics-settings-dialog';
+   panel.setAttribute('role','dialog');
+   panel.setAttribute('aria-modal','true');
+   panel.setAttribute('aria-label','Настройки аналитики VELARDREAM');
+   panel.style.cssText='position:fixed;z-index:10010;left:12px;right:12px;bottom:16px;max-width:570px;margin:auto;padding:16px;background:#152642;border:1px solid #e3c68a;border-radius:14px;color:#f8eddb;box-shadow:0 6px 28px rgba(0,0,0,.55);font:inherit';
+   var h=document.createElement('strong');h.textContent='Статистика и конфиденциальность';panel.appendChild(h);
+   var p=document.createElement('p');
+   p.textContent='Разрешение: '+(consentValue()==='yes'?'выдано':consentValue()==='no'?'отклонено':'не выбрано')+
+     '. Google Analytics учитывает посещения и открытия плееров, но не подтверждает полное прослушивание песен. Данные передаются Google. Выбор можно изменить в любой момент.';
+   panel.appendChild(p);
+   function dismiss(){if(panel.parentNode)panel.parentNode.removeChild(panel);}
+   function option(label,value){
+     var b=document.createElement('button');b.type='button';b.textContent=label;
+     b.style.cssText='display:inline-block;margin:5px;padding:10px 12px;min-height:42px;border:1px solid #d9bd85;border-radius:10px;background:#243753;color:#f7e4bc;font:inherit;cursor:pointer';
+     b.onclick=function(){choose(value);dismiss();};
+     panel.appendChild(b);
+   }
+   option('Разрешить аналитику',true);
+   option('Отказаться',false);
+   var close=document.createElement('button');close.type='button';close.textContent='Закрыть без изменений';
+   close.style.cssText='display:block;margin:9px 5px 0;padding:8px;border:0;background:transparent;color:#f7e4bc;text-decoration:underline;font:inherit';
+   close.onclick=dismiss;panel.appendChild(close);
+   document.body.appendChild(panel);
+   if(close.focus)close.focus();
+ }
  function control(){
    if(!config.enabled||!validId(gaId)||!document.querySelector)return;
    var footer=document.querySelector('footer');
    if(!footer||document.getElementById('velar-analytics-settings'))return;
    var button=document.createElement('button');button.id='velar-analytics-settings';button.type='button';
    button.textContent='Настройки статистики';
-   button.style.cssText='display:block;margin:10px auto;background:transparent;border:0;color:#c9d4e5;text-decoration:underline;cursor:pointer;font:inherit;font-size:.85rem';
-   button.onclick=function(){
-     remember(false);revoke();
-     // Offer reversible choice rather than treating a revoke as permanent.
-     try{window.localStorage.removeItem('velar-analytics-consent');}catch(ignore){}
-     banner();
-   };
+   button.style.cssText='display:block;margin:10px auto;background:transparent;border:0;color:#c9d4e5;text-decoration:underline;cursor:pointer;font:inherit;font-size:.85rem;min-height:44px';
+   button.onclick=privacySettings;
    footer.appendChild(button);
  }
  function choose(accepted){

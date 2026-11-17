@@ -7,7 +7,7 @@
  var root=null,dialog=null,log=null,input=null,prompt=null,buttons=null,header=null;
  var config=null,published=null,opened=false,initialized=false;
  var MAX_INPUT=360,activeTyping=null,announcer=null,jokeCursor=-1;
- var offlineBanner=false,offlineInChat=false;
+ var offlineBanner=false,offlineInChat=false,pendingConsentReply=null;
  function find(id){return document.getElementById(id);}
  function el(tag,cls,t){
    var e=document.createElement(tag);
@@ -261,7 +261,7 @@
    }
    session.timer=window.setTimeout(step,120);
  }
- function itemMessage(role,text,action,expression,animate){
+ function itemMessage(role,text,action,expression,animate,onComplete){
    if(!log)return;
    var row=el('div','velar-chat-line '+(role==='visitor'?'is-visitor':'is-assistant'));
    if(role==='assistant'){
@@ -272,7 +272,7 @@
    row.appendChild(paragraph);
    function addAction(){
      var list=action&&action.actions?action.actions:(action&&action.label?[action]:[]);
-     if(!list.length)return;
+     if(!list.length){if(typeof onComplete==='function')onComplete();return;}
      var group=list.length>1?el('div','velar-chat-actions'):row;
      list.slice(0,3).forEach(function(choice){
        if(!choice||!choice.label)return;
@@ -323,6 +323,7 @@
        group.appendChild(a);
      });
      if(group!==row&&group.children.length)row.appendChild(group);
+     if(typeof onComplete==='function')onComplete();
    }
    log.appendChild(row);
    if(shouldType)typeMessage(paragraph,text,addAction);
@@ -398,15 +399,24 @@
    try{if(window.sessionStorage)window.sessionStorage.setItem('velar-analytics-asked','1');}
    catch(ignore){}
  }
+ // RUN-191: type consent reply, then invite the visitor to choose music.
+ function emitConsentReply(accept){
+   itemMessage('assistant',accept?
+     'Спасибо! Вы разрешили учитывать посещения и открытия музыкальных плееров. Изменить выбор можно в «Настройках статистики» внизу сайта.':
+     'Спасибо за ответ! Ваш отказ сохранён. Аналитика отключена, а вся музыка доступна без ограничений.',
+     null,accept?'heart':'okay',true,function(){
+       itemMessage('assistant',
+         'А теперь давайте подберём музыку! Какое у вас настроение? Может быть, хочется чего-то романтического, весёлого или загадочного?',
+         null,'wave',true);
+     });
+ }
  function analyticsRespond(accept){
    var api=analyticsApi();
    if(!api||!api.choose)return;
    api.choose(accept);
    if(prompt)updateConsentGreeting();
-   itemMessage('assistant',accept?
-     'Спасибо! Вы разрешили собирать статистику посещений и открытий музыкальных плееров. Настройку можно изменить по ссылке «Настройки статистики» внизу сайта.':
-     'Понимаю и уважаю ваш выбор. Аналитика для вас выключена. Музыка, радио и все разделы доступны без ограничений.',
-     null,accept?'heart':'okay',false);
+   if(opened)emitConsentReply(accept);
+   else pendingConsentReply=accept;
  }
  // RUN-190: visible, compact consent choices on the greeting bubble.
  // The visitor need not open the chat first, and the classic welcome returns
@@ -426,7 +436,7 @@
          analyticsRespond(accept);
          actions.style.display='none';
          var line=prompt.querySelector&&prompt.querySelector('.velar-assistant-greeting-text');
-         if(line)line.textContent=accept?'Спасибо! Статистика включена по вашему согласию.':'Ваш выбор сохранён. Музыка доступна без аналитики.';
+         if(line)line.textContent=accept?'Спасибо за согласие! Какую музыку послушаем? Выберите настроение или откройте DJ Velar.':'Спасибо за ответ! Какую музыку послушаем? Выберите настроение или откройте DJ Velar.';
          prompt.className='velar-assistant-greeting';
        };
        actions.appendChild(b);
@@ -541,7 +551,11 @@
      launcher.setAttribute('aria-expanded',opened?'true':'false');
      prompt.className='velar-assistant-greeting hidden';markGreeting();
      if(opened){
-       if(!log.children.length)itemMessage('assistant',config.welcome,null,greetingChoice(),true);
+       if(pendingConsentReply!==null){
+         var reply=pendingConsentReply;
+         pendingConsentReply=null;
+         emitConsentReply(reply);
+       }else if(!log.children.length)itemMessage('assistant',config.welcome,null,greetingChoice(),true);
        analyticsInvitation();
        if(typeof navigator!=='undefined'&&navigator.onLine===false)notifyConnectivity();
        if(input&&input.focus&&(!window.matchMedia||!window.matchMedia('(max-width:590px)').matches))input.focus();
