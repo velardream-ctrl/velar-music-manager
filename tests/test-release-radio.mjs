@@ -260,8 +260,8 @@ assert.match(css,/.cms-release-art::before/);
 assert.match(css,/\.velar-radio--bubble/);
 assert.match(css,/min-height:200px/);
 assert.match(html,/universe\.js\?v=7/);
-assert.match(html,/style\.css\?v=75/);
-assert.match(sw,/CACHE_PREFIX \+ 'v84'/);
+assert.match(html,/style\.css\?v=76/);
+assert.match(sw,/CACHE_PREFIX \+ 'v85'/);
 assert.match(sw,/STUDIO_PREFIX\+'v52'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);
@@ -320,6 +320,13 @@ const listen=catalogPanel.children.find(c=>c.className==='velar-radio-start');
 listen.onclick();
 const videoURL=new URL(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src);
 assert.deepEqual([videoURL.pathname.split('/').pop(),videoURL.searchParams.get('playlist')].sort(),['ABCDEFGHIjk','abcdefghijk']);
+const youtubeNext=catalogPanel.children.find(c=>c.className==='velar-radio-player')
+ .children.find(c=>c.className==='velar-radio-next');
+assert.ok(youtubeNext,'YouTube radio must have a manual Next button');
+const previousVideo=doc.querySelectorAll('iframe.velar-radio-iframe')[0].src;
+youtubeNext.onclick();
+assert.notEqual(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src,previousVideo,
+ 'When IFrame API is unavailable, an explicit YouTube Next still changes the clip');
 choice.value='appleMusic';choice.onchange();listen.onclick();
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0].src,apple.replace('music.apple','embed.music.apple'));
 
