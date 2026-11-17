@@ -131,4 +131,51 @@ assert.match(css,/html\.ios-scroll-stable \.velar-radio,[\s\S]*?html\.ios-scroll
  'Keep the radio and assistant on separate composited fixed layers');
 assert.match(css,/html\.ios-scroll-stable\.has-living-art \.art-reveal\{[\s\S]*?opacity:1/,
  'Section headings must remain visible if iPhone observer callbacks are lost');
-console.log('PASS: RUN-071/171 desktop and iPad unchanged; iPhone crystal always visible in nonsticky scrolling scene and fixed radio/assistant retain compositor layers');
+// RUN-172: only old iPads get the legacy crystal sky/layout and its small
+// scroll animation. Modern devices keep exactly their previous CSS and JS.
+const oldIpad=environment({width:768,height:1024,clip:false,
+ userAgent:'Mozilla/5.0 (iPad; CPU OS 12_5_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/90.0 Mobile/15E148 Safari/604.1'});
+assert.match(oldIpad.doc.documentElement.className,/legacy-ipad-crystal/,
+ 'Old Safari 12 iPad must receive the narrowly scoped sky/size fallbacks');
+assert.doesNotMatch(oldIpad.doc.documentElement.className,/ios-scroll-stable/,
+ 'The iPhone scroll correction must never apply to an old iPad');
+assert.doesNotMatch(oldIpad.doc.documentElement.className,/has-living-art/,
+ 'Legacy iPad does not enable the costly sticky 158vh scene');
+assert.equal(oldIpad.chapter.attributes['data-motion-status'],'unsupported-clip');
+assert.equal(oldIpad.queued.length,1,'Old Safari receives an initial lightweight animation frame');
+oldIpad.queued.shift()();
+assert.match(oldIpad.parts['.crystal-journey-crystal'].style.transform,/scale\(/);
+assert.match(oldIpad.parts['.crystal-journey-ring--outer'].style.transform,/rotate\(/);
+assert.equal(typeof oldIpad.events.scroll,'function');
+oldIpad.events.scroll();oldIpad.events.scroll();
+assert.equal(oldIpad.queued.length,1,'Old iPad scroll animation is rAF-throttled');
+oldIpad.queued.shift()();
+const newIpad=environment({width:768,height:1024,
+ userAgent:'Mozilla/5.0 (iPad; CPU OS 16_7_10 like Mac OS X)'});
+assert.doesNotMatch(newIpad.doc.documentElement.className,/legacy-ipad-crystal/,
+ 'Current iPad must retain its existing responsive scene');
+assert.match(newIpad.doc.documentElement.className,/has-living-art/);
+const oldIphone=environment({width:390,height:844,clip:false,
+ userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 12_5 like Mac OS X)'});
+assert.doesNotMatch(oldIphone.doc.documentElement.className,/legacy-ipad-crystal/,
+ 'Older iPhones must not receive the iPad-specific artwork correction');
+const reducedOldIpad=environment({width:768,height:1024,clip:false,reduced:true,
+ userAgent:'Mozilla/5.0 (iPad; CPU OS 12_5_7 like Mac OS X)'});
+assert.match(reducedOldIpad.doc.documentElement.className,/legacy-ipad-crystal/,
+ 'Static fallback must still show the crystal when motion is disabled');
+assert.equal(reducedOldIpad.queued.length,0,'Reduced motion must disable legacy animation');
+for(const selector of [
+ '.crystal-journey-stage','.crystal-journey-sky','.crystal-journey-crystal',
+ '.crystal-journey-ring--outer','.crystal-journey-ring--inner',
+ '.crystal-journey-beam','.crystal-journey-stars'
+]){
+ assert.ok(css.includes('html.legacy-ipad-crystal '+selector+'{'),
+   'Old Safari layout uses explicit bounds only for '+selector);
+}
+assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-sky\{[^}]*top:0;right:0;bottom:0;left:0;/,
+ 'Legacy Safari sky must fill the stage without unsupported CSS inset');
+assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-crystal\{[^}]*width:140px;/,
+ 'Legacy crystal must have an explicit non-clamp width');
+assert.match(css,/html\.legacy-ipad-crystal \.crystal-journey-ring--outer\{[^}]*width:72vw;height:72vw;/,
+ 'Legacy ring must have normal CSS values without CSS min()');
+console.log('PASS: RUN-071/171/172 iPhone and modern iPad untouched; Safari12 iPad receives the missing crystal, rings and throttled scroll motion');
