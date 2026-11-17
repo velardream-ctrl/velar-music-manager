@@ -302,7 +302,7 @@ const languageChoice=languageOption.children[0].children[0];
 assert.equal(languageChoice.type,'checkbox');
 const languageSources=languageOption.children[1];
 assert.equal(languageSources.className,'landing-song-sources');
-assert.equal(languageSources.children.length,2,'Both Spotify/YouTube are visible without a dropdown');
+assert.equal(languageSources.children.length,3,'Spotify, YouTube and Apple Music have separate selectors');
 assert.equal(languageSources.children[0].children[0].checked,false);
 assert.equal(languageSources.children[1].children[0].checked,false);
 languageChoice.checked=true;languageChoice.onchange.call(languageChoice);
@@ -374,7 +374,7 @@ assert.ok(firstTopic,'Catalog songs appear as selectable checkboxes for the chos
 const loveCheckbox=firstTopic.children[0].children[0];
 const loveSources=firstTopic.children[1];
 assert.equal(loveSources.className,'landing-song-sources');
-assert.equal(loveSources.children.length,2,'Topics share the same two source checkboxes');
+assert.equal(loveSources.children.length,3,'Topics support Spotify, YouTube and Apple Music');
 const loveSpotify=loveSources.children[0].children[0];
 const loveYoutube=loveSources.children[1].children[0];
 assert.equal(loveCheckbox.type,'checkbox');
