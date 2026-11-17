@@ -927,7 +927,9 @@
            if(!active)return;
            api=e.target;
            if(order.length&&api&&typeof api.cuePlaylist==='function'){
-             api.cuePlaylist(chunk(),0,Number(startSeconds)||0);
+             // Do not interrupt a visitor who started playback before the API loaded.
+             var alreadyPlaying=typeof api.getPlayerState==='function'&&api.getPlayerState()===1;
+             if(!alreadyPlaying)api.cuePlaylist(chunk(),0,Number(startSeconds)||0);
              if(order.length<=limit&&typeof api.setLoop==='function'){
                api.setLoop(true);loopEnabled=true;
              }

@@ -251,7 +251,12 @@ assert.equal(map['velar-radio'].className,'velar-radio hidden');
 assert.equal(window.VMM_PUBLIC_LANDING.openRadioFromChat(),false,'disabled radio cannot launch from chat');
 assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe').length,0,'Disabling always unloads the official external player');
 assert.doesNotMatch(universeJS,/setInterval\(|setTimeout\(|getContext\(['"]webgl|requestAnimationFrame\(|fetch\(|firestore\(/);
-assert.doesNotMatch(publicJS,/autoplay=1|loop=1|muted=1/);
+// Explicit manual Next may request autoplay after a user click. The initial
+// radio-open action must not request autoplay without a Play gesture.
+const radioOpenStart=publicJS.indexOf('   open.onclick=function(){',publicJS.indexOf(' function renderRadio('));
+const radioOpenEnd=publicJS.indexOf('   panel.appendChild(open);',radioOpenStart);
+assert.ok(radioOpenStart>=0&&radioOpenEnd>radioOpenStart);
+assert.doesNotMatch(publicJS.slice(radioOpenStart,radioOpenEnd),/autoplay=1|muted=1/);
 // The single modal-only clock updates the seek position and is destroyed on close.
 assert.equal((publicJS.match(/setInterval\(/g)||[]).length,1);
 assert.match(publicJS,/if\(clock!==null\)window.clearInterval\(clock\)/);
