@@ -1939,6 +1939,7 @@
  }
  function assistantEditor(parent){
    var assistant=data.genres.assistant;
+   if(window.VELAR_AI_LAB&&window.VELAR_AI_LAB.attach)window.VELAR_AI_LAB.attach(parent);
    heading(parent,'VELAR Assistant — бесплатный музыкальный секретарь',
      'Работает прямо в браузере посетителя. Никакой платной нейросети, дополнительных запросов к Firestore, скрытой отправки сообщений или автозапуска музыки.');
    var check=document.createElement('label');check.className='landing-checkbox';
