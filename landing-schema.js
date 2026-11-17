@@ -973,6 +973,12 @@
     if(['classic','covers','tiles'].indexOf(featuredView)<0)
       throw new Error('Лучшие песни: неверный вариант отображения.');
     result.artists.featuredView=featuredView;
+    // The separate artist profile has its own listing mode, independent
+    // from homepage artist highlights and the main page sections.
+    var detailTrackView=typeof artists.detailTrackView==='undefined'?'compact':artists.detailTrackView;
+    if(['compact','covers','tiles'].indexOf(detailTrackView)<0)
+      throw new Error('Страница артиста: неверный способ показа песен.');
+    result.artists.detailTrackView=detailTrackView;
     result.releases.cards=cards(releases,'Релизы');
     result.releases.radio=radioConfig(typeof releases.radio==='undefined'?d.releases.radio:releases.radio);
     result.releases.playlists=safeList(releases.playlists,8,'Плейлисты',playlistCard,d.releases.playlists);
@@ -985,6 +991,19 @@
     if(songViewMode!=='standard'&&songViewMode!=='carousel')
       throw new Error('Оформление песен: выбери обычный показ или карусель.');
     result.genres.songViewMode=songViewMode;
+    // RUN-181: independently selected public layouts. Legacy global carousel
+    // and the old shared album display are respected on first migration.
+    var displayModes=typeof genres.displayModes==='undefined'?{}:genres.displayModes;
+    if(!displayModes||typeof displayModes!=='object'||Array.isArray(displayModes))
+      throw new Error('Оформление блоков: неверные настройки.');
+    var legacyLayout=songViewMode==='carousel'?'carousel':result.albums.trackView;
+    result.genres.displayModes={};
+    ['genres','topics','languages','albums'].forEach(function(key){
+      var mode=typeof displayModes[key]==='undefined'?legacyLayout:displayModes[key];
+      if(['compact','rows','covers','tiles','carousel'].indexOf(mode)<0)
+        throw new Error('Оформление блока '+key+': выбери компактный список, строки, карточки или карусель.');
+      result.genres.displayModes[key]=mode;
+    });
     result.genres.universe=universeConfig(genres.universe,d.genres.universe);
     result.genres.languages=languagesConfig(genres.languages,d.genres.languages);
     result.genres.topics=topicsConfig(genres.topics,d.genres.topics);

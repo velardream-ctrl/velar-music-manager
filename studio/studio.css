@@ -883,3 +883,13 @@ body.vmm-print-open{overflow:hidden}
  border:1px solid #c6a674;border-radius:11px;text-decoration:none;
  white-space:normal;overflow-wrap:anywhere;
 }
+
+/* RUN-181 — grouped public-site controls, accessible on narrow/legacy iPads. */
+#panel-landing .landing-display-settings{border:1px solid #637795;border-radius:15px;
+ margin:21px 0;padding:clamp(11px,2.5vw,18px);background:#111f39}
+#panel-landing .landing-display-group{border:1px solid #566b88;border-radius:12px;
+ background:#142540;margin:12px 0;padding:13px 15px}
+#panel-landing .landing-display-group h3{margin-top:2px}
+#panel-landing .landing-display-group .landing-field{margin:12px 0 3px}
+#panel-landing .landing-display-group select{width:100%;max-width:100%;min-height:44px}
+@media(max-width:540px){#panel-landing .landing-display-group{padding:11px}}

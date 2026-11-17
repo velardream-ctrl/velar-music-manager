@@ -200,6 +200,29 @@ dualEntry.children[0].children[0].onclick();
 assert.equal(mediaFrame(dualEntry.children[1]).src,
   'https://open.spotify.com/embed/track/0123456789ABCDEFGHIJKL');
 assert.equal(youtubeButton.attributes['aria-pressed'],'false');
+// RUN-180: selected featured layout must reach the actual public artist panel.
+const squarePage=api.normalize({...original,artists:{...original.artists,
+ featuredView:'tiles',songViewMode:'standard',cards:[profile,other]}});
+listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:squarePage})});
+assert.match(host.children[0].children[1].children[1].className,/cms-music-list--tiles/,
+ 'The Square Cards setting must change the public artist songs, not just the draft.');
+const coverPage=api.normalize({...original,artists:{...original.artists,
+ featuredView:'covers',songViewMode:'standard',cards:[profile,other]}});
+listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:coverPage})});
+assert.match(host.children[0].children[1].children[1].className,/cms-music-list--covers/,
+ 'The Cover Rows setting must change the public artist songs.');
+const carouselPage=api.normalize({...original,artists:{...original.artists,
+ featuredView:'tiles',songViewMode:'carousel',cards:[profile,other]}});
+var observedArtistView='';
+w.VELAR_PUBLIC_SONGS={mount:function(list,tracks,opts){observedArtistView=opts.view;list.className+=' public-song-carousel';return {close:function(){}};}};
+listener({exists:true,data:()=>({status:'published',schemaVersion:1,content:carouselPage})});
+assert.match(host.children[0].children[1].children[1].className,/public-artist-song-list/,
+ 'The explicit Carousel setting must override square/covers.');
+assert.match(host.children[0].children[1].children[1].className,/public-song-carousel/,
+ 'The Carousel setting must be interactive and horizontally scrollable.');
+assert.equal(observedArtistView,'carousel');
+delete w.VELAR_PUBLIC_SONGS;
+// Restore classic before checking the empty-song card presentation.
 const plain=api.normalize({...original,artists:{...original.artists,cards:[
  {...profile,featuredTracks:[]},{...other,featuredTracks:[]}
 ]}});
@@ -217,9 +240,9 @@ assert.match(editor,/attachedSourceCheckbox\(sources,'youtube'/);
 assert.match(editor,/markChanged\(\)/);
 assert.match(studio,/show\(el\('vmm-workflows'\),false\)/);
 assert.match(workflows,/show\(id\('panel-landing'\),false\)/);
-assert.match(html,/style\.css\?v=81/);
-assert.match(html,/landing-public\.js\?v=54/);
-assert.match(sw,/CACHE_PREFIX \+ 'v92'/);
+assert.match(html,/style\.css\?v=82/);
+assert.match(html,/landing-public\.js\?v=56/);
+assert.match(sw,/CACHE_PREFIX \+ 'v94'/);
 assert.match(css,/\.cms-music-play-icon::before\{/);
 assert.match(css,/border-left:10px solid currentColor/);
 assert.match(css,/\.cms-card-link::after\{/);

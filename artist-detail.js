@@ -82,6 +82,36 @@
      '@id':canonical+'#profile',url:canonical,mainEntity:entity
    });
  }
+
+ function platformName(provider){
+   return provider==='spotify'?'Spotify':provider==='appleMusic'?'Apple Music':'YouTube';
+ }
+ function groupSongs(tracks){
+   var groups=[],api=window.VMM_LANDING_SCHEMA;
+   (tracks||[]).forEach(function(track){
+     if(!track||!track.title)return;
+     var sources=[],seen={};
+     [['provider','url'],['alternateProvider','alternateUrl'],['thirdProvider','thirdUrl']].forEach(function(keys){
+       var provider=track[keys[0]],url=api.songUrl(track[keys[1]]||'',provider);
+       if(url&&!seen[provider]){seen[provider]=true;sources.push({provider:provider,url:url});}
+     });
+     if(!sources.length)return;
+     var title=String(track.title||'').trim(),key=title.toLocaleLowerCase('ru').replace(/ё/g,'е');
+     // Legacy per-platform rows may share a title. Merge only when their
+     // platforms do NOT overlap. Different recordings on the same platform
+     // remain separate even if the titles happen to be identical.
+     var target=null;
+     groups.forEach(function(group){
+       if(target||group.key!==key)return;
+       if(!sources.some(function(src){
+         return group.sources.some(function(other){return src.provider===other.provider;});
+       }))target=group;
+     });
+     if(target)target.sources=target.sources.concat(sources);
+     else groups.push({title:title,key:key,sources:sources});
+   });
+   return groups;
+ }
  function render(content){
    if(!window.VMM_LANDING_SCHEMA)return false;
    var safe;
@@ -123,17 +153,103 @@
      external(social,link.url,platforms[link.platform]||'Официальная страница','Перейти на платформу');
    });
    show('artist-social-section',social.children.length>0);
+   // RUN-181: the same song appears once, with source buttons in its row.
+   // Only published "best songs" are available here (up to 30); never query
+   // the private vmm_catalog, lyrics, offline audio or Studio assignments.
    var tracks=node('artist-tracks');clean(tracks);
    var sorted=(artist.featuredTracks||[]).slice();
-   if(artist.featuredSort!=='manual')sorted.sort(function(a,b){return a.title.localeCompare(b.title,'ru');});
-   sorted.forEach(function(track){
-     if(!track.url)return;
-     external(tracks,track.url,track.title,track.provider==='spotify'?'Spotify':'YouTube','artist-track');
-     if(track.alternateUrl&&track.alternateProvider)
-       external(tracks,track.alternateUrl,track.title+' · '+(track.alternateProvider==='spotify'?'Spotify':'YouTube'),
-         'Альтернативная площадка','artist-track');
-   });
-   show('artist-tracks-section',tracks.children.length>0);
+   if(artist.featuredSort!=='manual')
+     sorted.sort(function(a,b){return a.title.localeCompare(b.title,'ru');});
+   var grouped=groupSongs(sorted),layout=safe.artists.detailTrackView||'compact';
+   tracks.className='artist-tracks artist-tracks--'+layout;
+   var activeCard=null,activeProvider='',activePlayer=null,activeButtons=[];
+   function closePlayer(){
+     if(activePlayer)clean(activePlayer);
+     activeButtons.forEach(function(b){b.setAttribute('aria-pressed','false');});
+     activeCard=null;activeProvider='';activePlayer=null;activeButtons=[];
+   }
+   function play(card,holder,buttons,track,src){
+     if(activeCard===card&&activeProvider===src.provider){closePlayer();return;}
+     closePlayer();
+     var url=window.VMM_LANDING_SCHEMA.songUrl(src.url,src.provider);
+     if(!url)return;
+     var playerUrl=src.provider==='spotify'?
+       'https://open.spotify.com/embed/track/'+url.split('/').pop():
+       src.provider==='youtube'?
+         'https://www.youtube-nocookie.com/embed/'+url.split('v=')[1]:
+         url.replace('https://music.apple.com/','https://embed.music.apple.com/');
+     activeCard=card;activeProvider=src.provider;activePlayer=holder;activeButtons=buttons;
+     buttons.forEach(function(b){b.setAttribute('aria-pressed',
+       b.getAttribute('data-provider')===src.provider?'true':'false');});
+     var frame=make('iframe','artist-track-player'+(src.provider==='youtube'?' artist-track-player--video':''));
+     frame.title=track.title+' — '+platformName(src.provider);
+     frame.src=playerUrl;frame.loading='lazy';
+     frame.referrerPolicy='strict-origin-when-cross-origin';
+     frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
+     frame.setAttribute('allowfullscreen','');
+     holder.appendChild(frame);
+     var open=external(holder,url,'Открыть в '+platformName(src.provider),'','artist-track-external');
+     var close=make('button','artist-track-close','Закрыть плеер');close.type='button';close.onclick=closePlayer;
+     holder.appendChild(close);
+   }
+   var search=null,page=0,pageSize=20,list=make('div','artist-track-list');
+   function draw(){
+     closePlayer();clean(list);
+     var q=search?String(search.value||'').trim().toLocaleLowerCase('ru').replace(/ё/g,'е'):'';
+     var filtered=grouped.filter(function(song){
+       return !q||song.title.toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)>=0;
+     });
+     var totalPages=Math.max(1,Math.ceil(filtered.length/pageSize));
+     page=Math.max(0,Math.min(page,totalPages-1));
+     var pageRows=filtered.slice(page*pageSize,(page+1)*pageSize);
+     pageRows.forEach(function(track,index){
+       var item=make('div','artist-track-card');
+       var headline=make('div','artist-track-headline');
+       if(layout!=='compact'){
+         var artwork=make('span','artist-track-artwork','♫');
+         artwork.setAttribute('aria-hidden','true');
+         headline.appendChild(artwork);
+       }
+       headline.appendChild(make('strong','artist-track-name',track.title));
+       var sources=make('div','artist-track-sources'),controls=[];
+       track.sources.forEach(function(src){
+         var button=make('button','artist-track-source artist-track-source--'+src.provider,
+           src.provider==='spotify'?'♫':src.provider==='youtube'?'▶':'♪');
+         button.type='button';button.setAttribute('data-provider',src.provider);
+         button.setAttribute('aria-label','Слушать «'+track.title+'» в '+platformName(src.provider));
+         button.setAttribute('aria-pressed','false');button.title=platformName(src.provider);
+         controls.push(button);sources.appendChild(button);
+       });
+       var holder=make('div','artist-track-inline-player');
+       controls.forEach(function(button,i){
+         button.onclick=function(){play(item,holder,controls,track,track.sources[i]);};
+       });
+       item.appendChild(headline);item.appendChild(holder);item.appendChild(sources);list.appendChild(item);
+     });
+     if(!pageRows.length)list.appendChild(make('p','artist-hint','Песни не найдены.'));
+     var footer=node('artist-track-pagination');
+     if(footer){clean(footer);
+       if(filtered.length>pageSize){
+         var back=make('button','artist-track-page-button','← Назад');back.type='button';
+         back.disabled=page===0;back.onclick=function(){page--;draw();};
+         var current=make('span','',((page*pageSize)+1)+'–'+Math.min((page+1)*pageSize,filtered.length)+' / '+filtered.length);
+         var next=make('button','artist-track-page-button','Далее →');next.type='button';
+         next.disabled=page>=totalPages-1;next.onclick=function(){page++;draw();};
+         footer.appendChild(back);footer.appendChild(current);footer.appendChild(next);
+       }
+     }
+   }
+   if(grouped.length){
+     if(grouped.length>8){
+       search=make('input','artist-track-search');search.type='search';
+       search.placeholder='Найти песню…';
+       search.setAttribute('aria-label','Найти песню артиста');
+       search.oninput=function(){page=0;draw();};
+       tracks.appendChild(search);
+     }
+     tracks.appendChild(list);draw();
+   }
+   show('artist-tracks-section',grouped.length>0);
    var albums=node('artist-albums');clean(albums);
    // Exact published name only. Never infer a link from private catalog data.
    (safe.albums.entries||[]).forEach(function(album,index){

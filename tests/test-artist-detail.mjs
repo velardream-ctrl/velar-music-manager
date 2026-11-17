@@ -6,15 +6,17 @@ const schemaSrc=read('landing-schema.js'),src=read('artist-detail.js'),
  html=read('artist.html'),sw=read('sw.js');
 const window={location:{search:'?id=velar'}},elements={};
 function el(tag='div'){
- const obj={tagName:tag,children:[],className:'',textContent:'',style:{},hidden:false,
-  setAttribute(k,v){this[k]=v;},appendChild(x){this.children.push(x);return x;},
+ const obj={tagName:tag,children:[],className:'',textContent:'',style:{},hidden:false,attributes:{},
+  setAttribute(k,v){this.attributes[k]=v;this[k]=v;},
+  getAttribute(k){return this.attributes[k]||'';},
+  appendChild(x){this.children.push(x);return x;},
   removeChild(x){this.children.splice(this.children.indexOf(x),1);},
   get firstChild(){return this.children[0]||null;}};
  return obj;
 }
 for(const id of ['artist-message','artist-content','artist-name','artist-role','artist-description',
  'artist-portrait-wrap','artist-portrait','artist-biography','artist-biography-section',
- 'artist-social-links','artist-social-section','artist-tracks','artist-tracks-section',
+ 'artist-social-links','artist-social-section','artist-tracks','artist-tracks-section','artist-track-pagination',
  'artist-albums','artist-albums-section','artist-share','artist-meta-description',
  'artist-og-title','artist-og-description','artist-og-url','artist-jsonld'])elements[id]=el();
 elements['artist-content'].hidden=true;
@@ -33,7 +35,11 @@ const profile={title:'DJ Velar',artistId:'velar',subtitle:'Музыкант',des
   {platform:'spotify',url:'https://open.spotify.com/artist/1PNzGsDcFVuOMBN7Gw12tw',visible:true},
   {platform:'telegram',url:'https://t.me/velarmusic',visible:false}
  ],
- featuredTracks:[{title:'Песня',provider:'spotify',url:'https://open.spotify.com/track/4P1nQxu1C6WlL9OiZ0r5HL'}]
+ featuredTracks:[
+  {title:'Песня',provider:'spotify',url:'https://open.spotify.com/track/4P1nQxu1C6WlL9OiZ0r5HL'},
+  {title:'Песня',provider:'youtube',url:'https://www.youtube.com/watch?v=ABCDEFGHIjk'},
+  {title:'Песня',provider:'appleMusic',url:'https://music.apple.com/fi/album/white-birch/1234567890?i=1234567891'}
+ ]
 };
 const data=api.defaults();data.artists.cards=[profile];
 assert.equal(renderer.render(data),true);
@@ -42,9 +48,33 @@ assert.equal(elements['artist-biography'].textContent,'Подробная ист
 assert.equal(elements['artist-content'].hidden,false);
 assert.equal(elements['artist-social-links'].children.length,1);
 assert.equal(elements['artist-social-links'].children[0].href,profile.socialLinks[0].url);
-assert.equal(elements['artist-tracks'].children.length,1);
-assert.equal(elements['artist-tracks'].children[0].href,profile.featuredTracks[0].url);
+assert.equal(elements['artist-tracks'].children.length,1,
+ 'Exactly one list should be rendered with published songs');
+const songList=elements['artist-tracks'].children[0];
+assert.equal(songList.children.length,1,
+ 'Three legacy provider records of the same composition should be grouped');
+const card=songList.children[0];
+assert.equal(card.children[0].children[0].textContent,'Песня');
+const platforms=card.children[2].children;
+assert.equal(platforms.length,3,'Spotify, YouTube and Apple Music share one song card');
+assert.equal(platforms[0].attributes['data-provider'],'spotify');
+assert.equal(platforms[1].attributes['data-provider'],'youtube');
+assert.equal(platforms[2].attributes['data-provider'],'appleMusic');
+assert.equal(card.children[1].children.length,0,'No audio player before user interaction');
+platforms[2].onclick();
+assert.equal(card.children[1].children[0].tagName,'iframe');
+assert.match(card.children[1].children[0].src,/^https:\/\/embed\.music\.apple\.com/);
+platforms[2].onclick();
+assert.equal(card.children[1].children.length,0,'Tapping the same platform closes the iframe');
+
 assert.equal(elements['artist-portrait'].src,profile.imageUrl);
+data.artists.detailTrackView='tiles';
+assert.equal(renderer.render(data),true);
+assert.match(elements['artist-tracks'].className,/artist-tracks--tiles/);
+data.artists.detailTrackView='compact';
+assert.equal(renderer.render(data),true);
+assert.match(elements['artist-tracks'].className,/artist-tracks--compact/);
+
 const jsonLd=JSON.parse(elements['artist-jsonld'].textContent);
 assert.equal(jsonLd.mainEntity.name,'DJ Velar');
 assert.deepEqual(JSON.parse(JSON.stringify(jsonLd.mainEntity.sameAs)),[profile.socialLinks[0].url]);
@@ -55,8 +85,8 @@ assert.equal(renderer.render({...data,artists:{...data.artists,cards:[{...profil
 assert.equal(elements['artist-content'].hidden,true);
 assert.match(elements['artist-message'].textContent,/не опубликован/);
 assert.match(html,/noindex,nofollow/);
-assert.match(html,/artist-detail\.js\?v=3/);
-assert.match(sw,/artist-detail\.js\?v=3/);
+assert.match(html,/artist-detail\.js\?v=4/);
+assert.match(sw,/artist-detail\.js\?v=4/);
 assert.doesNotMatch(src,/\.collection\(['"]vmm_(?:lyrics|catalog|recordings|public_drafts)['"]\)/);
 assert.doesNotMatch(src,/\.set\(|\.add\(|\.update\(|\.delete\(/);
 console.log('PASS: individual artist pages render only published allowed profile information, with safe external links');
