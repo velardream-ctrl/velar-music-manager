@@ -8,6 +8,8 @@
     releases: ['Обсуждение релизов', '◎']
   };
   const demo = new URLSearchParams(location.search).get('demo') === '1';
+  const passwordKey = 'velar-forum-password-set:';
+  const passwordAccounts = new Set();
   const emailKey = 'velar-forum-email';
   const topicForm = $('topic-form');
   const replyForm = $('reply-form');
@@ -287,11 +289,24 @@
     $('auth-resend').hidden = mode !== 'verify';
   }
 
+  function hasPassword(account) {
+    if (!account) return false;
+    if (passwordAccounts.has(account.uid)) return true;
+    try { return localStorage.getItem(passwordKey + account.uid) === '1'; }
+    catch (_) { return false; }
+  }
+
+  function rememberPassword(account) {
+    passwordAccounts.add(account.uid);
+    try { localStorage.setItem(passwordKey + account.uid, '1'); } catch (_) {}
+    if (user && user.uid === account.uid) $('set-password').hidden = true;
+  }
+
   function showAccount(account) {
     user = account;
     $('sign-in').hidden = !!account;
     $('sign-out').hidden = !account;
-    $('set-password').hidden = !account || !account.emailVerified;
+    $('set-password').hidden = !account || !account.emailVerified || hasPassword(account);
     $('verify-email').hidden = !account || account.emailVerified;
     if (account && account.emailVerified && afterSignIn) {
       const action = afterSignIn;
@@ -303,11 +318,11 @@
 
   async function finish(email) {
     const continueAction = !!afterSignIn;
-    await auth.signInWithEmailLink(email, location.href);
+    const {user: account} = await auth.signInWithEmailLink(email, location.href);
     try { localStorage.removeItem(emailKey); } catch (_) {}
     history.replaceState(null, '', callback + location.hash);
     completing = false;
-    if (!continueAction) {
+    if (!continueAction && !hasPassword(account)) {
       setAuthMode('password');
       presentModal($('email-dialog'));
     } else {
@@ -356,6 +371,7 @@
           const account = auth.currentUser;
           try {
             await account.updatePassword(password);
+            rememberPassword(account);
           } catch (error) {
             if (error.code === 'auth/requires-recent-login') {
               emailForm.elements.namedItem('email').value = account.email || '';
@@ -388,6 +404,7 @@
         const result = registering
           ? await auth.createUserWithEmailAndPassword(email, password)
           : await auth.signInWithEmailAndPassword(email, password);
+        rememberPassword(result.user);
         if (!result.user.emailVerified) {
           setAuthMode('verify');
           if (registering) {
