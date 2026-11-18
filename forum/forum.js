@@ -259,6 +259,8 @@
     register: ['Создать аккаунт', 'Придумайте пароль от 6 символов. Для публикаций потребуется подтвердить email.', 'Зарегистрироваться'],
     reset: ['Задать или восстановить пароль', 'Введите email аккаунта, чтобы получить письмо для установки пароля.', 'Отправить письмо'],
     verify: ['Подтвердите email', 'Откройте письмо с подтверждением. Затем вернитесь сюда и нажмите «Проверить подтверждение».', 'Проверить подтверждение'],
+    sendLink: ['Получить ссылку для входа', 'Введите email своего аккаунта. После входа можно задать пароль.', 'Отправить ссылку'],
+    password: ['Задать пароль', 'Придумайте пароль от 6 символов.', 'Сохранить пароль'],
     link: ['Завершить вход по ссылке', 'Введите email, на который пришла эта ссылка.', 'Войти']
   };
 
@@ -271,14 +273,15 @@
     $('email-status').textContent = '';
     const email = emailForm.elements.namedItem('email');
     const password = emailForm.elements.namedItem('password');
-    email.required = mode !== 'verify';
+    email.required = mode !== 'verify' && mode !== 'password';
     $('email-field').hidden = !email.required;
-    password.required = mode === 'login' || mode === 'register';
+    password.required = mode === 'login' || mode === 'register' || mode === 'password';
     $('password-field').hidden = !password.required;
     password.value = '';
-    password.minLength = mode === 'register' ? 6 : 0;
-    password.autocomplete = mode === 'register' ? 'new-password' : 'current-password';
-    $('auth-login').hidden = mode !== 'register' && mode !== 'reset';
+    password.minLength = mode === 'register' || mode === 'password' ? 6 : 0;
+    password.autocomplete = mode === 'register' || mode === 'password' ? 'new-password' : 'current-password';
+    $('auth-login').hidden = !['register', 'reset', 'sendLink'].includes(mode);
+    $('auth-link').hidden = !['login', 'reset', 'link'].includes(mode);
     $('auth-register').hidden = mode !== 'login';
     $('auth-reset').hidden = mode !== 'login' && mode !== 'register';
     $('auth-resend').hidden = mode !== 'verify';
@@ -288,6 +291,7 @@
     user = account;
     $('sign-in').hidden = !!account;
     $('sign-out').hidden = !account;
+    $('set-password').hidden = !account || !account.emailVerified;
     $('verify-email').hidden = !account || account.emailVerified;
     if (account && account.emailVerified && afterSignIn) {
       const action = afterSignIn;
@@ -298,13 +302,31 @@
   }
 
   async function finish(email) {
+    const continueAction = !!afterSignIn;
     await auth.signInWithEmailLink(email, location.href);
     try { localStorage.removeItem(emailKey); } catch (_) {}
     history.replaceState(null, '', callback + location.hash);
-    dismissModal($('email-dialog'));
     completing = false;
+    if (!continueAction) {
+      setAuthMode('password');
+      presentModal($('email-dialog'));
+    } else {
+      dismissModal($('email-dialog'));
+    }
   }
 
+  function requestLink(status) {
+    completing = false;
+    history.replaceState(null, '', callback + location.hash);
+    setAuthMode('sendLink');
+    $('email-status').textContent = status || '';
+  }
+
+  $('set-password').onclick = () => {
+    setAuthMode('password');
+    presentModal($('email-dialog'));
+  };
+  $('auth-link').onclick = () => requestLink();
   $('auth-login').onclick = () => setAuthMode('login');
   $('auth-register').onclick = () => setAuthMode('register');
   $('auth-reset').onclick = () => setAuthMode('reset');
@@ -320,6 +342,33 @@
       const password = emailForm.elements.namedItem('password').value;
       try {
         if (authMode === 'link') { await finish(email); return; }
+        if (authMode === 'sendLink') {
+          await auth.sendSignInLinkToEmail(email, {url:callback,handleCodeInApp:true});
+          try { localStorage.setItem(emailKey, email); } catch (_) {}
+          $('email-status').textContent = 'Ссылка отправлена. Откройте письмо в браузере, которым пользуетесь для форума.';
+          return;
+        }
+        if (authMode === 'password') {
+          if (!auth.currentUser?.emailVerified) {
+            requestLink('Сначала подтвердите вход свежей ссылкой.');
+            return;
+          }
+          const account = auth.currentUser;
+          try {
+            await account.updatePassword(password);
+          } catch (error) {
+            if (error.code === 'auth/requires-recent-login') {
+              emailForm.elements.namedItem('email').value = account.email || '';
+              requestLink('Для установки пароля подтвердите вход свежей ссылкой.');
+              return;
+            }
+            throw error;
+          }
+          emailForm.elements.namedItem('password').value = '';
+          dismissModal($('email-dialog'));
+          $('status').textContent = 'Пароль сохранён. Теперь можно входить по email и паролю.';
+          return;
+        }
         if (authMode === 'reset') {
           await auth.sendPasswordResetEmail(email, {url:callback});
           $('email-status').textContent = 'Если аккаунт существует, письмо для установки пароля отправлено.';
@@ -349,6 +398,10 @@
           dismissModal($('email-dialog'));
         }
       } catch (error) {
+        if (authMode === 'link' && ['auth/expired-action-code', 'auth/invalid-action-code'].includes(error.code)) {
+          requestLink('Эта ссылка больше не действует. Запросите новую.');
+          return;
+        }
         if (['auth/wrong-password', 'auth/user-not-found', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(error.code))
           validation('Проверьте email и пароль. Пароль можно задать или восстановить по письму.');
         if (error.code === 'auth/email-already-in-use')
