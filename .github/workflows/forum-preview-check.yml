@@ -1,0 +1,53 @@
+name: Test Constellations forum preview
+on:
+  push:
+    branches: [feature/velardream-constellations-forum]
+  pull_request:
+    paths: ['forum/**', '.github/workflows/forum-preview-check.yml', 'firestore.rules', 'firestore.indexes.json']
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+      - name: Exercise forum at phone width
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { pathToFileURL } from 'node:url';
+          import { chromium } from 'playwright';
+          const browser = await chromium.launch({channel:'chrome'});
+          try {
+            const page = await browser.newPage({viewport:{width:390,height:844}});
+            await page.route('https://www.gstatic.com/**', route => route.abort());
+            await page.goto(pathToFileURL(process.cwd() + '/forum/index.html').href + '?demo=1');
+            await page.getByText('Песня о северном сиянии', {exact:true}).waitFor();
+            assert.equal(await page.locator('.topic').count(),4);
+            await page.getByRole('searchbox').fill('дуэта');
+            assert.equal(await page.locator('.topic').count(),1);
+            await page.getByRole('searchbox').clear();
+            await page.getByRole('button',{name:'Идеи для песен'}).click();
+            await page.getByRole('link',{name:'Песня о северном сиянии'}).click();
+            await page.getByRole('heading',{name:'Песня о северном сиянии'}).waitFor();
+            await page.locator('#reply-form textarea').fill('Хорошая идея для песни!');
+            await page.getByRole('button',{name:'Ответить'}).click();
+            await page.getByText('Хорошая идея для песни!').waitFor();
+            await page.getByRole('button',{name:/Создать тему/}).click();
+            await page.getByLabel('Имя на форуме').fill('Tester');
+            await page.getByLabel('Заголовок').fill('Новая музыкальная идея');
+            await page.getByLabel('Сообщение').fill('Обсудим будущий релиз.');
+            await page.getByRole('button',{name:'Опубликовать'}).click();
+            await page.getByRole('heading',{name:'Новая музыкальная идея'}).waitFor();
+            assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth > innerWidth),false);
+            console.log('Mobile preview: categories, search, thread, reply and new topic passed.');
+          } finally {
+            await browser.close();
+          }
+          NODE

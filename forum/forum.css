@@ -1,0 +1,59 @@
+:root{color-scheme:dark;--ink:#f1f3fa;--muted:#b5c5dc;--gold:#f3d6a0;--line:#344b68;--panel:#101d30;font:16px/1.6 system-ui,sans-serif}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;color:var(--ink);background:#071020}
+button,input,textarea,select{font:inherit}
+button,input,textarea,select{border:1px solid var(--line);border-radius:.65rem;background:#101e33;color:inherit}
+button{padding:.55rem .9rem;min-height:44px;cursor:pointer}
+button:hover,.constellation:hover{border-color:var(--gold)}
+button:disabled{opacity:.6;cursor:wait}
+:focus-visible{outline:2px solid #a6d9ff;outline-offset:4px}
+a{color:var(--gold)}
+h1,h2,h3,p{margin-top:0}
+.masthead{display:flex;gap:1rem;justify-content:space-between;align-items:center;padding:.9rem max(1rem,5vw);border-bottom:1px solid var(--line);background:#091322}
+.brand{display:inline-flex;align-items:center;gap:.55rem;color:var(--ink);text-decoration:none;letter-spacing:.16em;font-weight:800;line-height:1.3}
+.brand small,.eyebrow{color:var(--gold);letter-spacing:.2em;text-transform:uppercase}
+.brand img{object-fit:contain}
+.actions{display:flex;flex-wrap:wrap;gap:.6rem}
+.gold{background:var(--gold);color:#131924;border-color:var(--gold);font-weight:750}
+.outline{background:transparent}
+.sky{padding:clamp(2rem,6vw,5rem) max(1rem,5vw) 2rem;background:radial-gradient(ellipse at 73% 27%,#254373 0,transparent 53%),radial-gradient(ellipse at 12% 80%,#172c53 0,transparent 58%),linear-gradient(#071120,#0d1b30)}
+h1{font-size:clamp(2.5rem,7vw,5.5rem);line-height:1;letter-spacing:-.055em;margin-bottom:2rem}
+.constellations{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(.55rem,1.5vw,1.25rem)}
+.constellation{position:relative;isolation:isolate;overflow:hidden;display:grid;place-items:center;min-height:8rem;padding:.7rem;text-align:center;color:var(--ink);background:radial-gradient(ellipse at 50% 0%,#365782,#11213b 72%);border:1px solid #5a7699;box-shadow:inset 0 0 1.5rem #0d142a;border-radius:1rem}
+.constellation[aria-pressed=true]{border-color:var(--gold);color:var(--gold)}
+.constellation span{display:block;line-height:1.25;font-weight:750}
+.constellation .star{color:var(--gold);font-size:2rem;text-shadow:0 0 1rem #ffe1a4}
+.workspace{max-width:1300px;margin:auto;padding:1rem max(1rem,3vw) 3rem}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:1rem;padding:clamp(.9rem,3vw,1.7rem)}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem}
+.panel-head h2{margin:0}
+input,textarea,select{width:100%;padding:.58rem .75rem}
+textarea{min-height:6rem;resize:vertical}
+label{display:block}
+form label{margin:.65rem 0}
+.topic,.reply{border-top:1px solid var(--line);padding:.8rem 0}
+.topic{display:flex;align-items:center;justify-content:space-between;gap:.75rem}
+.topic a{font-weight:750;color:var(--ink);text-decoration:none}
+.topic a:hover{text-decoration:underline}
+.topic p,.reply p{margin:.2rem 0}
+.muted,.note{font-size:.9rem;color:var(--muted)}
+.note:empty{display:none}
+.message{white-space:pre-wrap;overflow-wrap:anywhere}
+dialog{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:1rem;width:min(34rem,calc(100% - 2rem));max-height:90vh;padding:1.2rem}
+dialog::backdrop{background:#020611b8}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media(max-width:720px){.constellations{grid-template-columns:repeat(2,minmax(0,1fr))}.masthead,.panel-head{align-items:flex-start;flex-direction:column}.search{width:100%}.constellation{min-height:6rem}.brand small{font-size:.65rem}}
+
+.sky{min-height:clamp(24rem,38vw,35rem);display:flex;flex-direction:column;justify-content:center;background:linear-gradient(90deg,#071020a6 0%,#07102022 70%),linear-gradient(0deg,#071020 0%,transparent 27%),url("constellations-sky.webp") center 62%/cover no-repeat,#0d1b30}
+.sky h1{text-shadow:0 3px 24px #040912}
+.constellation{background:#08152ac9;border-color:#ac8f5db0;box-shadow:inset 0 0 2.3rem #6887b72b;gap:.4rem;padding:1rem}
+.constellation::before,.constellation::after{content:"";position:absolute;z-index:-1;pointer-events:none}
+.constellation::before{inset:8% 9%;background:radial-gradient(circle at 9% 30%,#fff0c5 0 1px,transparent 3px),radial-gradient(circle at 30% 9%,#fff0c5 0 1px,transparent 3px),radial-gradient(circle at 69% 14%,#fff0c5 0 1px,transparent 3px),radial-gradient(circle at 91% 49%,#fff0c5 0 1px,transparent 3px),radial-gradient(circle at 68% 86%,#fff0c5 0 1px,transparent 3px),radial-gradient(circle at 22% 80%,#fff0c5 0 1px,transparent 3px)}
+.constellation::after{inset:17% 13%;border:1px solid #f3d6a05c;transform:skew(-15deg,-7deg);border-radius:28% 43% 19% 44%}
+.admin-title{font-size:clamp(2rem,6vw,3rem);margin:1.5rem 0 1rem;letter-spacing:-.03em}
+.moderator-row{align-items:flex-start}
+.moderator-row h3{margin:0}
+.moderator-row>div:first-child{min-width:0;flex:1}
+.moderator-row details{margin-top:.6rem}
+@media(max-width:720px){.sky{min-height:0;padding-top:2.6rem;background-position:center,center,60% 68%}.constellation{min-height:7rem;padding:.6rem}}
