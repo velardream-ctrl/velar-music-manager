@@ -92,7 +92,7 @@
           if (session === revision) status.textContent = denied;
           return;
         }
-        const access = await db.collection('vmm_admins').doc(user.uid).get();
+        const access = await db.collection('vmm_admins').doc(user.uid).get({source:'server'});
         if (session !== revision) return;
         if (!access.exists || access.data().enabled !== true) {
           status.textContent = denied;
