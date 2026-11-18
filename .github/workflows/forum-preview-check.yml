@@ -1,5 +1,7 @@
 name: Test Constellations forum preview
 on:
+  push:
+    branches: [feature/velardream-constellations-forum]
   pull_request:
     paths: ['forum/**', '.github/workflows/forum-preview-check.yml', 'firestore.rules', 'firestore.indexes.json']
 permissions:
