@@ -1,0 +1,66 @@
+name: Refresh enabled DJ Velar production gateway
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dj-velar-cloudflare-production-refresh.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dj-velar-production
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+      - name: Refresh active gateway and verify usage route
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          base=https://dj-velar-private-lab.velardream.workers.dev
+          config=cloudflare/.wrangler.production-refresh.toml
+          trap 'rm -f "$config"' EXIT
+          curl -fsS --max-time 12 "$base/health" | node -e '
+            const state = JSON.parse(require("fs").readFileSync(0,"utf8"));
+            if (state.status !== "hybrid-gateway" || !state.ready || !state.publicEnabled) process.exit(1);
+          '
+          grep -Fx 'PUBLIC_AI_ENABLED = "false"' cloudflare/wrangler.production.toml
+          sed 's/^PUBLIC_AI_ENABLED = "false"$/PUBLIC_AI_ENABLED = "true"/' cloudflare/wrangler.production.toml > "$config"
+          npx --yes wrangler@4.164.0 deploy --config "$config"
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          const base = 'https://dj-velar-private-lab.velardream.workers.dev';
+          const headers = { Origin: 'https://velardream.com', 'Content-Type': 'application/json' };
+          let health, usage;
+          for (let attempt = 0; attempt < 8; attempt++) {
+            health = await (await fetch(base + '/health', { signal: AbortSignal.timeout(10000) })).json();
+            usage = await fetch(base + '/v1/assistant-usage', {
+              method: 'POST', headers, body: JSON.stringify({ local: false, topic: 'unlisted' }),
+              signal: AbortSignal.timeout(10000)
+            });
+            if (health.publicEnabled && usage.status === 400) break;
+            await new Promise(resolve => setTimeout(resolve, 3000));
+          }
+          assert.equal(health.ready, true);
+          assert.equal(health.publicEnabled, true);
+          assert.equal(usage.status, 400);
+          assert.equal((await usage.json()).error, 'invalid_event');
+          const stats = await fetch(base + '/v1/owner-stats', { headers, signal: AbortSignal.timeout(10000) });
+          assert.equal(stats.status, 401);
+          console.log('Enabled gateway, usage validation, and owner-only counters verified.');
+          NODE

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const src=fs.readFileSync(new URL('../cloudflare/ai-budget.js',import.meta.url),'utf8');
-const code=src.replace('export class VelarAiBudget','class VelarAiBudget')+
+const code=src.replace('export const LEARNING_TOPICS','const LEARNING_TOPICS').replace('export class VelarAiBudget','class VelarAiBudget')+
   '\n;globalThis.VelarAiBudget=VelarAiBudget;';
 const ctx={Response,URL,Date,Number,globalThis:null};
 ctx.globalThis=ctx;
@@ -38,3 +38,9 @@ assert.equal((await (await budget.fetch(new Request(url+'/stats'))).json()).used
 assert.match(src,/store\.put/);
 assert.doesNotMatch(src,/message|CF-Connecting-IP|visitorText|localStorage/,'No questions or IP stored');
 console.log('PASS RUN-198: daily reservation cap, counters, failure tracking, no visitor data');
+
+assert.equal((await post('/assistant-record',{local:true,topic:'music'})).status,204);
+assert.equal((await post('/assistant-record',{local:false,topic:'not-an-allowed-topic'})).status,204);
+const assistantStats=await (await budget.fetch(new Request(url+'/assistant-stats'))).json();
+assert.equal(assistantStats.local,1);
+assert.deepEqual(assistantStats.topics,{music:1});

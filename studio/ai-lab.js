@@ -78,10 +78,14 @@
    // RUN-198: an authenticated on-demand counter in Assistant settings.
    // No token or usage report is stored in browser persistence or Firestore.
    var budgetBox=make("div");budgetBox.className="landing-card";
-   var budgetTitle=make("strong","Счётчик DJ Velar AI — сегодня (UTC)");
-   var budgetInfo=make("p","Введите секрет владельца выше и нажмите «Обновить счётчик AI».");
+   var budgetTitle=make("strong","Счётчики VELAR");
+   var budgetInfo=make("p","Введите секрет владельца выше и нажмите «Обновить счётчики».");
    budgetInfo.className="sync-note";budgetInfo.setAttribute("role","status");
-   var budgetButton=make("button","Обновить счётчик AI");
+   var topicsInfo=make("p","");
+   topicsInfo.className="sync-note";
+   var topicLabels={radio:"Радио и YouTube",catalog:"Песни и артисты",genres:"Жанры и настроение",
+     music:"Вопросы о музыке",site:"Сайт и плееры",other:"Другие темы"};
+   var budgetButton=make("button","Обновить счётчики");
    budgetButton.type="button";budgetButton.className="landing-add";
    budgetButton.onclick=function(){
      if(!validEndpoint(endpoint.value)||token.value.length<32){
@@ -101,11 +105,15 @@
      }).then(function(data){
        if(typeof data.used!=="number"||typeof data.day!=="string")
          throw new Error("Некорректные данные счётчика.");
-       budgetInfo.textContent="Дата "+data.day+" (UTC) · запросов AI: "+data.used+
-         " · успешных: "+data.succeeded+" · ошибок: "+data.failed+
-         (typeof data.limit==="number"?" · лимит: "+data.limit+
-           " · осталось: "+data.remaining:" · лимит не задан")+
-         ". Считаются попытки вызова модели, а не токены или стоимость.";
+       budgetInfo.textContent="Локальный VELAR сегодня — "+
+         (typeof data.local==="number"?data.local+" ответов":"данные недоступны")+
+         " · Llama AI — "+(typeof data.limit==="number"?"осталось "+data.remaining+" из "+data.limit:"лимит не задан")+
+         " · "+data.day+" (UTC)";
+       var topics=data.topics||{};
+       var ranked=Object.keys(topicLabels).filter(function(key){return Number(topics[key])>0;})
+         .sort(function(a,b){return topics[b]-topics[a];})
+         .map(function(key){return topicLabels[key]+": "+topics[key];});
+       topicsInfo.textContent="Темы без готового ответа — "+(ranked.length?ranked.join(" · "):"пока нет данных");
      }).catch(function(error){
        if(error&&error.message==="unauthorized"){
          budgetInfo.textContent="Секрет не принят. Введите секрет владельца для указанного Worker.";
@@ -116,6 +124,7 @@
      }).then(function(){budgetButton.disabled=false;});
    };
    budgetBox.appendChild(budgetTitle);budgetBox.appendChild(budgetInfo);
+   budgetBox.appendChild(topicsInfo);
    budgetBox.appendChild(budgetButton);section.appendChild(budgetBox);
    var button=make("button","Проверить ответ модели");
    button.type="button";button.className="landing-add";

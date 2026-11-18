@@ -1,11 +1,24 @@
 /* RUN-198: global UTC-day AI request budget, no visitor text or IP stored.
    One singleton SQLite-backed Cloudflare Durable Object, fail closed. */
+export const LEARNING_TOPICS = ["radio", "catalog", "genres", "music", "site", "other"];
 export class VelarAiBudget {
   constructor(state) { this.state=state; }
   async fetch(request) {
     const path=new URL(request.url).pathname;
     const day=new Date().toISOString().slice(0,10);
     const store=this.state.storage;
+    if(path==="/assistant-stats" || path==="/assistant-record") {
+      const saved=await store.get("assistant")||{day,local:0,topics:{}};
+      const count=saved.day===day?saved:{day,local:0,topics:saved.topics};
+      if(path==="/assistant-stats")return Response.json(count);
+      if(request.method!=="POST")return new Response(null,{status:405});
+      const event=await request.json();
+      if(event.local===true)count.local++;
+      if(LEARNING_TOPICS.includes(event.topic))
+        count.topics[event.topic]=(count.topics[event.topic]||0)+1;
+      await store.put("assistant",count);
+      return new Response(null,{status:204});
+    }
     if(path==="/stats") {
       const stats=(await store.get("daily"))||{day,used:0,succeeded:0,failed:0};
       const current=stats.day===day?stats:{day,used:0,succeeded:0,failed:0};

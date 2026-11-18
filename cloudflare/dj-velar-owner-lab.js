@@ -1,4 +1,4 @@
-import { VelarAiBudget } from "./ai-budget.js";
+import { VelarAiBudget, LEARNING_TOPICS } from "./ai-budget.js";
 export { VelarAiBudget };
 /* RUN-192 VELARDREAM DJ Velar AI - Cloudflare Workers AI.
    PRIVATE OWNER LAB ONLY. Never publish owner bearer tokens or put them in
@@ -42,6 +42,31 @@ export default {
       return json({status:"hybrid-gateway",ready:!!(env.AI&&env.VELAR_OWNER_TEST_TOKEN),
         model:MODEL,publicEnabled:publicReady},200);
     }
+    if(url.pathname==="/v1/assistant-usage"){
+      if(origin!==ORIGIN)return json({error:"origin_denied"},403);
+      if(request.method==="OPTIONS")return new Response(null,{status:204,headers:{
+        "Access-Control-Allow-Origin":ORIGIN,"Access-Control-Allow-Methods":"POST, OPTIONS",
+        "Access-Control-Allow-Headers":"Content-Type","Vary":"Origin"
+      }});
+      if(request.method!=="POST")return json({error:"method_not_allowed"},405);
+      try {
+        const body=await request.text();
+        if(body.length>120)return json({error:"too_large"},413);
+        const event=JSON.parse(body);
+        if(!event||typeof event.local!=="boolean"||
+          (event.topic!==""&&!LEARNING_TOPICS.includes(event.topic))||
+          (!event.local&&!event.topic))return json({error:"invalid_event"},400);
+        const ip=request.headers.get("CF-Connecting-IP");
+        if(!ip||!(await env.PUBLIC_RATE_LIMITER.limit({key:"usage:"+ip})).success)
+          return json({error:"usage_throttled"},429);
+        const namespace=env.PUBLIC_AI_BUDGET;
+        const stub=namespace.get(namespace.idFromName("assistant-usage"));
+        const result=await stub.fetch("https://internal/assistant-record",{
+          method:"POST",body:JSON.stringify({local:event.local,topic:event.topic})
+        });
+        return json({ok:result.ok},result.ok?200:503);
+      }catch(_){return json({error:"usage_unavailable"},503);}
+    }
     // RUN-198: only the authenticated owner may read the actual daily budget.
     if(url.pathname==="/v1/owner-stats"){
       if(origin!==ORIGIN)return json({error:"origin_denied"},403);
@@ -60,7 +85,11 @@ export default {
         const stats=await result.json();
         const dailyLimit=Number(env.PUBLIC_AI_DAILY_LIMIT);
         const limit=Number.isInteger(dailyLimit)&&dailyLimit>=1&&dailyLimit<=1000?dailyLimit:null;
+        const usageStub=env.PUBLIC_AI_BUDGET.get(env.PUBLIC_AI_BUDGET.idFromName("assistant-usage"));
+        const usageResponse=await usageStub.fetch("https://internal/assistant-stats");
+        const usage=usageResponse.ok?await usageResponse.json():null;
         return json({day:stats.day,used:stats.used,succeeded:stats.succeeded,
+          local:usage?.local??null,topics:usage?.topics??{},
           failed:stats.failed,limit,remaining:limit===null?null:Math.max(0,limit-stats.used),
           definition:"Attempts reserved before model call, not tokens or billable usage."},200);
       }catch(_){return json({error:"budget_unavailable"},503);}

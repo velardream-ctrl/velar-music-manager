@@ -42,7 +42,7 @@ assert.equal(answer('песня на немецком').target,'#languages');
 const custom={...settings,rules:[{keywords:'эксклюзив',answer:'У нас есть особая подборка.'}]};
 assert.equal(answer('эксклюзив',custom).text,'У нас есть особая подборка.');
 assert.match(html,/id="velar-assistant"/);
-assert.match(html,/velar-assistant\.js\?v=16&consent=190&typing=191&ai=196&hint=197&gateway=199/);
+assert.match(html,/velar-assistant\.js\?v=16&consent=190&typing=191&ai=196&hint=197&gateway=199&usage=204/);
 assert.match(html,/name="robots" content="noindex,nofollow,noarchive"/);
 assert.match(css,/\.velar-assistant-launch/);
 assert.match(css,/\.velar-assistant-wave/);
@@ -68,7 +68,7 @@ assert.equal(w.VELAR_ASSISTANT.expressionFor('OK'),'okay');
 assert.ok(css.includes("max-height:min(390px,50vh)"));
 assert.ok(!code.includes("dj-velar-assistant.webp"));
 assert.match(code,/sessionStorage/);
-assert.match(sw,/'\.\/velar-assistant\.js\?v=16&consent=190&typing=191&ai=196&hint=197&gateway=199'/);
+assert.match(sw,/'\.\/velar-assistant\.js\?v=16&consent=190&typing=191&ai=196&hint=197&gateway=199&usage=204'/);
 assert.match(publicCode,/velar-radio-panel--mini/);
 assert.doesNotMatch(publicCode,/localStorage\.setItem\('velar-radio-hidden'/);
 assert.match(publicCode,/VELAR_ASSISTANT\.render\(value\)/);
@@ -82,7 +82,7 @@ assert.doesNotMatch(css,/bottom:calc\(max\(16px,env\(safe-area-inset-bottom,0px\
 assert.match(css,/grid-template-columns:34px minmax\(0,1fr\)/);
 assert.match(css,/\.velar-chat-line\.is-assistant \.velar-chat-action\{grid-column:2;grid-row:2/);
 assert.match(code,/querySelector\('\.velar-assistant-title'\)/);
-assert.match(code,/Не сохраняем и не отправляем автору/);
+assert.match(code,/Учитываем ответы и темы для улучшения VELAR/);
 assert.doesNotMatch(code,/Ответы формируются на устройстве\. Сообщения не сохраняются/);
 assert.match(css,/\.velar-assistant-launch\[aria-expanded="true"\]\{display:none\}/);
 // RUN-088: launcher must disappear at DESKTOP width, not only in mobile media.
