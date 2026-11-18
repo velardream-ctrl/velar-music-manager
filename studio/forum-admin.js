@@ -3,9 +3,10 @@
   const status = document.getElementById('admin-status');
   const moderation = document.getElementById('moderation');
   const list = document.getElementById('moderation-topics');
+  const bans = document.getElementById('moderation-bans');
   const refresh = document.getElementById('refresh-topics');
   const denied = 'Войдите в VELARDREAM Studio под аккаунтом администратора.';
-  let db, session = 0, permitted = false;
+  let db, session = 0, permitted = false, adminUid;
 
   function element(tag, text, className) {
     const result = document.createElement(tag);
@@ -18,24 +19,34 @@
     const data = snapshot.data();
     const row = element('article', '', 'topic moderator-row');
     const copy = element('div');
+    const state = data.deleted ? 'Удалено' : data.visible ? 'Опубликовано' : 'Скрыто';
     copy.append(element(reply ? 'strong' : 'h3', reply ? data.author : data.title),
-      element('p', reply ? (data.visible ? 'Виден' : 'Скрыт') :
-        data.author + ' · ' + (data.visible ? 'Видна' : 'Скрыта'), 'muted'),
+      element('p', reply ? state : data.author + ' · ' + state, 'muted'),
       element('p', data.body, 'message'));
     const controls = element('div', '', 'actions');
-    const toggle = element('button', data.visible ? 'Скрыть' : 'Вернуть');
-    toggle.type = 'button';
-    toggle.onclick = async () => {
-      toggle.disabled = true;
-      try {
-        await snapshot.ref.update({visible: !data.visible});
-        const replacement = renderPost(await snapshot.ref.get(), reply);
-        row.replaceWith(replacement);
-        status.textContent = 'Видимость обновлена.';
-      } catch (_) { status.textContent = 'Не удалось изменить видимость.'; }
-      finally { toggle.disabled = false; }
-    };
-    controls.appendChild(toggle);
+    function change(patch) {
+      return async () => {
+        await snapshot.ref.update(patch);
+        const current = await snapshot.ref.get();
+        row.replaceWith(renderPost(current, reply));
+      };
+    }
+    if (data.deleted) {
+      controls.append(action('Восстановить', change({deleted: false, visible: true})));
+    } else {
+      controls.append(action(data.visible ? 'Скрыть' : 'Опубликовать', change({visible: !data.visible})));
+      controls.append(action('Удалить', change({deleted: true, visible: false}),
+        'Убрать запись с форума? Её можно будет восстановить в Studio.'));
+    }
+    if (data.uid && data.uid !== adminUid) {
+      controls.append(action('Забанить автора', async () => {
+        await db.collection('velar_forum_bans').doc(data.uid).set({
+          author: data.author,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await loadBans(session);
+      }, 'Запретить автору новые публикации на форуме?'));
+    }
     if (!reply) {
       const details = element('details');
       const summary = element('summary', 'Ответы');
@@ -58,6 +69,42 @@
     return row;
   }
 
+  function action(label, run, confirmation) {
+    const button = element('button', label);
+    button.type = 'button';
+    button.onclick = async () => {
+      if (!permitted || (confirmation && !window.confirm(confirmation))) return;
+      const revision = session;
+      button.disabled = true;
+      try {
+        await run();
+        if (revision === session) status.textContent = 'Изменение сохранено.';
+      } catch (_) {
+        if (revision === session) status.textContent = 'Действие недоступно. Проверьте опубликованные правила форума в Firebase.';
+      } finally {
+        button.disabled = false;
+      }
+    };
+    return button;
+  }
+
+  async function loadBans(revision) {
+    const rows = await db.collection('velar_forum_bans').orderBy('createdAt', 'desc').limit(100).get();
+    if (revision !== session) return;
+    bans.textContent = '';
+    if (rows.empty) bans.append(element('p', 'Заблокированных участников пока нет.', 'muted'));
+    rows.forEach(snapshot => {
+      const row = element('article', '', 'topic moderator-row');
+      row.append(element('div', snapshot.data().author + ' · ' + snapshot.id),
+        action('Снять бан', async () => {
+          await snapshot.ref.delete();
+          row.remove();
+          if (!bans.children.length) bans.append(element('p', 'Заблокированных участников пока нет.', 'muted'));
+        }));
+      bans.append(row);
+    });
+  }
+
   async function loadTopics() {
     if (!permitted) return;
     const revision = session;
@@ -69,7 +116,8 @@
       list.textContent = '';
       if (topics.empty) list.appendChild(element('p', 'Тем пока нет.', 'muted'));
       topics.forEach(topic => list.appendChild(renderPost(topic, false)));
-      status.textContent = '';
+      await loadBans(revision);
+      if (revision === session) status.textContent = '';
     } catch (error) {
       if (revision === session) status.textContent = error.code === 'permission-denied' ?
         'В Firebase ещё не опубликованы правила управления форумом.' : 'Не удалось загрузить темы.';
@@ -85,6 +133,7 @@
       permitted = false;
       moderation.hidden = true;
       list.textContent = '';
+      bans.textContent = '';
       if (!user) { status.textContent = denied; return; }
       try {
         const token = await user.getIdTokenResult();
@@ -98,6 +147,7 @@
           status.textContent = denied;
           return;
         }
+        adminUid = user.uid;
         permitted = true;
         moderation.hidden = false;
         await loadTopics();

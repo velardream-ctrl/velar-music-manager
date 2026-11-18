@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Управление форумом — VELARDREAM Studio</title>
-  <link rel="stylesheet" href="../forum/forum.css?v=3">
+  <link rel="stylesheet" href="../forum/forum.css?v=4">
 </head>
 <body>
   <header class="masthead">
@@ -20,13 +20,16 @@
         <h2>Последние темы</h2>
         <button id="refresh-topics" type="button">Обновить</button>
       </div>
+      <p class="muted">У темы и каждого ответа доступны действия модерации. Удалённые записи можно восстановить. Бан закрывает автору публикацию новых тем и ответов.</p>
       <div id="moderation-topics"></div>
+      <h2>Заблокированные участники</h2>
+      <div id="moderation-bans"></div>
     </section>
   </main>
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script defer src="firebase-config.js"></script>
-  <script defer src="forum-admin.js"></script>
+  <script defer src="forum-admin.js?v=2"></script>
 </body>
 </html>
