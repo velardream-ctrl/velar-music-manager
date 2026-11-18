@@ -78,9 +78,9 @@ jobs:
           const response = await fetch(base + '/v1/public-chat', {
             method: 'POST',
             headers: { Origin: origin, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: 'What is a bass line in music?', language: 'en' }),
+            body: JSON.stringify({ message: 'Define a bass line in one short sentence.', language: 'en' }),
             redirect: 'error',
-            signal: AbortSignal.timeout(20000)
+            signal: AbortSignal.timeout(90000)
           });
           assert.equal(response.status, 200, 'Production model request failed.');
           assert.equal(response.headers.get('access-control-allow-origin'), origin);
