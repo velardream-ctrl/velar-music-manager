@@ -26,6 +26,7 @@
   let active = '';
   let replyRequest = 0;
   let auth, db, user;
+  let authReady = false;
   let afterSignIn = null;
   const pageError = 'Форум пока недоступен. Попробуйте обновить страницу позже.';
 
@@ -171,8 +172,9 @@
       if (action) action();
       return;
     }
-    if (!auth) { $('status').textContent = pageError; return; }
+    if (!authReady) { $('status').textContent = auth ? 'Проверяем, выполнен ли вход…' : pageError; return; }
     afterSignIn = action || null;
+    setAuthMode(user ? 'verify' : completing ? 'link' : 'login');
     presentModal($('email-dialog'));
   }
 
@@ -182,8 +184,8 @@
   }
 
   $('new-topic').onclick = () => showLogin(openTopic);
-  $('sign-in').hidden = demo;
   $('sign-in').onclick = () => showLogin();
+  $('verify-email').onclick = () => showLogin();
   $('sign-out').onclick = () => auth.signOut().catch(() => { $('status').textContent = pageError; });
   $('back').onclick = event => { event.preventDefault(); location.hash = ''; };
   $('search').oninput = renderBoard;
@@ -251,29 +253,112 @@
 
   const callback = location.origin + location.pathname;
   let completing = false;
-  function requestEmailAgain() {
-    completing = true;
-    $('email-title').textContent = 'Подтвердить вход';
-    $('email-help').textContent = 'Введите адрес, на который пришла эта ссылка.';
-    $('email-submit').textContent = 'Войти';
-    presentModal($('email-dialog'));
+  let authMode = 'login';
+  const authModes = {
+    login: ['Вход на форум', 'Войдите по email и паролю. Email не отображается в обсуждениях.', 'Войти'],
+    register: ['Создать аккаунт', 'Придумайте пароль от 6 символов. Для публикаций потребуется подтвердить email.', 'Зарегистрироваться'],
+    reset: ['Задать или восстановить пароль', 'Введите email аккаунта, чтобы получить письмо для установки пароля.', 'Отправить письмо'],
+    verify: ['Подтвердите email', 'Откройте письмо с подтверждением. Затем вернитесь сюда и нажмите «Проверить подтверждение».', 'Проверить подтверждение'],
+    link: ['Завершить вход по ссылке', 'Введите email, на который пришла эта ссылка.', 'Войти']
+  };
+
+  function setAuthMode(mode) {
+    authMode = mode;
+    const [title, help, button] = authModes[mode];
+    $('email-title').textContent = title;
+    $('email-help').textContent = help;
+    $('email-submit').textContent = button;
+    $('email-status').textContent = '';
+    const email = emailForm.elements.namedItem('email');
+    const password = emailForm.elements.namedItem('password');
+    email.required = mode !== 'verify';
+    $('email-field').hidden = !email.required;
+    password.required = mode === 'login' || mode === 'register';
+    $('password-field').hidden = !password.required;
+    password.value = '';
+    password.minLength = mode === 'register' ? 6 : 0;
+    password.autocomplete = mode === 'register' ? 'new-password' : 'current-password';
+    $('auth-login').hidden = mode !== 'register' && mode !== 'reset';
+    $('auth-register').hidden = mode !== 'login';
+    $('auth-reset').hidden = mode !== 'login' && mode !== 'register';
+    $('auth-resend').hidden = mode !== 'verify';
   }
+
+  function showAccount(account) {
+    user = account;
+    $('sign-in').hidden = !!account;
+    $('sign-out').hidden = !account;
+    $('verify-email').hidden = !account || account.emailVerified;
+    if (account && account.emailVerified && afterSignIn) {
+      const action = afterSignIn;
+      afterSignIn = null;
+      dismissModal($('email-dialog'));
+      action();
+    }
+  }
+
   async function finish(email) {
     await auth.signInWithEmailLink(email, location.href);
     try { localStorage.removeItem(emailKey); } catch (_) {}
     history.replaceState(null, '', callback + location.hash);
     dismissModal($('email-dialog'));
     completing = false;
-    $('status').textContent = 'Вы вошли на форум.';
   }
+
+  $('auth-login').onclick = () => setAuthMode('login');
+  $('auth-register').onclick = () => setAuthMode('register');
+  $('auth-reset').onclick = () => setAuthMode('reset');
+  $('auth-resend').onclick = () => submit(emailForm, $('email-status'), async () => {
+    await auth.currentUser.sendEmailVerification({url:callback});
+    $('email-status').textContent = 'Письмо с подтверждением отправлено.';
+  });
+
   emailForm.onsubmit = event => {
     event.preventDefault();
     submit(emailForm, $('email-status'), async () => {
       const email = cleaned(emailForm, 'email');
-      if (completing) { await finish(email); return; }
-      await auth.sendSignInLinkToEmail(email, {url:callback,handleCodeInApp:true});
-      try { localStorage.setItem(emailKey, email); } catch (_) {}
-      $('email-status').textContent = 'Ссылка отправлена. Откройте письмо, чтобы войти.';
+      const password = emailForm.elements.namedItem('password').value;
+      try {
+        if (authMode === 'link') { await finish(email); return; }
+        if (authMode === 'reset') {
+          await auth.sendPasswordResetEmail(email, {url:callback});
+          $('email-status').textContent = 'Если аккаунт существует, письмо для установки пароля отправлено.';
+          return;
+        }
+        if (authMode === 'verify') {
+          const account = auth.currentUser;
+          if (!account) { setAuthMode('login'); return; }
+          await account.reload();
+          if (!account.emailVerified) validation('Email пока не подтверждён. Проверьте письмо.');
+          await account.getIdToken(true);
+          dismissModal($('email-dialog'));
+          showAccount(account);
+          return;
+        }
+        const registering = authMode === 'register';
+        const result = registering
+          ? await auth.createUserWithEmailAndPassword(email, password)
+          : await auth.signInWithEmailAndPassword(email, password);
+        if (!result.user.emailVerified) {
+          setAuthMode('verify');
+          if (registering) {
+            await result.user.sendEmailVerification({url:callback});
+            $('email-status').textContent = 'Письмо с подтверждением отправлено.';
+          }
+        } else {
+          dismissModal($('email-dialog'));
+        }
+      } catch (error) {
+        if (['auth/wrong-password', 'auth/user-not-found', 'auth/invalid-credential', 'auth/invalid-login-credentials'].includes(error.code))
+          validation('Проверьте email и пароль. Пароль можно задать или восстановить по письму.');
+        if (error.code === 'auth/email-already-in-use')
+          validation('Этот email уже зарегистрирован. Войдите или задайте пароль по письму.');
+        if (error.code === 'auth/weak-password' || error.code === 'auth/password-does-not-meet-requirements')
+          validation('Выберите более сложный пароль.');
+        if (error.code === 'auth/operation-not-allowed')
+          validation('Этот способ входа пока не включён в настройках форума.');
+        throw error;
+      }
     });
   };
 
@@ -288,22 +373,25 @@
     auth.languageCode = 'ru';
     db = app.firestore();
     auth.onAuthStateChanged(account => {
-      user = account;
-      $('sign-in').hidden = !!user;
-      $('sign-out').hidden = !user;
-      if (user && user.emailVerified && afterSignIn) {
-        const action = afterSignIn;
-        afterSignIn = null;
-        action();
-      }
+      authReady = true;
+      showAccount(account);
     });
+    try {
+      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    } catch (_) {
+      $('status').textContent = 'Браузер ограничивает сохранение входа. Используйте обычную вкладку для постоянного входа.';
+    }
     if (auth.isSignInWithEmailLink(location.href)) {
       let email;
       try { email = localStorage.getItem(emailKey); } catch (_) {}
       if (email) {
         try { await finish(email); }
-        catch (_) { requestEmailAgain(); }
-      } else requestEmailAgain();
+        catch (_) { completing = true; }
+      } else completing = true;
+      if (completing) {
+        setAuthMode('link');
+        presentModal($('email-dialog'));
+      }
     }
     await refresh();
   }
