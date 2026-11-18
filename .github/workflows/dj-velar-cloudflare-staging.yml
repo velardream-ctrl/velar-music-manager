@@ -1,0 +1,55 @@
+name: DJ Velar AI - validate or deploy isolated staging
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Validate offline, or deploy a separate staging Worker"
+        required: true
+        type: choice
+        default: validate
+        options:
+          - validate
+          - deploy-staging
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dj-velar-ai-staging
+  cancel-in-progress: false
+
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify all project regressions
+        run: npm test
+      - name: Validate Cloudflare Worker bundle without deployment
+        run: npx --yes wrangler@4 deploy --config cloudflare/wrangler.staging.toml --dry-run --outdir .wrangler-dryrun
+      - name: Verify required Cloudflare credentials for staging only
+        if: ${{ inputs.action == 'deploy-staging' }}
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CF_TOKEN" ] || [ -z "$CF_ACCOUNT" ]; then
+            echo "::error::Configure CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as GitHub Actions repository secrets."
+            exit 1
+          fi
+      - name: Deploy isolated staging Worker (public AI disabled)
+        if: ${{ inputs.action == 'deploy-staging' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4 deploy --config cloudflare/wrangler.staging.toml
+      - name: Explain next manual verification
+        if: ${{ inputs.action == 'deploy-staging' }}
+        run: |
+          echo "Staging deployed. Open its URL in Cloudflare Dashboard."
+          echo "Verify GET /health shows publicEnabled:false, bindings and secret protection."
+          echo "Production dj-velar-private-lab is unchanged; no public AI was activated."
