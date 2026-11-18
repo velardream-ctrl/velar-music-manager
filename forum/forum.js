@@ -1,12 +1,8 @@
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
-  const categories = {
-    site: ['Вопросы о сайте', '✧'],
-    ideas: ['Идеи для песен', '♫'],
-    collaboration: ['Сотрудничество', '✦'],
-    releases: ['Обсуждение релизов', '◎']
-  };
+  const sections = window.VelarForumSections;
+  let categories = Object.create(null);
   const demo = new URLSearchParams(location.search).get('demo') === '1';
   const authorNames = new Map();
   const passwordKey = 'velar-forum-password-set:';
@@ -74,32 +70,43 @@
   }
   function validation(text) { throw {userMessage:text}; }
 
-  Object.keys(categories).forEach(key => {
-    const [label, symbol] = categories[key];
-    const button = node('button', '', 'constellation');
-    button.type = 'button';
-    button.dataset.category = key;
-    button.setAttribute('aria-pressed', 'false');
-    const icon = node('span', symbol, 'star');
-    icon.setAttribute('aria-hidden', 'true');
-    button.append(icon, node('span', label));
-    button.onclick = () => {
-      category = category === key ? '' : key;
-      location.hash = '';
-      renderBoard();
-      board.scrollIntoView({block:'nearest'});
-    };
-    $('constellations').appendChild(button);
-    const option = node('option', label);
-    option.value = key;
-    topicForm.elements.namedItem('category').appendChild(option);
-  });
+  function renderSections(rows) {
+    categories = Object.create(null);
+    for (const section of rows) categories[section.id] = section;
+    $('constellations').replaceChildren();
+    const picker = topicForm.elements.namedItem('category');
+    const selected = picker.value;
+    picker.replaceChildren();
+    for (const {id:key, label, icon:symbol, enabled} of rows) {
+      if (!enabled) continue;
+      const button = node('button', '', 'constellation');
+      button.type = 'button';
+      button.dataset.category = key;
+      button.setAttribute('aria-pressed', 'false');
+      const icon = node('span', symbol, 'star');
+      icon.setAttribute('aria-hidden', 'true');
+      button.append(icon, node('span', label));
+      button.onclick = () => {
+        category = category === key ? '' : key;
+        location.hash = '';
+        renderBoard();
+        board.scrollIntoView({block:'nearest'});
+      };
+      $('constellations').appendChild(button);
+      const option = node('option', label);
+      option.value = key;
+      picker.appendChild(option);
+    }
+    if (categories[selected]?.enabled) picker.value = selected;
+  }
+
+  renderSections(sections.defaults);
 
   function renderBoard() {
     board.hidden = false;
     thread.hidden = true;
     active = '';
-    $('board-title').textContent = category ? categories[category][0] : 'Свежие обсуждения';
+    $('board-title').textContent = category ? categories[category].label : 'Свежие обсуждения';
     $('constellations').querySelectorAll('button').forEach(button => {
       button.setAttribute('aria-pressed', String(button.dataset.category === category));
     });
@@ -114,7 +121,7 @@
       title.href = '#topic=' + encodeURIComponent(topic.id);
       const group = node('div');
       const section = categories[topic.category];
-      group.append(title, node('p', [section ? section[0] : '', topic.author, timeLabel(topic.createdAt)].filter(Boolean).join(' · '), 'muted'));
+      group.append(title, node('p', [section ? section.label : '', topic.author, timeLabel(topic.createdAt)].filter(Boolean).join(' · '), 'muted'));
       row.append(group, node('span', '↗', 'muted'));
       list.appendChild(row);
     });
@@ -234,7 +241,7 @@
       const body = cleaned(topicForm, 'body');
       const author = cleaned(topicForm, 'author');
       const section = cleaned(topicForm, 'category');
-      if (author.length < 2 || title.length < 3 || body.length < 3 || !categories[section])
+      if (author.length < 2 || title.length < 3 || body.length < 3 || !categories[section]?.enabled)
         validation('Проверьте имя, раздел, заголовок и сообщение.');
       const data = {category:section,title,body,author,visible:true};
       let id;
@@ -465,6 +472,11 @@
     auth = app.auth();
     auth.languageCode = 'ru';
     db = app.firestore();
+    sections.load(db).then(rows => {
+      if (category && !rows.some(section => section.id === category && section.enabled)) category = '';
+      renderSections(rows);
+      if (!active) renderBoard();
+    }).catch(() => {});
     auth.onAuthStateChanged(account => {
       authReady = true;
       showAccount(account);

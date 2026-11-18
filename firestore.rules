@@ -93,8 +93,30 @@ service cloud.firestore {
     function forumWriter() {
       return request.auth != null && request.auth.token.email_verified == true;
     }
+    function forumSectionPath(id) {
+      return /databases/$(database)/documents/velar_forum_sections/$(id);
+    }
     function forumCategory(value) {
-      return value in ['site', 'ideas', 'collaboration', 'releases'];
+      return value is string && value.matches('^[a-zA-Z0-9_-]{1,32}$')
+        && (exists(forumSectionPath(value))
+          ? get(forumSectionPath(value)).data.enabled == true
+          : value in ['site', 'ideas', 'collaboration', 'releases']);
+    }
+
+    match /velar_forum_sections/{sectionId} {
+      allow get: if true;
+      allow list: if request.query.limit <= 100;
+      allow create, update: if studioAdmin()
+        && sectionId.matches('^[a-zA-Z0-9_-]{1,32}$')
+        && request.resource.data.keys().hasOnly(['label', 'icon', 'order', 'enabled'])
+        && request.resource.data.label is string
+        && request.resource.data.label.size() >= 2 && request.resource.data.label.size() <= 60
+        && request.resource.data.icon is string
+        && request.resource.data.icon.size() >= 1 && request.resource.data.icon.size() <= 12
+        && request.resource.data.order is int
+        && request.resource.data.order >= 0 && request.resource.data.order <= 9999
+        && request.resource.data.enabled is bool;
+      allow delete: if false;
     }
     function forumPost(data, maximum) {
       return forumWriter()

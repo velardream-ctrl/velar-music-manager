@@ -59,3 +59,7 @@ dialog::backdrop{background:#020611b8}
   .moderator-row{flex-direction:column}
   .moderator-row>div:first-child{width:100%}
 }
+
+.forum-section-editor{border-top:1px solid var(--line);padding:1rem 0}
+.forum-section-editor h3{margin:0}
+.forum-section-editor input[type=checkbox]{width:auto}
