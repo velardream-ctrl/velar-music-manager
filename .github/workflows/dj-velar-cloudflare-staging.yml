@@ -37,10 +37,23 @@ jobs:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          if [ -z "$CF_TOKEN" ] || [ -z "$CF_ACCOUNT" ]; then
-            echo "::error::Configure CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as GitHub Actions repository secrets."
-            exit 1
-          fi
+          node --input-type=module <<'NODE'
+          const { CF_TOKEN: token, CF_ACCOUNT: account } = process.env;
+          const errors = [];
+          if (!token) errors.push('CLOUDFLARE_API_TOKEN is missing.');
+          else if (/\bresource\s+"cloudflare_api_token"/.test(token))
+            errors.push('CLOUDFLARE_API_TOKEN contains Terraform configuration.');
+          else if (/^Bearer\b/i.test(token))
+            errors.push('CLOUDFLARE_API_TOKEN includes the Bearer prefix.');
+          else if (/\s/.test(token))
+            errors.push('CLOUDFLARE_API_TOKEN contains whitespace or line breaks.');
+          else if (/[^A-Za-z0-9_-]/.test(token))
+            errors.push('CLOUDFLARE_API_TOKEN contains unexpected characters, such as quotes.');
+          if (!account || !/^[a-f0-9]{32}$/i.test(account) || account.length !== 32)
+            errors.push('CLOUDFLARE_ACCOUNT_ID must contain exactly 32 hexadecimal characters.');
+          for (const error of errors) console.error(`::error::${error}`);
+          if (errors.length) process.exitCode = 1;
+          NODE
       - name: Deploy isolated staging Worker (public AI disabled)
         if: ${{ inputs.action == 'deploy-staging' }}
         env:
