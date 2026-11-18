@@ -53,3 +53,9 @@ dialog::backdrop{background:#020611b8}
 .moderator-row>div:first-child{min-width:0;flex:1}
 .moderator-row details{margin-top:.6rem}
 @media(max-width:720px){.sky{min-height:0;padding-top:2.6rem;background-position:center,center,60% 68%}}
+
+.moderator-row{overflow-wrap:anywhere}
+@media(max-width:600px){
+  .moderator-row{flex-direction:column}
+  .moderator-row>div:first-child{width:100%}
+}

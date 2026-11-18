@@ -98,18 +98,34 @@ service cloud.firestore {
     }
     function forumPost(data, maximum) {
       return forumWriter()
+        && !exists(/databases/$(database)/documents/velar_forum_bans/$(request.auth.uid))
         && data.uid == request.auth.uid
         && data.author is string && data.author.size() >= 2 && data.author.size() <= 32
         && data.body is string && data.body.size() >= 1 && data.body.size() <= maximum
         && data.visible == true && data.createdAt == request.time;
     }
     function forumModeration() {
-      return (studioAdmin() ||
-          (forumWriter() && resource.data.uid == request.auth.uid
-            && request.resource.data.visible == false))
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visible'])
-        && request.resource.data.visible is bool;
+      let changes = request.resource.data.diff(resource.data).affectedKeys();
+      return request.resource.data.visible is bool && (
+        (studioAdmin() && changes.hasOnly(['visible', 'deleted'])
+          && request.resource.data.get('deleted', false) is bool
+          && (!request.resource.data.get('deleted', false) || !request.resource.data.visible))
+        || (forumWriter() && resource.data.uid == request.auth.uid
+          && !request.resource.data.visible && changes.hasOnly(['visible']))
+      );
     }
+
+    match /velar_forum_bans/{uid} {
+      allow get: if studioAdmin();
+      allow list: if studioAdmin() && request.query.limit <= 100;
+      allow create, update: if studioAdmin() && uid != request.auth.uid
+        && request.resource.data.keys().hasOnly(['author', 'createdAt'])
+        && request.resource.data.author is string
+        && request.resource.data.author.size() <= 32
+        && request.resource.data.createdAt == request.time;
+      allow delete: if studioAdmin();
+    }
+
     function forumTopicVisible(topicId) {
       return get(/databases/$(database)/documents/velar_forum_topics/$(topicId)).data.visible == true;
     }
