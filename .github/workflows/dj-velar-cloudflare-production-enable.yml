@@ -75,16 +75,26 @@ jobs:
           }
           assert.equal(healthy, true, 'Production bindings did not become ready.');
           const origin = 'https://velardream.com';
-          const response = await fetch(base + '/v1/public-chat', {
+          let response, data;
+          for (let attempt = 0; attempt < 4; attempt++) {
+            response = await fetch(base + '/v1/public-chat', {
             method: 'POST',
             headers: { Origin: origin, 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: 'Define a bass line in one short sentence.', language: 'en' }),
             redirect: 'error',
             signal: AbortSignal.timeout(90000)
           });
+            data = await response.json();
+            if (response.status !== 503 || data.error !== 'public_ai_disabled') break;
+            await new Promise(resolve => setTimeout(resolve, 4000));
+          }
+          const knownErrors = ['public_ai_disabled', 'rate_limit_unavailable', 'rate_limited',
+            'daily_budget_not_configured', 'daily_budget_unavailable', 'daily_quota_exhausted',
+            'ai_unavailable_or_quota_exhausted', 'empty_model_response', 'origin_denied'];
+          if (!response.ok) console.error('Gateway rejected smoke test: HTTP ' + response.status +
+            ' ' + (knownErrors.includes(data.error) ? data.error : 'unknown_error'));
           assert.equal(response.status, 200, 'Production model request failed.');
           assert.equal(response.headers.get('access-control-allow-origin'), origin);
-          const data = await response.json();
           assert.equal(data.kind, 'model_text_only');
           assert.ok(typeof data.reply === 'string' && data.reply.trim());
           console.log('Public Worker served a model reply with the production gates enabled.');
