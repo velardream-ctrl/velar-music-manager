@@ -32,28 +32,35 @@
    var section=make("details");section.className="landing-card";
    var title=make("summary","Лаборатория DJ Velar AI — только для владельца");
    section.appendChild(title);
-   section.appendChild(make("p","Тест внешней модели через Cloudflare Workers AI. На публичном сайте ИИ выключен; старый DJ Velar продолжает работать как прежде. Ни токен, ни переписка здесь не сохраняются."));
+
    var endpoint=field(section,"Адрес моего Cloudflare Worker","url","https://...workers.dev/v1/owner-test");
+   endpoint.value="https://dj-velar-private-lab.velardream.workers.dev/v1/owner-test";
    var token=field(section,"Секрет владельца (не сохраняется)","password","Введите токен из Cloudflare Secrets");
+   var diagnostics=make("details");diagnostics.className="landing-card";
+   diagnostics.style.marginTop="12px";
+   diagnostics.appendChild(make("summary","Диагностика модели и резерва"));
+   diagnostics.appendChild(make("p","Проверка модели отправляет тестовый вопрос в Cloudflare. Проверка резерва имитирует отказ локально."));
    var languageRow=make("label");languageRow.className="landing-field";
    languageRow.appendChild(make("span","Язык ответа"));
    var language=make("select");
    [["ru","Русский"],["fi","Suomi"],["en","English"]].forEach(function(x){
      var o=make("option",x[1]);o.value=x[0];language.appendChild(o);
    });
-   languageRow.appendChild(language);section.appendChild(languageRow);
-   var question=field(section,"Тестовый вопрос","textarea","Подбери музыку для спокойного вечера");
+   languageRow.appendChild(language);diagnostics.appendChild(languageRow);
+   var question=field(diagnostics,"Тестовый вопрос","textarea","Подбери музыку для спокойного вечера");
    question.value="Расскажи, как ты поможешь выбрать музыку по настроению.";
    question.maxLength=500;
    var catalogRow=make('label');catalogRow.className='landing-field';
    var catalogToggle=make('input');catalogToggle.type='checkbox';
    catalogToggle.checked=false;
+   catalogRow.style.cssText='display:flex;align-items:flex-start;gap:10px';
+   catalogToggle.style.cssText='width:auto;flex:none;margin-top:3px';
    catalogRow.appendChild(catalogToggle);
    catalogRow.appendChild(make('span',' Подбирать из реально опубликованных песен VELARDREAM'));
-   section.appendChild(catalogRow);
-   section.appendChild(make('p','Если включено, лаборатория по запросу читает только общедоступную опубликованную страницу и передаёт модели короткий перечень до 4 проверенных песен. Приватные записи, черновики, ссылки и личные данные модели не отправляются.'));
+   diagnostics.appendChild(catalogRow);
+   diagnostics.appendChild(make('p','Если включено, лаборатория по запросу читает только общедоступную опубликованную страницу и передаёт модели короткий перечень до 4 проверенных песен. Приватные записи, черновики, ссылки и личные данные модели не отправляются.'));
    var preview=make('div');preview.className='landing-ai-catalog-preview';
-   section.appendChild(preview);
+   diagnostics.appendChild(preview);
    function showVerified(rows){
      preview.textContent='';
      if(!rows||!rows.length){preview.appendChild(make('p','Подходящих опубликованных песен пока нет.'));return;}
@@ -72,8 +79,8 @@
    // No token or usage report is stored in browser persistence or Firestore.
    var budgetBox=make("div");budgetBox.className="landing-card";
    var budgetTitle=make("strong","Счётчик DJ Velar AI — сегодня (UTC)");
-   var budgetInfo=make("p","Данные не загружены. Счётчик станет доступен после настройки Cloudflare.");
-   budgetInfo.className="sync-note";
+   var budgetInfo=make("p","Введите секрет владельца выше и нажмите «Обновить счётчик AI».");
+   budgetInfo.className="sync-note";budgetInfo.setAttribute("role","status");
    var budgetButton=make("button","Обновить счётчик AI");
    budgetButton.type="button";budgetButton.className="landing-add";
    budgetButton.onclick=function(){
@@ -83,7 +90,7 @@
      }
      if(typeof window.fetch!=="function"){budgetInfo.textContent="Нет поддержки сетевого запроса.";return;}
      budgetButton.disabled=true;budgetInfo.textContent="Получаем защищённый счётчик Cloudflare…";
-     var statsUrl=endpoint.value.replace(/\/v1\/owner-test$/,"/v1/owner-stats");
+     var statsUrl=endpoint.value.replace(/\/v1\/owner-test\/?$/,"/v1/owner-stats");
      window.fetch(statsUrl,{method:"GET",mode:"cors",credentials:"omit",
        headers:{"Authorization":"Bearer "+token.value},"cache":"no-store"
      }).then(function(response){
@@ -100,6 +107,10 @@
            " · осталось: "+data.remaining:" · лимит не задан")+
          ". Считаются попытки вызова модели, а не токены или стоимость.";
      }).catch(function(error){
+       if(error&&error.message==="unauthorized"){
+         budgetInfo.textContent="Секрет не принят. Введите секрет владельца для указанного Worker.";
+         return;
+       }
        budgetInfo.textContent="Счётчик недоступен: "+String(error&&error.message||error).slice(0,100)+
          ". Локальный DJ Velar от этого не зависит.";
      }).then(function(){budgetButton.disabled=false;});
@@ -110,8 +121,13 @@
    button.type="button";button.className="landing-add";
    var fallbackTest=make("button","Проверить отказ ИИ и резервный ответ");
    fallbackTest.type="button";fallbackTest.className="landing-add";
-   fallbackTest.style.marginLeft="8px";
-   var status=make("p","Не подключено. Сначала разверни Worker в своём бесплатном Cloudflare.");
+   var actions=make("div");
+   actions.style.cssText="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px";
+   [button,fallbackTest].forEach(function(control){
+     control.style.cssText="flex:1 1 220px;min-width:0;white-space:normal;margin:0";
+     actions.appendChild(control);
+   });
+   var status=make("p","Выберите проверку, чтобы увидеть результат.");
    status.className="sync-note";
    var result=make("pre");result.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;font:inherit;line-height:1.5";
    button.onclick=function(){
@@ -211,7 +227,8 @@
        router.reset();
      });
    };
-   section.appendChild(button);section.appendChild(fallbackTest);section.appendChild(status);section.appendChild(result);
+   diagnostics.appendChild(actions);diagnostics.appendChild(status);diagnostics.appendChild(result);
+   section.appendChild(diagnostics);
    var doc=make("p");
    doc.textContent="Секрет нельзя помещать в публичный JavaScript или опубликованные настройки Studio. Для подключения его нужно создать как Secret в Cloudflare. Облачный Worker не управляет сайтом и не имеет доступа к Firestore.";
    doc.className="sync-note";section.appendChild(doc);
