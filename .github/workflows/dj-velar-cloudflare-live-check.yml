@@ -127,13 +127,23 @@ jobs:
           node -e 'process.stdout.write(JSON.stringify({CHECK_TOKEN:process.env.CHECK_TOKEN}))' > secrets.json
           npx --yes wrangler@4.164.0 deploy --secrets-file secrets.json
           node --input-type=module <<'NODE'
-          const result = await fetch('https://dj-velar-ai-check.velardream.workers.dev/check', {
-            method: 'POST',
-            headers: { Authorization: 'Bearer ' + process.env.CHECK_TOKEN },
-            redirect: 'error',
-            signal: AbortSignal.timeout(30000)
-          });
-          const report = await result.json();
+          const url = 'https://dj-velar-ai-check.velardream.workers.dev/check';
+          let result, report;
+          for (let attempt = 0; attempt < 10; attempt++) {
+            result = await fetch(url, {
+              method: 'POST',
+              headers: { Authorization: 'Bearer ' + process.env.CHECK_TOKEN },
+              redirect: 'error',
+              signal: AbortSignal.timeout(15000)
+            });
+            if (result.headers.get('content-type')?.includes('application/json')) {
+              report = await result.json();
+              break;
+            }
+            console.log('Waiting for Worker readiness: HTTP ' + result.status);
+            await new Promise(resolve => setTimeout(resolve, 3000));
+          }
+          if (!report) throw new Error('Test Worker did not return a JSON report.');
           console.log('Cloudflare verification:', JSON.stringify({
             budget: report.budget === true, perIp: report.perIp === true, aggregate: report.aggregate === true
           }));
