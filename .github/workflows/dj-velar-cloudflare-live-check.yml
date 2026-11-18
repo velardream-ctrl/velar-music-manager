@@ -1,0 +1,142 @@
+name: Check DJ Velar Cloudflare limits
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dj-velar-cloudflare-live-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dj-velar-cloudflare-live-check
+  cancel-in-progress: false
+
+jobs:
+  live-check:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+      - name: Deploy and exercise isolated test Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          check_dir="$(mktemp -d)"
+          trap 'rm -rf "$check_dir"' EXIT
+          cp cloudflare/{dj-velar-owner-lab.js,ai-budget.js} "$check_dir"
+          cd "$check_dir"
+          cat > check.js <<'JS'
+          import gateway from './dj-velar-owner-lab.js';
+          export { VelarAiBudget } from './ai-budget.js';
+
+          async function checkLimiter(limiter, key, limit) {
+            for (let i = 0; i < limit; i++) {
+              if (!(await limiter.limit({ key })).success) return false;
+            }
+            // Cloudflare synchronizes edge counters asynchronously.
+            await scheduler.wait(1000);
+            return (await limiter.limit({ key })).success === false;
+          }
+
+          export default {
+            async fetch(request, env) {
+              if (request.method !== 'POST' || new URL(request.url).pathname !== '/check' ||
+                  !env.CHECK_TOKEN || request.headers.get('Authorization') !== 'Bearer ' + env.CHECK_TOKEN) {
+                return new Response(null, { status: 404 });
+              }
+              const id = crypto.randomUUID();
+              const objectId = env.PUBLIC_AI_BUDGET.idFromName(id);
+              let modelCalls = 0;
+              const envForCheck = {
+                AI: { run: async () => {
+                  modelCalls++;
+                  if (modelCalls === 2) throw new Error('Simulated model failure');
+                  return { response: 'Simulated model response' };
+                } },
+                PUBLIC_AI_ENABLED: 'true',
+                PUBLIC_AI_DAILY_LIMIT: '2',
+                PUBLIC_RATE_LIMITER: { limit: ({ key }) => env.PUBLIC_RATE_LIMITER.limit({ key: id + key }) },
+                PUBLIC_GLOBAL_RATE_LIMITER: { limit: ({ key }) => env.PUBLIC_GLOBAL_RATE_LIMITER.limit({ key: id + key }) },
+                PUBLIC_AI_BUDGET: { idFromName: () => objectId, get: key => env.PUBLIC_AI_BUDGET.get(key) }
+              };
+              const ask = ip => gateway.fetch(new Request('https://internal/v1/public-chat', {
+                method: 'POST',
+                headers: { Origin: 'https://velardream.com', 'CF-Connecting-IP': ip, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: 'Test gateway', language: 'en' })
+              }), envForCheck);
+
+              const first = await ask('192.0.2.1');
+              const second = await ask('192.0.2.2');
+              const third = await ask('192.0.2.3');
+              const stats = await (await env.PUBLIC_AI_BUDGET.get(objectId).fetch('https://internal/stats')).json();
+              const [perIp, aggregate] = await Promise.all([
+                checkLimiter(env.PUBLIC_RATE_LIMITER, id + ':ip', 3),
+                checkLimiter(env.PUBLIC_GLOBAL_RATE_LIMITER, id + ':aggregate', 10)
+              ]);
+              const budget = first.status === 200 && second.status === 503 && third.status === 429 &&
+                (await third.json()).error === 'daily_quota_exhausted' && modelCalls === 2 &&
+                stats.used === 2 && stats.succeeded === 1 && stats.failed === 1;
+              return Response.json({ budget, perIp, aggregate }, {
+                status: budget && perIp && aggregate ? 200 : 500
+              });
+            }
+          };
+          JS
+          cat > wrangler.toml <<'TOML'
+          name = "dj-velar-ai-check"
+          main = "check.js"
+          compatibility_date = "2026-11-17"
+          workers_dev = true
+          preview_urls = false
+
+          [[ratelimits]]
+          name = "PUBLIC_RATE_LIMITER"
+          namespace_id = "20221"
+            [ratelimits.simple]
+            limit = 3
+            period = 60
+
+          [[ratelimits]]
+          name = "PUBLIC_GLOBAL_RATE_LIMITER"
+          namespace_id = "20222"
+            [ratelimits.simple]
+            limit = 10
+            period = 60
+
+          [[durable_objects.bindings]]
+          name = "PUBLIC_AI_BUDGET"
+          class_name = "VelarAiBudget"
+
+          [[migrations]]
+          tag = "run202-check-v1"
+          new_sqlite_classes = ["VelarAiBudget"]
+          TOML
+          export CHECK_TOKEN="$(openssl rand -hex 32)"
+          echo "::add-mask::$CHECK_TOKEN"
+          umask 077
+          node -e 'process.stdout.write(JSON.stringify({CHECK_TOKEN:process.env.CHECK_TOKEN}))' > secrets.json
+          npx --yes wrangler@4.164.0 deploy --secrets-file secrets.json
+          node --input-type=module <<'NODE'
+          const result = await fetch('https://dj-velar-ai-check.velardream.workers.dev/check', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + process.env.CHECK_TOKEN },
+            redirect: 'error',
+            signal: AbortSignal.timeout(30000)
+          });
+          const report = await result.json();
+          console.log('Cloudflare verification:', JSON.stringify({
+            budget: report.budget === true, perIp: report.perIp === true, aggregate: report.aggregate === true
+          }));
+          if (!result.ok || !report.budget || !report.perIp || !report.aggregate) process.exitCode = 1;
+          NODE
