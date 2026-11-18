@@ -8,6 +8,7 @@
     releases: ['Обсуждение релизов', '◎']
   };
   const demo = new URLSearchParams(location.search).get('demo') === '1';
+  const authorNames = new Map();
   const passwordKey = 'velar-forum-password-set:';
   const passwordAccounts = new Set();
   const emailKey = 'velar-forum-email';
@@ -180,7 +181,27 @@
     presentModal($('email-dialog'));
   }
 
+  function forumAuthor(account) {
+    const uid = demo ? 'demo' : account?.uid;
+    if (!uid) return '';
+    let saved = authorNames.get(uid);
+    if (!saved && !demo) {
+      try { saved = localStorage.getItem('velar-forum-author:' + uid); } catch (_) {}
+    }
+    return saved || topics.find(topic => topic.uid === uid)?.author || '';
+  }
+
+  function rememberAuthor(account, name) {
+    const uid = demo ? 'demo' : account?.uid;
+    if (!uid) return;
+    authorNames.set(uid, name);
+    if (!demo) {
+      try { localStorage.setItem('velar-forum-author:' + uid, name); } catch (_) {}
+    }
+  }
+
   function openTopic() {
+    topicForm.elements.namedItem('author').value = forumAuthor(user);
     if (category) topicForm.elements.namedItem('category').value = category;
     presentModal($('topic-dialog'));
   }
@@ -217,14 +238,16 @@
         validation('Проверьте имя, раздел, заголовок и сообщение.');
       const data = {category:section,title,body,author,visible:true};
       let id;
+      const authorAccount = user;
       if (demo) {
         id = 'demo-' + Date.now();
         samples.unshift(Object.assign({id}, data));
       } else {
         const doc = await db.collection('velar_forum_topics').add(
-          Object.assign(data, {uid:user.uid, createdAt:postStamp()}));
+          Object.assign(data, {uid:authorAccount.uid, createdAt:postStamp()}));
         id = doc.id;
       }
+      rememberAuthor(authorAccount, author);
       dismissModal($('topic-dialog'));
       topicForm.reset();
       $('similar').textContent = '';
@@ -243,7 +266,7 @@
       const id = active;
       const body = cleaned(replyForm, 'body');
       if (!id || !body) validation('Введите ответ.');
-      const author = cleaned(topicForm, 'author') || 'Участник форума';
+      const author = forumAuthor(user) || 'Участник форума';
       if (demo) (sampleReplies[id] || (sampleReplies[id] = [])).push({author,body});
       else await topicPath(id).collection('replies').add({
         author,body,uid:user.uid,visible:true,createdAt:postStamp()
