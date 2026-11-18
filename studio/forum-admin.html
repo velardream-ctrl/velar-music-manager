@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Управление форумом — VELARDREAM Studio</title>
-  <link rel="stylesheet" href="../forum/forum.css?v=4">
+  <link rel="stylesheet" href="../forum/forum.css?v=5">
 </head>
 <body>
   <header class="masthead">
@@ -19,6 +19,13 @@
       <a href="./">Открыть Studio и проверить вход</a>
       <a href="./forum-admin.html">Повторить проверку</a>
     </div>
+    <section id="section-settings" class="panel" hidden aria-labelledby="section-settings-title">
+      <h2 id="section-settings-title">Разделы форума</h2>
+      <p class="muted">Меньшее число в поле «Порядок» выводит раздел выше. Скрытие убирает раздел из меню и закрывает создание тем. Опубликованные темы остаются доступны.</p>
+      <p id="section-status" role="status"></p>
+      <div id="section-list"></div>
+      <button id="section-add" type="button" class="gold" disabled>Добавить раздел</button>
+    </section>
     <section id="moderation" class="panel" hidden aria-label="Темы форума">
       <div class="panel-head">
         <h2>Последние темы</h2>
@@ -40,6 +47,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script defer src="firebase-config.js"></script>
-  <script defer src="forum-admin.js?v=3"></script>
+  <script defer src="../forum/sections.js"></script>
+  <script defer src="forum-admin.js?v=4"></script>
 </body>
 </html>

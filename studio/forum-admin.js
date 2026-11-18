@@ -119,6 +119,90 @@
     });
   }
 
+  const sections = window.VelarForumSections;
+  const sectionPanel = document.getElementById('section-settings');
+  const sectionStatus = document.getElementById('section-status');
+  const sectionList = document.getElementById('section-list');
+  const sectionAdd = document.getElementById('section-add');
+  let sectionRows = [];
+
+  function sectionField(form, name, label, value, attributes = {}) {
+    const field = Object.assign(element('input'), {name, value}, attributes);
+    const wrapper = element('label', label);
+    wrapper.append(field);
+    form.append(wrapper);
+    return field;
+  }
+
+  function renderSection(section) {
+    const form = element('form', '', 'forum-section-editor');
+    const heading = element('h3', section.label || 'Новый раздел');
+    form.append(heading);
+    const label = sectionField(form, 'label', 'Название', section.label, {required:true,minLength:2,maxLength:60});
+    const icon = sectionField(form, 'icon', 'Иконка (символ или эмодзи)', section.icon, {required:true,maxLength:12});
+    const order = sectionField(form, 'order', 'Порядок', section.order, {type:'number',min:'0',max:'9999',required:true});
+    const enabled = sectionField(form, 'enabled', ' Показывать раздел', '', {type:'checkbox',checked:section.enabled});
+    const save = element('button', 'Сохранить раздел');
+    const controls = element('div', '', 'actions');
+    controls.append(save);
+    if (!section.id) {
+      const cancel = element('button', 'Отмена');
+      cancel.type = 'button';
+      cancel.onclick = () => { form.remove(); sectionAdd.disabled = false; };
+      controls.append(cancel);
+    }
+    form.append(controls);
+    form.onsubmit = async event => {
+      event.preventDefault();
+      if (!permitted) return;
+      const revision = session;
+      const data = {label:label.value.trim(),icon:icon.value.trim(),order:order.valueAsNumber,enabled:enabled.checked};
+      if (data.label.length < 2 || !data.icon) {
+        sectionStatus.textContent = 'Заполните название и иконку.';
+        return;
+      }
+      save.disabled = true;
+      try {
+        const collection = db.collection(sections.collection);
+        const ref = section.id ? collection.doc(section.id) : collection.doc();
+        await ref.set(data);
+        if (revision !== session) return;
+        await loadSections(revision);
+        if (revision === session && !sectionAdd.disabled) sectionStatus.textContent = 'Раздел сохранён.';
+      } catch (_) {
+        if (revision === session) sectionStatus.textContent = 'Не удалось сохранить раздел.';
+      } finally {
+        save.disabled = false;
+      }
+    };
+    return form;
+  }
+
+  async function loadSections(revision) {
+    sectionAdd.disabled = true;
+    sectionStatus.textContent = 'Загружаем разделы…';
+    try {
+      const rows = await withAccessTimeout(sections.load(db));
+      if (revision !== session) return;
+      sectionRows = rows;
+      sectionList.replaceChildren(...rows.map(renderSection));
+      sectionAdd.disabled = rows.length >= 100;
+      sectionStatus.textContent = rows.length >= 100 ? 'Достигнут предел в 100 разделов.' : '';
+    } catch (error) {
+      if (revision !== session) return;
+      sectionStatus.textContent = error.code === 'permission-denied' ?
+        'Чтобы управлять разделами, опубликуйте обновлённые правила Firestore.' : 'Не удалось загрузить разделы. Обновите страницу.';
+    }
+  }
+
+  sectionAdd.onclick = () => {
+    sectionAdd.disabled = true;
+    const order = Math.min(9999, Math.max(0, ...sectionRows.map(section => section.order)) + 10);
+    const form = renderSection({label:'',icon:'✦',order,enabled:true});
+    sectionList.append(form);
+    form.elements.namedItem('label').focus();
+  };
+
   async function loadTopics() {
     if (!permitted) return;
     const revision = session;
@@ -149,6 +233,8 @@
       const revision = ++session;
       permitted = false;
       moderation.hidden = true;
+      sectionPanel.hidden = true;
+      sectionList.replaceChildren();
       list.textContent = '';
       bans.textContent = '';
       if (!user) { showAccessError(denied); return; }
@@ -167,6 +253,8 @@
         adminUid = user.uid;
         permitted = true;
         moderation.hidden = false;
+        sectionPanel.hidden = false;
+        void loadSections(revision);
         await loadTopics();
       } catch (error) {
         if (session === revision) showAccessError(error.code === 'permission-denied' ? denied :
