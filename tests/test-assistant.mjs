@@ -82,7 +82,7 @@ assert.doesNotMatch(css,/bottom:calc\(max\(16px,env\(safe-area-inset-bottom,0px\
 assert.match(css,/grid-template-columns:34px minmax\(0,1fr\)/);
 assert.match(css,/\.velar-chat-line\.is-assistant \.velar-chat-action\{grid-column:2;grid-row:2/);
 assert.match(code,/querySelector\('\.velar-assistant-title'\)/);
-assert.match(code,/Не сохраняем и не отправляем автору/);
+assert.match(code,/Учитываем ответы и темы для улучшения VELAR/);
 assert.doesNotMatch(code,/Ответы формируются на устройстве\. Сообщения не сохраняются/);
 assert.match(css,/\.velar-assistant-launch\[aria-expanded="true"\]\{display:none\}/);
 // RUN-088: launcher must disappear at DESKTOP width, not only in mobile media.
