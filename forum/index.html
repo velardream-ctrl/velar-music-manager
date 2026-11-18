@@ -12,7 +12,8 @@
   <header class="masthead">
     <a class="brand" href="../"><img src="../assets/velardream-crystal.png" alt="" width="36" height="44">VELARDREAM <small>RECORDS</small></a>
     <div class="actions">
-      <button id="sign-in" class="outline">Войти по email</button>
+      <button id="sign-in" class="outline" hidden>Войти</button>
+      <button id="verify-email" hidden>Подтвердить email</button>
       <button id="sign-out" hidden>Выйти</button>
       <button id="new-topic" class="gold">＋ Создать тему</button>
     </div>
@@ -49,11 +50,21 @@
   </main>
   <dialog id="email-dialog">
     <form id="email-form">
-      <h2 id="email-title">Войти по email</h2>
-      <p id="email-help">Пришлём ссылку для входа. Адрес email не отображается в обсуждениях.</p>
-      <label>Email<input type="email" name="email" autocomplete="email" required></label>
+      <h2 id="email-title">Вход на форум</h2>
+      <p id="email-help">Войдите по email и паролю. Email не отображается в обсуждениях.</p>
+      <label id="email-field">Email<input type="email" name="email" autocomplete="username" required></label>
+      <label id="password-field">Пароль<input type="password" name="password" autocomplete="current-password" required></label>
       <p id="email-status" role="status"></p>
-      <div class="actions"><button type="button" data-close>Закрыть</button><button type="submit" class="gold" id="email-submit">Отправить ссылку</button></div>
+      <div class="actions">
+        <button type="button" data-close>Закрыть</button>
+        <button type="submit" class="gold" id="email-submit">Войти</button>
+      </div>
+      <p class="actions">
+        <button type="button" id="auth-login" hidden>Уже есть аккаунт</button>
+        <button type="button" id="auth-register">Создать аккаунт</button>
+        <button type="button" id="auth-reset">Задать или восстановить пароль</button>
+        <button type="button" id="auth-resend" hidden>Отправить подтверждение ещё раз</button>
+      </p>
     </form>
   </dialog>
   <dialog id="topic-dialog">
@@ -72,6 +83,6 @@
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script defer src="../studio/firebase-config.js"></script>
-  <script defer src="forum.js?v=2"></script>
+  <script defer src="forum.js?v=3"></script>
 </body>
 </html>
