@@ -893,5 +893,3 @@ body.vmm-print-open{overflow:hidden}
 #panel-landing .landing-display-group .landing-field{margin:12px 0 3px}
 #panel-landing .landing-display-group select{width:100%;max-width:100%;min-height:44px}
 @media(max-width:540px){#panel-landing .landing-display-group{padding:11px}}
-
-.sidebar .forum-admin-link{display:flex;align-items:center;color:#c0cbdf;text-decoration:none;text-align:left;padding:11px 13px;border-radius:10px}
