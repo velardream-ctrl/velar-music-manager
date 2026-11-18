@@ -1,6 +1,5 @@
-import { VelarAiBudget } from "./ai-budget.js";
+import { VelarAiBudget, LEARNING_TOPICS } from "./ai-budget.js";
 export { VelarAiBudget };
-import { LEARNING_TOPICS } from "./ai-budget.js";
 /* RUN-192 VELARDREAM DJ Velar AI - Cloudflare Workers AI.
    PRIVATE OWNER LAB ONLY. Never publish owner bearer tokens or put them in
    GitHub, localStorage, URLs, or Firestore. No public access endpoint.
@@ -57,6 +56,9 @@ export default {
         if(!event||typeof event.local!=="boolean"||
           (event.topic!==""&&!LEARNING_TOPICS.includes(event.topic))||
           (!event.local&&!event.topic))return json({error:"invalid_event"},400);
+        const ip=request.headers.get("CF-Connecting-IP");
+        if(!ip||!(await env.PUBLIC_RATE_LIMITER.limit({key:"usage:"+ip})).success)
+          return json({error:"usage_throttled"},429);
         const namespace=env.PUBLIC_AI_BUDGET;
         const stub=namespace.get(namespace.idFromName("assistant-usage"));
         const result=await stub.fetch("https://internal/assistant-record",{
