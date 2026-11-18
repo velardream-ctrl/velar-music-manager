@@ -1,0 +1,23 @@
+name: Validate DJ Velar production bundle
+on:
+  pull_request:
+    paths:
+      - 'cloudflare/**'
+      - '.github/workflows/dj-velar-cloudflare-production-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+      - name: Build production bundle without deploying
+        run: npx --yes wrangler@4.164.0 deploy --config cloudflare/wrangler.production.toml --dry-run --outdir .wrangler-production-check
