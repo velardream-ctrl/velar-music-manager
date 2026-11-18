@@ -1,0 +1,82 @@
+name: Verify DJ Velar production recovery source
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dj-velar-cloudflare-source-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 07eaf8d0e3541f8cf3bec1c650fc2a374c384131
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compare deployed code without printing it
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const version = '8246ffc9-2209-4633-ab6b-10030b2764dc';
+          const account = process.env.CF_ACCOUNT;
+          const token = process.env.CF_TOKEN;
+          if (!account || account.length !== 32 || !/^[a-f0-9]+$/i.test(account) ||
+              !token || /[^A-Za-z0-9_-]/.test(token)) {
+            console.error('Cloudflare credentials are missing or invalid.');
+            process.exit(1);
+          }
+          const base = 'https://api.cloudflare.com/client/v4/accounts/' + account +
+            '/workers/scripts/dj-velar-private-lab';
+          async function get(path) {
+            const result = await fetch(base + path, {
+              headers: { Authorization: 'Bearer ' + token },
+              redirect: 'error',
+              signal: AbortSignal.timeout(15000)
+            });
+            if (!result.ok) throw new Error('Cloudflare API HTTP ' + result.status);
+            return result;
+          }
+          async function verifyActiveVersion() {
+            const data = await (await get('/deployments')).json();
+            const versions = data.result?.deployments?.[0]?.versions;
+            if (data.success !== true || versions?.length !== 1 ||
+                versions[0].version_id !== version || versions[0].percentage !== 100) {
+              throw new Error('Expected recovery version is no longer the sole active deployment.');
+            }
+          }
+          try {
+            await verifyActiveVersion();
+            const live = await get('/content/v2');
+            let deployed;
+            if (/^multipart\/form-data/i.test(live.headers.get('content-type') || '')) {
+              const parts = [...(await live.formData()).values()].filter(part => part instanceof File);
+              if (parts.length !== 1) throw new Error('Expected one deployed source module.');
+              deployed = await parts[0].text();
+            } else {
+              deployed = await live.text();
+            }
+            await verifyActiveVersion();
+            const original = await readFile('cloudflare/dj-velar-owner-lab.js', 'utf8');
+            const normalize = source => source.replace(/\r\n/g, '\n').trimEnd();
+            if (normalize(deployed) !== normalize(original)) {
+              throw new Error('Cloudflare source differs from the committed RUN-192 recovery source.');
+            }
+            console.log('Active production version matches the RUN-192 recovery source.');
+          } catch (error) {
+            const known = /^(Cloudflare API HTTP |Expected |Cloudflare source differs)/.test(error.message);
+            console.error(known ? error.message : 'Could not read or compare Cloudflare source.');
+            process.exitCode = 1;
+          }
+          NODE
