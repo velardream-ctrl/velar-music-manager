@@ -98,7 +98,6 @@ jobs:
           main = "check.js"
           compatibility_date = "2026-11-17"
           workers_dev = true
-          preview_urls = false
 
           [[ratelimits]]
           name = "PUBLIC_RATE_LIMITER"
