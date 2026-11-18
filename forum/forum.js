@@ -285,6 +285,7 @@
     }
     const app = firebase.initializeApp(window.VELAR_FIREBASE_CONFIG, 'velar-forum');
     auth = app.auth();
+    auth.languageCode = 'ru';
     db = app.firestore();
     auth.onAuthStateChanged(account => {
       user = account;
