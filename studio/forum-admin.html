@@ -15,6 +15,10 @@
   <main class="workspace">
     <h1 class="admin-title">Управление форумом</h1>
     <p id="admin-status" role="status" class="note">Проверяем доступ к Studio…</p>
+    <div id="admin-recovery" class="actions" hidden>
+      <a href="./">Открыть Studio и проверить вход</a>
+      <a href="./forum-admin.html">Повторить проверку</a>
+    </div>
     <section id="moderation" class="panel" hidden aria-label="Темы форума">
       <div class="panel-head">
         <h2>Последние темы</h2>
@@ -26,10 +30,16 @@
       <div id="moderation-bans"></div>
     </section>
   </main>
+  <script>
+    window.forumAdminStartup = setTimeout(function () {
+      document.getElementById('admin-status').textContent = 'Загрузка панели заняла слишком много времени.';
+      document.getElementById('admin-recovery').hidden = false;
+    }, 12000);
+  </script>
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script defer src="firebase-config.js"></script>
-  <script defer src="forum-admin.js?v=2"></script>
+  <script defer src="forum-admin.js?v=3"></script>
 </body>
 </html>
