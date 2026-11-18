@@ -114,8 +114,8 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/velar_forum_topics/$(topicId)).data.visible == true;
     }
     match /velar_forum_topics/{topicId} {
-      allow get: if resource.data.visible == true;
-      allow list: if resource.data.visible == true && request.query.limit <= 100;
+      allow get: if studioAdmin() || resource.data.visible == true;
+      allow list: if request.query.limit <= 100 && (studioAdmin() || resource.data.visible == true);
       allow create: if request.resource.data.keys().hasOnly([
           'uid', 'author', 'body', 'visible', 'createdAt', 'category', 'title'
         ])
@@ -126,8 +126,8 @@ service cloud.firestore {
       allow update: if forumModeration();
       allow delete: if false;
       match /replies/{replyId} {
-        allow get: if forumTopicVisible(topicId) && resource.data.visible == true;
-        allow list: if forumTopicVisible(topicId) && resource.data.visible == true && request.query.limit <= 100;
+        allow get: if studioAdmin() || (forumTopicVisible(topicId) && resource.data.visible == true);
+        allow list: if request.query.limit <= 100 && (studioAdmin() || (forumTopicVisible(topicId) && resource.data.visible == true));
         allow create: if forumTopicVisible(topicId)
           && request.resource.data.keys().hasOnly(['uid', 'author', 'body', 'visible', 'createdAt'])
           && forumPost(request.resource.data, 2000);
