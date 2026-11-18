@@ -1,12 +1,26 @@
 (function () {
   'use strict';
   const status = document.getElementById('admin-status');
+  const recovery = document.getElementById('admin-recovery');
   const moderation = document.getElementById('moderation');
   const list = document.getElementById('moderation-topics');
   const bans = document.getElementById('moderation-bans');
   const refresh = document.getElementById('refresh-topics');
   const denied = 'Войдите в VELARDREAM Studio под аккаунтом администратора.';
   let db, session = 0, permitted = false, adminUid;
+
+  function showAccessError(message) {
+    status.textContent = message;
+    recovery.hidden = false;
+  }
+
+  function withAccessTimeout(check) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error('access-timeout')), 10000);
+    });
+    return Promise.race([check, timeout]).finally(() => clearTimeout(timer));
+  }
 
   function element(tag, text, className) {
     const result = document.createElement(tag);
@@ -129,29 +143,41 @@
     const app = firebase.initializeApp(window.VELAR_FIREBASE_CONFIG);
     db = app.firestore();
     app.auth().onAuthStateChanged(async user => {
+      clearTimeout(window.forumAdminStartup);
+      recovery.hidden = true;
+      status.textContent = 'Проверяем доступ к Studio…';
       const revision = ++session;
       permitted = false;
       moderation.hidden = true;
       list.textContent = '';
       bans.textContent = '';
-      if (!user) { status.textContent = denied; return; }
+      if (!user) { showAccessError(denied); return; }
       try {
-        const token = await user.getIdTokenResult();
+        const token = await withAccessTimeout(user.getIdTokenResult());
         if (!user.emailVerified || token.signInProvider !== 'google.com') {
-          if (session === revision) status.textContent = denied;
+          if (session === revision) showAccessError(denied);
           return;
         }
-        const access = await db.collection('vmm_admins').doc(user.uid).get({source:'server'});
+        const access = await withAccessTimeout(db.collection('vmm_admins').doc(user.uid).get({source:'server'}));
         if (session !== revision) return;
         if (!access.exists || access.data().enabled !== true) {
-          status.textContent = denied;
+          showAccessError(denied);
           return;
         }
         adminUid = user.uid;
         permitted = true;
         moderation.hidden = false;
         await loadTopics();
-      } catch (_) { if (session === revision) status.textContent = denied; }
+      } catch (error) {
+        if (session === revision) showAccessError(error.code === 'permission-denied' ? denied :
+          'Не удалось проверить права администратора. Попробуйте открыть панель ещё раз.');
+      }
+    }, () => {
+      clearTimeout(window.forumAdminStartup);
+      showAccessError('Не удалось восстановить вход в Studio.');
     });
-  } catch (_) { status.textContent = 'Не удалось подключить Firebase Studio.'; }
+  } catch (_) {
+    clearTimeout(window.forumAdminStartup);
+    showAccessError('Не удалось подключить Firebase Studio.');
+  }
 }());
