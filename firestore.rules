@@ -89,6 +89,52 @@ service cloud.firestore {
     match /vmm_contacts/{itemId} { allow read, write: if studioAdmin(); }
     match /vmm_outreach/{itemId} { allow read, write: if studioAdmin(); }
     match /vmm_audit/{itemId} { allow read, write: if studioAdmin(); }
+    // Forum accounts may sign in by email. Studio authorization remains Google-only.
+    function forumWriter() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function forumCategory(value) {
+      return value in ['site', 'ideas', 'collaboration', 'releases'];
+    }
+    function forumPost(data, maximum) {
+      return forumWriter()
+        && data.uid == request.auth.uid
+        && data.author is string && data.author.size() >= 2 && data.author.size() <= 32
+        && data.body is string && data.body.size() >= 1 && data.body.size() <= maximum
+        && data.visible == true && data.createdAt == request.time;
+    }
+    function forumModeration() {
+      return (studioAdmin() ||
+          (forumWriter() && resource.data.uid == request.auth.uid
+            && request.resource.data.visible == false))
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visible'])
+        && request.resource.data.visible is bool;
+    }
+    function forumTopicVisible(topicId) {
+      return get(/databases/$(database)/documents/velar_forum_topics/$(topicId)).data.visible == true;
+    }
+    match /velar_forum_topics/{topicId} {
+      allow get: if resource.data.visible == true;
+      allow list: if resource.data.visible == true && request.query.limit <= 100;
+      allow create: if request.resource.data.keys().hasOnly([
+          'uid', 'author', 'body', 'visible', 'createdAt', 'category', 'title'
+        ])
+        && forumPost(request.resource.data, 3000)
+        && forumCategory(request.resource.data.category)
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 3 && request.resource.data.title.size() <= 100;
+      allow update: if forumModeration();
+      allow delete: if false;
+      match /replies/{replyId} {
+        allow get: if forumTopicVisible(topicId) && resource.data.visible == true;
+        allow list: if forumTopicVisible(topicId) && resource.data.visible == true && request.query.limit <= 100;
+        allow create: if forumTopicVisible(topicId)
+          && request.resource.data.keys().hasOnly(['uid', 'author', 'body', 'visible', 'createdAt'])
+          && forumPost(request.resource.data, 2000);
+        allow update: if forumModeration();
+        allow delete: if false;
+      }
+    }
     match /{document=**} { allow read, write: if false; }
   }
 }
