@@ -52,7 +52,7 @@ jobs:
           export default {
             async fetch(request, env) {
               if (request.method !== 'POST' || new URL(request.url).pathname !== '/check' ||
-                  !env.CHECK_TOKEN || request.headers.get('Authorization') !== 'Bearer ' + env.CHECK_TOKEN) {
+                  !env.CHECK_TOKEN || request.headers.get('X-Velar-Check') !== env.CHECK_TOKEN) {
                 return new Response(null, { status: 404 });
               }
               const id = crypto.randomUUID();
@@ -132,7 +132,7 @@ jobs:
           for (let attempt = 0; attempt < 10; attempt++) {
             result = await fetch(url, {
               method: 'POST',
-              headers: { Authorization: 'Bearer ' + process.env.CHECK_TOKEN },
+              headers: { 'X-Velar-Check': process.env.CHECK_TOKEN },
               redirect: 'error',
               signal: AbortSignal.timeout(15000)
             });
