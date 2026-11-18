@@ -488,7 +488,23 @@
    var unresolved=result.text===replyText(config,'fallbackEnabled')||
      result.text===replyText(config,'fallbackDisabled');
    var router=window.VELAR_AI_FALLBACK;
+   var endpoint='https://dj-velar-private-lab.velardream.workers.dev/v1/public-chat';
    function show(out,source,reason){
+     var topic='';
+     if(unresolved){
+       if(/радио|radio|youtube|ютуб/i.test(t))topic='radio';
+       else if(/артист|альбом|релиз|песн|artist|album/i.test(t))topic='catalog';
+       else if(/жанр|настроен|genre|mood/i.test(t))topic='genres';
+       else if(/музык|ритм|мелоди|аккорд|music|rhythm|chord/i.test(t))topic='music';
+       else if(/сайт|плеер|настройк|site|player/i.test(t))topic='site';
+       else topic='other';
+     }
+     if(typeof window.fetch==='function'&&(source==='local'||topic)){
+       window.fetch(endpoint.replace('/public-chat','/assistant-usage'),{
+         method:'POST',mode:'cors',credentials:'omit',headers:{'Content-Type':'application/json'},
+         body:JSON.stringify({local:source==='local',topic:topic})
+       }).catch(function(){});
+     }
      itemMessage('assistant',out.text,
        (out.actions&&out.actions.length)||out.action?out:null,
        reactionChoice(t,out.text),true);
@@ -502,7 +518,6 @@
    }
    // A fixed non-secret endpoint. Until DNS route and Cloudflare public
    // protection are deliberately enabled, any failure falls back locally.
-   var endpoint='https://dj-velar-private-lab.velardream.workers.dev/v1/public-chat';
    var controller=typeof AbortController==='function'?new AbortController():null;
    var abortTimer=null;
    function remote(){
@@ -581,7 +596,7 @@
    };
    dialog.appendChild(form);
    dialog.appendChild(el('p','velar-assistant-privacy',
-     'Не сохраняем и не отправляем автору'));
+     'Учитываем ответы и темы для улучшения VELAR'));
    root.appendChild(dialog);
    if(window.addEventListener)window.addEventListener('scroll',updateBrowsingState,false);
    function toggle(open){
@@ -654,7 +669,7 @@
    setText('.velar-assistant-close',configLabel('closeText','×'));
    setText('.velar-assistant-submit',configLabel('submit','Спросить'));
    var privacy=setText('.velar-assistant-privacy',
-     configLabel('privacy','Не сохраняем и не отправляем автору'));
+     configLabel('privacy','Учитываем ответы и темы для улучшения VELAR'));
    if(privacy){
      privacy.title=privacy.textContent;
      privacy.style.display=privacy.textContent?'':'none';
