@@ -1,0 +1,34 @@
+# RUN-201: separate staging Worker. Never deploys to existing production Worker.
+name = "dj-velar-ai-staging"
+main = "dj-velar-owner-lab.js"
+compatibility_date = "2026-11-17"
+workers_dev = true
+
+[vars]
+PUBLIC_AI_ENABLED = "false"
+PUBLIC_AI_DAILY_LIMIT = "20"
+
+[ai]
+binding = "AI"
+
+[[ratelimits]]
+name = "PUBLIC_RATE_LIMITER"
+namespace_id = "20101"
+  [ratelimits.simple]
+  limit = 3
+  period = 60
+
+[[ratelimits]]
+name = "PUBLIC_GLOBAL_RATE_LIMITER"
+namespace_id = "20102"
+  [ratelimits.simple]
+  limit = 10
+  period = 60
+
+[[durable_objects.bindings]]
+name = "PUBLIC_AI_BUDGET"
+class_name = "VelarAiBudget"
+
+[[migrations]]
+tag = "run201-staging-budget-v1"
+new_sqlite_classes = ["VelarAiBudget"]
