@@ -40,6 +40,12 @@ try {
     const title=await page.evaluate(content=>{
       if(!VMM_PUBLIC_LANDING.render(content))throw Error('Published content rejected');
       const normalized=VMM_LANDING_SCHEMA.normalize(content);
+      const clips=normalized.releases.cards.filter(item=>item.visible&&item.kind==='video');
+      if(clips.length&&normalized.releases.videoView==='auto'){
+        const rail=document.querySelector('.video-carousel .public-song-carousel-track');
+        if(!rail||rail.children.length!==clips.length)throw Error('Published video carousel incomplete');
+        console.log('Published video carousel',clips.length);
+      }
       const artist=normalized.artists.cards.find(a=>a.visible&&a.featuredTracks.length);
       const song=artist.featuredTracks[0];
       const result=VELAR_NAVIGATION.command('Найди песню '+song.title,normalized);

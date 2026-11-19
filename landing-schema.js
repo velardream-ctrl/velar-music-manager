@@ -171,7 +171,7 @@
       releases:{
         heading:'Музыка, которую можно открыть заново',
         intro:'Синглы, альбомы, клипы и внешние плееры — без загрузки тяжёлых музыкальных файлов на собственный сервер.',
-        cards:[],
+        cards:[],videoView:'auto',
         radio:{enabled:false,controlVersion:2,title:'VELAR RADIO',provider:'spotify',url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh',visual:{mode:'heartbeat',intensity:3,spread:20}},
         playlists:[{title:'Мой лучший плейлист',description:'Музыкальная подборка VELAR',provider:'spotify',
           url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh',visible:true}],
@@ -1057,7 +1057,7 @@
       throw new Error('Страница артиста: неверный способ показа песен.');
     result.artists.detailTrackView=detailTrackView;
     result.releases.cards=cards(releases,'Релизы');
-    result.releases.videoView=['auto','carousel'].indexOf(releases.videoView)>=0?releases.videoView:'grid';
+    result.releases.videoView=['grid','carousel','auto'].indexOf(releases.videoView)>=0?releases.videoView:d.releases.videoView;
     result.releases.videoMotion=motionSettings(releases.videoMotion);
     result.releases.radio=radioConfig(typeof releases.radio==='undefined'?d.releases.radio:releases.radio);
     result.releases.playlists=safeList(releases.playlists,8,'Плейлисты',playlistCard,d.releases.playlists);
