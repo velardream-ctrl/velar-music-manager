@@ -3,6 +3,7 @@
    Only curated public metadata from the one existing landing snapshot. */
 (function(){
  'use strict';
+ var mounted=null;
  var data=null,active='',buttons=[],showAll=false;
  function byId(s){return document.getElementById(s);}
  function el(tag,cls,t){var n=document.createElement(tag);if(cls)n.className=cls;
@@ -14,7 +15,9 @@
    if(!core)return;core.className=core.className.replace(/ crystal-selection-pulse/g,'');void core.offsetWidth;
    core.className+=' crystal-selection-pulse';
  }
- function select(slug,requestedUrl){
+ function select(slug,requestedUrl,play){
+   if(requestedUrl&&mounted&&slug===active)return mounted.openByUrl(requestedUrl,play);
+   mounted=null;
    var selected=null,list=entries(),area=byId('public-topic-detail');
    list.forEach(function(t){if(t.slug===slug)selected=t;});
    if(!selected)selected=list[0]||null;
@@ -38,14 +41,15 @@
    if(!window.VELAR_PUBLIC_SONGS){
      area.appendChild(el('p','topic-empty','Плеер временно недоступен.'));return false;
    }
-   var player=window.VELAR_PUBLIC_SONGS.mount(songs,selected.tracks,{prefix:'topic',batch:12});
+   var player=mounted=window.VELAR_PUBLIC_SONGS.mount(songs,selected.tracks,{prefix:'topic',batch:12});
    // A requested source opens inline immediately below its one song row.
-   if(requestedUrl&&selected.slug===slug)return player.openByUrl(requestedUrl);
+   if(requestedUrl&&selected.slug===slug)return player.openByUrl(requestedUrl,play);
    return false;
  }
- function openFromChat(slug,url){return select(slug,url);}
+ function openFromChat(slug,url,play){return select(slug,url,play);}
 
  function render(value){
+   mounted=null;
    var cloud=byId('public-topic-cloud'),orbit=byId('public-topic-orbit');
    if(!cloud||!orbit)return;
    data=value||{heading:'Созвездия чувств и историй',intro:'',entries:[]};

@@ -168,6 +168,8 @@
      return {text:settings.jokes[jokeCursor],
        action:'ask',target:'ещё анекдот',label:'Ещё анекдот 🎵'};
    }
+   var search=window.VELAR_NAVIGATION&&window.VELAR_NAVIGATION.command(raw,data);
+   if(search)return search;
    // RUN-087: contextual music guide keeps owner rules above defaults.
    var guide=window.VELAR_FAQ&&window.VELAR_FAQ.guide&&window.VELAR_FAQ.guide(q,data,settings);
    if(guide)return guide;
@@ -274,12 +276,13 @@
      var list=action&&action.actions?action.actions:(action&&action.label?[action]:[]);
      if(!list.length){if(typeof onComplete==='function')onComplete();return;}
      var group=list.length>1?el('div','velar-chat-actions'):row;
-     list.slice(0,3).forEach(function(choice){
+     (list[0]&&list[0].action==="navigate-song"?list:list.slice(0,3)).forEach(function(choice){
        if(!choice||!choice.label)return;
        var a=el('button','velar-chat-action',choice.label);
        a.type='button';
        a.onclick=function(){
-         if(choice.action==='email'){
+         if(choice.action==='navigate-song'){visitSong(choice);}
+         else if(choice.action==='email'){
            var email=config&&config.contactEmail;
            if(!email)return;
            var subject='VELARDREAM — предложение о сотрудничестве';
@@ -295,7 +298,7 @@
              openedSong=window.VELAR_TOPICS.openFromChat(choice.target,choice.url);
            if(choice.kind==='language'&&window.VELAR_LANGUAGES&&window.VELAR_LANGUAGES.openFromChat)
              openedSong=window.VELAR_LANGUAGES.openFromChat(choice.target,choice.url);
-           window.location.hash=choice.kind==='language'?'languages':'topics';
+           if(!openedSong)window.location.hash=choice.kind==='language'?'languages':'topics';
            if(!openedSong&&choice.kind==='topic'&&window.VELAR_TOPICS&&window.VELAR_TOPICS.select)
              window.VELAR_TOPICS.select(choice.target);
          }else if(choice.action==='analytics-yes'||choice.action==='analytics-no'){
@@ -465,6 +468,12 @@
      {actions:[{action:'analytics-yes',label:'Разрешить аналитику'},
        {action:'analytics-no',label:'Отказаться'}]},'wave',false);
  }
+ function visitSong(choice){
+   if(!window.VELAR_NAVIGATION.navigate(choice))return false;
+   var close=root&&root.querySelector('.velar-assistant-close');
+   if(opened&&close&&close.onclick)close.onclick();
+   return true;
+ }
  function say(query){
    var t=String(query||'').trim().slice(0,MAX_INPUT);
    if(!t)return;
@@ -481,8 +490,10 @@
      if(input)input.value='';
      return;
    }
+   if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.cancelNavigation)window.VELAR_PUBLIC_SONGS.cancelNavigation();
    var result=answer(t,published,config);
    if(input)input.value='';
+   if(result.selection&&!visitSong(result.selection))result={text:'Подборка обновилась. Попробуй найти песню ещё раз.'};
    // RUN-196: owner's rules, actual music commands and verified site links
    // always win. Only unrecognized questions may be sent to public AI.
    var unresolved=result.text===replyText(config,'fallbackEnabled')||

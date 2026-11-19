@@ -2,12 +2,15 @@
    ES5-compatible for legacy iPad Safari; iframe created only after interaction. */
 (function(){
  'use strict';
+ var mounted=null;
  var current='',items=[],buttons=[];
  function byId(id){return document.getElementById(id);}
  function el(tag,cls,content){var n=document.createElement(tag);if(cls)n.className=cls;if(typeof content==='string')n.textContent=content;return n;}
  function clear(n){while(n&&n.firstChild)n.removeChild(n.firstChild);}
  function available(){return items.filter(function(g){return g.visible===true;});}
  function select(id){
+   if(mounted&&id===current)return mounted;
+   mounted=null;
    var list=available(),selected=null,detail=byId('public-genre-detail');
    list.forEach(function(g){if(g.id===id)selected=g;});
    if(!selected)selected=list[0]||null;
@@ -28,9 +31,10 @@
    if(!window.VELAR_PUBLIC_SONGS||!window.VELAR_PUBLIC_SONGS.mount){
      detail.appendChild(el('p','topic-empty','Плеер временно недоступен.'));return;
    }
-   window.VELAR_PUBLIC_SONGS.mount(songs,selected.tracks,{prefix:'genre',batch:12});
+   return mounted=window.VELAR_PUBLIC_SONGS.mount(songs,selected.tracks,{prefix:'genre',batch:12});
  }
  function render(value){
+   mounted=null;
    var holder=byId('public-genres-tags');
    if(!holder)return;
    items=value&&Array.isArray(value.entries)?value.entries:[];

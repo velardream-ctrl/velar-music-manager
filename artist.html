@@ -12,6 +12,7 @@
  <meta property="og:description" id="artist-og-description" content="Музыка и история артиста VELARDREAM Records">
  <meta property="og:url" id="artist-og-url" content="https://velardream.com/artist.html">
  <link rel="icon" href="favicon.svg?v=2" type="image/svg+xml">
+ <link rel="stylesheet" href="style.css?v=82&consent=190">
  <link rel="stylesheet" href="artist-detail.css?v=3">
  <title>Артист — VELARDREAM Records</title>
  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
@@ -20,8 +21,11 @@
  <script src="landing-schema.js?v=31" defer></script>
  <script src="image-loading.js?v=1" defer></script>
   <script src="public-offline.js?v=1" defer></script>
+ <script src="smart-navigation.js?v=1" defer></script>
  <script src="public-song-ui.js?v=25" defer></script>
  <script src="analytics-public.js?v=1" defer></script>
+ <script src="youtube-compat.js?v=2" defer></script>
+ <script src="landing-public.js?v=57" defer></script>
  <script src="artist-detail.js?v=5" defer></script>
 </head>
 <body>
@@ -57,6 +61,11 @@
    <section class="artist-section" id="artist-tracks-section" hidden>
     <h2>Лучшие песни</h2>
     <p class="artist-hint">Открываются на официальных музыкальных площадках</p>
+    <form id="artist-song-search" role="search">
+     <label>Найти песню <input type="search" name="song" maxlength="160" required></label>
+     <button type="submit">Найти</button>
+     <div class="artist-song-results" aria-live="polite"></div>
+    </form>
     <div class="artist-tracks" id="artist-tracks"></div>
     <div class="artist-track-pagination" id="artist-track-pagination"></div>
    </section>

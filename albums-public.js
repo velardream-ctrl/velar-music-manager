@@ -3,7 +3,7 @@
    No private catalog, audio, lyrics or new Firestore reads. */
 (function(){
  'use strict';
- var active=null;
+ var active=null,openers=Object.create(null);
  function el(tag,cls,txt){
    var e=document.createElement(tag);if(cls)e.className=cls;
    if(typeof txt==='string')e.textContent=txt;return e;
@@ -21,7 +21,7 @@
  function render(config){
    var host=document.getElementById('public-albums-cards');
    if(!host||!config)return;
-   closeCurrent();clear(host);
+   closeCurrent();clear(host);openers=Object.create(null);
    var heading=document.getElementById('albums-title'),intro=document.getElementById('public-albums-intro');
    if(heading)heading.textContent=config.heading;
    if(intro)intro.textContent=config.intro;
@@ -76,11 +76,15 @@
        }else songs.appendChild(el('p','cms-album-empty','Песни ещё не добавлены.'));
        active={button:open,host:songs,player:player,card:card};
      };
+     openers[album.id]=function(){
+       if(!active||active.button!==open)open.onclick();
+       return active&&active.player;
+     };
      body.appendChild(open);
      card.appendChild(body);
      card.appendChild(songs);
      host.appendChild(card);
    });
  }
- window.VELAR_ALBUMS={render:render};
+ window.VELAR_ALBUMS={render:render,expand:function(id){return openers[id]&&openers[id]();}};
 }());

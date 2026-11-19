@@ -234,7 +234,7 @@
      sorted.sort(function(a,b){return a.title.localeCompare(b.title,'ru');});
    var grouped=groupSongs(sorted),layout=safe.artists.detailTrackView||'compact';
    tracks.className='artist-tracks artist-tracks--'+layout;
-   var activeCard=null,activeProvider='',activePlayer=null,activeButtons=[];
+   var sharedPlayer=null,activeCard=null,activeProvider='',activePlayer=null,activeButtons=[];
    function closePlayer(){
      if(activePlayer)clean(activePlayer);
      activeButtons.forEach(function(b){b.setAttribute('aria-pressed','false');});
@@ -277,6 +277,7 @@
      var pageRows=filtered.slice(page*pageSize,(page+1)*pageSize);
      pageRows.forEach(function(track,index){
        var item=make('div','artist-track-card');
+       item.setAttribute('data-url',track.sources[0].url);
        var headline=make('div','artist-track-headline');
        var artwork=null;
        if(layout!=='compact'){
@@ -317,8 +318,40 @@
        }
      }
    }
-   if(grouped.length){
-     if(grouped.length>8){
+   var form=node('artist-song-search');
+   var oldPagination=node('artist-track-pagination');if(oldPagination)clean(oldPagination);
+   if(form&&window.VELAR_NAVIGATION){
+     var results=form.querySelector('.artist-song-results'),queryInput=form.elements.song;
+     function reveal(choice){
+       if(sharedPlayer)return sharedPlayer.openByUrl(choice.url,choice.play);
+       var selected=-1;
+       grouped.forEach(function(group,i){if(group.sources.some(function(src){return src.url===choice.url;}))selected=i;});
+       if(selected<0)return false;
+       page=Math.floor(selected/pageSize);draw();
+       var card=list.children[selected%pageSize],button=card.querySelector('.artist-track-source');
+       button.click();card.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+       card.className+=' song-found';window.setTimeout(function(){card.classList.remove('song-found');},2400);
+       return true;
+     }
+     form.onsubmit=function(event){
+       event.preventDefault();clean(results);
+       window.VELAR_PUBLIC_SONGS.cancelNavigation();
+       var result=window.VELAR_NAVIGATION.command('Найди песню '+queryInput.value,{artists:{cards:[artist]}});
+       if(!result)return;
+       if(result.selection){reveal(result.selection);return;}
+       results.appendChild(make('span','',result.text));
+       (result.actions||[]).forEach(function(choice){
+         var pick=make('button','artist-track-page-button',choice.label);pick.type='button';
+         pick.onclick=function(){clean(results);reveal(choice);};results.appendChild(pick);
+       });
+     };
+   }
+   if(artist.profileDisplay&&window.VELAR_PUBLIC_SONGS){
+     sharedPlayer=window.VELAR_PUBLIC_SONGS.mount(tracks,grouped.map(function(group){
+       var track=artTrack(group);track.artist=artist.title;return track;
+     }),{prefix:'artist',view:artist.profileDisplay,motion:artist.profileDisplayMotion,keepOrder:true});
+   }else if(grouped.length){
+     if(grouped.length>8&&!form){
        search=make('input','artist-track-search');search.type='search';
        search.placeholder='Найти песню…';
        search.setAttribute('aria-label','Найти песню артиста');

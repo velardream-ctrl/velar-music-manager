@@ -1,0 +1,139 @@
+import assert from 'node:assert/strict';
+import { pathToFileURL } from 'node:url';
+import { readFile } from 'node:fs/promises';
+import { chromium, webkit } from 'playwright';
+
+const useWebKit=process.argv.includes('--webkit');
+const browser=useWebKit?await webkit.launch():await chromium.launch({channel:'chrome'});
+try {
+  const page=await browser.newPage({viewport:{width:980,height:800},serviceWorkers:'block'});
+  const errors=[];
+  page.on('pageerror',e=>errors.push(String(e)));
+  const live=process.argv.includes('--published');
+  const origin='https://velardream.com/';
+  if(live){
+    const resources=['index.html','smart-navigation.js','public-song-ui.js','landing-public.js','velar-assistant.js'];
+    const deadline=Date.now()+8*60*1000;
+    for(const file of resources){
+      const expected=await readFile(file,'utf8');
+      for(;;){
+        const response=await fetch(origin+file+'?verify='+Date.now());
+        if(response.ok&&await response.text()===expected)break;
+        if(Date.now()>deadline)throw Error('Pages did not serve release file '+file);
+        await new Promise(resolve=>setTimeout(resolve,6000));
+      }
+    }
+  }
+  await page.route(/^https?:/,route=>live&&route.request().url().startsWith(origin)&&route.request().method()==='GET'?route.continue():route.abort());
+  await page.goto(live?origin+'?verify='+Date.now():pathToFileURL(process.cwd()+'/index.html').href);
+  if(live){
+    const response=await fetch('https://firestore.googleapis.com/v1/projects/velardream-records-studio/databases/(default)/documents/vmm_public_pages/landing');
+    assert.equal(response.status,200);
+    function decode(v){
+      if(v.mapValue)return Object.fromEntries(Object.entries(v.mapValue.fields||{}).map(([k,value])=>[k,decode(value)]));
+      if(v.arrayValue)return (v.arrayValue.values||[]).map(decode);
+      if(v.integerValue)return Number(v.integerValue);
+      return Object.values(v)[0];
+    }
+    const document=decode({mapValue:await response.json()});
+    assert.equal(document.status,'published');
+    const title=await page.evaluate(content=>{
+      if(!VMM_PUBLIC_LANDING.render(content))throw Error('Published content rejected');
+      const normalized=VMM_LANDING_SCHEMA.normalize(content);
+      const artist=normalized.artists.cards.find(a=>a.visible&&a.featuredTracks.length);
+      const song=artist.featuredTracks[0];
+      const result=VELAR_NAVIGATION.command('Найди песню '+song.title,normalized);
+      const choice=result.selection||(result.actions||[]).find(c=>c.url===song.url);
+      if(!choice||!VELAR_NAVIGATION.navigate(choice))throw Error('Published song unreachable');
+      return song.title;
+    },document.content);
+    await page.waitForFunction(()=>document.querySelector('.song-found iframe'));
+    console.log('Published catalog and player verified:',title);
+  }
+  await page.evaluate(()=>{
+    const d=window.fixture=VMM_LANDING_SCHEMA.defaults();
+    const group=d.genres.topics.entries[0];
+    group.visible=true;
+    group.tracks=Array.from({length:250},(_,i)=>({
+      title:i===248?'Люба':'Трек '+String(i).padStart(3,'0'),artist:'Velar',
+      provider:'youtube',url:'https://www.youtube.com/watch?v='+String(i).padStart(11,'0')
+    }));
+    d.genres.displayModes={topics:'auto',languages:'rows',genres:'rows',albums:'rows'};
+    d.genres.assistant.enabled=true;
+    VMM_LANDING_SCHEMA.normalize(d);
+  });
+  for(const mode of ['rows','carousel','auto','compact']){
+    assert.ok(await page.evaluate(mode=>{
+      fixture.genres.displayModes.topics=mode;
+      return VMM_PUBLIC_LANDING.render(fixture);
+    },mode));
+    const command=text=>page.evaluate(text=>{
+      const result=VELAR_NAVIGATION.command(text,fixture);
+      return VELAR_NAVIGATION.navigate(result.selection);
+    },text);
+    assert.ok(await command('Найди песню Трек 220'));
+    assert.ok(await command('Включи Любу'));
+    const selected=page.locator('#public-topic-detail .is-playing');
+    await selected.filter({hasText:'Люба'}).waitFor();
+    assert.equal(await page.locator('#public-topic-detail iframe').count(),1);
+    assert.match(await selected.locator('iframe').getAttribute('src'),/autoplay=1/);
+    if(mode==='auto'||mode==='carousel'){
+      for(const width of [980,390,844]){
+        await page.setViewportSize({width,height:800});
+        await page.waitForTimeout(300);
+        const offset=await selected.evaluate(el=>{
+          const rail=el.parentNode,r=rail.getBoundingClientRect(),c=el.getBoundingClientRect();
+          return Math.abs(c.left+c.width/2-r.left-rail.clientWidth/2);
+        });
+        assert.ok(offset<=3,'Center with '+width+'px viewport: '+offset);
+      }
+      if(mode==='auto'){
+        const rail=page.locator('#public-topic-detail .public-song-carousel-track');
+        const pause=page.locator('#public-topic-detail button').filter({hasText:'Пауза'});
+        await pause.click();
+        await selected.locator('.public-song-source').click();
+        await page.mouse.move(0,0);
+        const stopped=await rail.evaluate(el=>el.scrollLeft);
+        await page.waitForTimeout(450);
+        assert.equal(await rail.evaluate(el=>el.scrollLeft),stopped);
+        await page.getByRole('button',{name:'Продолжить',exact:true}).click();
+        await page.mouse.move(0,0);
+        await page.waitForFunction(pos=>document.querySelector('#public-topic-detail .public-song-carousel-track').scrollLeft!==pos,stopped);
+      }
+    }
+  }
+  assert.deepEqual(await page.evaluate(()=>{
+    const get=q=>VELAR_NAVIGATION.command(q,fixture);
+    return [get('Найди Луба').actions.length,get('Найди песню Трек 20').actions.length,!!get('Найди песню Неизвестная').selection];
+  }),[1,10,false]);
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.evaluate(()=>{
+    fixture.genres.displayModes.topics='auto';
+    VMM_PUBLIC_LANDING.render(fixture);
+    document.querySelector('.velar-assistant-launch').click();
+    const input=document.querySelector('.velar-assistant-input');
+    input.value='Найди песню Люба';
+    input.form.dispatchEvent(new Event('submit',{cancelable:true}));
+  });
+  await page.locator('#public-topic-detail .song-found').filter({hasText:'Люба'}).waitFor();
+  const artistDocument=await page.evaluate(()=>{
+    const data=structuredClone(fixture),artist={};data.artists.cards=[artist];
+    artist.visible=true;artist.title='Test Artist';artist.artistId='test-artist';
+    artist.featuredTracks=data.genres.topics.entries[0].tracks.slice(0,5);
+    artist.profileDisplay='auto';artist.homeDisplay='rows';
+    artist.profileDisplayMotion={direction:'left',end:'swing',speed:87};
+    const normalized=VMM_LANDING_SCHEMA.normalize(data);
+    if(JSON.stringify(normalized)!==JSON.stringify(VMM_LANDING_SCHEMA.normalize(normalized)))throw Error('Settings do not round-trip');
+    if(normalized.artists.cards[0].homeDisplay!=='rows'||normalized.genres.displayModes.topics!=='auto')throw Error('Layouts crossed sections');
+    return data;
+  });
+  const artistUrl=live?origin+'artist.html':pathToFileURL(process.cwd()+'/artist.html').href;
+  await page.goto(artistUrl+'?id=test-artist');
+  assert.ok(await page.evaluate(d=>VMM_ARTIST_DETAIL.render(d),artistDocument));
+  const profile=page.locator('#artist-song-search');
+  await profile.locator('input').fill('Трек 003');
+  await profile.getByRole('button',{name:'Найти',exact:true}).click();
+  await page.locator('#artist-tracks .song-found iframe').waitFor();
+  assert.deepEqual(errors,[]);
+  console.log('Browser passed: list, compact, carousel, auto, repeated navigation, centering, pause, restore, fuzzy and ambiguous queries.');
+} finally { await browser.close(); }
