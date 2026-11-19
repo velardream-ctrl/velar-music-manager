@@ -108,14 +108,16 @@ service cloud.firestore {
       allow list: if request.query.limit <= 100;
       allow create, update: if studioAdmin()
         && sectionId.matches('^[a-zA-Z0-9_-]{1,32}$')
-        && request.resource.data.keys().hasOnly(['label', 'icon', 'order', 'enabled'])
+        && request.resource.data.keys().hasOnly(['label', 'icon', 'order', 'enabled', 'deleted'])
         && request.resource.data.label is string
         && request.resource.data.label.size() >= 2 && request.resource.data.label.size() <= 60
         && request.resource.data.icon is string
         && request.resource.data.icon.size() >= 1 && request.resource.data.icon.size() <= 12
         && request.resource.data.order is int
         && request.resource.data.order >= 0 && request.resource.data.order <= 9999
-        && request.resource.data.enabled is bool;
+        && request.resource.data.enabled is bool
+        && request.resource.data.get('deleted', false) is bool
+        && (!request.resource.data.get('deleted', false) || !request.resource.data.enabled);
       allow delete: if false;
     }
     function forumPost(data, maximum) {
