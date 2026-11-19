@@ -541,6 +541,15 @@
     auth = app.auth();
     auth.languageCode = 'ru';
     db = app.firestore();
+    db.collection('velar_forum_settings').doc('public').get().then(snapshot => {
+      if (!snapshot.exists) return;
+      const {title, subtitle} = snapshot.data();
+      const name = title || 'Форум';
+      $('forum-title').textContent = name;
+      $('forum-subtitle').textContent = subtitle;
+      $('forum-subtitle').hidden = !subtitle;
+      document.title = name + ' — VELARDREAM';
+    }).catch(() => {});
     sections.load(db).then(rows => {
       if (category && !rows.some(section => section.id === category && section.enabled)) category = '';
       renderSections(rows);
