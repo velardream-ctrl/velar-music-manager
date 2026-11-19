@@ -69,6 +69,7 @@
    if(choice.kind==='artist'){
      var groups=document.querySelectorAll('[data-song-artist]');
      for(var g=0;g<groups.length;g++)if(groups[g].getAttribute('data-song-artist')===choice.target){base=groups[g];break;}
+     if(base===document)return false;
      var list=base.querySelector('.public-artist-song-list');
      if(list&&list.velarSongs)return list.velarSongs.openByUrl(choice.url,choice.play);
    }
@@ -79,6 +80,11 @@
      if(button){
        card.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
        if(button.getAttribute('aria-pressed')!=='true')button.click();
+       var frame=card.querySelector('iframe');
+       if(choice.play&&frame&&/^https:\/\/www\.youtube-nocookie\.com\/embed\//.test(frame.src)){
+         frame.setAttribute('allow','autoplay; encrypted-media; fullscreen; picture-in-picture');
+         if(frame.src.indexOf('autoplay=1')<0)frame.src+=(frame.src.indexOf('?')<0?'?':'&')+'autoplay=1';
+       }
        card.classList.add('song-found');window.setTimeout(function(){card.classList.remove('song-found');},2400);
        return true;
      }

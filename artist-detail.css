@@ -1,3 +1,7 @@
+#artist-song-search{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+#artist-song-search input,#artist-song-search button{padding:8px;border-radius:8px;background:#162842;color:inherit;border:1px solid #9c855d}
+.artist-song-results{display:flex;flex-wrap:wrap;gap:6px}
+.artist-track-card{scroll-margin-top:5rem}
 /* RUN-115. Standalone, public, ES5-compatible artist profile layout. */
 :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#f5ecdb;background:#0a1023}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 55% 0,#28365c 0,#101c38 35%,#0a1023 80%);line-height:1.6}

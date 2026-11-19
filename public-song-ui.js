@@ -201,7 +201,7 @@
      list.velarSongs=outer;redraw();return outer;
    }
    if(view==='tiles')list.className+=' public-song-list--tiles';
-   var isCarousel=view==='carousel'||view==='auto',firstRendered=0;
+   var isCarousel=view==='carousel'||view==='auto',firstRendered=0,cycling=false;
    var amount=opts.batch||12,index=-1,source='',slots=[],buttons=[],titles=[],entries=[],
      count=0,more=null,instance=null,container=list,rail=null,
      position=0,previous=null,following=null,counter=null;
@@ -218,13 +218,14 @@
    }
    function showAt(n){
      if(!isCarousel)return;
-     if(n<firstRendered||n>=count+amount)windowAt(n);
-     if(n>=count&&count<tracks.length)appendBatch();
-     position=Math.max(0,Math.min(count-1,n));
+     if(n<0||n>=tracks.length)return;
+     if(!entries[n]&&(cycling||n<firstRendered||n>=count+amount))windowAt(n);
+     if(!entries[n]&&n>=count&&count<tracks.length)appendBatch();
+     position=Math.max(0,Math.min(tracks.length-1,n));
      var item=entries[position];
      if(item&&rail){
        var left=center(item);
-       if(rail.scrollTo){try{rail.scrollTo({left:left,behavior:'smooth'});}
+       if(rail.scrollTo){try{rail.scrollTo({left:left,behavior:window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}
          catch(e){rail.scrollLeft=left;}}
        else rail.scrollLeft=left;
      }
@@ -235,12 +236,12 @@
      var nav=el('div','public-song-carousel-controls');
      previous=el('button','public-song-carousel-arrow','‹');
      previous.type='button';previous.setAttribute('aria-label','Предыдущая песня');
-     previous.onclick=function(){showAt(position-1);};
+     previous.onclick=function(){manualUntil=Date.now()+1400;showAt(position-1);};
      counter=el('span','public-song-carousel-count');
      counter.setAttribute('aria-live','polite');
      following=el('button','public-song-carousel-arrow','›');
      following.type='button';following.setAttribute('aria-label','Следующая песня');
-     following.onclick=function(){showAt(position+1);};
+     following.onclick=function(){manualUntil=Date.now()+1400;showAt(position+1);};
      nav.appendChild(previous);nav.appendChild(counter);nav.appendChild(following);
      rail=el('div','public-song-carousel-track');
      rail.setAttribute('role','region');
@@ -249,9 +250,10 @@
        if(moving)return;
        if(!rail.clientWidth||!rail.scrollWidth)return;
        var nearest=position,dist=Infinity;
-       for(var j=0;j<count;j++)if(entries[j]){
-         var delta=Math.abs(center(entries[j])-rail.scrollLeft);
-         if(delta<dist){dist=delta;nearest=j;}
+       for(var j=0;j<rail.children.length;j++){
+         var row=rail.children[j];if(typeof row.velarIndex!=='number')continue;
+         var delta=Math.abs(center(row)-rail.scrollLeft);
+         if(delta<dist){dist=delta;nearest=row.velarIndex;}
        }
        if(nearest!==position){position=nearest;updateCarousel();}
      };
@@ -307,7 +309,7 @@
    // Explicit repeat click toggles off; picking the other service switches players.
    // The chat deep link calls open() directly so it can always OPEN the requested song.
    function toggle(i,src,fromTitle){
-     navigation++;moving=false;
+     navigation++;moving=false;if(rail&&view!=='auto')rail.style.scrollSnapType='';
      // RUN-140: use our own active state, never inspect third-party iframe DOM.
      // Mobile Safari may report iframe children inconsistently while loading.
      if(index===i&&(fromTitle||source===src.provider)){
@@ -322,7 +324,7 @@
      var item=el('div','public-song-entry '+classes+'-song-entry'+
        (view==='covers'?' public-song-entry--covers':view==='tiles'?' public-song-entry--tiles':
          isCarousel?' public-song-entry--carousel':''));
-     item.setAttribute('data-song-url',track.url);
+     item.setAttribute('data-song-url',track.url);item.velarIndex=i;
      entries[i]=item;
      var title=el('div','public-song-label');
      title.appendChild(el('span','public-song-index',('0'+(i+1)).slice(-2)));
@@ -432,7 +434,7 @@
      // until user focus or a playback click. Legacy mode remains eager.
    }
    function windowAt(target){
-     clearActive();clear(container);
+     cycling=false;clearActive();clear(container);
      entries=[];slots=[];buttons=[];titles=[];more=null;
      firstRendered=Math.max(0,target-Math.floor(amount/2));
      count=firstRendered;appendBatch();
@@ -454,8 +456,8 @@
      for(var i=0;i<tracks.length;i++){
        var sources=approved(tracks[i]);
        for(var j=0;j<sources.length;j++)if(sources[j].url===url){
-         if(isCarousel&&(i<firstRendered||i>=count+amount))windowAt(i);
-         while(i>=count)appendBatch(); // Preserve mounted players when growing.
+         if(isCarousel&&!entries[i]&&(cycling||i<firstRendered||i>=count+amount))windowAt(i);
+         while(!entries[i]&&i>=count)appendBatch(); // Preserve mounted players when growing.
          var card=entries[i],ticket=++navigation;
          if(!card)return false;
          var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -464,12 +466,13 @@
          }
          function arrive(){
            moving=false;
+           if(rail&&view!=='auto')rail.style.scrollSnapType='';
            if(ticket!==navigation||card.isConnected===false)return;
            open(i,sources[j],play);
            if(card.classList){card.classList.add('song-found');window.setTimeout(function(){card.classList.remove('song-found');},2400);}
          }
          if(!rail||reduced||!window.requestAnimationFrame){arrive();return true;}
-         var start=rail.scrollLeft,time=null;
+         var start=rail.scrollLeft,time=null;rail.style.scrollSnapType='none';
          moving=true;
          function step(now){
            if(ticket!==navigation||card.isConnected===false){if(ticket===moveTicket)moving=false;return;}
@@ -483,7 +486,7 @@
      }
      return false;
    }
-   var moving=false,moveTicket=0;
+   var moving=false,moveTicket=0,manualUntil=0;
    instance={openByUrl:openByUrl,close:clearActive};
    list.velarSongs=instance;
    appendBatch();
@@ -507,7 +510,7 @@
        if(observer)observer.disconnect();if(frame)window.cancelAnimationFrame(frame);
        document.removeEventListener('visibilitychange',visibility);
      });
-     if(resize)resize.observe(rail);
+     if(resize){resize.observe(rail);if(entries[0])resize.observe(entries[0]);}
      else window.addEventListener('resize',margins);
      window.requestAnimationFrame(margins);
      if(view!=='auto')return;
@@ -548,14 +551,27 @@
      if(direction<0&&tracks.length>1)window.requestAnimationFrame(function(){
        if(index<0&&!moving){windowAt(tracks.length-1);margins();rail.scrollLeft=center(entries[tracks.length-1]);}
      });
+     function extendLoop(){
+       var forward=direction>0,anchor=forward?rail.lastElementChild:rail.firstElementChild;
+       var k=(anchor.velarIndex+direction+tracks.length)%tracks.length;
+       var before=anchor.getBoundingClientRect().left;
+       if(!entries[k])addRow(k);
+       if(forward)rail.appendChild(entries[k]);else rail.insertBefore(entries[k],rail.firstElementChild);
+       if(rail.children.length>amount*3){
+         var old=forward?rail.firstElementChild:rail.lastElementChild,idx=old.velarIndex;
+         rail.removeChild(old);delete entries[idx];delete slots[idx];delete buttons[idx];delete titles[idx];
+       }
+       rail.scrollLeft+=anchor.getBoundingClientRect().left-before;
+       cycling=true;
+     }
      function tick(now){
        frame=0;
        if(!list.isConnected)return;
        var dt=last?Math.min(40,now-last):0;last=now;
-       if(seen&&!document.hidden&&!reduced.matches&&!paused&&!hover&&!held&&!moving&&index<0&&Date.now()>until&&!document.getElementById('velar-legacy-video-modal')&&tracks.length>1){
+       if(seen&&!document.hidden&&!reduced.matches&&!paused&&!hover&&!held&&!moving&&index<0&&Date.now()>Math.max(until,manualUntil)&&!document.getElementById('velar-legacy-video-modal')&&tracks.length>1){
          var edge=rail.scrollWidth-rail.clientWidth;
-         if(direction>0&&edge-rail.scrollLeft<rail.clientWidth&&count<tracks.length){appendBatch();trimInvisible();}
-         if(direction<0&&rail.scrollLeft<rail.clientWidth&&firstRendered>0){prependPrevious();trimInvisible();}
+         if(!cycling&&direction>0&&edge-rail.scrollLeft<rail.clientWidth&&count<tracks.length){appendBatch();trimInvisible();}
+         if(!cycling&&direction<0&&rail.scrollLeft<rail.clientWidth&&firstRendered>0){prependPrevious();trimInvisible();}
          edge=rail.scrollWidth-rail.clientWidth;
          if(edge>0){
            fraction+=dt*(8+Number(motion.speed||35)*1.6)/1000;
@@ -564,15 +580,7 @@
              var next=rail.scrollLeft+direction*pixels;
              if(next>edge||next<0){
                if(motion.end==='swing'){direction*=-1;next=Math.max(0,Math.min(edge,next));}
-               else if(direction>0&&firstRendered>0||direction<0&&count<tracks.length){
-                 windowAt(direction>0?0:tracks.length-1);margins();
-                 next=center(entries[direction>0?0:tracks.length-1]);
-               }else if(count===tracks.length){
-                 // Rotate existing nodes. A visible neighbour keeps its screen position.
-                 var anchor=direction>0?rail.lastElementChild:rail.firstElementChild,before=anchor.getBoundingClientRect().left;
-                 if(direction>0)rail.appendChild(rail.firstElementChild);else rail.insertBefore(rail.lastElementChild,rail.firstElementChild);
-                 next=rail.scrollLeft+anchor.getBoundingClientRect().left-before+direction*pixels;
-               }else {appendBatch();next=edge;}
+               else {extendLoop();next=rail.scrollLeft+direction*pixels;}
              }
              rail.scrollLeft=next;
            }
