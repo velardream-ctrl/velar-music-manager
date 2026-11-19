@@ -134,12 +134,50 @@
     return field;
   }
 
+  const iconPresets = [
+    ['✧', 'Вопросы'], ['♫', 'Музыка и идеи'], ['✦', 'Сотрудничество'], ['◎', 'Релизы'],
+    ['💬', 'Обсуждения'], ['🎤', 'Вокал'], ['🎸', 'Инструменты'], ['🎧', 'Прослушивание'],
+    ['🎹', 'Клавиши'], ['🎛️', 'Студия и звук'], ['💿', 'Альбомы'], ['🎬', 'Видео'],
+    ['📣', 'Новости'], ['📅', 'События'], ['💡', 'Предложения'], ['🛠️', 'Помощь'],
+    ['🤝', 'Совместные проекты'], ['🌌', 'Созвездия'], ['⭐', 'Избранное']
+  ];
+
+  function sectionIconPicker(form, value) {
+    const preset = element('select');
+    const label = element('label', 'Иконка');
+    for (const [icon, name] of iconPresets) {
+      const option = element('option', icon + ' ' + name);
+      option.value = icon;
+      preset.append(option);
+    }
+    const customOption = element('option', 'Своя иконка…');
+    customOption.value = '';
+    preset.append(customOption);
+    label.append(preset);
+    form.append(label);
+
+    const custom = sectionField(form, 'icon', 'Свой символ или эмодзи', '', {maxLength:12});
+    preset.value = iconPresets.some(([icon]) => icon === value) ? value : '';
+    if (!preset.value) custom.value = value;
+
+    function sync() {
+      custom.required = !preset.value;
+      custom.parentElement.hidden = !custom.required;
+    }
+    preset.onchange = () => {
+      sync();
+      if (custom.required) custom.focus();
+    };
+    sync();
+    return () => preset.value || custom.value.trim();
+  }
+
   function renderSection(section) {
     const form = element('form', '', 'forum-section-editor');
     const heading = element('h3', section.label || 'Новый раздел');
     form.append(heading);
     const label = sectionField(form, 'label', 'Название', section.label, {required:true,minLength:2,maxLength:60});
-    const icon = sectionField(form, 'icon', 'Иконка (символ или эмодзи)', section.icon, {required:true,maxLength:12});
+    const selectedIcon = sectionIconPicker(form, section.icon);
     const order = sectionField(form, 'order', 'Порядок', section.order, {type:'number',min:'0',max:'9999',required:true});
     const enabled = sectionField(form, 'enabled', ' Показывать раздел', '', {type:'checkbox',checked:section.enabled});
     const save = element('button', 'Сохранить раздел');
@@ -156,7 +194,7 @@
       event.preventDefault();
       if (!permitted) return;
       const revision = session;
-      const data = {label:label.value.trim(),icon:icon.value.trim(),order:order.valueAsNumber,enabled:enabled.checked};
+      const data = {label:label.value.trim(),icon:selectedIcon(),order:order.valueAsNumber,enabled:enabled.checked};
       if (data.label.length < 2 || !data.icon) {
         sectionStatus.textContent = 'Заполните название и иконку.';
         return;
