@@ -210,38 +210,70 @@
     const selectedIcon = sectionIconPicker(form, section.icon);
     const order = sectionField(form, 'order', 'Порядок', section.order, {type:'number',min:'0',max:'9999',required:true});
     const enabled = sectionField(form, 'enabled', ' Показывать раздел', '', {type:'checkbox',checked:section.enabled});
-    const save = element('button', 'Сохранить раздел');
+    const save = element('button', 'Сохранить изменения', 'gold');
+    save.type = 'submit';
+    const cancel = element('button', 'Отменить изменения');
+    cancel.type = 'button';
     const controls = element('div', '', 'actions');
-    controls.append(save);
-    if (section.id) controls.append(sectionDeleteAction(section));
-    if (!section.id) {
-      const cancel = element('button', 'Отмена');
-      cancel.type = 'button';
-      cancel.onclick = () => { form.remove(); sectionAdd.disabled = false; };
-      controls.append(cancel);
-    }
+    const draftActions = element('div', '', 'actions');
+    draftActions.append(save, cancel);
+    controls.append(draftActions);
+    const remove = section.id ? sectionDeleteAction(section) : null;
+    if (remove) controls.append(remove);
     form.append(controls);
+    form.dataset.sectionId = section.id || '';
+
+    function readDraft() {
+      return {label:label.value.trim(),icon:selectedIcon(),order:order.valueAsNumber,enabled:enabled.checked};
+    }
+
+    function updateDraft() {
+      const data = readDraft();
+      const changed = !section.id || data.label !== section.label || data.icon !== section.icon ||
+        data.order !== section.order || data.enabled !== section.enabled;
+      draftActions.hidden = !changed;
+      if (remove) remove.hidden = changed;
+      form.dataset.dirty = String(changed);
+      return changed;
+    }
+
+    cancel.onclick = () => {
+      if (section.id) {
+        const restored = renderSection(section);
+        form.replaceWith(restored);
+        restored.elements.namedItem('label').focus();
+      } else {
+        form.remove();
+        sectionAdd.disabled = sectionRows.length >= 100;
+        if (!sectionAdd.disabled) sectionAdd.focus();
+      }
+      sectionStatus.textContent = 'Изменения отменены.';
+    };
+    form.oninput = form.onchange = updateDraft;
+    updateDraft();
+
     form.onsubmit = async event => {
       event.preventDefault();
-      if (!permitted) return;
+      if (!permitted || save.disabled || !updateDraft()) return;
       const revision = session;
-      const data = {label:label.value.trim(),icon:selectedIcon(),order:order.valueAsNumber,enabled:enabled.checked};
+      const data = readDraft();
       if (data.label.length < 2 || !data.icon) {
         sectionStatus.textContent = 'Заполните название и иконку.';
         return;
       }
-      save.disabled = true;
+      const fields = [...form.querySelectorAll('input, select, button')];
+      fields.forEach(field => { field.disabled = true; });
       try {
         const collection = db.collection(sections.collection);
         const ref = section.id ? collection.doc(section.id) : collection.doc();
         await ref.set(data);
         if (revision !== session) return;
-        await loadSections(revision);
-        if (revision === session && !sectionAdd.disabled) sectionStatus.textContent = 'Раздел сохранён.';
+        form.replaceWith(renderSection({id:ref.id, ...data}));
+        if (await loadSections(revision)) sectionStatus.textContent = 'Раздел сохранён.';
       } catch (_) {
         if (revision === session) sectionStatus.textContent = 'Не удалось сохранить раздел.';
       } finally {
-        save.disabled = false;
+        fields.forEach(field => { field.disabled = false; });
       }
     };
     return form;
@@ -254,7 +286,12 @@
       const rows = await withAccessTimeout(sections.load(db));
       if (revision !== session) return;
       sectionRows = rows;
-      sectionList.replaceChildren(...rows.filter(section => !section.deleted).map(renderSection));
+      const drafts = new Map([...sectionList.querySelectorAll('form[data-dirty="true"]')]
+        .map(form => [form.dataset.sectionId, form]));
+      const activeForms = rows.filter(section => !section.deleted)
+        .map(section => drafts.get(section.id) || renderSection(section));
+      if (drafts.has('')) activeForms.push(drafts.get(''));
+      sectionList.replaceChildren(...activeForms);
       const deleted = rows.filter(section => section.deleted);
       sectionArchive.hidden = !deleted.length;
       archivedSections.replaceChildren(...deleted.map(section => {
@@ -262,7 +299,7 @@
         row.append(element('p', section.icon + ' ' + section.label), sectionDeleteAction(section));
         return row;
       }));
-      sectionAdd.disabled = rows.length >= 100;
+      sectionAdd.disabled = rows.length >= 100 || drafts.has('');
       sectionStatus.textContent = rows.length >= 100 ? 'Достигнут предел в 100 разделов.' : '';
       return true;
     } catch (error) {
