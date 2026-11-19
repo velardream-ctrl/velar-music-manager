@@ -6,6 +6,12 @@
   <meta name="robots" content="noindex,nofollow">
   <title>Управление форумом — VELARDREAM Studio</title>
   <link rel="stylesheet" href="../forum/forum.css?v=5">
+  <style>
+    .studio-embedded { background:transparent; }
+    .studio-embedded .workspace { margin:0; padding:0; }
+    .studio-embedded .workspace > .panel { background:transparent; border:0; border-radius:0; padding:0; box-shadow:none; margin:1.5rem 0 0; }
+    .studio-embedded .admin-title { margin:0 0 .5rem; }
+  </style>
 </head>
 <body>
   <header class="masthead">
@@ -48,7 +54,9 @@
       const header = document.querySelector('.masthead');
       const main = document.querySelector('main');
       const forumLink = header.querySelector('a');
-      document.getElementById('forum-studio-brand').hidden = true;
+      document.body.classList.add('studio-embedded');
+      header.hidden = true;
+      main.querySelector('h1').after(forumLink);
       forumLink.target = '_blank';
       forumLink.rel = 'noopener';
 
@@ -62,7 +70,6 @@
       frame.style.minHeight = '0';
       document.documentElement.style.overflow = 'hidden';
       const observer = new ResizeObserver(resize);
-      observer.observe(header);
       observer.observe(main);
       resize();
     }());
