@@ -156,7 +156,7 @@ assert.match(html,/id="languages"/);
 assert.match(html,/src="assets\/velardream-symbol.svg"/);
 assert.match(html,/languages-public\.js\?v=3/);
 assert.match(html,/public-song-ui\.js\?v=25/);
-assert.match(sw,/'\.\/public-song-ui\.js\?v=25'/);
+assert.match(sw,/'\.\/public-song-ui\.js\?v=25&clips=1'/);
 assert.match(css,/\.language-orbit-node\[aria-pressed=true\]/);
 assert.match(css,/\.language-song-play::before/);
 assert.match(sw,/'\.\/languages-public\.js\?v=3'/);
