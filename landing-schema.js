@@ -892,6 +892,11 @@
     links.forEach(function(link){if(link.url){if(seen[link.url])throw new Error('Повтор ссылки сайта: '+link.url);seen[link.url]=true;}});
     return {enabled:s.enabled===true,shareEnabled:s.shareEnabled===true,links:links};
   }
+  function motionSettings(value){
+    var source=value||{},speed=Number(source.speed||35);
+    return {direction:source.direction==='left'?'left':'right',
+      end:source.end==='swing'?'swing':'loop',speed:Math.max(1,Math.min(100,Math.round(speed)||35))};
+  }
   function card(x,type,index){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Карточка '+index+': неверный формат.');
     var title=plain(x.title,'Название карточки '+index,110,!!x.visible);
@@ -910,6 +915,10 @@
       if(artistId&&!/^[a-z0-9-]+$/.test(artistId))
         throw new Error('Ключ артиста: недопустимый формат.');
       result.artistId=artistId;
+      ['homeDisplay','profileDisplay'].forEach(function(key){
+        if(['rows','carousel','auto'].indexOf(x[key])>=0)result[key]=x[key];
+        if(x[key+'Motion'])result[key+'Motion']=motionSettings(x[key+'Motion']);
+      });
       var shape=x.imageShape||'square';
       if(shape!=='square'&&shape!=='circle')throw new Error('Форма фотографии: квадрат или круг.');
       result.imageShape=shape;
@@ -1035,7 +1044,7 @@
     };
     result.artists.cards=cards(artists,'Артисты');
     var artistSongMode=typeof artists.songViewMode==='undefined'?(typeof genres.songViewMode==='undefined'?'standard':genres.songViewMode):artists.songViewMode;
-     if(artistSongMode!=='standard'&&artistSongMode!=='carousel')throw new Error('Песни артистов: выбери список или карусель.');
+     if(artistSongMode!=='standard'&&artistSongMode!=='carousel'&&artistSongMode!=='auto')throw new Error('Песни артистов: выбери список или карусель.');
      result.artists.songViewMode=artistSongMode;
      var featuredView=artists.featuredView||d.artists.featuredView;
     if(['classic','covers','tiles'].indexOf(featuredView)<0)
@@ -1066,9 +1075,11 @@
       throw new Error('Оформление блоков: неверные настройки.');
     var legacyLayout=songViewMode==='carousel'?'carousel':result.albums.trackView;
     result.genres.displayModes={};
+    result.genres.motion={};
     ['genres','topics','languages','albums'].forEach(function(key){
+      result.genres.motion[key]=motionSettings(genres.motion&&genres.motion[key]);
       var mode=typeof displayModes[key]==='undefined'?legacyLayout:displayModes[key];
-      if(['compact','rows','covers','tiles','carousel'].indexOf(mode)<0)
+      if(['compact','rows','covers','tiles','carousel','auto'].indexOf(mode)<0)
         throw new Error('Оформление блока '+key+': выбери компактный список, строки, карточки или карусель.');
       result.genres.displayModes[key]=mode;
     });

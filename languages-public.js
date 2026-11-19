@@ -3,6 +3,7 @@
    Spotify/YouTube embeds load only after an explicit click. ES5/iOS12. */
 (function(){
  'use strict';
+ var mounted=null;
  var current='',dataset=null,buttons=[],moreCount=14;
  function id(k){return document.getElementById(k);}
  function el(tag,cls,t){var n=document.createElement(tag);if(cls)n.className=cls;
@@ -16,7 +17,9 @@
    if(!core)return;core.className=core.className.replace(/ crystal-selection-pulse/g,'');void core.offsetWidth;
    core.className+=' crystal-selection-pulse';
  }
- function show(code,requestedUrl){
+ function show(code,requestedUrl,play){
+   if(requestedUrl&&mounted&&code===current)return mounted.openByUrl(requestedUrl,play);
+   mounted=null;
    var lang=null,detail=id('public-language-detail');
    entries().forEach(function(item){if(item.code===code)lang=item;});
    if(!lang)lang=entries()[0]||null;
@@ -40,14 +43,15 @@
    if(!window.VELAR_PUBLIC_SONGS){
      detail.appendChild(el('p','language-empty','Плеер временно недоступен.'));return false;
    }
-   var player=window.VELAR_PUBLIC_SONGS.mount(list,lang.tracks,{prefix:'language',batch:14});
+   var player=mounted=window.VELAR_PUBLIC_SONGS.mount(list,lang.tracks,{prefix:'language',batch:14});
    // Chat deep-links are invoked only after the listener clicks its action.
-   if(requestedUrl&&lang.code===code)return player.openByUrl(requestedUrl);
+   if(requestedUrl&&lang.code===code)return player.openByUrl(requestedUrl,play);
    return false;
  }
- function openFromChat(code,url){return show(code,url);}
+ function openFromChat(code,url,play){return show(code,url,play);}
 
  function render(config){
+   mounted=null;
    var orbit=id('public-language-orbit'),detail=id('public-language-detail');
    if(!orbit||!detail)return;
    dataset=config||{heading:'Музыка на языках Вселенной',intro:'',entries:[]};

@@ -89,6 +89,7 @@
    title.appendChild(create('span','cms-music-kicker','СЛУШАТЬ АРТИСТА'));
    title.appendChild(create('h3','','Лучшие песни'));
    panel.appendChild(title);
+   panel.setAttribute('data-song-artist',item.artistId||item.title);
    var tracks=(item.featuredTracks||[]).slice();
    // Manual order remains opt-in for up to 30 featured songs per artist.
    if(item.featuredSort!=='manual')tracks.sort(compareSong);
@@ -97,7 +98,8 @@
      panel.appendChild(create('p','cms-music-empty','Подборка композиций появится здесь после выбора в музыкальной студии.'));
      return panel;
    }
-   if((view==='carousel'||view==='classic')&&window.VELAR_PUBLIC_SONGS){
+   view=item.homeDisplay||view;
+   if((view==='auto'||view==='rows'||view==='carousel'||view==='classic')&&window.VELAR_PUBLIC_SONGS){
      var carousel=create('div','public-artist-song-list');
      panel.appendChild(carousel);
      // Retain the curator's explicit manual order for an artist's best songs.
@@ -107,7 +109,7 @@
          thirdProvider:t.thirdProvider,thirdUrl:t.thirdUrl};
      });
      window.VELAR_PUBLIC_SONGS.mount(carousel,curated,{
-       prefix:'artist',view:view==='carousel'?'carousel':'rows',batch:30,keepOrder:true
+       prefix:'artist',motion:item.homeDisplayMotion,view:view==='auto'?'auto':view==='carousel'?'carousel':'rows',batch:30,keepOrder:true
      });
      return panel;
    }
@@ -159,6 +161,7 @@
      if(view==='classic')button.appendChild(artwork);
      button.setAttribute('aria-label','Слушать: '+track.title+' — '+(track.provider==='spotify'?'Spotify':track.provider==='appleMusic'?'Apple Music':'YouTube'));
      var entry=create('div','cms-music-entry');
+     entry.setAttribute('data-song-url',track.url);
      var player=create('div','cms-music-player cms-music-player--inline');
      player.setAttribute('role','region');
      player.setAttribute('aria-label','Плеер: '+track.title);
@@ -291,7 +294,7 @@
      if(stories){
        var row=create('div','cms-artist-story'+(index%2?' cms-artist-story--reverse':''));
        row.appendChild(card);
-       row.appendChild(musicPanel(item,songMode==='carousel'?'carousel':(featuredView||'classic'),albums));
+       row.appendChild(musicPanel(item,songMode==='auto'?'auto':songMode==='carousel'?'carousel':(featuredView||'classic'),albums));
        target.appendChild(row);
      }else target.appendChild(card);
    });
@@ -328,6 +331,7 @@
      first.firstChild&&first.firstChild.tagName==='iframe');
  }
  function pauseOtherEmbeds(){
+   if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.closeActive)window.VELAR_PUBLIC_SONGS.closeActive();
    // Remove any previous external embed instead of starting parallel players.
    // Cross-origin APIs must not be used to simulate streams or playback.
    if(typeof document.querySelectorAll!=='function')return;
@@ -555,6 +559,7 @@
    index=typeof index==='number'?index:0;
    var isVideo=item.kind==='video';
    var card=create('article','cms-release-card'+(feature?' cms-release-card--featured':''));
+   card.setAttribute('data-song-url',item.mediaUrl||'');
    var art=create('div','cms-release-art'+(isVideo?' cms-release-art--video':''));
    if(item.imageData||item.imageUrl){
      var image=create('img','cms-release-cover');
@@ -1313,6 +1318,9 @@
    assign('public-about-intro',value.about.intro);
    assign('public-about-notice',value.about.notice);
    renderCatalogProgress(value.about.progress);
+   if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.configure)
+     window.VELAR_PUBLIC_SONGS.configure(
+       value.albums.trackView,value.albums.entries,value.genres.songViewMode,value.releases.cards,value.hero.coverSourcePriority,value.genres.displayModes,value.genres.motion);
    if(window.VELAR_GENRES&&window.VELAR_GENRES.render)
      window.VELAR_GENRES.render(value.genres);
    else{
@@ -1320,9 +1328,6 @@
        value.genres.tags.forEach(function(tag){tags.appendChild(create('span','',tag));});
      }
    }
-   if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.configure)
-     window.VELAR_PUBLIC_SONGS.configure(
-       value.albums.trackView,value.albums.entries,value.genres.songViewMode,value.releases.cards,value.hero.coverSourcePriority,value.genres.displayModes);
    cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums,value.artists.songViewMode||value.genres.songViewMode);
    if(window.VELAR_ALBUMS&&window.VELAR_ALBUMS.render)window.VELAR_ALBUMS.render(value.albums);
    releaseGallery(value.releases);
@@ -1424,6 +1429,7 @@
    host.style.display=host.children.length?'flex':'none';
  }
  function start(){
+   if(byId('artist-main'))return; // The profile owns its public snapshot subscription.
    var help=byId("standalone-help");if(help)help.appendChild(stationHelp(true));
    if(!window.VMM_LANDING_SCHEMA)return;
    var fresh=false;

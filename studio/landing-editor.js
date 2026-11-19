@@ -2717,6 +2717,15 @@
 
  // RUN-181: all homepage display choices live in ONE place.
  // Artist profile settings are intentionally not here: they belong to Artists.
+ function motionFields(block,settings){
+   selectField(block,'Направление движения карточек',[['right','Справа налево'],['left','Слева направо']],settings.direction||'right',function(v){settings.direction=v;});
+   selectField(block,'В конце подборки',[['loop','По кругу'],['swing','Маятник']],settings.end||'loop',function(v){settings.end=v;});
+   var label=document.createElement('label'),caption=document.createElement('span'),speed=document.createElement('input');
+   speed.type='range';speed.min='1';speed.max='100';speed.value=settings.speed||35;
+   function update(){caption.textContent='Скорость '+speed.value+'%';}
+   update();speed.oninput=function(){settings.speed=Number(speed.value);update();updateButtons();};
+   label.appendChild(caption);label.appendChild(speed);block.appendChild(label);
+ }
  function homepageDisplaySettings(parent){
    var headingBlock=document.createElement('section');
    headingBlock.className='landing-display-settings';
@@ -2725,18 +2734,28 @@
    var artistBlock=document.createElement('section');artistBlock.className='landing-display-group';
    heading(artistBlock,'Артисты на главной',
      'Только подборка «Лучшие песни» рядом с карточками артистов. Отдельная страница артиста настраивается в разделе «Артисты».');
-   var featured=data.artists.songViewMode==='carousel'?'carousel':data.artists.featuredView||'classic';
+   var featured=data.artists.songViewMode==='auto'?'auto':data.artists.songViewMode==='carousel'?'carousel':data.artists.featuredView||'classic';
    selectField(artistBlock,'Показ лучших песен на главной',
      [['classic','Компактные строки'],['covers','Строки с обложками'],
-      ['tiles','Квадратные карточки'],['carousel','Карусель (до 30 песен)']],featured,function(v){
-       if(v==='carousel'){data.artists.songViewMode='carousel';}
+      ['tiles','Квадратные карточки'],['carousel','Карусель'],['auto','Автокарусель']],featured,function(v){
+       if(v==='carousel'||v==='auto'){data.artists.songViewMode=v;}
        else{data.artists.songViewMode='standard';data.artists.featuredView=v;}
      });
+   data.artists.cards.forEach(function(artist){
+     var details=document.createElement('details'),summary=document.createElement('summary');
+     summary.textContent=artist.title||'Артист';details.appendChild(summary);
+     [['homeDisplay','На главной'],['profileDisplay','В профиле артиста']].forEach(function(row){
+       var key=row[0];
+       selectField(details,row[1],[['','Как в общем оформлении'],['rows','Список'],['carousel','Карусель'],['auto','Автокарусель']],artist[key]||'',function(v){artist[key]=v;});
+       motionFields(details,artist[key+'Motion']||(artist[key+'Motion']={}));
+     });
+     artistBlock.appendChild(details);
+   });
    headingBlock.appendChild(artistBlock);
    if(!data.genres.displayModes)data.genres.displayModes={};
    var choices=[['compact','Компактный список · поиск · страницы по 25'],
      ['rows','Обычный список'],['covers','Строки с обложками'],
-     ['tiles','Квадратные карточки'],['carousel','Карусель (для коротких подборок)']];
+     ['tiles','Квадратные карточки'],['carousel','Карусель'],['auto','Автокарусель']];
    [['genres','Жанры'],['topics','Темы песен'],['languages','Языки песен'],
     ['albums','Песни в альбомах']].forEach(function(entry){
      var block=document.createElement('section');block.className='landing-display-group';
@@ -2748,6 +2767,8 @@
      selectField(block,'Показ: '+entry[1],choices,selected,function(v){
        data.genres.displayModes[entry[0]]=v;
      });
+     var motion=data.genres.motion||(data.genres.motion={});
+     motionFields(block,motion[entry[0]]||(motion[entry[0]]={}));
      headingBlock.appendChild(block);
    });
    var albums=document.createElement('section');albums.className='landing-display-group';
@@ -2758,7 +2779,7 @@
      data.albums.view||'grid',function(v){data.albums.view=v;});
    headingBlock.appendChild(albums);
    var warn=document.createElement('p');warn.className='sync-note';
-   warn.textContent='Если в подборке больше 40 песен, карусель автоматически заменяется компактным списком с поиском и страницами. Изменения сначала сохрани в черновике, затем опубликуй.';
+   warn.textContent='Изменения сначала сохрани в черновике, затем опубликуй.';
    headingBlock.appendChild(warn);parent.appendChild(headingBlock);
  }
 

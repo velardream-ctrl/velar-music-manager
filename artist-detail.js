@@ -317,7 +317,11 @@
        }
      }
    }
-   if(grouped.length){
+   if(artist.profileDisplay&&window.VELAR_PUBLIC_SONGS){
+     window.VELAR_PUBLIC_SONGS.mount(tracks,grouped.map(function(group){
+       var track=artTrack(group);track.artist=artist.title;return track;
+     }),{prefix:'artist',view:artist.profileDisplay,motion:artist.profileDisplayMotion,keepOrder:true});
+   }else if(grouped.length){
      if(grouped.length>8){
        search=make('input','artist-track-search');search.type='search';
        search.placeholder='Найти песню…';

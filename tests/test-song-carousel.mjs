@@ -146,8 +146,8 @@ const albums=node();engine.mount(albums,[songs[1]],{prefix:'album'});
 assert.doesNotMatch(albums.className,/public-song-carousel/);
 engine.configure('rows',[],'carousel',[],undefined,{topics:'carousel'});
 const hugeCarousel=node();engine.mount(hugeCarousel,fifty,{prefix:'topic'});
-assert.match(hugeCarousel.className,/public-song-compact/,
- 'Over 40 songs must use searchable pages even when carousel is configured');
+assert.match(hugeCarousel.className,/public-song-carousel/,
+ 'Long collections retain the selected carousel layout');
 
 const css=read('style.css');
 assert.match(css,/\.public-song-carousel-track\{/);
