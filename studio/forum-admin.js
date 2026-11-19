@@ -340,6 +340,10 @@
   try {
     const app = firebase.initializeApp(window.VELAR_FIREBASE_CONFIG);
     db = app.firestore();
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent) ||
+        (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)) {
+      db.settings({experimentalForceLongPolling:true});
+    }
     app.auth().onAuthStateChanged(async user => {
       clearTimeout(window.forumAdminStartup);
       recovery.hidden = true;

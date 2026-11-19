@@ -377,6 +377,11 @@
   function initialize(){
     try{
       firebase.initializeApp(cfg);auth=firebase.auth();db=firebase.firestore();
+      // iOS WebViews and Safari can stall on long-lived WebChannel responses.
+      if(/iPhone|iPad|iPod/.test(navigator.userAgent) ||
+         (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints>1)){
+        db.settings({experimentalForceLongPolling:true});
+      }
       db.enablePersistence({synchronizeTabs:true}).catch(function(){});
       signIn.disabled=false;message('Войди через Google, чтобы подтвердить доступ владельца.');
       auth.onAuthStateChanged(function(next){

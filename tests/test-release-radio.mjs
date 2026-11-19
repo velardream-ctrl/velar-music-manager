@@ -280,7 +280,7 @@ assert.match(css,/min-height:200px/);
 assert.match(html,/universe\.js\?v=7/);
 assert.match(html,/style\.css\?v=82/);
 assert.match(sw,/CACHE_PREFIX \+ 'v97'/);
-assert.match(sw,/STUDIO_PREFIX\+'v59'/);
+assert.match(sw,/STUDIO_PREFIX\+'v60'/);
 assert.match(admin,/function releaseCatalogPicker/);
 assert.match(admin,/function playAndFollowEditor/);
 console.log('PASS: RUN-069/070 safe releases, Spotify playlists, subscribers, opt-in radio, one active iframe and lazy 2.5D universe');
