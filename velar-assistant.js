@@ -111,8 +111,8 @@
    if(!found){
      ts.entries.some(function(t){
        if(!t.visible)return false;
-       var needle=norm(t.label);
-       if(needle.length>=3&&(' '+q+' ').indexOf(' '+needle+' ')!==-1){found=t;return true;}
+       var terms=[t.label].concat((t.keywords||'').split(','));
+       if(terms.some(function(term){var needle=norm(term);return needle.length>=2&&(' '+q+' ').indexOf(' '+needle+' ')!==-1;})){found=t;return true;}
        return false;
      });
    }

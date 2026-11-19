@@ -60,6 +60,8 @@
    return {text:best===2?'Возможно, ты ищешь одну из этих песен?':'Какую композицию открыть?',actions:found};
  }
  function navigate(choice){
+   var sections={artist:'artists',release:'releases',album:'albums',language:'languages',genre:'genres',topic:'topics'};
+   if(window.VMM_PUBLIC_LANDING&&window.VMM_PUBLIC_LANDING.ensureSection)window.VMM_PUBLIC_LANDING.ensureSection(sections[choice.kind]);
    var base=document,controller;
    if(choice.kind==='topic')return window.VELAR_TOPICS.openFromChat(choice.target,choice.url,choice.play);
    if(choice.kind==='language')return window.VELAR_LANGUAGES.openFromChat(choice.target,choice.url,choice.play);

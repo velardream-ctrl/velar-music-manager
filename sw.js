@@ -1,11 +1,11 @@
 /* VELAR public shell only. NEVER cache authenticated API responses or personal lyrics here. ES5 compatible. */
 'use strict';
 var CACHE_PREFIX = 'velar-public-shell-';
-var CACHE_NAME = CACHE_PREFIX + 'v97' + '-smart201-clips' + '-progress184' + '-analytics186' + '-velar188' + '-tab189' + '-tab189' + '-bubble190-typing191-ai196-gateway199-live202-lab203-usage204-forum';
+var CACHE_NAME = CACHE_PREFIX + 'v97' + '-shared-skins-groups2' + '-smart201-clips' + '-progress184' + '-analytics186' + '-velar188' + '-tab189' + '-tab189' + '-bubble190-typing191-ai196-gateway199-live202-lab203-usage204-forum';
 /* Only private studio SOURCE FILES are cached. Never cache Firestore, Drive files,
    authenticated responses, user lyrics or audio through this Service Worker. */
 var STUDIO_PREFIX='velar-studio-shell-';
-var STUDIO_CACHE=STUDIO_PREFIX+'v63' + '-smart201-refresh-clips'+'-progress184-run185'+'-analytics186' + '-velar188' + '-reports191-ai192-run193-catalog194-fallback195-budget198';
+var STUDIO_CACHE=STUDIO_PREFIX+'v63' + '-groups2' + '-smart201-refresh-clips'+'-progress184-run185'+'-analytics186' + '-velar188' + '-reports191-ai192-run193-catalog194-fallback195-budget198';
 var STUDIO_ASSETS=[
   './studio/','./studio/index.html','./studio/studio.css?v=31','./studio/artist-choices.js?v=1','./studio/artist-track-links.js?v=1','./studio/artist-image-editor.js?v=1','./studio/title-language.js?v=2', './studio/landing-merge.js?v=1',
   './studio/song-distribution.js?v=3','./studio/existing-links-reconcile.js?v=1','./ai-fallback.js?v=1','./studio/ai-public-catalog.js?v=1','./studio/ai-lab.js?v=5&layout=203&usage=204', './landing-schema.js?v=31&clips=1&carousel=201', './studio/landing-editor.js?v=46&fix=185&analytics=189&reports=191&ai=192&carousel=201&clips=1',
@@ -33,6 +33,7 @@ function studioNavigation(url){
 var ASSETS = [
   './radio/', './radio/index.html', './radio/station.js', './radio/station.css', './radio/manifest.webmanifest',
   './', './index.html', './artist.html', './artist-detail.css?v=3', './artist-detail.js?v=5', './app/', './app/index.html',
+  './home-skin.js','./home-skin.css','./assets/spotify-3u4nP80fuKrYdfpM7AipMK.jpg',
   './style.css', './style.css?v=82&consent=190&clips=1', './main.js', './landing-schema.js?v=31&clips=1', './image-loading.js?v=1', './public-offline.js?v=1', './playlist-resonance.js?v=1', './youtube-compat.js?v=2', './analytics-public.js?v=1&privacy=191', './landing-public.js?v=57&clips=1', './universe.js?v=7', './smart-navigation.js?v=1', './public-song-ui.js?v=25&clips=1', './albums-public.js?v=4', './languages-public.js?v=3', './topics-public.js?v=3', './genres-public.js?v=1', './velar-faq-engine.js?v=3', './ai-fallback.js?v=1', './velar-assistant.js?v=16&consent=190&typing=191&ai=196&hint=197&gateway=199&usage=204', './living-art.js?v=7', './manifest.webmanifest',
   './assets/velar-radio-icon-gold-bold.png', './assets/velar-radio-icon-gold-bold.webp', './assets/velar-radio-icon-gold.webp', './assets/velar-radio-icon.webp', './favicon.svg', './favicon.svg?v=2', './assets/velardream-crystal.png', './assets/velardream-symbol.svg', './assets/velardream-app-icon-192.png', './assets/velardream-app-icon-512.png','./assets/dj-velar-expressions.jpg'
 ];

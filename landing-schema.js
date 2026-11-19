@@ -149,6 +149,7 @@
   function defaults(){
     return {
       hero:{
+        skin:'classic',
         subtitle:'Разные голоса. Разные жанры. Одна вселенная музыки.',
         intro:'Здесь рождается пространство для артистов, авторских релизов и музыкальных историй — от оперы и этно до рока, поп-музыки и кроссоверов.',
         imageLoadingLevel:0, // RUN-123: existing published pages remain eager.
@@ -697,8 +698,19 @@
       if(!Array.isArray(tracks)||tracks.length>300)
         throw new Error('Тема '+slug+': максимум 300 песен.');
       var chosen=consolidateAttachedTracks(tracks,'Тема '+slug);
-      return {slug:slug,label:label,description:description,
+      var parent=topic.parentSlug;
+      if(parent===undefined){
+        var seeds={wedding:'celebration',birthday:'celebration',jealousy:'love',loyalty:'love',separation:'love',treason:'love',winter:'seasons',summer:'seasons',autumn:'seasons',spring:'seasons'};
+        parent=topics.some(function(t){return t&&t.slug===seeds[slug];})?seeds[slug]:'';
+      }
+      return {slug:slug,label:label,description:description,parentSlug:plain(parent||'','Основная тема',35,false),
+        keywords:plain(topic.keywords||'','Ключевые слова',250,false),searchOnly:topic.searchOnly===true,
         visible:topic.visible===true,tracks:chosen};
+    });
+    result.forEach(function(t){
+      if(!t.parentSlug)return;
+      var parent=result.filter(function(p){return p.slug===t.parentSlug;})[0];
+      if(!parent||parent.parentSlug)throw new Error('Выберите основную тему верхнего уровня.');
     });
     return {heading:plain(typeof x.heading==='string'?x.heading:def.heading,
       'Заголовок тематических миров',160,true),
@@ -1019,6 +1031,7 @@
     var d=defaults(),hero=value.hero||{},artists=value.artists||{},albums=value.albums||{},releases=value.releases||{},genres=value.genres||{},about=value.about||{};
     var result={
       hero:{
+        skin:hero.skin==='compact'?'compact':'classic',
         subtitle:plain(typeof hero.subtitle==='string'?hero.subtitle:d.hero.subtitle,'Первый экран — подзаголовок',160,true),
         intro:plain(typeof hero.intro==='string'?hero.intro:d.hero.intro,'Первый экран — описание',600,true),
         imageLoadingLevel:(function(){

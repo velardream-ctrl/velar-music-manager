@@ -42,6 +42,7 @@ try {
       const normalized=VMM_LANDING_SCHEMA.normalize(content);
       const clips=normalized.releases.cards.filter(item=>item.visible&&item.kind==='video');
       if(clips.length&&normalized.releases.videoView==='auto'){
+         VMM_PUBLIC_LANDING.ensureSection('releases');
         const rail=document.querySelector('.video-carousel .public-song-carousel-track');
         if(!rail||rail.children.length!==clips.length)throw Error('Published video carousel incomplete');
         console.log('Published video carousel',clips.length);

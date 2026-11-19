@@ -16,32 +16,50 @@
    core.className+=' crystal-selection-pulse';
  }
  function select(slug,requestedUrl,play){
+   if(window.VMM_PUBLIC_LANDING&&window.VMM_PUBLIC_LANDING.ensureSection)window.VMM_PUBLIC_LANDING.ensureSection('topics');
    if(requestedUrl&&mounted&&slug===active)return mounted.openByUrl(requestedUrl,play);
    mounted=null;
    var selected=null,list=entries(),area=byId('public-topic-detail');
    list.forEach(function(t){if(t.slug===slug)selected=t;});
-   if(!selected)selected=list[0]||null;
+
    active=selected?selected.slug:'';
    buttons.forEach(function(b){b.element.setAttribute('aria-pressed',b.slug===active?'true':'false');});
    if(!area)return;
    clear(area);
-   if(!selected){area.appendChild(el('p','topic-empty','Тематические миры пока не опубликованы.'));return;}
+   if(!selected){area.appendChild(el('p','topic-empty','Выберите тему, чтобы открыть её песни.'));return;}
    var header=el('div','topic-detail-heading');
    header.appendChild(el('span','universe-info-kicker','МУЗЫКАЛЬНАЯ ТЕМА'));
    header.appendChild(el('h3','',selected.label));
    if(selected.description)header.appendChild(el('p','',selected.description));
    area.appendChild(header);
-   if(!selected.tracks.length){
+   var root=selected.parentSlug||selected.slug,children=list.filter(function(t){return t.parentSlug===root&&t.tracks.length&&!t.searchOnly;});
+   if(children.length){
+     var related=el('div','topics-cloud');
+     list.filter(function(t){return t.slug===root;}).concat(children).forEach(function(t){
+       var chip=el('button','topic-tag',t.label);chip.type='button';chip.setAttribute('aria-pressed',String(t.slug===slug));
+       chip.onclick=function(){select(t.slug);};related.appendChild(chip);
+     });
+     header.appendChild(related);
+   }
+   var tracks=selected.tracks.slice();
+   if(!selected.parentSlug){
+     var seen=Object.create(null);
+     tracks.forEach(function(t){seen[t.url]=true;});
+     list.filter(function(t){return t.parentSlug===root;}).forEach(function(t){
+       t.tracks.forEach(function(song){if(!seen[song.url]){seen[song.url]=true;tracks.push(song);}});
+     });
+   }
+   if(!tracks.length){
      area.appendChild(el('p','topic-empty','Пока в этом мире нет назначенных песен. Новые композиции появятся после проверки и публикации.'));
      return;
    }
-   area.appendChild(el('p','topic-count','Песен по теме: '+selected.tracks.length));
+   area.appendChild(el('p','topic-count','Песен по теме: '+tracks.length));
    var songs=el('div','topic-song-list');
    area.appendChild(songs);
    if(!window.VELAR_PUBLIC_SONGS){
      area.appendChild(el('p','topic-empty','Плеер временно недоступен.'));return false;
    }
-   var player=mounted=window.VELAR_PUBLIC_SONGS.mount(songs,selected.tracks,{prefix:'topic',batch:12});
+   var player=mounted=window.VELAR_PUBLIC_SONGS.mount(songs,tracks,{prefix:'topic',batch:12});
    // A requested source opens inline immediately below its one song row.
    if(requestedUrl&&selected.slug===slug)return player.openByUrl(requestedUrl,play);
    return false;
@@ -57,7 +75,10 @@
    if(title)title.textContent=data.heading;
    if(intro)intro.textContent=data.intro;
    clear(cloud);clear(orbit);buttons=[];
-   var available=entries(),featured=available.slice(0,10);
+   var all=entries(),available=all.filter(function(t){
+     return !t.searchOnly&&(!t.parentSlug||!all.some(function(p){return p.slug===t.parentSlug;}))&&
+       (t.tracks.length||all.some(function(child){return child.parentSlug===t.slug&&child.tracks.length;}));
+   }),featured=available.slice(0,10);
    featured.forEach(function(t,i){
      var angle=-Math.PI/2+2*Math.PI*i/Math.max(1,featured.length);
      var chip=el('button','topic-planet');
@@ -66,7 +87,7 @@
      chip.style.left=(50+38*Math.cos(angle)).toFixed(2)+'%';
      chip.style.top=(50+36*Math.sin(angle)).toFixed(2)+'%';
      chip.appendChild(el('span','topic-planet-name',t.label));
-     chip.appendChild(el('small','',t.tracks.length?String(t.tracks.length)+' песен':'скоро'));
+     chip.appendChild(el('small','',t.tracks.length?String(t.tracks.length)+' песен':'Подборки'));
      chip.onclick=function(){select(t.slug);pulse();};
      orbit.appendChild(chip);buttons.push({element:chip,slug:t.slug});
    });
