@@ -399,8 +399,22 @@
     }catch(err){disabled('Ошибка авторизации: '+err.message);}
   }
   var accessAttempt=0, retryAdminAccess=false;
+  function readAdminAccessOverHttps(account, signal){
+    return account.getIdToken().then(function(token){
+      var path='/v1/projects/'+encodeURIComponent(cfg.projectId)+'/databases/(default)/documents/vmm_admins/'+encodeURIComponent(account.uid);
+      return window.fetch('https://firestore.googleapis.com'+path,{
+        headers:{Authorization:'Bearer '+token},cache:'no-store',signal:signal
+      });
+    }).then(function(response){
+      if(response.status===403||response.status===404)return false;
+      if(!response.ok)throw new Error('Firestore HTTP '+response.status);
+      return response.json().then(function(doc){
+        return !!(doc.fields&&doc.fields.enabled&&doc.fields.enabled.booleanValue===true);
+      });
+    });
+  }
   function checkAdminAccess(){
-    var attempt=++accessAttempt, account=user, timer;
+    var attempt=++accessAttempt, account=user, timer, httpsTimer, controller;
     retryAdminAccess=false;
     if(!account){unauthorized('Вход через Google необходим для доступа к личным материалам.');return;}
     if(!account.emailVerified){unauthorized('Google не подтвердил электронную почту аккаунта.');return;}
@@ -409,15 +423,35 @@
     signIn.textContent='Проверяем доступ…';
     message('Google подтвердил вход. Проверяем права администратора…');
 
-    function retry(){
-      if(attempt!==accessAttempt||user!==account)return;
+    function pending(){return attempt===accessAttempt&&user===account;}
+    function finish(){
       accessAttempt++;
+      window.clearTimeout(timer);
+      if(httpsTimer!==undefined)window.clearTimeout(httpsTimer);
+      if(controller)controller.abort();
+    }
+    function retry(){
+      if(!pending())return;
+      finish();
       unauthorized('Google подтвердил вход, но Studio не получила ответ при проверке прав.');
       retryAdminAccess=true;
       signIn.textContent='Повторить проверку доступа';
     }
+    function decided(enabled){
+      if(!pending())return;
+      finish();
+      if(enabled){signinReady();showWorkspace();}
+      else unauthorized('Аккаунт Google не включён в список администраторов VELARDREAM.');
+    }
+    function fallback(){
+      if(!pending()||controller)return;
+      controller=new window.AbortController();
+      readAdminAccessOverHttps(account,controller.signal).then(decided).catch(function(){});
+    }
 
     timer=window.setTimeout(retry,12000);
+    var canUseHttps=navigator.onLine&&typeof window.fetch==='function'&&typeof window.AbortController==='function';
+    if(canUseHttps)httpsTimer=window.setTimeout(fallback,4000);
     // An offline session still requires a previously cached, verified admin document.
     var adminRead=db.collection('vmm_admins').doc(user.uid).get({source:'server'});
     if(!navigator.onLine)adminRead=adminRead.catch(function(error){
@@ -425,16 +459,13 @@
       return db.collection('vmm_admins').doc(account.uid).get({source:'cache'});
     });
     adminRead.then(function(doc){
-      if(attempt!==accessAttempt||user!==account)return;
-      if(doc.exists&&doc.data()&&doc.data().enabled===true){
-        signinReady();
-        showWorkspace();
-      }else unauthorized('Аккаунт Google не включён в список администраторов VELARDREAM.');
+      decided(doc.exists&&doc.data()&&doc.data().enabled===true);
     }).catch(function(error){
-      if(attempt!==accessAttempt||user!==account)return;
-      if(error.code==='permission-denied')unauthorized('Этот аккаунт Google не имеет доступа к Studio.');
+      if(!pending())return;
+      if(error.code==='permission-denied')decided(false);
+      else if(canUseHttps)fallback();
       else retry();
-    }).then(function(){window.clearTimeout(timer);});
+    });
   }
   signIn.onclick=function(){
     if(!auth)return;

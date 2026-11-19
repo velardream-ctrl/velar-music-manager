@@ -9,12 +9,12 @@
 </head>
 <body>
   <header class="masthead">
-    <a id="return-to-studio" class="brand" href="./">← VELARDREAM Studio</a>
+    <span id="forum-studio-brand" class="brand">VELARDREAM Studio</span>
     <a href="../forum/">Открыть форум</a>
   </header>
   <script>
     if (window.parent !== window && /(?:^|[?&])embedded=1(?:&|$)/.test(location.search)) {
-      document.getElementById('return-to-studio').hidden = true;
+      document.getElementById('forum-studio-brand').hidden = true;
       document.querySelector('.masthead > a:last-child').target = '_blank';
       document.querySelector('.masthead > a:last-child').rel = 'noopener';
     }
