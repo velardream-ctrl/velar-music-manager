@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="theme-color" content="#071020">
   <title>Созвездия — форум VELARDREAM</title>
-  <link rel="stylesheet" href="forum.css?v=3">
+  <link rel="stylesheet" href="forum.css?v=6">
 </head>
 <body>
   <header class="masthead">
@@ -55,6 +55,13 @@
       <p id="email-help">Войдите по email и паролю. Email не отображается в обсуждениях.</p>
       <label id="email-field">Email<input type="email" name="email" autocomplete="username" required></label>
       <label id="password-field">Пароль<input type="password" name="password" autocomplete="current-password" required></label>
+      <fieldset id="login-options" hidden>
+        <legend>Настройки входа</legend>
+        <label id="remember-session-option"><input type="checkbox" id="remember-session" checked> Запомнить меня</label>
+        <label><input type="checkbox" id="save-credential"> Сохранить пароль в браузере</label>
+        <label><input type="checkbox" id="remember-options"> Больше не спрашивать</label>
+      </fieldset>
+      <button type="button" id="show-login-options" hidden>Изменить настройки входа</button>
       <p id="email-status" role="status"></p>
       <div class="actions">
         <button type="button" data-close>Закрыть</button>
@@ -86,6 +93,6 @@
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script defer src="../studio/firebase-config.js"></script>
   <script defer src="sections.js"></script>
-  <script defer src="forum.js?v=7"></script>
+  <script defer src="forum.js?v=8"></script>
 </body>
 </html>
