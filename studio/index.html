@@ -11,6 +11,12 @@
   <link rel="stylesheet" href="forum-menu.css">
   <link rel="stylesheet" href="recordings.css?v=12">
   <title>VELARDREAM RECORDS · Studio</title>
+  <style>
+    #analytics-report .vmm-table-wrap{overflow-x:auto;margin:0 0 1.5rem}
+    #analytics-report table{width:100%;border-collapse:collapse}
+    #analytics-report th,#analytics-report td{text-align:left;padding:.55rem;border-bottom:1px solid #e5d2a82b;overflow-wrap:anywhere}
+    #analytics-report select{display:block;max-width:100%;padding:.65rem;background:#0c1630;color:inherit;border:1px solid #c6b68a57;border-radius:9px}
+  </style>
 </head>
 <body>
   <header class="topbar">
@@ -37,6 +43,7 @@
         <nav class="sidebar" aria-label="Разделы кабинета">
           <button type="button" data-panel="landing">Главная страница</button>
           <button type="button" data-panel="forum">Форум</button>
+          <button type="button" data-panel="analytics">Статистика</button>
           <button type="button" class="nav-active" data-panel="lyrics">Тексты песен</button>
           <button type="button" data-panel="catalog">Каталог релизов</button>
           <button type="button" data-panel="recordings">Фонограммы</button>
@@ -153,6 +160,21 @@
           </section>
           <section id="panel-future" class="panel hidden" aria-live="polite">
             <iframe id="forum-admin-frame" class="hidden" title="Управление форумом" style="display:block;width:100%;height:75vh;min-height:420px;border:0"></iframe>
+            <section id="analytics-report" class="hidden" aria-labelledby="analytics-report-title">
+              <h2 id="analytics-report-title">Статистика сайта и музыки</h2>
+              <p class="muted">Посещения учитываются после согласия на аналитику. Запуски YouTube и открытия плееров показаны отдельно.</p>
+              <form id="analytics-report-form" class="lyric-form">
+                <div class="form-grid">
+                  <label>ID ресурса GA4<input name="property" inputmode="numeric" pattern="[0-9]{1,20}" placeholder="Числовой ID" required></label>
+                  <label>Период <select name="period"><option value="7">7 дней</option><option value="30" selected>30 дней</option><option value="90">90 дней</option></select></label>
+                </div>
+                <p class="muted">ID ресурса указан в Google Analytics → Администратор → Сведения о ресурсе.</p>
+                <div class="actions"><button type="submit">Загрузить статистику</button></div>
+              </form>
+              <p id="analytics-report-status" role="status" class="sync-note"></p>
+              <div id="analytics-report-results" class="vmm-module"></div>
+              <p><a href="https://analytics.google.com/" target="_blank" rel="noopener noreferrer">Открыть Google Analytics</a></p>
+            </section>
             <div id="future-content"><p class="eyebrow">VELAR MUSIC MANAGER</p><h2 id="future-title">Раздел</h2><p id="future-message"></p><p class="muted">Данные хранятся в защищённой Firestore. Исходная Google Sheets не изменяется.</p>
             <div id="records-browser" class="records-browser hidden">
               <h3 id="records-browser-title">Записи</h3>
@@ -171,7 +193,8 @@
   <div id="print-page" class="print-page" aria-hidden="true"><h1 id="print-title"></h1><p id="print-meta"></p><div id="print-body"></div></div>
   <script src="firebase-config.js"></script>
   <script src="offline-admin.js?v=1"></script>
-  <script src="studio.js?v=15"></script>
+  <script src="analytics-report.js?v=1"></script>
+  <script src="studio.js?v=16"></script>
   <script src="offline-lyrics-sync.js?v=1"></script>
   <script src="../landing-schema.js?v=31"></script>
   <script src="artist-choices.js?v=3"></script>

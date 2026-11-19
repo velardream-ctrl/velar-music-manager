@@ -242,7 +242,7 @@
   }
   // Hash-based tab state: only a fixed, nonsensitive panel name appears in
   // the URL. No localStorage/sessionStorage, tokens, titles or lyrics.
-  function validPanel(p){return ['overview','landing','forum','lyrics','catalog','recordings','platforms','contacts','outreach','extras','audit','data'].indexOf(p)>=0;}
+  function validPanel(p){return ['overview','landing','forum','analytics','lyrics','catalog','recordings','platforms','contacts','outreach','extras','audit','data'].indexOf(p)>=0;}
   function rememberPanel(p){
     if(!validPanel(p))return;
     try{
@@ -264,7 +264,8 @@
     for(var i=0;i<keys.length;i++)keys[i].className=keys[i].getAttribute('data-panel')===id?'nav-active':'';
     show(el('panel-lyrics'),id==='lyrics');show(el('panel-landing'),id==='landing');show(el('panel-future'),id!=='lyrics'&&id!=='data'&&id!=='landing');show(el('panel-data'),id==='data');
     var forumFrame=el('forum-admin-frame');
-    show(forumFrame,id==='forum');show(el('future-content'),id!=='forum');
+    show(forumFrame,id==='forum');show(el('future-content'),id!=='forum'&&id!=='analytics');
+    show(el('analytics-report'),id==='analytics');
     if(id==='forum'&&authorized&&!forumFrame.hasAttribute('src')){
       forumFrame.setAttribute('src','forum-admin.html?embedded=1');
     }
@@ -285,6 +286,7 @@
     }
     if(authorized&&authorizedUid!==user.uid){
       el('forum-admin-frame').removeAttribute('src');
+      if(window.VMM_ANALYTICS_REPORT)window.VMM_ANALYTICS_REPORT.reset();
       lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
       if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
       if(window.VMM_LANDING&&window.VMM_LANDING.reset)window.VMM_LANDING.reset();
@@ -293,7 +295,7 @@
     text(el('account-label'),user.email||'Google');text(el('net-state'),navigator.onLine?'В сети':'Без сети');
     text(el('sync-status'),'Читаем личную базу…');
     var section=rememberedPanel();
-    if(section==='forum'||(section==='landing'&&window.VMM_LANDING))selectPanel(section);
+    if(section==='forum'||section==='analytics'||(section==='landing'&&window.VMM_LANDING))selectPanel(section);
     else if(section==='recordings'&&window.VMM_RECORDINGS)window.VMM_RECORDINGS.open();
     else if(section!=='lyrics'&&window.VMM_WORKFLOWS)window.VMM_WORKFLOWS.open(section);
     else selectPanel('lyrics');
@@ -307,6 +309,7 @@
     if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
     if(window.VMM_LANDING&&window.VMM_LANDING.reset)window.VMM_LANDING.reset();
     el('forum-admin-frame').removeAttribute('src');
+    if(window.VMM_ANALYTICS_REPORT)window.VMM_ANALYTICS_REPORT.reset();
     show(workspace,false);show(gate,true);message(note);if(auth)signinReady();
   }
   function save(e){
