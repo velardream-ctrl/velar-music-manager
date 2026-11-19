@@ -1057,6 +1057,8 @@
       throw new Error('Страница артиста: неверный способ показа песен.');
     result.artists.detailTrackView=detailTrackView;
     result.releases.cards=cards(releases,'Релизы');
+    result.releases.videoView=['auto','carousel'].indexOf(releases.videoView)>=0?releases.videoView:'grid';
+    result.releases.videoMotion=motionSettings(releases.videoMotion);
     result.releases.radio=radioConfig(typeof releases.radio==='undefined'?d.releases.radio:releases.radio);
     result.releases.playlists=safeList(releases.playlists,8,'Плейлисты',playlistCard,d.releases.playlists);
     result.releases.subscriptions=safeList(releases.subscriptions,6,'Подписки',subscriptionCard,d.releases.subscriptions);

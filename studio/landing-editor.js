@@ -2752,6 +2752,11 @@
      artistBlock.appendChild(details);
    });
    headingBlock.appendChild(artistBlock);
+   var clips=document.createElement('section');clips.className='landing-display-group';
+   heading(clips,'Видеоклипы','Карточки видео в разделе «Релизы и видеоклипы».');
+   selectField(clips,'Показ видеоклипов',[['grid','Обычные карточки'],['carousel','Карусель'],['auto','Автокарусель']],data.releases.videoView||'grid',function(v){data.releases.videoView=v;});
+   motionFields(clips,data.releases.videoMotion||(data.releases.videoMotion={}));
+   headingBlock.appendChild(clips);
    if(!data.genres.displayModes)data.genres.displayModes={};
    var choices=[['compact','Компактный список · поиск · страницы по 25'],
      ['rows','Обычный список'],['covers','Строки с обложками'],

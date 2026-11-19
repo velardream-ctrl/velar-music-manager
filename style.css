@@ -2446,3 +2446,7 @@ html.legacy-ipad-crystal .velar-radio > .station-help > .station-help-button::-w
 .public-song-entry,.cms-music-entry{scroll-margin-top:6rem}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 .song-found{outline:2px solid #e4bf77;outline-offset:-2px;box-shadow:inset 0 0 12px #d3a65355}
+
+.video-carousel{min-width:0}
+.video-carousel[hidden]{display:none}
+.video-carousel .cms-release-card{flex:0 0 82%;max-width:460px;scroll-snap-align:center}

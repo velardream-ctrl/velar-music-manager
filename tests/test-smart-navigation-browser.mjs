@@ -62,6 +62,35 @@ try {
     d.genres.assistant.enabled=true;
     VMM_LANDING_SCHEMA.normalize(d);
   });
+  for(const videoView of ['grid','carousel','auto']){
+    assert.ok(await page.evaluate(view=>{
+      fixture.releases.videoView=view;
+      fixture.releases.cards=Array.from({length:4},(_,i)=>({title:'Видео '+i,
+        visible:true,kind:'video',spotlight:i===0?'video':'none',mediaProvider:'youtube',
+        mediaUrl:'https://www.youtube.com/watch?v='+String(i).padStart(11,'0')}));
+      return VMM_PUBLIC_LANDING.render(fixture);
+    },videoView));
+    const gallery=page.locator('#public-releases-cards');
+    assert.equal(await gallery.locator('.cms-release-card').count(),4);
+    if(videoView==='grid')continue;
+    const rail=gallery.locator('.public-song-carousel-track');
+    await rail.scrollIntoViewIfNeeded();
+    await page.mouse.move(0,0);
+    if(videoView==='auto')await page.waitForFunction(()=>document.querySelector('.video-carousel .public-song-carousel-track').scrollLeft>4);
+    await rail.locator('.cms-release-listen').first().click();
+    await rail.locator('iframe').waitFor();
+    await page.mouse.move(0,0);
+    await page.waitForTimeout(250);
+    const stopped=await rail.evaluate(el=>el.scrollLeft);
+    await page.waitForTimeout(250);
+    assert.equal(await rail.evaluate(el=>el.scrollLeft),stopped);
+    await rail.locator('.cms-release-close').first().click();
+    await gallery.getByRole('button',{name:'Синглы',exact:true}).click();
+    assert.equal(await rail.count(),0);
+    await gallery.getByRole('button',{name:'Видеоклипы',exact:true}).click();
+    assert.equal(await rail.locator('.cms-release-card').count(),4);
+  }
+  await page.evaluate(()=>{fixture.releases.cards=[];fixture.releases.videoView='grid';});
   for(const mode of ['rows','carousel','auto','compact']){
     assert.ok(await page.evaluate(mode=>{
       fixture.genres.displayModes.topics=mode;

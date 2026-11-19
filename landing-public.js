@@ -675,8 +675,10 @@
    }
    empty(target);target.className='cms-release-showcase';
    var features=create('div','cms-release-features'),spotlight={music:false,video:false};
-   var others=[];
+   var others=[],clips=[],clipHost=create('section','video-carousel');
+   var useRail=(value.videoView==='carousel'||value.videoView==='auto')&&window.VELAR_PUBLIC_SONGS;
    shown.forEach(function(item){
+     if(useRail&&item.kind==='video'){clips.push(item);return;}
      var slot=item.spotlight;
      if((slot==='music'||slot==='video')&&!spotlight[slot]){
        spotlight[slot]=true;features.appendChild(releaseCard(item,true));
@@ -700,16 +702,29 @@
    });
    function paint(){
      buttons.forEach(function(b){b.setAttribute('aria-pressed',b.value===mode?'true':'false');});
-     empty(grid);
+     empty(grid);empty(clipHost);
+     var showClips=clips.length&&(mode==='all'||mode==='video');
+     clipHost.hidden=!showClips;
+     if(showClips){
+       clipHost.appendChild(create('h3','','Видеоклипы'));
+       var list=create('div','video-carousel-list');clipHost.appendChild(list);
+       var sorted=clips.slice().sort(function(a,b){
+         return Number(b.spotlight==='video')-Number(a.spotlight==='video')||compareSong(a,b);
+       });
+       window.VELAR_PUBLIC_SONGS.mount(list,sorted,{prefix:'video',forceView:value.videoView,
+         keepOrder:true,batch:sorted.length,motion:value.videoMotion,
+         renderCard:function(item,i){return releaseCard(item,item.spotlight==='video',i);}
+       });
+     }
      var matches=others.filter(function(item){return mode==='all'||item.kind===mode;});
      matches.slice(0,limit).forEach(function(item,index){grid.appendChild(releaseCard(item,false,index));});
      more.textContent='Показать ещё ('+(matches.length-limit)+')';
      more.className='cms-release-more'+(matches.length>limit?'':' hidden');
-     if(!matches.length)
+     if(!matches.length&&!showClips)
        grid.appendChild(create('p','cms-release-empty','Пока нет релизов в этой категории.'));
    }
    more.onclick=function(){limit+=6;paint();};
-   target.appendChild(filters);target.appendChild(grid);target.appendChild(more);
+   target.appendChild(filters);if(clips.length)target.appendChild(clipHost);target.appendChild(grid);target.appendChild(more);
    paint();
  }
 

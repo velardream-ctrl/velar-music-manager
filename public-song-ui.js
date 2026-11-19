@@ -235,17 +235,17 @@
      list.className+=' public-song-carousel';
      var nav=el('div','public-song-carousel-controls');
      previous=el('button','public-song-carousel-arrow','‹');
-     previous.type='button';previous.setAttribute('aria-label','Предыдущая песня');
+     previous.type='button';previous.setAttribute('aria-label',opts.renderCard?'Предыдущий клип':'Предыдущая песня');
      previous.onclick=function(){manualUntil=Date.now()+1400;showAt(position-1);};
      counter=el('span','public-song-carousel-count');
      counter.setAttribute('aria-live','polite');
      following=el('button','public-song-carousel-arrow','›');
-     following.type='button';following.setAttribute('aria-label','Следующая песня');
+     following.type='button';following.setAttribute('aria-label',opts.renderCard?'Следующий клип':'Следующая песня');
      following.onclick=function(){manualUntil=Date.now()+1400;showAt(position+1);};
      nav.appendChild(previous);nav.appendChild(counter);nav.appendChild(following);
      rail=el('div','public-song-carousel-track');
      rail.setAttribute('role','region');
-     rail.setAttribute('aria-label','Песни: листайте влево или вправо');
+     rail.setAttribute('aria-label',opts.renderCard?'Видеоклипы':'Песни: листайте влево или вправо');
      rail.onscroll=function(){
        if(moving)return;
        if(!rail.clientWidth||!rail.scrollWidth)return;
@@ -319,6 +319,10 @@
      return open(i,src);
    }
    function addRow(i){
+     if(opts.renderCard){
+       var card=opts.renderCard(tracks[i],i);
+       entries[i]=card;card.velarIndex=i;container.appendChild(card);return;
+     }
      var track=tracks[i],sources=approved(track);
      if(!sources.length)return;
      var item=el('div','public-song-entry '+classes+'-song-entry'+
@@ -568,7 +572,7 @@
        frame=0;
        if(!list.isConnected)return;
        var dt=last?Math.min(40,now-last):0;last=now;
-       if(seen&&!document.hidden&&!reduced.matches&&!paused&&!hover&&!held&&!moving&&index<0&&Date.now()>Math.max(until,manualUntil)&&!document.getElementById('velar-legacy-video-modal')&&tracks.length>1){
+       if(seen&&!document.hidden&&!reduced.matches&&!paused&&!hover&&!held&&!moving&&index<0&&!(opts.renderCard&&rail.querySelector('iframe'))&&Date.now()>Math.max(until,manualUntil)&&!document.getElementById('velar-legacy-video-modal')&&tracks.length>1){
          var edge=rail.scrollWidth-rail.clientWidth;
          if(!cycling&&direction>0&&edge-rail.scrollLeft<rail.clientWidth&&count<tracks.length){appendBatch();trimInvisible();}
          if(!cycling&&direction<0&&rail.scrollLeft<rail.clientWidth&&firstRendered>0){prependPrevious();trimInvisible();}
