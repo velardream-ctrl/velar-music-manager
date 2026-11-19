@@ -18,7 +18,7 @@ const auth={signInWithPopup(){popupCalls++;return new Promise((resolve,reject)=>
 function Provider(){}
 Provider.prototype.setCustomParameters=function(){};
 const firebase={auth:{GoogleAuthProvider:Provider}};
-const prefix="var signIn=button,auth=mockAuth,firebase=mockFirebase,authorized=false,signInAttempt=0,signInWatchdog=null;"+
+const prefix="var signIn=button,auth=mockAuth,firebase=mockFirebase,authorized=false,signInAttempt=0,signInWatchdog=null,retryAdminAccess=false;"+
   "function message(s){messages.push(s);}";
 const snippet=prefix+src.slice(helperStart,helperEnd)+src.slice(handlerStart,handlerEnd);
 const ctx={button,mockAuth:auth,mockFirebase:firebase,messages,window,Promise,Error};
@@ -46,3 +46,33 @@ assert.match(src,/function signinReady/);
 assert.match(src,/if\(user\)\{clearSignInWatchdog/);
 assert.match(src,/if\(authorized&&authorizedUid===user\.uid\)/);
 console.log('PASS: Safari popup starts in click, timed recovery, actionable retry, blocked-popup errors and admin verification retained');
+
+const checkStart=src.indexOf('  var accessAttempt=');
+const checkEnd=src.indexOf('  signIn.onclick=function(){',checkStart);
+const accessTimers=new Map();
+let accessTimer=0, openCount=0, readCount=0, resolveLate;
+const verified={uid:'owner',emailVerified:true};
+const approved={exists:true,data:()=>({enabled:true})};
+const accessContext={
+  user:verified,signIn:{},navigator:{onLine:true},
+  window:{setTimeout(fn,ms){assert.equal(ms,12000);accessTimers.set(++accessTimer,fn);return accessTimer;},clearTimeout(id){accessTimers.delete(id);}},
+  clearSignInWatchdog(){},signinReady(){},message(){},unauthorized(){accessContext.signIn.disabled=false;},
+  showWorkspace(){openCount++;},
+  db:{collection(name){assert.equal(name,'vmm_admins');return {doc(uid){assert.equal(uid,verified.uid);return {get({source}) {
+    assert.equal(source,'server');
+    return ++readCount===1?new Promise(resolve=>{resolveLate=resolve;}):Promise.resolve(approved);
+  }};}};}}
+};
+vm.runInNewContext(src.slice(checkStart,checkEnd),accessContext);
+accessContext.checkAdminAccess();
+assert.equal(accessContext.signIn.disabled,true);
+[...accessTimers.values()][0]();
+assert.equal(accessContext.signIn.textContent,'Повторить проверку доступа');
+assert.equal(accessContext.signIn.disabled,false);
+resolveLate(approved);
+await new Promise(r=>setImmediate(r));
+assert.equal(openCount,0,'A late prior check must not unlock Studio');
+accessContext.checkAdminAccess();
+await new Promise(r=>setImmediate(r));
+assert.equal(openCount,1,'Retry checks the already-authenticated account');
+assert.equal(accessTimers.size,0);
