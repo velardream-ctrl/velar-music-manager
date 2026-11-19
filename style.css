@@ -1885,7 +1885,6 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 /* RUN-140: player replaces artwork/title; platform controls remain BELOW it. */
 .public-song-entry{display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch}
 .public-song-entry>.public-song-label{flex:0 0 auto;width:100%;max-width:100%}
-.public-song-entry.is-playing>.public-song-label{display:none!important}
 .public-song-entry>.public-song-inline{flex:0 0 auto;width:100%;max-width:100%;order:1;min-width:0;overflow:hidden}
 .public-song-entry>.public-song-platforms{order:2;display:flex;flex:0 0 auto;width:100%;min-width:0;max-width:100%;margin:8px 0 0!important;gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;box-sizing:border-box;padding:3px 2px 6px;position:relative;z-index:3;align-items:center;justify-content:flex-start}
 .public-song-entry>.public-song-platforms>.public-song-source{flex:0 0 40px;margin:0!important;width:40px;height:40px;min-width:40px;min-height:40px;touch-action:manipulation}
@@ -2452,7 +2451,6 @@ html.legacy-ipad-crystal .velar-radio > .station-help > .station-help-button::-w
 .video-carousel .cms-release-card{flex:0 0 82%;max-width:460px;scroll-snap-align:center}
 
 /* Keep the selected song's own caption and controls visible outside the embed. */
-.public-song-entry.is-playing>.public-song-label{display:flex!important}
 .public-song-entry.is-playing:not(.public-song-entry--carousel)>.public-song-inline:not(:empty){
  position:relative!important;inset:auto;top:auto;left:auto;right:auto;
  width:100%;max-width:none;height:auto!important;min-height:0;padding:4px!important;
@@ -2465,6 +2463,7 @@ html.legacy-ipad-crystal .velar-radio > .station-help > .station-help-button::-w
  top:auto;left:auto;right:auto;width:100%;margin:0;
 }
 .public-song-entry--carousel.is-playing>.public-song-label{order:1}
+.public-song-entry.is-playing .public-song-copy strong{display:block;white-space:normal;overflow:visible}
 .public-song-entry--carousel.is-playing .public-song-artwork{display:none}
 .public-song-entry--carousel.is-playing>.public-song-inline:not(:empty){
  order:0;position:relative!important;display:block;flex:0 0 auto!important;

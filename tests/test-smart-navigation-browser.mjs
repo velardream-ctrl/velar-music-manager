@@ -55,6 +55,24 @@ try {
     },document.content);
     await page.waitForFunction(()=>document.querySelector('.song-found iframe'));
     console.log('Published catalog and player verified:',title);
+    const match=await page.evaluate(content=>{
+      const result=VELAR_NAVIGATION.command('Покажи Любовь',VMM_LANDING_SCHEMA.normalize(content));
+      return result&&result.selection&&VELAR_NAVIGATION.navigate(result.selection);
+    },document.content);
+    if(match){
+      const card=page.locator('.public-song-entry.is-playing').filter({has:page.getByText('Любовь',{exact:true})});
+      await card.waitFor();
+      for(const width of [390,896]){
+        await page.setViewportSize({width,height:780});
+        await page.waitForTimeout(350);
+        assert.ok(await card.evaluate(el=>{
+          const caption=el.querySelector('.public-song-copy strong').getBoundingClientRect();
+          const player=el.querySelector('iframe').getBoundingClientRect();
+          return caption.height>0&&player.height>0&&(player.bottom<=caption.top+1||caption.bottom<=player.top+1);
+        }),'Published Любовь caption at '+width);
+      }
+      console.log('Published Любовь title visible at 390 and 896 px');
+    }
   }
   await page.evaluate(()=>{
     const d=window.fixture=VMM_LANDING_SCHEMA.defaults();
