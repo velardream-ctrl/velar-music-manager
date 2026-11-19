@@ -150,6 +150,7 @@
     return {
       hero:{
         skin:'classic',
+        featureMode:'random',featureUrl:'',featureMinutes:5,
         subtitle:'Разные голоса. Разные жанры. Одна вселенная музыки.',
         intro:'Здесь рождается пространство для артистов, авторских релизов и музыкальных историй — от оперы и этно до рока, поп-музыки и кроссоверов.',
         imageLoadingLevel:0, // RUN-123: existing published pages remain eager.
@@ -1032,6 +1033,9 @@
     var result={
       hero:{
         skin:hero.skin==='compact'?'compact':'classic',
+        featureMode:['fixed','rotate'].indexOf(hero.featureMode)>=0?hero.featureMode:'random',
+        featureUrl:typeof hero.featureUrl==='string'?hero.featureUrl.slice(0,2048):'',
+        featureMinutes:[1,5,15,30,60].indexOf(hero.featureMinutes)>=0?hero.featureMinutes:5,
         subtitle:plain(typeof hero.subtitle==='string'?hero.subtitle:d.hero.subtitle,'Первый экран — подзаголовок',160,true),
         intro:plain(typeof hero.intro==='string'?hero.intro:d.hero.intro,'Первый экран — описание',600,true),
         imageLoadingLevel:(function(){
@@ -1107,8 +1111,35 @@
     if(JSON.stringify(result).length>780000)throw new Error('Изображений слишком много: уменьшай фотографии или используй меньше карточек (ограничение размера страницы).');
     return result;
   }
+  function homepageSongs(data){
+    var songs=[],byLink=Object.create(null);
+    function collect(rows,artistTracks){
+      (rows||[]).forEach(function(row){
+        if(!row.visible)return;
+        (artistTracks?row.featuredTracks||[]:row.tracks||[]).forEach(function(track){
+          if(!track.title||!track.url)return;
+          var links=[track.url,track.alternateUrl,track.thirdUrl].filter(Boolean);
+          var existing=links.map(function(url){return byLink[url];}).filter(Boolean)[0];
+          var song=existing||{title:track.title,artist:track.artist||(artistTracks?row.title:'')};
+          if(!existing)songs.push(song);
+          ['','alternate','third'].forEach(function(prefix){
+            var provider=track[prefix?prefix+'Provider':'provider'],url=track[prefix?prefix+'Url':'url'];
+            if(!url)return;
+            byLink[url]=song;
+            if([song.provider,song.alternateProvider,song.thirdProvider].indexOf(provider)>=0)return;
+            var slot=!song.url?'':!song.alternateUrl?'alternate':'third';
+            song[slot?slot+'Provider':'provider']=provider;
+            song[slot?slot+'Url':'url']=url;
+          });
+        });
+      });
+    }
+    collect(data.artists.cards,true);
+    [data.genres.entries,data.genres.topics.entries,data.genres.languages.entries,data.albums.entries].forEach(function(rows){collect(rows,false);});
+    return songs;
+  }
   function blankCard(){return {title:'',subtitle:'',description:'',url:'',imageUrl:'',visible:false};}
-  window.VMM_LANDING_SCHEMA={defaults:defaults,normalize:normalize,blankCard:blankCard,
+  window.VMM_LANDING_SCHEMA={homepageSongs:homepageSongs,defaults:defaults,normalize:normalize,blankCard:blankCard,
     songUrl:songUrl,featuredTrack:featuredTrack,featuredTracks:featuredTracks,
     releaseMediaUrl:releaseMediaUrl,playlistUrl:playlistUrl,radioConfig:radioConfig,radioCatalog:radioCatalog,
     albumsConfig:albumsConfig,albumEntry:albumEntry,

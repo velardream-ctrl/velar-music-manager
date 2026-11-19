@@ -15,17 +15,16 @@
     if (external) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
     return a;
   }
-  function feature(data) {
-    var tracks = [];
-    data.artists.cards.filter(visible).forEach(function (a) { tracks = tracks.concat(a.featuredTracks || []); });
-    [data.genres.entries, data.genres.topics.entries, data.genres.languages.entries].forEach(function (entries) {
-      entries.filter(visible).forEach(function (g) { tracks = tracks.concat(g.tracks || []); });
-    });
-    return tracks.filter(function (t) { return t.title === 'Любовь' && /^(DJ )?Velar$/i.test(t.artist) && t.alternateUrl; })[0] || tracks[0];
+  var activeUrl='', mode='', timer=null, songs=[];
+  function lastSong(){
+    try {return sessionStorage.getItem('velar-feature-last')||'';} catch(error){return '';}
   }
-  function visible(item) { return item.visible !== false; }
-  function paint(data) {
-    host.textContent = '';
+  function randomSong(previous){
+    var options=songs.filter(function(song){return song.url!==previous;});
+    if(!options.length)return songs[0];
+    return options[Math.floor(Math.random()*options.length)];
+  }
+  function paintSong(data,song){
     var hero = element('div','skin-feature'), brand = element('div','skin-brand');
     var crystal = document.querySelector('.hero-mark').cloneNode(false);
     crystal.removeAttribute('class');
@@ -34,7 +33,7 @@
     brand.appendChild(element('small','','RECORDS'));
     brand.appendChild(element('i','',data.hero.subtitle));
     hero.appendChild(brand);
-    var song = feature(data);
+
     if (song) {
       var cover = element('img','skin-cover');
       cover.alt = 'Обложка: ' + song.title;
@@ -56,7 +55,14 @@
       });
       hero.appendChild(copy);
     }
-    host.appendChild(hero);
+    if(host.firstChild)host.replaceChild(hero,host.firstChild);
+    else host.appendChild(hero);
+    activeUrl=song?song.url:'';
+    if(song&&mode!=='fixed'){
+      try {sessionStorage.setItem('velar-feature-last',activeUrl);} catch(error){}
+    }
+  }
+  function appendNavigation(){
     var details = element('details','skin-sections');
     details.appendChild(element('summary','','Подобрать музыку · Все разделы'));
     var nav = element('nav');
@@ -65,9 +71,23 @@
   }
   function apply() {
     var compact = !!content && content.hero.skin === 'compact';
-    if (compact) paint(content);
+    window.clearInterval(timer);
     host.hidden = !compact;
     document.body.classList.toggle('skin-compact',compact);
+    if(!compact)return;
+    songs=window.VMM_LANDING_SCHEMA.homepageSongs(content);
+    var nextMode=content.hero.featureMode||'random';
+    var wanted=nextMode==='fixed'?content.hero.featureUrl:(mode===nextMode?activeUrl:'');
+    mode=nextMode;
+    var chosen=songs.filter(function(song){return wanted&&[song.url,song.alternateUrl,song.thirdUrl].indexOf(wanted)>=0;})[0];
+    paintSong(content,chosen||(mode==='fixed'?songs[0]:randomSong(lastSong())));
+    if(!host.querySelector('.skin-sections'))appendNavigation();
+    if(mode==='rotate'&&songs.length>1){
+      timer=window.setInterval(function(){
+        if(document.hidden||host.firstChild.contains(document.activeElement))return;
+        paintSong(content,randomSong(activeUrl));
+      },(content.hero.featureMinutes||5)*60000);
+    }
   }
   window.VelarHomeSkin = {render:function (data) { content = data; apply(); }};
 }());

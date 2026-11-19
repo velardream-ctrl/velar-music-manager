@@ -2740,6 +2740,23 @@
    selectField(headingBlock,'Вид главной страницы',[['classic','Классический'],['compact','Компактный']],data.hero.skin||'classic',function(v){
      data.hero.skin=v;
    });
+   var songs=API.homepageSongs(data).sort(compareSong);
+   var modes=[['random','Случайная при открытии страницы'],['fixed','Выбранная песня'],['rotate','Случайная со сменой по таймеру']];
+   var mode=selectField(headingBlock,'Главная песня компактного вида',modes,data.hero.featureMode||'random',function(value){
+     data.hero.featureMode=value;
+     showSongSettings();
+   });
+   var songOptions=songs.map(function(song){return [song.url,song.title+(song.artist?' — '+song.artist:'')];});
+   var selected=songs.filter(function(song){return [song.url,song.alternateUrl,song.thirdUrl].indexOf(data.hero.featureUrl)>=0;})[0];
+   var fixedFields=document.createElement('div');headingBlock.appendChild(fixedFields);
+   selectField(fixedFields,'Песня из каталога',[['','Первая доступная песня']].concat(songOptions),selected?selected.url:'',function(value){data.hero.featureUrl=value;});
+   var timerFields=document.createElement('div');headingBlock.appendChild(timerFields);
+   selectField(timerFields,'Менять песню каждые',[1,5,15,30,60].map(function(n){return [String(n),n+' мин'];}),String(data.hero.featureMinutes||5),function(value){data.hero.featureMinutes=Number(value);});
+   function showSongSettings(){
+     fixedFields.hidden=mode.value!=='fixed';
+     timerFields.hidden=mode.value!=='rotate';
+   }
+   showSongSettings();
    var artistBlock=document.createElement('section');artistBlock.className='landing-display-group';
    heading(artistBlock,'Артисты на главной',
      'Только подборка «Лучшие песни» рядом с карточками артистов. Отдельная страница артиста настраивается в разделе «Артисты».');
