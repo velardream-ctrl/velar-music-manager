@@ -124,7 +124,37 @@
   const sectionStatus = document.getElementById('section-status');
   const sectionList = document.getElementById('section-list');
   const sectionAdd = document.getElementById('section-add');
+  const sectionArchive = document.getElementById('section-archive');
+  const archivedSections = document.getElementById('archived-sections');
   let sectionRows = [];
+
+  function sectionDeleteAction(section) {
+    const deleting = !section.deleted;
+    const button = element('button', deleting ? 'Удалить раздел' : 'Восстановить раздел');
+    button.type = 'button';
+    button.onclick = async () => {
+      if (!permitted || (deleting && !window.confirm('Удалить раздел «' + section.label +
+        '»? Темы сохранятся, а раздел можно будет восстановить.'))) return;
+      const revision = session;
+      button.disabled = true;
+      sectionStatus.textContent = '';
+      try {
+        const data = {label:section.label,icon:section.icon,order:section.order,enabled:!deleting,deleted:deleting};
+        await db.collection(sections.collection).doc(section.id).set(data);
+        if (revision !== session) return;
+        if (await loadSections(revision)) {
+          sectionStatus.textContent = deleting ? 'Раздел перенесён в удалённые.' : 'Раздел восстановлен.';
+        }
+      } catch (error) {
+        if (revision === session) sectionStatus.textContent = error.code === 'permission-denied'
+          ? 'Удаление и восстановление требуют обновлённых правил Firestore.'
+          : 'Не удалось изменить раздел. Попробуйте ещё раз.';
+      } finally {
+        button.disabled = false;
+      }
+    };
+    return button;
+  }
 
   function sectionField(form, name, label, value, attributes = {}) {
     const field = Object.assign(element('input'), {name, value}, attributes);
@@ -183,6 +213,7 @@
     const save = element('button', 'Сохранить раздел');
     const controls = element('div', '', 'actions');
     controls.append(save);
+    if (section.id) controls.append(sectionDeleteAction(section));
     if (!section.id) {
       const cancel = element('button', 'Отмена');
       cancel.type = 'button';
@@ -223,9 +254,17 @@
       const rows = await withAccessTimeout(sections.load(db));
       if (revision !== session) return;
       sectionRows = rows;
-      sectionList.replaceChildren(...rows.map(renderSection));
+      sectionList.replaceChildren(...rows.filter(section => !section.deleted).map(renderSection));
+      const deleted = rows.filter(section => section.deleted);
+      sectionArchive.hidden = !deleted.length;
+      archivedSections.replaceChildren(...deleted.map(section => {
+        const row = element('div', '', 'forum-section-editor');
+        row.append(element('p', section.icon + ' ' + section.label), sectionDeleteAction(section));
+        return row;
+      }));
       sectionAdd.disabled = rows.length >= 100;
       sectionStatus.textContent = rows.length >= 100 ? 'Достигнут предел в 100 разделов.' : '';
+      return true;
     } catch (error) {
       if (revision !== session) return;
       sectionStatus.textContent = error.code === 'permission-denied' ?
@@ -273,6 +312,8 @@
       moderation.hidden = true;
       sectionPanel.hidden = true;
       sectionList.replaceChildren();
+      sectionArchive.hidden = true;
+      archivedSections.replaceChildren();
       list.textContent = '';
       bans.textContent = '';
       if (!user) { showAccessError(denied); return; }

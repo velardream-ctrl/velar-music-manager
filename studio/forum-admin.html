@@ -25,6 +25,10 @@
       <p id="section-status" role="status"></p>
       <div id="section-list"></div>
       <button id="section-add" type="button" class="gold" disabled>Добавить раздел</button>
+      <details id="section-archive" hidden>
+        <summary>Удалённые разделы</summary>
+        <div id="archived-sections"></div>
+      </details>
     </section>
     <section id="moderation" class="panel" hidden aria-label="Темы форума">
       <div class="panel-head">
@@ -48,6 +52,6 @@
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script defer src="firebase-config.js"></script>
   <script defer src="../forum/sections.js"></script>
-  <script defer src="forum-admin.js?v=5"></script>
+  <script defer src="forum-admin.js?v=6"></script>
 </body>
 </html>
