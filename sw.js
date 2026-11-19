@@ -45,10 +45,10 @@ function isPublicAsset(url) {
 }
 self.addEventListener('install', function (event) {
   event.waitUntil(Promise.all([
-    caches.open(CACHE_NAME).then(function(cache){return cache.addAll(ASSETS);}),
+    caches.open(CACHE_NAME).then(function(cache){return cache.addAll(ASSETS.map(function(asset){return new Request(asset,{cache:"reload"});}));}),
     caches.open(STUDIO_CACHE).then(function(cache){
       return Promise.all(STUDIO_ASSETS.concat(SDK_ASSETS).map(function(asset){
-        return cache.add(asset).catch(function(){return null;});
+        return cache.add(STUDIO_ASSETS.indexOf(asset)>=0?new Request(asset,{cache:"reload"}):asset).catch(function(){return null;});
       }));
     })
   ]).then(function(){return self.skipWaiting();}));

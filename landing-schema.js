@@ -917,7 +917,7 @@
       result.artistId=artistId;
       ['homeDisplay','profileDisplay'].forEach(function(key){
         if(['rows','carousel','auto'].indexOf(x[key])>=0)result[key]=x[key];
-        if(x[key+'Motion'])result[key+'Motion']=motionSettings(x[key+'Motion']);
+        result[key+'Motion']=motionSettings(x[key+'Motion']);
       });
       var shape=x.imageShape||'square';
       if(shape!=='square'&&shape!=='circle')throw new Error('Форма фотографии: квадрат или круг.');

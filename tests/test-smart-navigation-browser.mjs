@@ -116,6 +116,24 @@ try {
     input.form.dispatchEvent(new Event('submit',{cancelable:true}));
   });
   await page.locator('#public-topic-detail .song-found').filter({hasText:'Люба'}).waitFor();
+  const artistDocument=await page.evaluate(()=>{
+    const data=structuredClone(fixture),artist={};data.artists.cards=[artist];
+    artist.visible=true;artist.title='Test Artist';artist.artistId='test-artist';
+    artist.featuredTracks=data.genres.topics.entries[0].tracks.slice(0,5);
+    artist.profileDisplay='auto';artist.homeDisplay='rows';
+    artist.profileDisplayMotion={direction:'left',end:'swing',speed:87};
+    const normalized=VMM_LANDING_SCHEMA.normalize(data);
+    if(JSON.stringify(normalized)!==JSON.stringify(VMM_LANDING_SCHEMA.normalize(normalized)))throw Error('Settings do not round-trip');
+    if(normalized.artists.cards[0].homeDisplay!=='rows'||normalized.genres.displayModes.topics!=='auto')throw Error('Layouts crossed sections');
+    return data;
+  });
+  const artistUrl=live?origin+'artist.html':pathToFileURL(process.cwd()+'/artist.html').href;
+  await page.goto(artistUrl+'?id=test-artist');
+  assert.ok(await page.evaluate(d=>VMM_ARTIST_DETAIL.render(d),artistDocument));
+  const profile=page.locator('#artist-song-search');
+  await profile.locator('input').fill('Трек 003');
+  await profile.getByRole('button',{name:'Найти',exact:true}).click();
+  await page.locator('#artist-tracks .song-found iframe').waitFor();
   assert.deepEqual(errors,[]);
   console.log('Browser passed: list, compact, carousel, auto, repeated navigation, centering, pause, restore, fuzzy and ambiguous queries.');
 } finally { await browser.close(); }
