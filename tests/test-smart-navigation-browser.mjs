@@ -64,6 +64,7 @@ try {
       title:i===248?'Люба':'Трек '+String(i).padStart(3,'0'),artist:'Velar',
       provider:'youtube',url:'https://www.youtube.com/watch?v='+String(i).padStart(11,'0')
     }));
+    Object.assign(group.tracks[248],{alternateProvider:'spotify',alternateUrl:'https://open.spotify.com/track/0123456789ABCDEFGHIJKL',thirdProvider:'appleMusic',thirdUrl:'https://music.apple.com/fi/album/white-birch/1234567890?i=1234567891'});
     d.genres.displayModes={topics:'auto',languages:'rows',genres:'rows',albums:'rows'};
     d.genres.assistant.enabled=true;
     VMM_LANDING_SCHEMA.normalize(d);
@@ -83,7 +84,10 @@ try {
     await rail.scrollIntoViewIfNeeded();
     await page.mouse.move(0,0);
     if(videoView==='auto')await page.waitForFunction(()=>document.querySelector('.video-carousel .public-song-carousel-track').scrollLeft>4);
-    await rail.locator('.cms-release-listen').first().click();
+    const rect=await rail.boundingBox();
+    await page.mouse.move(rect.x+rect.width/2,Math.min(790,rect.y+rect.height/2));
+    await rail.locator('.cms-release-listen').first().focus();
+    await page.keyboard.press('Enter');
     await rail.locator('iframe').waitFor();
     await page.mouse.move(0,0);
     await page.waitForTimeout(250);
@@ -97,7 +101,7 @@ try {
     assert.equal(await rail.locator('.cms-release-card').count(),4);
   }
   await page.evaluate(()=>{fixture.releases.cards=[];fixture.releases.videoView='grid';});
-  for(const mode of ['rows','carousel','auto','compact']){
+  for(const mode of ['rows','carousel','auto','compact','tiles','covers']){
     assert.ok(await page.evaluate(mode=>{
       fixture.genres.displayModes.topics=mode;
       return VMM_PUBLIC_LANDING.render(fixture);
@@ -112,10 +116,23 @@ try {
     await selected.filter({hasText:'Люба'}).waitFor();
     assert.equal(await page.locator('#public-topic-detail iframe').count(),1);
     assert.match(await selected.locator('iframe').getAttribute('src'),/autoplay=1/);
+    async function checkCaption(){
+      assert.ok(await selected.evaluate(card=>{
+        const box=el=>el.getBoundingClientRect();
+        const caption=box(card.querySelector('.public-song-copy strong')),media=box(card.querySelector('iframe'));
+        return caption.height>0&&caption.width>0&&(caption.top>=media.bottom-1||caption.bottom<=media.top+1);
+      }),'Visible song title outside the player in '+mode);
+    }
+    await checkCaption();
+    for(const provider of ['spotify','appleMusic']){
+      await selected.locator('[data-provider="'+provider+'"]').click();
+      await checkCaption();
+    }
     if(mode==='auto'||mode==='carousel'){
       for(const width of [980,390,844]){
         await page.setViewportSize({width,height:800});
         await page.waitForTimeout(300);
+        await checkCaption();
         const offset=await selected.evaluate(el=>{
           const rail=el.parentNode,r=rail.getBoundingClientRect(),c=el.getBoundingClientRect();
           return Math.abs(c.left+c.width/2-r.left-rail.clientWidth/2);
@@ -126,7 +143,7 @@ try {
         const rail=page.locator('#public-topic-detail .public-song-carousel-track');
         const pause=page.locator('#public-topic-detail button').filter({hasText:'Пауза'});
         await pause.click();
-        await selected.locator('.public-song-source').click();
+        await selected.locator('[data-provider="appleMusic"]').click();
         await page.mouse.move(0,0);
         const stopped=await rail.evaluate(el=>el.scrollLeft);
         await page.waitForTimeout(450);
