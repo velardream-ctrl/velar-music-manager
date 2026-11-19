@@ -76,3 +76,30 @@ accessContext.checkAdminAccess();
 await new Promise(r=>setImmediate(r));
 assert.equal(openCount,1,'Retry checks the already-authenticated account');
 assert.equal(accessTimers.size,0);
+
+accessContext.cfg={projectId:'studio-test'};
+verified.getIdToken=async()=> 'mock-firebase-token';
+accessContext.window.AbortController=AbortController;
+accessContext.window.setTimeout=(fn,ms)=>{
+  accessTimers.set(++accessTimer,{fn,ms});
+  return accessTimer;
+};
+accessContext.db.collection=()=>({doc:()=>({get:()=>new Promise(()=>{})})});
+accessContext.window.fetch=async (url,options)=>{
+  assert.equal(url,'https://firestore.googleapis.com/v1/projects/studio-test/databases/(default)/documents/vmm_admins/owner');
+  assert.equal(options.headers.Authorization,'Bearer mock-firebase-token');
+  assert.equal(options.cache,'no-store');
+  return {ok:true,status:200,json:async()=>({fields:{enabled:{booleanValue:true}}})};
+};
+accessContext.checkAdminAccess();
+[...accessTimers.values()].find(timer=>timer.ms===4000).fn();
+await new Promise(r=>setImmediate(r));
+assert.equal(openCount,2,'HTTPS fallback accepts server-confirmed administrator rights');
+assert.equal(accessTimers.size,0);
+
+accessContext.window.fetch=async()=>({ok:false,status:403});
+accessContext.checkAdminAccess();
+[...accessTimers.values()].find(timer=>timer.ms===4000).fn();
+await new Promise(r=>setImmediate(r));
+assert.equal(openCount,2,'A server rejection must never unlock Studio');
+assert.equal(accessTimers.size,0);
