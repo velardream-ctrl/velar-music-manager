@@ -1,6 +1,4 @@
-#skin-preview-tools[hidden],#compact-home[hidden]{display:none}
-#skin-preview-tools{text-align:center;background:#111c2f;color:#f2dcb7;padding:10px;font:15px system-ui;position:sticky;top:0;z-index:10001}
-#skin-choice{margin-left:8px;font:inherit;border:1px solid #9a815a;border-radius:6px;padding:5px;background:#142139;color:#fff0d6}
+#compact-home[hidden]{display:none}
 .skin-compact .hero,.skin-compact #crystal-journey{display:none}
 #compact-home{font:18px Georgia,serif;color:#f5e5c9;padding:20px max(4%,calc((100% - 1150px)/2));background:#080e18}
 #compact-home h1,#compact-home h2{font-family:Georgia,serif;font-weight:400;color:inherit;margin:0}
@@ -15,4 +13,4 @@
 .skin-brand img{height:auto;max-height:240px;object-fit:contain}.skin-feature>.skin-cover{aspect-ratio:1;object-fit:cover}.skin-cover[hidden]{display:none}
 .skin-compact .main-panels{display:flex;flex-direction:column}.skin-compact #releases{order:-1}.skin-compact .main-panels>section{min-width:0}
 
-#visitor-skin{background:#142139;color:#f4dfbd;border:1px solid #8e795a;border-radius:7px;padding:6px;font:inherit}.topics-more{margin:12px auto}.topics-more summary{cursor:pointer}.topics-more .topics-cloud{margin-top:12px}
+.topics-more{margin:12px auto}.topics-more summary{cursor:pointer}.topics-more .topics-cloud{margin-top:12px}

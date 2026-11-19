@@ -2737,12 +2737,9 @@
    headingBlock.className='landing-display-settings';
    heading(headingBlock,'Оформление блоков главной страницы',
      'Здесь собраны все способы показа песен посетителям на главной. Каждый блок независим. Для длинных подборок рекомендуется компактный список с поиском и страницами.');
-   var skinSelect=selectField(headingBlock,'Вид главной страницы',[['classic','Классический'],['compact','Компактный']],data.hero.skin||'classic',function(v){
-     data.hero.skin=v;previewSkin.href='../index.html?skinPreview='+v;
+   selectField(headingBlock,'Вид главной страницы',[['classic','Классический'],['compact','Компактный']],data.hero.skin||'classic',function(v){
+     data.hero.skin=v;
    });
-   var previewSkin=document.createElement('a');previewSkin.href='../index.html?skinPreview='+skinSelect.value;
-   previewSkin.target='_blank';previewSkin.rel='noopener';previewSkin.textContent='Сравнить виды без публикации';
-   headingBlock.appendChild(previewSkin);
    var artistBlock=document.createElement('section');artistBlock.className='landing-display-group';
    heading(artistBlock,'Артисты на главной',
      'Только подборка «Лучшие песни» рядом с карточками артистов. Отдельная страница артиста настраивается в разделе «Артисты».');
