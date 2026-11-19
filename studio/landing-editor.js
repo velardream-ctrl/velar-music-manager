@@ -2740,7 +2740,16 @@
    selectField(headingBlock,'Вид главной страницы',[['classic','Классический'],['compact','Компактный']],data.hero.skin||'classic',function(v){
      data.hero.skin=v;
    });
-   var songs=API.homepageSongs(data).sort(compareSong);
+   var source=selectField(headingBlock,'Источник главной песни',[['all','Все песни'],['genres','Жанры'],['topics','Темы'],['languages','Языки'],['artists','Артисты'],['albums','Альбомы']],data.hero.featureSource||'all',function(value){
+     data.hero.featureSource=value;data.hero.featureGroup='';render();
+   });
+   var sourceRows={genres:data.genres.entries||[],topics:data.genres.topics.entries||[],languages:data.genres.languages.entries||[],artists:data.artists.cards||[],albums:data.albums.entries||[]}[source.value]||[];
+   if(source.value!=='all'){
+     selectField(headingBlock,'Конкретная подборка',[['','Все песни раздела']].concat(sourceRows.filter(function(row){return row.visible;}).map(function(row){
+       return [String(row.id||row.slug||row.code||''),row.label||row.title||'Без названия'];
+     }).filter(function(row){return row[0];})),data.hero.featureGroup||'',function(value){data.hero.featureGroup=value;render();});
+   }
+   var songs=API.featuredSourceSongs(data).sort(compareSong);
    var modes=[['random','Случайная при открытии страницы'],['fixed','Выбранная песня'],['rotate','Случайная со сменой по таймеру']];
    var mode=selectField(headingBlock,'Главная песня компактного вида',modes,data.hero.featureMode||'random',function(value){
      data.hero.featureMode=value;
@@ -2750,11 +2759,14 @@
    var selected=songs.filter(function(song){return [song.url,song.alternateUrl,song.thirdUrl].indexOf(data.hero.featureUrl)>=0;})[0];
    var fixedFields=document.createElement('div');headingBlock.appendChild(fixedFields);
    selectField(fixedFields,'Песня из каталога',[['','Первая доступная песня']].concat(songOptions),selected?selected.url:'',function(value){data.hero.featureUrl=value;});
+   var dailyFields=document.createElement('div');headingBlock.appendChild(dailyFields);
+   selectField(dailyFields,'Случайная песня',[['open','Новая при открытии'],['day','Одна на весь день']],data.hero.featureDaily?'day':'open',function(v){data.hero.featureDaily=v==='day';});
    var timerFields=document.createElement('div');headingBlock.appendChild(timerFields);
    selectField(timerFields,'Менять песню каждые',[1,5,15,30,60].map(function(n){return [String(n),n+' мин'];}),String(data.hero.featureMinutes||5),function(value){data.hero.featureMinutes=Number(value);});
    function showSongSettings(){
      fixedFields.hidden=mode.value!=='fixed';
      timerFields.hidden=mode.value!=='rotate';
+     dailyFields.hidden=mode.value!=='random';
    }
    showSongSettings();
    var artistBlock=document.createElement('section');artistBlock.className='landing-display-group';
