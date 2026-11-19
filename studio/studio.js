@@ -381,24 +381,52 @@
       signIn.disabled=false;message('Войди через Google, чтобы подтвердить доступ владельца.');
       auth.onAuthStateChanged(function(next){
         user=next;
-        if(user){clearSignInWatchdog();message('Google подтвердил вход. Проверяем права администратора…');}
-        if(!user){unauthorized('Вход через Google необходим для доступа к личным материалам.');return;}
-        if(!user.emailVerified){unauthorized('Google не подтвердил электронную почту аккаунта.');return;}
-        // Offline access only if this exact verified admin doc was previously cached by Firestore.
-        // Never grant offline access from a localStorage flag or an unverified email.
-        var adminRead=db.collection('vmm_admins').doc(user.uid).get({source:'server'});
-        if(!navigator.onLine)adminRead=adminRead.catch(function(){
-          return db.collection('vmm_admins').doc(user.uid).get({source:'cache'});
-        });
-        adminRead.then(function(doc){
-          if(doc.exists&&doc.data()&&doc.data().enabled===true)showWorkspace();
-          else unauthorized('Аккаунт Google не включён в список администраторов VELARDREAM.');
-        }).catch(function(err){unauthorized('Проверка разрешения владельца не удалась: '+err.message);});
+        if(user){clearSignInWatchdog();}
+        checkAdminAccess();
       });
     }catch(err){disabled('Ошибка авторизации: '+err.message);}
   }
+  var accessAttempt=0, retryAdminAccess=false;
+  function checkAdminAccess(){
+    var attempt=++accessAttempt, account=user, timer;
+    retryAdminAccess=false;
+    if(!account){unauthorized('Вход через Google необходим для доступа к личным материалам.');return;}
+    if(!account.emailVerified){unauthorized('Google не подтвердил электронную почту аккаунта.');return;}
+    clearSignInWatchdog();
+    signIn.disabled=true;
+    signIn.textContent='Проверяем доступ…';
+    message('Google подтвердил вход. Проверяем права администратора…');
+
+    function retry(){
+      if(attempt!==accessAttempt||user!==account)return;
+      accessAttempt++;
+      unauthorized('Google подтвердил вход, но Studio не получила ответ при проверке прав.');
+      retryAdminAccess=true;
+      signIn.textContent='Повторить проверку доступа';
+    }
+
+    timer=window.setTimeout(retry,12000);
+    // An offline session still requires a previously cached, verified admin document.
+    var adminRead=db.collection('vmm_admins').doc(user.uid).get({source:'server'});
+    if(!navigator.onLine)adminRead=adminRead.catch(function(error){
+      if(error.code==='permission-denied')throw error;
+      return db.collection('vmm_admins').doc(account.uid).get({source:'cache'});
+    });
+    adminRead.then(function(doc){
+      if(attempt!==accessAttempt||user!==account)return;
+      if(doc.exists&&doc.data()&&doc.data().enabled===true){
+        signinReady();
+        showWorkspace();
+      }else unauthorized('Аккаунт Google не включён в список администраторов VELARDREAM.');
+    }).catch(function(error){
+      if(attempt!==accessAttempt||user!==account)return;
+      if(error.code==='permission-denied')unauthorized('Этот аккаунт Google не имеет доступа к Studio.');
+      else retry();
+    }).then(function(){window.clearTimeout(timer);});
+  }
   signIn.onclick=function(){
     if(!auth)return;
+    if(retryAdminAccess){checkAdminAccess();return;}
     var attempt=++signInAttempt;
     signIn.disabled=true;
     signIn.textContent='Открываем Google…';
@@ -426,9 +454,7 @@
     Promise.resolve(promise).then(function(){
       if(attempt!==signInAttempt)return;
       clearSignInWatchdog();
-      // User verification is still performed ONLY by the auth observer and
-      // server-side vmm_admins check; popup completion does not grant access.
-      if(!authorized)message('Вход Google выполнен. Проверяем права администратора…');
+      // The auth observer owns the administrator check and its status.
     }).catch(function(err){
       if(attempt!==signInAttempt||authorized)return;
       signinReady();
