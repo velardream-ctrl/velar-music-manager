@@ -26,6 +26,17 @@
       <a href="./forum-admin.html">Повторить проверку</a>
     </div>
     <section id="section-settings" class="panel" hidden aria-labelledby="section-settings-title">
+      <form id="forum-identity" hidden>
+        <h2>Название форума</h2>
+        <p class="muted">Если оставить поля пустыми, на странице появится только заголовок «Форум».</p>
+        <label>Заголовок<input name="title" maxlength="80" placeholder="Форум"></label>
+        <label>Подпись над заголовком<input name="subtitle" maxlength="100"></label>
+        <div id="identity-actions" class="actions" hidden>
+          <button type="submit" class="gold">Сохранить изменения</button>
+          <button type="button" id="identity-cancel">Отменить изменения</button>
+        </div>
+      </form>
+      <p id="identity-status" role="status"></p>
       <h2 id="section-settings-title">Разделы форума</h2>
       <p class="muted">Меньшее число в поле «Порядок» выводит раздел выше. Скрытие убирает раздел из меню и закрывает создание тем. Опубликованные темы остаются доступны.</p>
       <p id="section-status" role="status"></p>
@@ -85,6 +96,6 @@
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script defer src="firebase-config.js"></script>
   <script defer src="../forum/sections.js"></script>
-  <script defer src="forum-admin.js?v=9"></script>
+  <script defer src="forum-admin.js?v=10"></script>
 </body>
 </html>

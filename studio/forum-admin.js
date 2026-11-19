@@ -317,6 +317,64 @@
     form.elements.namedItem('label').focus();
   };
 
+  const identity = document.getElementById('forum-identity');
+  const identityStatus = document.getElementById('identity-status');
+  const identityActions = document.getElementById('identity-actions');
+  const titleField = identity.elements.namedItem('title');
+  const subtitleField = identity.elements.namedItem('subtitle');
+  let savedIdentity;
+
+  function identityRef() {
+    return db.collection('velar_forum_settings').doc('public');
+  }
+
+  function restoreIdentity() {
+    titleField.value = savedIdentity.title;
+    subtitleField.value = savedIdentity.subtitle;
+    identityActions.hidden = true;
+  }
+
+  async function loadIdentity(revision) {
+    identityStatus.textContent = 'Загружаем название форума…';
+    try {
+      const snapshot = await withAccessTimeout(identityRef().get({source:'server'}));
+      if (revision !== session) return;
+      savedIdentity = snapshot.exists ? snapshot.data() : {title:'Созвездия',subtitle:'Музыкальное сообщество'};
+      restoreIdentity();
+      identity.hidden = false;
+      identityStatus.textContent = '';
+    } catch (error) {
+      if (revision !== session) return;
+      identityStatus.textContent = error.code === 'permission-denied' ?
+        'Для изменения названия форума нужно опубликовать обновлённые правила Firestore.' :
+        'Не удалось загрузить название форума.';
+    }
+  }
+
+  identity.oninput = () => {
+    identityActions.hidden = titleField.value === savedIdentity.title && subtitleField.value === savedIdentity.subtitle;
+  };
+  document.getElementById('identity-cancel').onclick = restoreIdentity;
+  identity.onsubmit = async event => {
+    event.preventDefault();
+    if (!permitted || identityActions.hidden) return;
+    const revision = session;
+    const data = {title:titleField.value.trim(),subtitle:subtitleField.value.trim()};
+    const controls = [...identity.elements];
+    controls.forEach(control => { control.disabled = true; });
+    try {
+      await identityRef().set(data);
+      if (revision !== session) return;
+      savedIdentity = data;
+      restoreIdentity();
+      identityStatus.textContent = 'Название форума сохранено.';
+    } catch (_) {
+      if (revision === session) identityStatus.textContent = 'Не удалось сохранить название форума.';
+    } finally {
+      controls.forEach(control => { control.disabled = false; });
+    }
+  };
+
   async function loadTopics() {
     if (!permitted) return;
     const revision = session;
@@ -352,6 +410,8 @@
       permitted = false;
       moderation.hidden = true;
       sectionPanel.hidden = true;
+      identity.hidden = true;
+      identityStatus.textContent = '';
       sectionList.replaceChildren();
       sectionArchive.hidden = true;
       archivedSections.replaceChildren();
@@ -375,6 +435,7 @@
         moderation.hidden = false;
         sectionPanel.hidden = false;
         void loadSections(revision);
+        void loadIdentity(revision);
         await loadTopics();
       } catch (error) {
         if (session === revision) showAccessError(error.code === 'permission-denied' ? denied :
