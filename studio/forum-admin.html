@@ -12,13 +12,6 @@
     <span id="forum-studio-brand" class="brand">VELARDREAM Studio</span>
     <a href="../forum/">Открыть форум</a>
   </header>
-  <script>
-    if (window.parent !== window && /(?:^|[?&])embedded=1(?:&|$)/.test(location.search)) {
-      document.getElementById('forum-studio-brand').hidden = true;
-      document.querySelector('.masthead > a:last-child').target = '_blank';
-      document.querySelector('.masthead > a:last-child').rel = 'noopener';
-    }
-  </script>
   <main class="workspace">
     <h1 class="admin-title">Управление форумом</h1>
     <p id="admin-status" role="status" class="note">Проверяем доступ к Studio…</p>
@@ -48,6 +41,32 @@
       <div id="moderation-bans"></div>
     </section>
   </main>
+  <script>
+    (function () {
+      const frame = window.frameElement;
+      if (!frame || !/(?:^|[?&])embedded=1(?:&|$)/.test(location.search)) return;
+      const header = document.querySelector('.masthead');
+      const main = document.querySelector('main');
+      const forumLink = header.querySelector('a');
+      document.getElementById('forum-studio-brand').hidden = true;
+      forumLink.target = '_blank';
+      forumLink.rel = 'noopener';
+
+      if (typeof ResizeObserver !== 'function') return;
+      const resize = () => {
+        if (!frame.getClientRects().length) return;
+        // Measure the content rather than the viewport so the frame can shrink too.
+        const height = Math.ceil(main.getBoundingClientRect().bottom + window.scrollY) + 'px';
+        if (frame.style.height !== height) frame.style.height = height;
+      };
+      frame.style.minHeight = '0';
+      document.documentElement.style.overflow = 'hidden';
+      const observer = new ResizeObserver(resize);
+      observer.observe(header);
+      observer.observe(main);
+      resize();
+    }());
+  </script>
   <script>
     window.forumAdminStartup = setTimeout(function () {
       document.getElementById('admin-status').textContent = 'Загрузка панели заняла слишком много времени.';
