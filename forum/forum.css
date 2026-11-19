@@ -63,3 +63,6 @@ dialog::backdrop{background:#020611b8}
 .forum-section-editor{border-top:1px solid var(--line);padding:1rem 0}
 .forum-section-editor h3{margin:0}
 .forum-section-editor input[type=checkbox]{width:auto}
+
+#login-options{margin:.8rem 0;padding:.2rem .8rem;border:1px solid var(--line);border-radius:.65rem}
+#login-options input{width:auto;margin-right:.35rem}

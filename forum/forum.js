@@ -296,8 +296,69 @@
     link: ['Завершить вход по ссылке', 'Введите email, на который пришла эта ссылка.', 'Войти']
   };
 
+  const loginOptionsKey = 'velar-forum-login-options';
+
+  function savedLoginOptions() {
+    try {
+      const options = JSON.parse(localStorage.getItem(loginOptionsKey));
+      if (options && typeof options.remember === 'boolean' && typeof options.save === 'boolean') return options;
+    } catch (_) {}
+    return null;
+  }
+
+  function showLoginOptions(mode) {
+    const options = savedLoginOptions();
+    const usesPassword = ['login', 'register', 'password'].includes(mode);
+    $('remember-session').checked = options?.remember ?? true;
+    $('save-credential').checked = options?.save ?? false;
+    $('remember-options').checked = !!options;
+    $('remember-session-option').hidden = mode === 'password';
+    $('login-options').hidden = !usesPassword || !!options;
+    $('show-login-options').hidden = !usesPassword || !options;
+  }
+
+  $('show-login-options').onclick = () => {
+    $('login-options').hidden = false;
+    $('show-login-options').hidden = true;
+    ($('remember-session-option').hidden ? $('save-credential') : $('remember-session')).focus();
+  };
+
+  function persistLoginOptions(options) {
+    try {
+      if (options.skipPrompt) {
+        localStorage.setItem(loginOptionsKey, JSON.stringify({remember:options.remember,save:options.save}));
+      } else localStorage.removeItem(loginOptionsKey);
+    } catch (_) {}
+  }
+
+  function saveBrowserCredential(email, password) {
+    if (!email || !window.PasswordCredential || !navigator.credentials?.store) return;
+    try {
+      const credential = new window.PasswordCredential({id:email,password});
+      navigator.credentials.store(credential).catch(() => {});
+    } catch (_) {}
+  }
+
+  async function setLoginPersistence(remember) {
+    const persistence = firebase.auth.Auth.Persistence;
+    try {
+      await auth.setPersistence(remember ? persistence.LOCAL : persistence.SESSION);
+    } catch (error) {
+      if (!remember) {
+        try {
+          await auth.setPersistence(persistence.NONE);
+          return;
+        } catch (_) {
+          validation('Браузер не позволяет настроить временный вход.');
+        }
+      }
+      $('status').textContent = 'Браузер ограничивает сохранение входа.';
+    }
+  }
+
   function setAuthMode(mode) {
     authMode = mode;
+    showLoginOptions(mode);
     const [title, help, button] = authModes[mode];
     $('email-title').textContent = title;
     $('email-help').textContent = help;
@@ -348,6 +409,7 @@
 
   async function finish(email) {
     const continueAction = !!afterSignIn;
+    if (savedLoginOptions()?.remember === false) await setLoginPersistence(false);
     const {user: account} = await auth.signInWithEmailLink(email, location.href);
     try { localStorage.removeItem(emailKey); } catch (_) {}
     history.replaceState(null, '', callback + location.hash);
@@ -385,6 +447,8 @@
     submit(emailForm, $('email-status'), async () => {
       const email = cleaned(emailForm, 'email');
       const password = emailForm.elements.namedItem('password').value;
+      const options = {remember:$('remember-session').checked,save:$('save-credential').checked,
+        skipPrompt:$('remember-options').checked};
       try {
         if (authMode === 'link') { await finish(email); return; }
         if (authMode === 'sendLink') {
@@ -402,6 +466,8 @@
           try {
             await account.updatePassword(password);
             rememberPassword(account);
+            persistLoginOptions(options);
+            if (options.save) saveBrowserCredential(account.email, password);
           } catch (error) {
             if (error.code === 'auth/requires-recent-login') {
               emailForm.elements.namedItem('email').value = account.email || '';
@@ -431,10 +497,13 @@
           return;
         }
         const registering = authMode === 'register';
+        await setLoginPersistence(options.remember);
         const result = registering
           ? await auth.createUserWithEmailAndPassword(email, password)
           : await auth.signInWithEmailAndPassword(email, password);
         rememberPassword(result.user);
+        persistLoginOptions(options);
+        if (options.save) saveBrowserCredential(email, password);
         if (!result.user.emailVerified) {
           setAuthMode('verify');
           if (registering) {
@@ -481,11 +550,6 @@
       authReady = true;
       showAccount(account);
     });
-    try {
-      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    } catch (_) {
-      $('status').textContent = 'Браузер ограничивает сохранение входа. Используйте обычную вкладку для постоянного входа.';
-    }
     if (auth.isSignInWithEmailLink(location.href)) {
       let email;
       try { email = localStorage.getItem(emailKey); } catch (_) {}
