@@ -468,7 +468,7 @@
            moving=false;
            if(rail&&view!=='auto')rail.style.scrollSnapType='';
            if(ticket!==navigation||card.isConnected===false)return;
-           open(i,sources[j],play);
+           if(index!==i||source!==sources[j].provider||play)open(i,sources[j],play);
            if(card.classList){card.classList.add('song-found');window.setTimeout(function(){card.classList.remove('song-found');},2400);}
          }
          if(!rail||reduced||!window.requestAnimationFrame){arrive();return true;}

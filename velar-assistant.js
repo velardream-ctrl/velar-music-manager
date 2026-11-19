@@ -298,7 +298,7 @@
              openedSong=window.VELAR_TOPICS.openFromChat(choice.target,choice.url);
            if(choice.kind==='language'&&window.VELAR_LANGUAGES&&window.VELAR_LANGUAGES.openFromChat)
              openedSong=window.VELAR_LANGUAGES.openFromChat(choice.target,choice.url);
-           window.location.hash=choice.kind==='language'?'languages':'topics';
+           if(!openedSong)window.location.hash=choice.kind==='language'?'languages':'topics';
            if(!openedSong&&choice.kind==='topic'&&window.VELAR_TOPICS&&window.VELAR_TOPICS.select)
              window.VELAR_TOPICS.select(choice.target);
          }else if(choice.action==='analytics-yes'||choice.action==='analytics-no'){
