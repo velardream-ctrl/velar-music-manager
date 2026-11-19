@@ -2,40 +2,7 @@
   'use strict';
   var host = document.getElementById('compact-home');
   if (!host) return;
-  var choice = document.getElementById('skin-choice');
-  var query = new URLSearchParams(location.search);
-  var preview = window.VelarLocalComparison || query.get('skinPreview');
-  var override = null;
   var content = null;
-  if (preview === 'classic' || preview === 'compact') {
-    override = preview;
-    document.getElementById('skin-preview-tools').hidden = false;
-    choice.value = override;
-    choice.onchange = function () {
-      override = choice.value;
-      if (!window.VelarLocalComparison) {
-        query.set('skinPreview', override);
-        history.replaceState(null, '', '?' + query.toString());
-      } else {
-        try { localStorage.setItem('velar-comparison-skin', override); } catch (ignore) {}
-      }
-      apply();
-      window.scrollTo(0, 0);
-    };
-  }
-  if (!override) {
-    var personal = document.getElementById('visitor-skin');
-    if (personal) {
-      try { override = localStorage.getItem('velar-home-view'); } catch (ignore) {}
-      if (override !== 'compact' && override !== 'classic') override = null;
-      personal.value = override || '';
-      personal.onchange = function () {
-        override = personal.value || null;
-        try { localStorage.setItem('velar-home-view',override || ''); } catch (ignore) {}
-        apply();window.scrollTo(0,0);
-      };
-    }
-  }
   function element(tag, cls, text) {
     var node = document.createElement(tag);
     node.className = cls || '';
@@ -97,7 +64,7 @@
     details.appendChild(nav); host.appendChild(details);
   }
   function apply() {
-    var compact = !!content && (override || content.hero.skin) === 'compact';
+    var compact = !!content && content.hero.skin === 'compact';
     if (compact) paint(content);
     host.hidden = !compact;
     document.body.classList.toggle('skin-compact',compact);
