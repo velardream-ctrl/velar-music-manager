@@ -9,9 +9,16 @@
 </head>
 <body>
   <header class="masthead">
-    <a class="brand" href="./">← VELARDREAM Studio</a>
+    <a id="return-to-studio" class="brand" href="./">← VELARDREAM Studio</a>
     <a href="../forum/">Открыть форум</a>
   </header>
+  <script>
+    if (window.parent !== window && /(?:^|[?&])embedded=1(?:&|$)/.test(location.search)) {
+      document.getElementById('return-to-studio').hidden = true;
+      document.querySelector('.masthead > a:last-child').target = '_blank';
+      document.querySelector('.masthead > a:last-child').rel = 'noopener';
+    }
+  </script>
   <main class="workspace">
     <h1 class="admin-title">Управление форумом</h1>
     <p id="admin-status" role="status" class="note">Проверяем доступ к Studio…</p>
