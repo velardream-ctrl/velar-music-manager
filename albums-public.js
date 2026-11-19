@@ -86,5 +86,7 @@
      host.appendChild(card);
    });
  }
- window.VELAR_ALBUMS={render:render,expand:function(id){return openers[id]&&openers[id]();}};
+ window.VELAR_ALBUMS={render:render,expand:function(id){
+   if(window.VMM_PUBLIC_LANDING&&window.VMM_PUBLIC_LANDING.ensureSection)window.VMM_PUBLIC_LANDING.ensureSection('albums');
+return openers[id]&&openers[id]();}};
 }());

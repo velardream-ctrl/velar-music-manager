@@ -1774,6 +1774,7 @@
      });
      var remove=button('Удалить',function(){
        if(!window.confirm('Удалить эту тему и привязки песен из черновика?'))return;
+       topics.forEach(function(t){if(t.parentSlug===topic.slug)t.parentSlug='';});
        topics.splice(index,1);
        if(topicEditorSlug===topic.slug)topicEditorSlug='';
        render();
@@ -1797,8 +1798,13 @@
    heading(card,'Подборка: '+current.label,
      'Тема и прикреплённые композиции попадут к слушателям только после сохранения и отдельной публикации.');
    field(card,'Уникальный код темы (латиница)',current.slug,function(v){
+     topics.forEach(function(t){if(t.parentSlug&&t.parentSlug===current.slug)t.parentSlug=v.trim().toLowerCase();});
      current.slug=v.trim().toLowerCase();topicEditorSlug=current.slug;
    });
+   var hasChildren=topics.some(function(t){return t.parentSlug===current.slug;});
+   if(!hasChildren)selectField(card,'Основная тема',[['','Самостоятельная тема']].concat(topics.filter(function(t){return t!==current&&!t.parentSlug;}).map(function(t){return [t.slug,t.label];})),current.parentSlug||'',function(v){current.parentSlug=v;});
+   selectField(card,'Показ темы',[['browse','В подборе и поиске'],['search','Только в поиске']],current.searchOnly?'search':'browse',function(v){current.searchOnly=v==='search';});
+   field(card,'Поисковые слова через запятую',current.keywords||'',function(v){current.keywords=v;});
    field(card,'Название темы',current.label,function(v){current.label=v;});
    field(card,'Описание темы для слушателей',current.description||'',function(v){current.description=v;},true);
    var visibility=document.createElement('label');visibility.className='landing-checkbox';
@@ -2731,6 +2737,12 @@
    headingBlock.className='landing-display-settings';
    heading(headingBlock,'Оформление блоков главной страницы',
      'Здесь собраны все способы показа песен посетителям на главной. Каждый блок независим. Для длинных подборок рекомендуется компактный список с поиском и страницами.');
+   var skinSelect=selectField(headingBlock,'Вид главной страницы',[['classic','Классический'],['compact','Компактный']],data.hero.skin||'classic',function(v){
+     data.hero.skin=v;previewSkin.href='../index.html?skinPreview='+v;
+   });
+   var previewSkin=document.createElement('a');previewSkin.href='../index.html?skinPreview='+skinSelect.value;
+   previewSkin.target='_blank';previewSkin.rel='noopener';previewSkin.textContent='Сравнить виды без публикации';
+   headingBlock.appendChild(previewSkin);
    var artistBlock=document.createElement('section');artistBlock.className='landing-display-group';
    heading(artistBlock,'Артисты на главной',
      'Только подборка «Лучшие песни» рядом с карточками артистов. Отдельная страница артиста настраивается в разделе «Артисты».');
@@ -2886,7 +2898,7 @@
      field(panel,'Основное описание',data.hero.intro,function(v){data.hero.intro=v;},true);
      // RUN-123: on-site image load testing. Saving and publication remain separate.
      var loadPanel=document.createElement('section');loadPanel.className='landing-loading-controls';
-     heading(loadPanel,'Загрузка изображений',
+     heading(loadPanel,'Загрузка изображений и разделов',
        'Регулируй отложенную загрузку: первые обложки появляются быстро, остальные — по выбранной степени.');
      var loadLabel=document.createElement('label');loadLabel.className='landing-loading-label';
      var loadTitle=document.createElement('span');loadTitle.textContent='Степень ленивой загрузки';
@@ -2909,12 +2921,12 @@
      loadTest.target='_blank';loadTest.rel='noopener noreferrer';
      function updateLoadLabel(){
        var n=Number(loadSlider.value);if(n<0||n>3||n!==Math.floor(n))n=0;
-       loadValue.textContent=loadNames[n];loadHelp.textContent=loadHints[n];
+       loadValue.textContent=loadNames[n];loadHelp.textContent=loadHints[n]+[' Разделы открываются сразу.',' Разделы подготавливаются за два экрана.',' Разделы подготавливаются за экран.',' Разделы подготавливаются непосредственно перед появлением.'][n];
        loadTest.href='../?imageLoadingTest='+n;
        loadSlider.setAttribute('aria-valuetext',loadNames[n]);
      }
      loadSlider.value=String(data.hero.imageLoadingLevel||0);
-     loadSlider.setAttribute('aria-label','Степень ленивой загрузки изображений, от 0 до 3');
+     loadSlider.setAttribute('aria-label','Степень ленивой загрузки изображений и разделов, от 0 до 3');
      loadSlider.oninput=function(){
        data.hero.imageLoadingLevel=Number(this.value);updateLoadLabel();updateButtons();
      };

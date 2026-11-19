@@ -61,15 +61,14 @@ window.VMM_PUBLIC_LANDING={stopExternalPlayers(){stopCalls++;}};
 vm.runInNewContext(playerUI,{window,document,Array,String,Object,Number,Math,Error},{timeout:1000});
 vm.runInNewContext(topics,{window,document,Array,String,Object,Number,Math,Error},{timeout:1000});
 window.VELAR_TOPICS.render(edited.genres.topics);
-assert.equal(nodes['public-topic-orbit'].children.length,10,
- 'Only top ten selected topic planets render around the crystal');
-assert.equal(nodes['public-topic-cloud'].children.length,tags.length,
- 'Every visible tag appears in the complete accessible cloud');
-assert.equal(nodes['public-topic-detail'].children[2].className,'topic-song-list');
-const wedding=nodes['public-topic-cloud'].children.find(x=>x.textContent==='Свадьба');
+assert.equal(nodes['public-topic-orbit'].children.length,2,'Only nonempty groups on the orbit');
+assert.deepEqual(nodes['public-topic-cloud'].children.map(x=>x.textContent),['Любовь','Праздник']);
+assert.match(nodes['public-topic-detail'].children[0].textContent,/Выберите тему/);
+nodes['public-topic-cloud'].children[1].onclick();
+const wedding=nodes['public-topic-detail'].children[0].children.at(-1).children.find(x=>x.textContent==='Свадьба');
 assert.ok(wedding);
 wedding.onclick();
-assert.equal(wedding.attributes['aria-pressed'],'true');
+assert.equal(nodes['public-topic-detail'].children[0].children.at(-1).children.at(-1).attributes['aria-pressed'],'true');
 assert.equal(nodes['public-topic-detail'].children[0].children[1].textContent,'Свадьба');
 let detail=nodes['public-topic-detail'];
 assert.equal(detail.children[2].children.length,1);

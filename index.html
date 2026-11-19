@@ -59,9 +59,12 @@
   <script src="velar-assistant.js?v=16&consent=190&typing=191&ai=196&hint=197&gateway=199&usage=204" defer></script>
   <script src="living-art.js?v=7" defer></script>
   <script src="main.js" defer></script>
+  <link rel="stylesheet" href="home-skin.css">
+  <script src="home-skin.js" defer></script>
 </head>
 <body class="public-site">
   <a class="skip-link" href="#content">Перейти к содержанию</a>
+  <div id="skin-preview-tools" hidden><label>Предпросмотр · Вид главной <select id="skin-choice"><option value="classic">Классический</option><option value="compact">Компактный</option></select></label></div>
   <header class="site-header" id="top">
     <a class="mini-brand" href="#top" aria-label="VELARDREAM RECORDS — главная">
       <img class="brand-emblem brand-emblem-header" src="assets/velardream-symbol.svg" width="18" height="32" alt="" aria-hidden="true"><span>VELARDREAM</span>
@@ -75,10 +78,12 @@
       <a href="#languages">Языки</a>
       <a href="#topics">Темы песен</a>
       <a href="#about">О проекте</a>
+      <select id="visitor-skin" aria-label="Вид главной страницы"><option value="">Вид сайта</option><option value="classic">Классический</option><option value="compact">Компактный</option></select>
     </nav>
   </header>
 
   <main id="content">
+    <section id="compact-home" hidden aria-label="Музыка Velardream"></section>
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-halo" aria-hidden="true"></div>
       <p class="hero-kicker">INDEPENDENT MUSIC UNIVERSE</p>
@@ -255,10 +260,11 @@
           </div>
           <div id="public-topic-orbit" class="topics-orbit" role="group" aria-label="Тематические планеты песен"></div>
         </div>
-        <h3 class="topics-cloud-title">Облако музыкальных тем</h3>
+        <details class="topics-more"><summary>Все основные темы</summary>
         <div id="public-topic-cloud" class="topics-cloud" role="group" aria-label="Все темы и настроения">
-          <span>Любовь</span><span>Свадьба</span><span>Верность</span><span>Ревность</span><span>Вера и религия</span><span>Космос</span><span>Грусть</span><span>Юмор</span>
+
         </div>
+        </details>
         <div id="public-topic-detail" class="topic-detail" aria-live="polite">
           <p>Выберите тему, чтобы открыть её песни.</p>
         </div>

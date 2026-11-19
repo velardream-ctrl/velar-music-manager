@@ -9,6 +9,8 @@
  function clear(n){while(n&&n.firstChild)n.removeChild(n.firstChild);}
  function available(){return items.filter(function(g){return g.visible===true;});}
  function select(id){
+   if(window.VMM_PUBLIC_LANDING&&window.VMM_PUBLIC_LANDING.ensureSection)window.VMM_PUBLIC_LANDING.ensureSection('genres');
+
    if(mounted&&id===current)return mounted;
    mounted=null;
    var list=available(),selected=null,detail=byId('public-genre-detail');

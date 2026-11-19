@@ -1306,6 +1306,31 @@
    }
  }
  var stationSettings=null,landingRadioSettings=null;
+ // Keep controllers and deep links usable before an offscreen section is observed.
+ var sectionObserver=null,sectionTasks=Object.create(null);
+ function ensureSection(id){
+   var work=sectionTasks[id];
+   if(!work)return;
+   delete sectionTasks[id];
+   var section=byId(id);
+   if(sectionObserver&&section)sectionObserver.unobserve(section);
+   work();
+ }
+ function configureSections(level){
+   if(sectionObserver)sectionObserver.disconnect();
+   sectionObserver=null;sectionTasks=Object.create(null);
+   if(!level||!window.IntersectionObserver)return;
+   var margin=[0,(window.innerHeight||800)*2,window.innerHeight||800,150][level];
+   sectionObserver=new window.IntersectionObserver(function(entries){
+     entries.forEach(function(entry){if(entry.isIntersecting||entry.intersectionRatio>0)ensureSection(entry.target.id);});
+   },{rootMargin:margin+'px'});
+ }
+ function section(id,work){
+   var target=byId(id);
+   if(!sectionObserver||!target||window.location.hash==='#'+id){work();return;}
+   sectionTasks[id]=work;
+   sectionObserver.observe(target);
+ }
  function render(content){
    if(!window.VMM_LANDING_SCHEMA)return false;
    var value;
@@ -1317,7 +1342,9 @@
      byId('station-status').textContent=config.enabled?'':'Радио сейчас выключено владельцем.';
      return true;
    }
+   if(window.VelarHomeSkin)window.VelarHomeSkin.render(value);
    if(imagePolicy()&&imagePolicy().configure)imagePolicy().configure(value.hero.imageLoadingLevel);
+   configureSections(imagePolicy()&&imagePolicy().getLevel?imagePolicy().getLevel():0);
    if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.configure(value.hero.analytics,
      !!(value.genres&&value.genres.assistant&&value.genres.assistant.enabled));
    assign('public-hero-subtitle',value.hero.subtitle);
@@ -1336,6 +1363,7 @@
    if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.configure)
      window.VELAR_PUBLIC_SONGS.configure(
        value.albums.trackView,value.albums.entries,value.genres.songViewMode,value.releases.cards,value.hero.coverSourcePriority,value.genres.displayModes,value.genres.motion);
+   section('genres',function(){
    if(window.VELAR_GENRES&&window.VELAR_GENRES.render)
      window.VELAR_GENRES.render(value.genres);
    else{
@@ -1343,20 +1371,21 @@
        value.genres.tags.forEach(function(tag){tags.appendChild(create('span','',tag));});
      }
    }
-   cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums,value.artists.songViewMode||value.genres.songViewMode);
-   if(window.VELAR_ALBUMS&&window.VELAR_ALBUMS.render)window.VELAR_ALBUMS.render(value.albums);
-   releaseGallery(value.releases);
-   playlistGallery(value.releases);
+   });
+   section('artists',function(){cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums,value.artists.songViewMode||value.genres.songViewMode);});
+   section('albums',function(){if(window.VELAR_ALBUMS&&window.VELAR_ALBUMS.render)window.VELAR_ALBUMS.render(value.albums);});
+   section('releases',function(){releaseGallery(value.releases);});
+   section('playlists',function(){playlistGallery(value.releases);});
    // A new snapshot of another section must never restart an active radio iframe.
    var radioSignature=radioPlaybackSignature(value.releases.radio);
    if(radioSignature!==landingRadioSettings){
      renderRadio(value.releases.radio);landingRadioSettings=radioSignature;
    }else applyRadioVisual(value.releases.radio);
-   if(window.VELAR_UNIVERSE&&window.VELAR_UNIVERSE.render)window.VELAR_UNIVERSE.render(value);
-   if(window.VELAR_LANGUAGES&&window.VELAR_LANGUAGES.render)
-     window.VELAR_LANGUAGES.render(value.genres.languages);
-   if(window.VELAR_TOPICS&&window.VELAR_TOPICS.render)
-     window.VELAR_TOPICS.render(value.genres.topics);
+   section('universe',function(){if(window.VELAR_UNIVERSE&&window.VELAR_UNIVERSE.render)window.VELAR_UNIVERSE.render(value);});
+   section('languages',function(){if(window.VELAR_LANGUAGES&&window.VELAR_LANGUAGES.render)
+     window.VELAR_LANGUAGES.render(value.genres.languages);});
+   section('topics',function(){if(window.VELAR_TOPICS&&window.VELAR_TOPICS.render)
+     window.VELAR_TOPICS.render(value.genres.topics);});
    if(window.VELAR_ASSISTANT&&window.VELAR_ASSISTANT.render)
      window.VELAR_ASSISTANT.render(value);
    return true;
@@ -1472,6 +1501,6 @@
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);
  else start();
- window.VMM_PUBLIC_LANDING={render:render,stopExternalPlayers:pauseOtherEmbeds,
+ window.VMM_PUBLIC_LANDING={render:render,ensureSection:ensureSection,stopExternalPlayers:pauseOtherEmbeds,
    openYouTubeModal:openYouTubeModal,openRadioFromChat:openRadioFromChat}; // public UI only, never writes
 }());

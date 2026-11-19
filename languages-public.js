@@ -18,6 +18,8 @@
    core.className+=' crystal-selection-pulse';
  }
  function show(code,requestedUrl,play){
+   if(window.VMM_PUBLIC_LANDING&&window.VMM_PUBLIC_LANDING.ensureSection)window.VMM_PUBLIC_LANDING.ensureSection('languages');
+
    if(requestedUrl&&mounted&&code===current)return mounted.openByUrl(requestedUrl,play);
    mounted=null;
    var lang=null,detail=id('public-language-detail');

@@ -53,7 +53,13 @@
    // RUN-132: artwork is Spotify-only. YouTube/Apple Music remain playable
    // sources, but never provide an image or replace a failed Spotify cover.
    var spotify=approved(track).filter(function(item){return item.provider==='spotify';})[0];
-   if(!spotify||typeof window.fetch!=='function')return;
+   if(!spotify)return;
+   // Locally cached official Spotify thumbnail, matched by canonical track URL.
+   if(spotify.url==='https://open.spotify.com/track/3u4nP80fuKrYdfpM7AipMK'){
+     callback('assets/spotify-3u4nP80fuKrYdfpM7AipMK.jpg');
+     return;
+   }
+   if(typeof window.fetch!=='function')return;
    var key=spotify.url,record=artworkCache[key];
    if(record){
      if(record.url)callback(record.url);
