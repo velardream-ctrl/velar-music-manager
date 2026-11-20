@@ -1036,7 +1036,7 @@
         featureMode:['fixed','rotate','list'].indexOf(hero.featureMode)>=0?hero.featureMode:'random',
         featureUrl:typeof hero.featureUrl==='string'?hero.featureUrl.slice(0,2048):'',
         featureMinutes:[1,5,15,30,60].indexOf(hero.featureMinutes)>=0?hero.featureMinutes:5,
-        featureSource:['all','genres','topics','languages','artists','albums','curated'].indexOf(hero.featureSource)>=0?hero.featureSource:'all',
+        featureSource:['all','genres','topics','languages','artists','albums'].indexOf(hero.featureSource)>=0?hero.featureSource:'all',
         featureGroup:typeof hero.featureGroup==='string'?hero.featureGroup.slice(0,120):'',
         featureDaily:hero.featureDaily===true,
         subtitle:plain(typeof hero.subtitle==='string'?hero.subtitle:d.hero.subtitle,'Первый экран — подзаголовок',160,true),
@@ -1145,9 +1145,6 @@
     var genres=data.genres||{},topics=genres.topics||{},languages=genres.languages||{};
     var groups={genres:genres.entries||[],topics:topics.entries||[],languages:languages.entries||[],
       artists:(data.artists||{}).cards||[],albums:(data.albums||{}).entries||[]};
-    if(source==='curated')return (genres.entries||[]).filter(function(row){
-      return /авторск/i.test([row.label,row.title,row.name].filter(Boolean).join(' '));
-    });
     return groups[source]||[];
   }
   function featuredSourceSongs(data){
