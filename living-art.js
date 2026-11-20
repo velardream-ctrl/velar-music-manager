@@ -44,7 +44,7 @@
    return 'enabled';
  }
  function supportsMotion(){return motionStatus()==='enabled';}
- function phaseFor(p){var count=chapter?chapter.querySelectorAll('.crystal-journey-stanza').length:3;return Math.min(Math.max(1,count)-1,Math.floor(Math.min(.999999,p)*Math.max(1,count)));}
+ function phaseFor(p){var count=chapter?chapter.querySelectorAll('.crystal-journey-stanza').length:3;count=Math.max(1,count);if(count===3)return p<.31?0:p<.68?1:2;return Math.min(count-1,Math.floor(Math.min(.999999,Math.max(0,p))*count));}
  function apply(){
    scheduled=0;if(!active||!chapter)return;
    var rect=chapter.getBoundingClientRect();
