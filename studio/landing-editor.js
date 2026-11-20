@@ -2743,7 +2743,7 @@
    var sourceArea=document.createElement('div');
    headingBlock.appendChild(sourceArea);
    var source=selectField(sourceArea,'Источник главной песни',
-     [['all','Все песни'],['genres','Жанры'],['topics','Темы'],['languages','Языки'],['artists','Артисты'],['albums','Альбомы'],['curated','Авторские подборки']],
+     [['all','Все песни'],['genres','Жанры'],['topics','Темы'],['languages','Языки'],['artists','Артисты'],['albums','Альбомы']],
      data.hero.featureSource||'all',function(value){
        data.hero.featureSource=value;data.hero.featureGroup='';render();
      });
@@ -2754,7 +2754,7 @@
        return [String(row.id||row.slug||row.code||''),row.label||row.title||row.name||'Без названия'];
      }).filter(function(row){return row[0];});
      selectField(sourceArea,'Выбрать '+({
-       genres:'жанр',topics:'тему',languages:'язык',artists:'артиста',albums:'альбом',curated:'авторскую подборку'
+       genres:'жанр',topics:'тему',languages:'язык',artists:'артиста',albums:'альбом'
      }[source.value]||'раздел'),[['','Все доступные в разделе']].concat(groupOptions),data.hero.featureGroup||'',function(value){
        data.hero.featureGroup=value;render();
      });
