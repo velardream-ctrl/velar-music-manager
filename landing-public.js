@@ -1347,8 +1347,9 @@
    configureSections(imagePolicy()&&imagePolicy().getLevel?imagePolicy().getLevel():0);
    if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.configure(value.hero.analytics,
      !!(value.genres&&value.genres.assistant&&value.genres.assistant.enabled));
+   var featured=window.VMM_LANDING_SCHEMA.homepagePlaylist(value);
    (function(){
-     var f=value.hero.featuredPlaylist,host=byId('featured-spotify-playlist'),frame=byId('vd-feature-iframe');
+     var f=featured,host=byId('featured-spotify-playlist'),frame=byId('vd-feature-iframe');
      if(host&&f){host.hidden=f.enabled===false;host.style.display=f.enabled===false?'none':'';
        assign('vd-feature-title',f.title);assign('vd-feature-description',f.description);
        var link=byId('vd-feature-link');if(link)link.href=f.url;
@@ -1403,7 +1404,7 @@
    section('artists',function(){cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums,value.artists.songViewMode||value.genres.songViewMode);});
    section('albums',function(){if(window.VELAR_ALBUMS&&window.VELAR_ALBUMS.render)window.VELAR_ALBUMS.render(value.albums);});
    section('releases',function(){releaseGallery(value.releases);});
-   section('playlists',function(){playlistGallery(value.releases,value.hero.featuredPlaylist);});
+   section('playlists',function(){playlistGallery(value.releases,featured);});
    // A new snapshot of another section must never restart an active radio iframe.
    var radioSignature=radioPlaybackSignature(value.releases.radio);
    if(radioSignature!==landingRadioSettings){
