@@ -2772,6 +2772,8 @@
      sourceArea.hidden=value!=='list';
      showSongSettings();
    });
+   // Keep dependent controls directly below the fourth mode selector.
+   headingBlock.insertBefore(sourceArea,mode.parentNode.nextSibling);
    var songOptions=songs.map(function(song){return [song.url,song.title+(song.artist?' — '+song.artist:'')];});
    var selected=songs.filter(function(song){return [song.url,song.alternateUrl,song.thirdUrl].indexOf(data.hero.featureUrl)>=0;})[0];
    var fixedFields=document.createElement('div');headingBlock.appendChild(fixedFields);
