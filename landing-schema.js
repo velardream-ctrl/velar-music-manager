@@ -150,7 +150,7 @@
     return {
       hero:{
         skin:'classic',
-        featureMode:'random',featureUrl:'',featureMinutes:5,featureSource:'all',featureGroup:'',featureDaily:false,
+        featureMode:'random',featureUrl:'',featureMinutes:5,featureSource:'all',featureGroup:'',featureDaily:false,featureListRotation:'open',
         subtitle:'Разные голоса. Разные жанры. Одна вселенная музыки.',
         intro:'Здесь рождается пространство для артистов, авторских релизов и музыкальных историй — от оперы и этно до рока, поп-музыки и кроссоверов.',
         imageLoadingLevel:0, // RUN-123: existing published pages remain eager.
@@ -1039,6 +1039,7 @@
         featureSource:['all','genres','topics','languages','artists','albums'].indexOf(hero.featureSource)>=0?hero.featureSource:'all',
         featureGroup:typeof hero.featureGroup==='string'?hero.featureGroup.slice(0,120):'',
         featureDaily:hero.featureDaily===true,
+        featureListRotation:['open','timer','day'].indexOf(hero.featureListRotation)>=0?hero.featureListRotation:(hero.featureDaily?'day':'open'),
         subtitle:plain(typeof hero.subtitle==='string'?hero.subtitle:d.hero.subtitle,'Первый экран — подзаголовок',160,true),
         intro:plain(typeof hero.intro==='string'?hero.intro:d.hero.intro,'Первый экран — описание',600,true),
         imageLoadingLevel:(function(){
