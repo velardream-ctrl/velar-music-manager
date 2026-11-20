@@ -23,6 +23,6 @@ assert.match(admin,/https:\/\/analytics\.google\.com\//);
 const html=read('index.html'),studio=read('studio/index.html'),sw=read('sw.js');
 assert.match(html,/analytics-public\.js\?v=1&privacy=191/);
 assert.match(html,/velar-assistant\.js\?v=16&consent=190&typing=191&ai=196&hint=197&gateway=199/);
-assert.match(studio,/landing-editor\.js\?v=46&fix=185&analytics=189&reports=191/);
+assert.match(studio,/landing-editor\.js\?v=48&fix=185&analytics=189&reports=191/);
 assert.match(sw,/typing191/);
 console.log('PASS RUN-191: consent typing, music follow-up, footer settings, owner reports');

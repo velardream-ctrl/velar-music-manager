@@ -31,7 +31,7 @@ assert.equal(d.releases.playlists[0].url,link);
 assert.equal(d.releases.subscriptions[0].url,profile);
 const release=(x)=>({...api.blankCard(),title:'Белая берёза',subtitle:'DJ Velar',visible:true,
  mediaProvider:'spotify',mediaUrl:'https://open.spotify.com/track/0123456789ABCDEFGHIJKL',kind:'single',...x});
-const page=api.normalize({...d,releases:{...d.releases,
+const page=api.normalize({...d,hero:{...d.hero,featuredPlaylist:{...d.hero.featuredPlaylist,enabled:false}},releases:{...d.releases,
  radio:{...d.releases.radio,enabled:true,controlVersion:2},cards:[
  release({spotlight:'music'}),release({title:'Журавли',kind:'video',mediaProvider:'youtube',
    mediaUrl:'https://youtu.be/ABCDEFGHIjk',spotlight:'video'}),
