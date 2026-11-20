@@ -25,8 +25,11 @@
     return options[Math.floor(Math.random()*options.length)];
   }
   function paintSong(data,song){
-    var hero = element('div','skin-feature'), brand = element('div','skin-brand');
-    var crystal = document.querySelector('.hero-mark').cloneNode(false);
+    var allowed=['classic','vinyl','wave','cinema','mini','crystal'];
+    var skin=allowed.indexOf(data.hero.featureSkin)>=0?data.hero.featureSkin:'classic';
+    var hero = element('div','skin-feature skin-style-'+skin), brand = element('div','skin-brand');
+    var sourceCrystal=document.querySelector('.hero-mark');
+    var crystal = sourceCrystal?sourceCrystal.cloneNode(false):element('div','skin-crystal-fallback');
     crystal.removeAttribute('class');
     brand.appendChild(crystal);
     brand.appendChild(element('strong','','VELARDREAM'));
@@ -45,13 +48,16 @@
         cover.src = url;
       });
       var copy = element('div','skin-song');
+      copy.appendChild(element('span','skin-song-kicker','СЕЙЧАС В СОЗВЕЗДИИ'));
       copy.appendChild(element('h1','',song.title));
       copy.appendChild(element('i','',song.artist));
       [[song.provider,song.url],[song.alternateProvider,song.alternateUrl],[song.thirdProvider,song.thirdUrl]].forEach(function (pair) {
         if (!pair[1]) return;
         var titles = {spotify:'Слушать в Spotify',youtube:'Смотреть на YouTube',appleMusic:'Слушать в Apple Music'};
         var a = link(titles[pair[0]] || 'Открыть песню',pair[1],true);
-        a.className = 'skin-platform ' + pair[0]; copy.appendChild(a);
+        a.className = 'skin-platform ' + pair[0];
+        a.setAttribute('aria-label',titles[pair[0]] || 'Открыть песню');
+        copy.appendChild(a);
       });
       hero.appendChild(copy);
     }

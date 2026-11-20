@@ -2740,6 +2740,10 @@
    selectField(headingBlock,'Вид главной страницы',[['classic','Классический'],['compact','Компактный']],data.hero.skin||'classic',function(v){
      data.hero.skin=v;
    });
+   selectField(headingBlock,'Оформление главной песни',
+     [['classic','1 · Классика Velar'],['vinyl','2 · Виниловая сцена'],['wave','3 · Волна звука'],
+      ['cinema','4 · Обложка в кадре'],['mini','5 · Мини-плеер'],['crystal','6 · Кристальная рамка']],
+     data.hero.featureSkin||'classic',function(v){data.hero.featureSkin=v;});
    var sourceArea=document.createElement('div');
    headingBlock.appendChild(sourceArea);
    var source=selectField(sourceArea,'Источник главной песни',
