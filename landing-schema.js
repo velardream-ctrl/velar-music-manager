@@ -1141,21 +1141,33 @@
     [data.genres.entries,data.genres.topics.entries,data.genres.languages.entries,data.albums.entries].forEach(function(rows){collect(rows,false);});
     return songs;
   }
+  function featuredSourceGroups(data,source){
+    var genres=data.genres||{},topics=genres.topics||{},languages=genres.languages||{};
+    var groups={genres:genres.entries||[],topics:topics.entries||[],languages:languages.entries||[],
+      artists:(data.artists||{}).cards||[],albums:(data.albums||{}).entries||[]};
+    if(source==='curated')return (genres.entries||[]).filter(function(row){
+      return /авторск/i.test([row.label,row.title,row.name].filter(Boolean).join(' '));
+    });
+    return groups[source]||[];
+  }
   function featuredSourceSongs(data){
     var hero=data.hero||{},source=hero.featureSource||'all',group=hero.featureGroup||'',all=homepageSongs(data);
     if(source==='all')return all;
-    if(source==='curated')source='genres';
-    var groups={genres:data.genres.entries||[],topics:data.genres.topics.entries||[],languages:data.genres.languages.entries||[],artists:data.artists.cards||[],albums:data.albums.entries||[]}[source]||[];
-    var rows=groups.filter(function(row){return row.visible&&(!group||String(row.id||row.slug||row.code||'')===group);});
+    var rows=featuredSourceGroups(data,source).filter(function(row){
+      return row.visible!==false&&(!group||String(row.id||row.slug||row.code||'')===group);
+    });
     var links=Object.create(null);
-    rows.forEach(function(row){(source==='artists'?row.featuredTracks||[]:row.tracks||[]).forEach(function(track){
-      [track.url,track.alternateUrl,track.thirdUrl].forEach(function(url){if(url)links[url]=true;});
-    });});
-    var selected=all.filter(function(song){return [song.url,song.alternateUrl,song.thirdUrl].some(function(url){return url&&links[url];});});
-    return selected.length?selected:all;
+    rows.forEach(function(row){
+      (source==='artists'?row.featuredTracks||[]:row.tracks||[]).forEach(function(track){
+        [track.url,track.alternateUrl,track.thirdUrl].forEach(function(url){if(url)links[url]=true;});
+      });
+    });
+    return all.filter(function(song){
+      return [song.url,song.alternateUrl,song.thirdUrl].some(function(url){return url&&links[url];});
+    });
   }
   function blankCard(){return {title:'',subtitle:'',description:'',url:'',imageUrl:'',visible:false};}
-  window.VMM_LANDING_SCHEMA={homepageSongs:homepageSongs,featuredSourceSongs:featuredSourceSongs,defaults:defaults,normalize:normalize,blankCard:blankCard,
+  window.VMM_LANDING_SCHEMA={homepageSongs:homepageSongs,featuredSourceSongs:featuredSourceSongs,featuredSourceGroups:featuredSourceGroups,defaults:defaults,normalize:normalize,blankCard:blankCard,
     songUrl:songUrl,featuredTrack:featuredTrack,featuredTracks:featuredTracks,
     releaseMediaUrl:releaseMediaUrl,playlistUrl:playlistUrl,radioConfig:radioConfig,radioCatalog:radioCatalog,
     albumsConfig:albumsConfig,albumEntry:albumEntry,
