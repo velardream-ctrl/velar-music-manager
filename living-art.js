@@ -153,6 +153,7 @@
      }
      if(r.bottom<0||r.top>viewport)return;
      var p=clamp(-r.top/duration);
+     captions=chapter.querySelectorAll('.crystal-journey-stanza');
      image.style.transform='translate(-50%,-50%) scale('+(0.90+.27*p).toFixed(3)+')';
      outerRing.style.transform='translate(-50%,-50%) rotate('+Math.round(65*p)+'deg)';
      innerRing.style.transform='translate(-50%,-50%) rotate('+Math.round(-75*p)+'deg)';
