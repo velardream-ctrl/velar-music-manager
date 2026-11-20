@@ -1,0 +1,27 @@
+/* RUN-205: run with node tests/featured-crystal-schema.test.js */
+'use strict';
+const assert=require('assert');
+const fs=require('fs');
+const vm=require('vm');
+const context={window:{}};
+vm.runInNewContext(fs.readFileSync('landing-schema.js','utf8'),context,{filename:'landing-schema.js'});
+const api=context.window.VMM_LANDING_SCHEMA;
+const copy=x=>JSON.parse(JSON.stringify(x));
+const defaults=api.defaults();
+const normalized=api.normalize(defaults);
+assert.equal(normalized.hero.featuredPlaylist.enabled,true);
+assert.equal(normalized.hero.crystalJourney.stages.length,3);
+const legacy=copy(defaults);delete legacy.hero.featuredPlaylist;delete legacy.hero.crystalJourney;
+assert.equal(api.normalize(legacy).hero.crystalJourney.stages.length,3);
+const hidden=copy(defaults);hidden.hero.featuredPlaylist.enabled=false;hidden.hero.crystalJourney.enabled=false;
+assert.equal(api.normalize(hidden).hero.featuredPlaylist.enabled,false);
+assert.equal(api.normalize(hidden).hero.crystalJourney.enabled,false);
+const expanded=copy(defaults);expanded.hero.crystalJourney.stages.push('04 — Новый мир');
+assert.equal(api.normalize(expanded).hero.crystalJourney.stages.length,4);
+const apple=copy(defaults);apple.releases.playlists.push({title:'Apple',description:'',provider:'appleMusic',url:'https://music.apple.com/us/playlist/example/pl.123ABC',visible:true});
+assert.equal(api.normalize(apple).releases.playlists[1].provider,'appleMusic');
+const invalid=copy(defaults);invalid.hero.featuredPlaylist.url='https://example.com';
+assert.throws(()=>api.normalize(invalid),/Spotify/);
+const tooMany=copy(defaults);tooMany.hero.crystalJourney.stages=Array.from({length:13},(_,i)=>'Stage '+i);
+assert.throws(()=>api.normalize(tooMany),/12/);
+console.log('RUN-205 schema checks: PASS (8 assertions)');
