@@ -2774,6 +2774,17 @@
    });
    // Keep dependent controls directly below the fourth mode selector.
    headingBlock.insertBefore(sourceArea,mode.parentNode.nextSibling);
+   var listRotationFields=document.createElement('div');sourceArea.appendChild(listRotationFields);
+   selectField(listRotationFields,'Когда менять песню',
+     [['open','При открытии страницы'],['timer','По таймеру'],['day','Одна песня на весь день']],
+     data.hero.featureListRotation||(data.hero.featureDaily?'day':'open'),function(v){
+       data.hero.featureListRotation=v;
+       listTimerFields.hidden=v!=='timer';
+     });
+   var listTimerFields=document.createElement('div');sourceArea.appendChild(listTimerFields);
+   selectField(listTimerFields,'Интервал смены',[1,5,15,30,60].map(function(n){return [String(n),n+' мин'];}),
+     String(data.hero.featureMinutes||5),function(v){data.hero.featureMinutes=Number(v);});
+   listTimerFields.hidden=(data.hero.featureListRotation||(data.hero.featureDaily?'day':'open'))!=='timer';
    var songOptions=songs.map(function(song){return [song.url,song.title+(song.artist?' — '+song.artist:'')];});
    var selected=songs.filter(function(song){return [song.url,song.alternateUrl,song.thirdUrl].indexOf(data.hero.featureUrl)>=0;})[0];
    var fixedFields=document.createElement('div');headingBlock.appendChild(fixedFields);
@@ -2785,7 +2796,7 @@
    function showSongSettings(){
      fixedFields.hidden=mode.value!=='fixed';
      timerFields.hidden=mode.value!=='rotate';
-     dailyFields.hidden=mode.value!=='random'&&mode.value!=='list';
+     dailyFields.hidden=mode.value!=='random';
    }
    showSongSettings();
    var artistBlock=document.createElement('section');artistBlock.className='landing-display-group';
