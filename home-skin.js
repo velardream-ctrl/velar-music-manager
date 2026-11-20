@@ -77,7 +77,7 @@
     if(!compact)return;
     songs=content.hero.featureMode==='list'?window.VMM_LANDING_SCHEMA.featuredSourceSongs(content):window.VMM_LANDING_SCHEMA.homepageSongs(content);
     var nextMode=content.hero.featureMode||'random';
-    var wanted=nextMode==='fixed'?content.hero.featureUrl:(mode===nextMode?activeUrl:'');
+    var wanted=nextMode==='fixed'?content.hero.featureUrl:(nextMode==='list'?'':(mode===nextMode?activeUrl:''));
     mode=nextMode;
     var chosen=songs.filter(function(song){return wanted&&[song.url,song.alternateUrl,song.thirdUrl].indexOf(wanted)>=0;})[0];
     var daily=null;
@@ -87,7 +87,7 @@
       var sorted=songs.slice().sort(function(a,b){return a.url<b.url?-1:a.url>b.url?1:0;});
       daily=sorted[(hash>>>0)%sorted.length];
     }
-    paintSong(content,chosen||(mode==='fixed'?songs[0]:daily||randomSong(lastSong())));
+    paintSong(content,daily||chosen||(mode==='fixed'?songs[0]:randomSong(lastSong())));
     // Compact header already has navigation; do not duplicate it beneath the song.
     if(mode==='rotate'&&songs.length>1){
       timer=window.setInterval(function(){
