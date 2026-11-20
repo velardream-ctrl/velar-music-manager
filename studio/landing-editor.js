@@ -1070,6 +1070,8 @@
      var tick=document.createElement('input');tick.type='checkbox';tick.checked=item.visible===true;
      tick.onchange=function(){item.visible=this.checked;updateButtons();};
      row.appendChild(tick);row.appendChild(document.createTextNode(' Показывать плейлист'));box.appendChild(row);
+     box.appendChild(button('↑ Выше',function(){if(index===0)return;var prev=data.releases.playlists[index-1];data.releases.playlists[index-1]=item;data.releases.playlists[index]=prev;render();}));
+     box.appendChild(button('↓ Ниже',function(){if(index>=data.releases.playlists.length-1)return;var next=data.releases.playlists[index+1];data.releases.playlists[index+1]=item;data.releases.playlists[index]=next;render();}));
      box.appendChild(button('Удалить плейлист',function(){
        if(!window.confirm('Убрать плейлист из черновика?'))return;
        data.releases.playlists.splice(index,1);render();
