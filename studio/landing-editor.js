@@ -2740,19 +2740,22 @@
    selectField(headingBlock,'Вид главной страницы',[['classic','Классический'],['compact','Компактный']],data.hero.skin||'classic',function(v){
      data.hero.skin=v;
    });
-   var source=selectField(headingBlock,'Источник главной песни',[['all','Все песни'],['genres','Жанры'],['topics','Темы'],['languages','Языки'],['artists','Артисты'],['albums','Альбомы']],data.hero.featureSource||'all',function(value){
+   var sourceArea=document.createElement('div');headingBlock.appendChild(sourceArea);
+   var source=selectField(sourceArea,'Источник главной песни',[['all','Все песни'],['genres','Жанры'],['topics','Темы'],['languages','Языки'],['artists','Артисты'],['albums','Альбомы'],['curated','Авторские подборки']],data.hero.featureSource||'all',function(value){
      data.hero.featureSource=value;data.hero.featureGroup='';render();
    });
-   var sourceRows={genres:data.genres.entries||[],topics:data.genres.topics.entries||[],languages:data.genres.languages.entries||[],artists:data.artists.cards||[],albums:data.albums.entries||[]}[source.value]||[];
+   var sourceRows={curated:(data.genres.entries||[]).filter(function(row){return /авторск/i.test(row.label||'');}),genres:data.genres.entries||[],topics:data.genres.topics.entries||[],languages:data.genres.languages.entries||[],artists:data.artists.cards||[],albums:data.albums.entries||[]}[source.value]||[];
    if(source.value!=='all'){
      selectField(headingBlock,'Конкретная подборка',[['','Все песни раздела']].concat(sourceRows.filter(function(row){return row.visible;}).map(function(row){
        return [String(row.id||row.slug||row.code||''),row.label||row.title||'Без названия'];
      }).filter(function(row){return row[0];})),data.hero.featureGroup||'',function(value){data.hero.featureGroup=value;render();});
    }
+   sourceArea.hidden=(data.hero.featureMode||'random')!=='list';
    var songs=API.featuredSourceSongs(data).sort(compareSong);
-   var modes=[['random','Случайная при открытии страницы'],['fixed','Выбранная песня'],['rotate','Случайная со сменой по таймеру']];
+   var modes=[['random','Случайная при открытии страницы'],['fixed','Выбранная песня'],['rotate','Случайная со сменой по таймеру'],['list','Случайная из списка песен']];
    var mode=selectField(headingBlock,'Главная песня компактного вида',modes,data.hero.featureMode||'random',function(value){
      data.hero.featureMode=value;
+     sourceArea.hidden=value!=='list';
      showSongSettings();
    });
    var songOptions=songs.map(function(song){return [song.url,song.title+(song.artist?' — '+song.artist:'')];});
@@ -2766,7 +2769,7 @@
    function showSongSettings(){
      fixedFields.hidden=mode.value!=='fixed';
      timerFields.hidden=mode.value!=='rotate';
-     dailyFields.hidden=mode.value!=='random';
+     dailyFields.hidden=mode.value!=='random'&&mode.value!=='list';
    }
    showSongSettings();
    var artistBlock=document.createElement('section');artistBlock.className='landing-display-group';
