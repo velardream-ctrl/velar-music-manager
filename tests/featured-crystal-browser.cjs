@@ -141,9 +141,9 @@ delete previous.content.hero.crystalJourney;
      scrollTo(0,top+distance*(i+.5)/count);
      await settle();
      assert(chapter.querySelector('.is-current')?.textContent==='CMS '+(i+1),'stage '+(i+1)+'/'+count+' / '+chapter.dataset.journeyPhase);
-     assert(Math.abs(stage.getBoundingClientRect().top)<=2,'stage not pinned / '+stage.getBoundingClientRect().top);
+     assert(Math.abs(stage.getBoundingClientRect().top)<=2,'stage not pinned / '+stage.getBoundingClientRect().top+' ('+getComputedStyle(stage).position+')');
     }
-    assert(Math.abs(stage.getBoundingClientRect().height-innerHeight)<=2,'stage height');
+    assert(Math.abs(stage.getBoundingClientRect().height-innerHeight)<=2,'stage height '+stage.getBoundingClientRect().height+' / '+innerHeight+' ('+chapter.getAttribute('data-motion-status')+')');
    }
    assert(counts[0]<counts[1]&&counts[1]<counts[2],'scroll distance '+counts);
    landing.hero.featuredPlaylist.enabled=false;landing.hero.crystalJourney.enabled=false;render();await settle();

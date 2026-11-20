@@ -2494,3 +2494,32 @@ html.legacy-ipad-crystal .velar-radio > .station-help > .station-help-button::-w
 .cms-music-entry.is-playing>.cms-music-player:not(:empty)>*{
  position:static;width:100%;max-width:100%;margin:0;
 }
+
+/* RUN-205: the editable journey needs a full scroll range at desktop widths.
+   The static layout keeps its existing long form for reduced motion and older browsers. */
+@media (min-width:851px){
+ .has-living-art .crystal-journey{
+   height:190vh;min-height:1100px;padding:0;
+   height:calc(190vh + var(--journey-scroll-delta, 0vh));
+   min-height:calc(1100px + var(--journey-min-delta, 0px));
+ }
+ .has-living-art .crystal-journey-stage{
+   position:sticky;top:0;height:100vh;min-height:0;max-width:none;padding:0;overflow:hidden;
+ }
+ html.ios-scroll-stable.has-living-art .crystal-journey{
+   height:200vh;min-height:0;
+   height:calc(200vh + var(--journey-scroll-delta, 0vh));
+ }
+ html.ios-scroll-stable.has-living-art .crystal-journey-stage{position:-webkit-sticky;position:sticky}
+ html.legacy-ipad-crystal .crystal-journey-stage{padding:0}
+ .has-living-art .crystal-journey-ring,.has-living-art .crystal-journey-crystal,.has-living-art .crystal-journey-beam,
+ html.legacy-ipad-crystal .crystal-journey-ring,html.legacy-ipad-crystal .crystal-journey-crystal,
+ html.legacy-ipad-crystal .crystal-journey-beam{top:38%}
+ .has-living-art .crystal-journey-copy,html.legacy-ipad-crystal .crystal-journey-copy{
+   position:absolute;top:auto;bottom:3vh;left:16px;right:16px;margin:auto;padding:0;
+ }
+}
+.has-living-art [data-many-stages] .crystal-journey-stanza:not(.is-current),
+html.legacy-ipad-crystal [data-many-stages][data-journey-phase] .crystal-journey-stanza:not(.is-current){
+ display:none;
+}
