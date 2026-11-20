@@ -44,7 +44,7 @@
    return 'enabled';
  }
  function supportsMotion(){return motionStatus()==='enabled';}
- function phaseFor(p){return p<.31?0:p<.68?1:2;}
+ function phaseFor(p){var count=chapter?chapter.querySelectorAll('.crystal-journey-stanza').length:3;return Math.min(Math.max(1,count)-1,Math.floor(Math.min(.999999,p)*Math.max(1,count)));}
  function apply(){
    scheduled=0;if(!active||!chapter)return;
    var rect=chapter.getBoundingClientRect();
@@ -127,7 +127,7 @@
    var outerRing=chapter.querySelector('.crystal-journey-ring--outer');
    var innerRing=chapter.querySelector('.crystal-journey-ring--inner');
    var captions=chapter.querySelectorAll('.crystal-journey-stanza');
-   if(!stage||!image||!outerRing||!innerRing||!captions||captions.length!==3)return;
+   if(!stage||!image||!outerRing||!innerRing||!captions||!captions.length)return;
    var reduced=false,saveData=false;
    try{reduced=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);}
    catch(ignore){}
@@ -196,7 +196,7 @@
    near=chapter.querySelector('.crystal-journey-stars--near');
    beams=Array.prototype.slice.call(chapter.querySelectorAll('.crystal-journey-beam'));
    stanzas=Array.prototype.slice.call(chapter.querySelectorAll('.crystal-journey-stanza'));
-   if(!crystal||!outer||!inner||!far||!near||stanzas.length!==3)return;
+   if(!crystal||!outer||!inner||!far||!near||!stanzas.length)return;
    started=true;
    watcher=new window.IntersectionObserver(enter,{threshold:0});
    watcher.observe(chapter);
@@ -220,6 +220,7 @@
      if(bounds.bottom>0&&bounds.top<window.innerHeight)attach();
    });
  }
+ window.VELAR_JOURNEY_REFRESH=function(){if(!chapter)return;stanzas=Array.prototype.slice.call(chapter.querySelectorAll('.crystal-journey-stanza'));currentPhase=-1;schedule();};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
  else init();
  window.VELAR_LIVING_ART={scrollProgress:scrollProgress,phaseFor:phaseFor,motionStatus:motionStatus};
