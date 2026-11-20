@@ -767,8 +767,8 @@
        var close=create('button','cms-release-close','Закрыть плеер');
        close.type='button';close.onclick=function(){empty(player);choose.setAttribute('aria-pressed','false');};player.appendChild(close);
      };
-     actions.appendChild(choose);
-     var external=create('a','cms-card-link','Открыть в '+(item.provider==='spotify'?'Spotify':'YouTube'));
+     if(item.provider!=='appleMusic')actions.appendChild(choose);
+     var external=create('a','cms-card-link','Открыть в '+(item.provider==='spotify'?'Spotify':item.provider==='appleMusic'?'Apple Music':'YouTube'));
      external.href=item.url;external.target='_blank';external.rel='noopener noreferrer';
      actions.appendChild(external);details.appendChild(actions);
      card.appendChild(details);card.appendChild(player);grid.appendChild(card);
