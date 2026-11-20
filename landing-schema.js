@@ -497,7 +497,7 @@
   }
   function playlistCard(x,i){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Плейлист '+i+': неправильная запись.');
-    var provider=x.provider==='youtube'?'youtube':'spotify';
+    var provider=['youtube','spotify','appleMusic'].indexOf(x.provider)>=0?x.provider:'spotify';
     if(x.provider&&x.provider!==provider)throw new Error('Плейлист '+i+': только Spotify, YouTube или Apple Music.');
     var link=playlistUrl(x.url||'',provider);
     if(x.visible===true&&!link)throw new Error('Плейлист '+i+': нужна публичная ссылка на плейлист.');
