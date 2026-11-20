@@ -1347,6 +1347,25 @@
    configureSections(imagePolicy()&&imagePolicy().getLevel?imagePolicy().getLevel():0);
    if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.configure(value.hero.analytics,
      !!(value.genres&&value.genres.assistant&&value.genres.assistant.enabled));
+   (function(){
+     var f=value.hero.featuredPlaylist,host=byId('featured-spotify-playlist'),frame=byId('vd-feature-iframe');
+     if(host&&f){host.hidden=f.enabled===false;host.style.display=f.enabled===false?'none':'';
+       assign('vd-feature-title',f.title);assign('vd-feature-description',f.description);
+       var link=byId('vd-feature-link');if(link)link.href=f.url;
+       var match=/\/playlist\/([A-Za-z0-9]{22})/.exec(f.url||'');
+       if(frame&&match){var src='https://open.spotify.com/embed/playlist/'+match[1]+'?theme=0';if(frame.getAttribute('src')!==src)frame.setAttribute('src',src);}
+     }
+     var c=value.hero.crystalJourney,chapter=byId('crystal-journey');
+     if(chapter&&c){chapter.hidden=c.enabled===false;chapter.style.display=c.enabled===false?'none':'';
+       var kicker=chapter.querySelector('.crystal-journey-kicker'),description=chapter.querySelector('.crystal-journey-description'),button=chapter.querySelector('.crystal-journey-link');
+       if(kicker)kicker.textContent=c.kicker;assign('crystal-journey-title',c.title);if(description)description.textContent=c.description;
+       if(button){var first=button.firstChild;if(first&&first.nodeType===3)first.nodeValue=c.linkText+' ';}
+       var list=chapter.querySelector('.crystal-journey-stanzas');if(list){while(list.firstChild)list.removeChild(list.firstChild);
+         c.stages.forEach(function(t,i){var span=document.createElement('span');span.className='crystal-journey-stanza'+(i===0?' is-current':'');span.textContent=t;list.appendChild(span);});
+         if(window.VELAR_JOURNEY_REFRESH)window.VELAR_JOURNEY_REFRESH();
+       }
+     }
+   }());
    assign('public-hero-subtitle',value.hero.subtitle);
    assign('public-hero-intro',value.hero.intro);
    assign('artists-title',value.artists.heading);
