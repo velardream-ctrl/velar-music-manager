@@ -2747,19 +2747,11 @@
      data.hero.featureSource||'all',function(value){
        data.hero.featureSource=value;data.hero.featureGroup='';render();
      });
-   // Always derive these options from the current editable catalog, never from a duplicate list.
-   var catalogGroups={
-     genres:data.genres.entries||[],
-     topics:data.genres.topics.entries||[],
-     languages:data.genres.languages.entries||[],
-     artists:data.artists.cards||[],
-     albums:data.albums.entries||[],
-     curated:(data.genres.entries||[]).filter(function(row){return /авторск/i.test(row.label||'');})
-   };
-   var sourceRows=catalogGroups[source.value]||[];
+   // Options are derived from the same live catalog used by the public selector.
+   var sourceRows=API.featuredSourceGroups(data,source.value);
    if(source.value!=='all'){
-     var groupOptions=sourceRows.filter(function(row){return row.visible;}).map(function(row){
-       return [String(row.id||row.slug||row.code||''),row.label||row.title||'Без названия'];
+     var groupOptions=sourceRows.filter(function(row){return row.visible!==false;}).map(function(row){
+       return [String(row.id||row.slug||row.code||''),row.label||row.title||row.name||'Без названия'];
      }).filter(function(row){return row[0];});
      selectField(sourceArea,'Выбрать '+({
        genres:'жанр',topics:'тему',languages:'язык',artists:'артиста',albums:'альбом',curated:'авторскую подборку'
@@ -2773,7 +2765,7 @@
      }
    }
    sourceArea.hidden=(data.hero.featureMode||'random')!=='list';
-   var songs=(data.hero.featureMode==='list'?API.featuredSourceSongs(data):API.homepageSongs(data)).sort(compareSong);
+   var songs=API.homepageSongs(data).sort(compareSong);
    var modes=[['random','Случайная при открытии страницы'],['fixed','Выбранная песня'],['rotate','Случайная со сменой по таймеру'],['list','Случайная из списка песен']];
    var mode=selectField(headingBlock,'Главная песня компактного вида',modes,data.hero.featureMode||'random',function(value){
      data.hero.featureMode=value;
