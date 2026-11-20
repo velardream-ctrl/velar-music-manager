@@ -1033,10 +1033,10 @@
     var result={
       hero:{
         skin:hero.skin==='compact'?'compact':'classic',
-        featureMode:['fixed','rotate'].indexOf(hero.featureMode)>=0?hero.featureMode:'random',
+        featureMode:['fixed','rotate','list'].indexOf(hero.featureMode)>=0?hero.featureMode:'random',
         featureUrl:typeof hero.featureUrl==='string'?hero.featureUrl.slice(0,2048):'',
         featureMinutes:[1,5,15,30,60].indexOf(hero.featureMinutes)>=0?hero.featureMinutes:5,
-        featureSource:['all','genres','topics','languages','artists','albums'].indexOf(hero.featureSource)>=0?hero.featureSource:'all',
+        featureSource:['all','genres','topics','languages','artists','albums','curated'].indexOf(hero.featureSource)>=0?hero.featureSource:'all',
         featureGroup:typeof hero.featureGroup==='string'?hero.featureGroup.slice(0,120):'',
         featureDaily:hero.featureDaily===true,
         subtitle:plain(typeof hero.subtitle==='string'?hero.subtitle:d.hero.subtitle,'Первый экран — подзаголовок',160,true),
@@ -1144,6 +1144,7 @@
   function featuredSourceSongs(data){
     var hero=data.hero||{},source=hero.featureSource||'all',group=hero.featureGroup||'',all=homepageSongs(data);
     if(source==='all')return all;
+    if(source==='curated')source='genres';
     var groups={genres:data.genres.entries||[],topics:data.genres.topics.entries||[],languages:data.genres.languages.entries||[],artists:data.artists.cards||[],albums:data.albums.entries||[]}[source]||[];
     var rows=groups.filter(function(row){return row.visible&&(!group||String(row.id||row.slug||row.code||'')===group);});
     var links=Object.create(null);
