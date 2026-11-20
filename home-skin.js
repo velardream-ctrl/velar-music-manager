@@ -81,7 +81,7 @@
     mode=nextMode;
     var chosen=songs.filter(function(song){return wanted&&[song.url,song.alternateUrl,song.thirdUrl].indexOf(wanted)>=0;})[0];
     var daily=null;
-    if((mode==='random'||mode==='list')&&content.hero.featureDaily&&songs.length){
+    if(((mode==='random'&&content.hero.featureDaily)||(mode==='list'&&(content.hero.featureListRotation||(content.hero.featureDaily?'day':'open'))==='day'))&&songs.length){
       var seed=new Date().toISOString().slice(0,10)+'|'+(content.hero.featureSource||'all')+'|'+(content.hero.featureGroup||''),hash=2166136261;
       for(var i=0;i<seed.length;i++){hash^=seed.charCodeAt(i);hash=Math.imul(hash,16777619);}
       var sorted=songs.slice().sort(function(a,b){return a.url<b.url?-1:a.url>b.url?1:0;});
@@ -89,7 +89,7 @@
     }
     paintSong(content,daily||chosen||(mode==='fixed'?songs[0]:randomSong(lastSong())));
     // Compact header already has navigation; do not duplicate it beneath the song.
-    if(mode==='rotate'&&songs.length>1){
+    if((mode==='rotate'||(mode==='list'&&(content.hero.featureListRotation||(content.hero.featureDaily?'day':'open'))==='timer'))&&songs.length>1){
       timer=window.setInterval(function(){
         if(document.hidden||host.firstChild.contains(document.activeElement))return;
         paintSong(content,randomSong(activeUrl));
