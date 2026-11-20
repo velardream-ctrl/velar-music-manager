@@ -15,7 +15,7 @@ jobs:
       - run: npm test
       - run: node --check main.js && node --check sw.js
   homepage-browser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     strategy:
