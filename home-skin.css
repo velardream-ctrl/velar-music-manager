@@ -14,3 +14,8 @@
 .skin-compact .main-panels{display:flex;flex-direction:column}.skin-compact #releases{order:-1}.skin-compact .main-panels>section{min-width:0}
 
 .topics-more{margin:12px auto}.topics-more summary{cursor:pointer}.topics-more .topics-cloud{margin-top:12px}
+
+/* Featured playlist uses the same content in compact mode. */
+.skin-compact #featured-spotify-playlist{max-width:900px!important;margin:12px auto 26px!important;padding:16px!important}
+.skin-compact #featured-spotify-playlist iframe{height:340px!important}
+@media(max-width:680px){.skin-compact #featured-spotify-playlist iframe{height:400px!important}}
