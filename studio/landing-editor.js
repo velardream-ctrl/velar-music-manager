@@ -2746,7 +2746,7 @@
    });
    var sourceRows={curated:(data.genres.entries||[]).filter(function(row){return /авторск/i.test(row.label||'');}),genres:data.genres.entries||[],topics:data.genres.topics.entries||[],languages:data.genres.languages.entries||[],artists:data.artists.cards||[],albums:data.albums.entries||[]}[source.value]||[];
    if(source.value!=='all'){
-     selectField(headingBlock,'Конкретная подборка',[['','Все песни раздела']].concat(sourceRows.filter(function(row){return row.visible;}).map(function(row){
+     selectField(sourceArea,'Конкретная подборка',[['','Все песни раздела']].concat(sourceRows.filter(function(row){return row.visible;}).map(function(row){
        return [String(row.id||row.slug||row.code||''),row.label||row.title||'Без названия'];
      }).filter(function(row){return row[0];})),data.hero.featureGroup||'',function(value){data.hero.featureGroup=value;render();});
    }
