@@ -150,7 +150,7 @@
     return {
       hero:{
         skin:'classic',
-        featureMode:'random',featureUrl:'',featureMinutes:5,
+        featureMode:'random',featureUrl:'',featureMinutes:5,featureSource:'all',featureGroup:'',featureDaily:false,featureListRotation:'open',
         subtitle:'Разные голоса. Разные жанры. Одна вселенная музыки.',
         intro:'Здесь рождается пространство для артистов, авторских релизов и музыкальных историй — от оперы и этно до рока, поп-музыки и кроссоверов.',
         imageLoadingLevel:0, // RUN-123: existing published pages remain eager.
@@ -1033,9 +1033,13 @@
     var result={
       hero:{
         skin:hero.skin==='compact'?'compact':'classic',
-        featureMode:['fixed','rotate'].indexOf(hero.featureMode)>=0?hero.featureMode:'random',
+        featureMode:['fixed','rotate','list'].indexOf(hero.featureMode)>=0?hero.featureMode:'random',
         featureUrl:typeof hero.featureUrl==='string'?hero.featureUrl.slice(0,2048):'',
         featureMinutes:[1,5,15,30,60].indexOf(hero.featureMinutes)>=0?hero.featureMinutes:5,
+        featureSource:['all','genres','topics','languages','artists','albums'].indexOf(hero.featureSource)>=0?hero.featureSource:'all',
+        featureGroup:typeof hero.featureGroup==='string'?hero.featureGroup.slice(0,120):'',
+        featureDaily:hero.featureDaily===true,
+        featureListRotation:['open','timer','day'].indexOf(hero.featureListRotation)>=0?hero.featureListRotation:(hero.featureDaily?'day':'open'),
         subtitle:plain(typeof hero.subtitle==='string'?hero.subtitle:d.hero.subtitle,'Первый экран — подзаголовок',160,true),
         intro:plain(typeof hero.intro==='string'?hero.intro:d.hero.intro,'Первый экран — описание',600,true),
         imageLoadingLevel:(function(){
@@ -1138,8 +1142,30 @@
     [data.genres.entries,data.genres.topics.entries,data.genres.languages.entries,data.albums.entries].forEach(function(rows){collect(rows,false);});
     return songs;
   }
+  function featuredSourceGroups(data,source){
+    var genres=data.genres||{},topics=genres.topics||{},languages=genres.languages||{};
+    var groups={genres:genres.entries||[],topics:topics.entries||[],languages:languages.entries||[],
+      artists:(data.artists||{}).cards||[],albums:(data.albums||{}).entries||[]};
+    return groups[source]||[];
+  }
+  function featuredSourceSongs(data){
+    var hero=data.hero||{},source=hero.featureSource||'all',group=hero.featureGroup||'',all=homepageSongs(data);
+    if(source==='all')return all;
+    var rows=featuredSourceGroups(data,source).filter(function(row){
+      return row.visible!==false&&(!group||String(row.id||row.slug||row.code||'')===group);
+    });
+    var links=Object.create(null);
+    rows.forEach(function(row){
+      (source==='artists'?row.featuredTracks||[]:row.tracks||[]).forEach(function(track){
+        [track.url,track.alternateUrl,track.thirdUrl].forEach(function(url){if(url)links[url]=true;});
+      });
+    });
+    return all.filter(function(song){
+      return [song.url,song.alternateUrl,song.thirdUrl].some(function(url){return url&&links[url];});
+    });
+  }
   function blankCard(){return {title:'',subtitle:'',description:'',url:'',imageUrl:'',visible:false};}
-  window.VMM_LANDING_SCHEMA={homepageSongs:homepageSongs,defaults:defaults,normalize:normalize,blankCard:blankCard,
+  window.VMM_LANDING_SCHEMA={homepageSongs:homepageSongs,featuredSourceSongs:featuredSourceSongs,featuredSourceGroups:featuredSourceGroups,defaults:defaults,normalize:normalize,blankCard:blankCard,
     songUrl:songUrl,featuredTrack:featuredTrack,featuredTracks:featuredTracks,
     releaseMediaUrl:releaseMediaUrl,playlistUrl:playlistUrl,radioConfig:radioConfig,radioCatalog:radioCatalog,
     albumsConfig:albumsConfig,albumEntry:albumEntry,
