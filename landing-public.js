@@ -728,11 +728,11 @@
    paint();
  }
 
- function playlistGallery(value){
+ function playlistGallery(value,featured){
    var grid=byId('public-playlists-cards'),follow=byId('public-subscriptions');
    if(!grid||!follow)return;
    empty(grid);empty(follow);
-   var playlists=value.playlists.filter(function(row){return row.visible&&row.url;});
+   var playlists=value.playlists.filter(function(row){return row.visible&&row.url&&!(featured.enabled&&row.provider==='spotify'&&row.url===featured.url);});
    playlists.forEach(function(item,index){
      var card=create('article','cms-playlist-card'+(index===0?' cms-playlist-card--featured':''));
      var decoration=create('div','cms-playlist-art');
@@ -767,8 +767,8 @@
        var close=create('button','cms-release-close','Закрыть плеер');
        close.type='button';close.onclick=function(){empty(player);choose.setAttribute('aria-pressed','false');};player.appendChild(close);
      };
-     actions.appendChild(choose);
-     var external=create('a','cms-card-link','Открыть в '+(item.provider==='spotify'?'Spotify':'YouTube'));
+     if(item.provider!=='appleMusic')actions.appendChild(choose);
+     var external=create('a','cms-card-link','Открыть в '+(item.provider==='spotify'?'Spotify':item.provider==='appleMusic'?'Apple Music':'YouTube'));
      external.href=item.url;external.target='_blank';external.rel='noopener noreferrer';
      actions.appendChild(external);details.appendChild(actions);
      card.appendChild(details);card.appendChild(player);grid.appendChild(card);
@@ -1347,6 +1347,34 @@
    configureSections(imagePolicy()&&imagePolicy().getLevel?imagePolicy().getLevel():0);
    if(window.VMM_ANALYTICS)window.VMM_ANALYTICS.configure(value.hero.analytics,
      !!(value.genres&&value.genres.assistant&&value.genres.assistant.enabled));
+   (function(){
+     var f=value.hero.featuredPlaylist,host=byId('featured-spotify-playlist'),frame=byId('vd-feature-iframe');
+     if(host&&f){host.hidden=f.enabled===false;host.style.display=f.enabled===false?'none':'';
+       assign('vd-feature-title',f.title);assign('vd-feature-description',f.description);
+       var link=byId('vd-feature-link');if(link)link.href=f.url;
+       var match=/\/playlist\/([A-Za-z0-9]{22})/.exec(f.url||'');
+       if(frame){
+         var src=f.enabled&&match?'https://open.spotify.com/embed/playlist/'+match[1]+'?theme=0':'';
+         if(src&&frame.getAttribute('src')!==src)frame.setAttribute('src',src);
+         else if(!src&&frame.hasAttribute('src'))frame.removeAttribute('src');
+       }
+     }
+     var c=value.hero.crystalJourney,chapter=byId('crystal-journey');
+     if(chapter&&c){chapter.hidden=c.enabled===false;chapter.style.display=c.enabled===false?'none':'';
+       var kicker=chapter.querySelector('.crystal-journey-kicker'),description=chapter.querySelector('.crystal-journey-description'),button=chapter.querySelector('.crystal-journey-link');
+       if(kicker)kicker.textContent=c.kicker;assign('crystal-journey-title',c.title);if(description)description.textContent=c.description;
+       if(button){var first=button.firstChild;if(first&&first.nodeType===3)first.nodeValue=c.linkText+' ';}
+       var delta=c.stages.length-3;
+       if(delta>0)chapter.setAttribute('data-many-stages','');
+       else chapter.removeAttribute('data-many-stages');
+       chapter.style.setProperty('--journey-scroll-delta',(delta*25)+'vh');
+       chapter.style.setProperty('--journey-min-delta',(delta*90)+'px');
+       var list=chapter.querySelector('.crystal-journey-stanzas');if(list){while(list.firstChild)list.removeChild(list.firstChild);
+         c.stages.forEach(function(t,i){var span=document.createElement('span');span.className='crystal-journey-stanza'+(i===0?' is-current':'');span.textContent=t;list.appendChild(span);});
+         if(window.VELAR_JOURNEY_REFRESH)window.VELAR_JOURNEY_REFRESH();
+       }
+     }
+   }());
    assign('public-hero-subtitle',value.hero.subtitle);
    assign('public-hero-intro',value.hero.intro);
    assign('artists-title',value.artists.heading);
@@ -1375,7 +1403,7 @@
    section('artists',function(){cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums,value.artists.songViewMode||value.genres.songViewMode);});
    section('albums',function(){if(window.VELAR_ALBUMS&&window.VELAR_ALBUMS.render)window.VELAR_ALBUMS.render(value.albums);});
    section('releases',function(){releaseGallery(value.releases);});
-   section('playlists',function(){playlistGallery(value.releases);});
+   section('playlists',function(){playlistGallery(value.releases,value.hero.featuredPlaylist);});
    // A new snapshot of another section must never restart an active radio iframe.
    var radioSignature=radioPlaybackSignature(value.releases.radio);
    if(radioSignature!==landingRadioSettings){
@@ -1476,6 +1504,12 @@
    if(byId('artist-main'))return; // The profile owns its public snapshot subscription.
    var help=byId("standalone-help");if(help)help.appendChild(stationHelp(true));
    if(!window.VMM_LANDING_SCHEMA)return;
+   // Provide the default player when the first public snapshot is unavailable.
+   var frame=byId('vd-feature-iframe'),defaultLink=byId('vd-feature-link');
+   if(frame&&defaultLink&&!frame.getAttribute('src')){
+     var defaultEmbed=officialEmbed(defaultLink.href,'spotify','playlist');
+     if(defaultEmbed)frame.setAttribute('src',defaultEmbed+'?theme=0');
+   }
    var fresh=false;
    // Public-only IndexedDB snapshot restores every published section and the
    // local assistant even when the Firebase SDK cannot load without network.

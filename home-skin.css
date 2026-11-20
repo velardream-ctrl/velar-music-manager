@@ -1,5 +1,5 @@
 #compact-home[hidden]{display:none}
-.skin-compact .hero,.skin-compact #crystal-journey{display:none}
+.skin-compact .hero{display:none}
 #compact-home{font:18px Georgia,serif;color:#f5e5c9;padding:20px max(4%,calc((100% - 1150px)/2));background:#080e18}
 #compact-home h1,#compact-home h2{font-family:Georgia,serif;font-weight:400;color:inherit;margin:0}
 #compact-home h1{font-size:clamp(36px,5vw,76px);line-height:1.1}
@@ -14,3 +14,8 @@
 .skin-compact .main-panels{display:flex;flex-direction:column}.skin-compact #releases{order:-1}.skin-compact .main-panels>section{min-width:0}
 
 .topics-more{margin:12px auto}.topics-more summary{cursor:pointer}.topics-more .topics-cloud{margin-top:12px}
+
+/* Featured playlist uses the same content in compact mode. */
+.skin-compact #featured-spotify-playlist{max-width:900px!important;margin:12px auto 26px!important;padding:16px!important}
+.skin-compact #featured-spotify-playlist iframe{height:340px!important}
+@media(max-width:680px){.skin-compact #featured-spotify-playlist iframe{height:400px!important}}

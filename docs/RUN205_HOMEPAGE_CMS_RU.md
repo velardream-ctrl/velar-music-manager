@@ -1,0 +1,70 @@
+# RUN-205 · Управление главной страницей
+
+Дата начала · 20.11.2026
+PR · [#196](https://github.com/velardream-ctrl/velar-music-manager/pull/196)
+Рабочая ветка · `feature/playlist-crystal-cms-20261120`
+Исходная версия PR · [d1386db](https://github.com/velardream-ctrl/velar-music-manager/commit/d1386db91958984a37d7c59151106663196716b4)
+Основа выпуска и отката · [679a556](https://github.com/velardream-ctrl/velar-music-manager/commit/679a55642dca3e8e312b2c8a5b4157c50ccea648)
+
+## Изменения
+
+- В Studio → Главная страница вкладка «Плейлисты и подписки» содержит настройки главного Spotify-плейлиста. Отдельная вкладка «Анимация кристалла» содержит подпись, заголовок, описание, кнопку, переключатель и 1–12 переставляемых этапов.
+- Главная показывает один экземпляр выбранного Spotify-плейлиста в классическом и компактном режимах. Если главный блок выключен, ранее опубликованная карточка плейлиста сохраняется в общей подборке.
+- Прокрутка сцены масштабируется при добавлении и удалении этапов. Сохранены границы переключения для трёх этапов и отдельный путь закрепления сцены на старом iPad. Убраны конфликтующие правила, которые скрывали включённую сцену в компактном режиме и отменяли закрепление на широком экране. При 4–12 этапах в анимированной сцене показывается текущая реплика.
+- Для браузера и service worker согласованы версии новых ресурсов. Проверка исходных настроек компактного режима также выявила зависимость от перестановки DOM-узла. Порядок элементов сохранён обычным добавлением узла после селектора.
+
+## Проверки и ограничения
+
+- `npm test` пройден, включая `tests/featured-crystal-schema.test.js`. Всего 69 успешных сценариев. Синтаксис JavaScript проверен через `node --check`. Отдельный браузерный сценарий использует настоящие страницы Studio и главной с локальной заменой Firestore. В качестве первой публикации используется прежняя схема без двух новых полей.
+- Браузерный сценарий проверяет черновик после перезагрузки, возврат к опубликованной версии, публикацию, её публичное отображение и возврат прежних значений второй публикацией. Сценарий успешно прошёл в Chromium и WebKit. [GitHub Actions, 3 из 3](https://github.com/velardream-ctrl/velar-music-manager/actions/runs/44815459522).
+- На настольном профиле и профилях iPhone 11, современного iPad и старого iPad проверены 1, 3 и 12 этапов, закрепление на весь экран, оба режима, один плеер, смена URL и видимость. Проверка консоли пройдена. Старый iPad проверен через размеры и user agent. Физические устройства, Safari 12/13 и Windows требуют отдельной проверки.
+- Spotify в браузерной автоматизации заменён локальным ответом. Проверка охватывает официальный URL, iframe, переключение режима и отсутствие двойной карточки. Рабочий адрес Spotify iframe отдельно ответил HTTP 200. Воспроизведение звука в Spotify не проверялось.
+- Тестовые записи изолированы от рабочей Firestore. Google-вход и рабочие правила Firestore этим сценарием не проверяются.
+
+## Резерв и откат
+
+- Из `679a55642dca3e8e312b2c8a5b4157c50ccea648` создан ZIP исходников. `unzip -tq` завершился успешно. SHA-256 архива `75276383fbdccdba8436c1f6593f267957426c2a1b806134b1ae8df845f8d9f3`. Тот же снимок можно создать через `git archive --format=zip -o velar-before-run205.zip 679a55642dca3e8e312b2c8a5b4157c50ccea648`.
+- Рабочий публичный документ `vmm_public_pages/landing`, ревизия 196, успешно прошёл нормализацию новой схемой. Снимок `Velar_RUN205_public_landing_rev196.json` сохранён без полей автора записи. SHA-256 `135e929a3c8ab3c6b58ff63d6636f34a42f99d5232a5a3e0941fbffd98ea95cd`. HTML рабочего сайта совпал с `index.html` коммита `679a556`. Для выпуска кода изменение Firestore не требуется.
+- Если понадобится откат после слияния, открыть PR с обратным коммитом к выпуску RUN-205. Для merge-коммита использовать `git revert -m 1 <merge-sha>`, для squash-коммита — `git revert <squash-sha>`. Проверить развёртывание Pages и загрузку предыдущих ресурсов. Если владелец уже изменил контент, перед откатом кода вернуть прежние значения в Studio по снимку ревизии 196, сохранить черновик и отдельно опубликовать. Этот шаг нужен только при откате контента. Для отмены неопубликованных правок использовать «Вернуть опубликованную версию».
+- Статус на момент записи · проверки выпуска пройдены, слияние и публикация ожидают подтверждения владельца.
+
+## Коммиты RUN-205
+
+- [5efc7be](https://github.com/velardream-ctrl/velar-music-manager/commit/5efc7befa9d7af61ff63d0cae18ffb5316b47d19) — редактор, совместимость, кэш и браузерный сценарий.
+- [574f830](https://github.com/velardream-ctrl/velar-music-manager/commit/574f8301a2f29632a2da3ed5c0bf82714602dd66) — образ Ubuntu для Playwright.
+- [289047e](https://github.com/velardream-ctrl/velar-music-manager/commit/289047e6cd24d60105d4b628acc09e3b9e7c3806) — закрепление сцены и успешная проверка обоих режимов.
+- Итоговый коммит в ветке RUN-205 — журнал и совместимость кэша страницы артиста.
+
+## Файлы PR
+
+```text
+.github/workflows/verify.yml
+docs/RUN205_HOMEPAGE_CMS_RU.md
+docs/WORK_ACTIVITY_LOG_RU.md
+home-skin.css
+index.html
+landing-public.js
+landing-schema.js
+living-art.js
+package.json
+studio/index.html
+studio/landing-editor.js
+style.css
+sw.js
+tests/featured-crystal-browser.cjs
+tests/featured-crystal-schema.test.js
+tests/test-analytics-tab.mjs
+tests/test-artist-photo.mjs
+tests/test-consent-followup-and-reports.mjs
+tests/test-cross-browser-ui.mjs
+tests/test-eager-images.mjs
+tests/test-featured-music.mjs
+tests/test-image-loading.mjs
+tests/test-ipad-compat.mjs
+tests/test-landing-schema.mjs
+tests/test-living-art.mjs
+tests/test-release-radio.mjs
+tests/test-rule-audit-jokes.mjs
+tests/test-song-catalog-pagination.mjs
+tests/test-static.mjs
+```

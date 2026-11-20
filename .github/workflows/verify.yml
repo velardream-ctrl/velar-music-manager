@@ -14,3 +14,27 @@ jobs:
           node-version: '20'
       - run: npm test
       - run: node --check main.js && node --check sw.js
+  homepage-browser:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install --no-save --no-package-lock playwright@1.58.2
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Verify Studio and public homepage in an isolated browser
+        env:
+          RUN205_ENGINE: ${{ matrix.browser }}
+        run: |
+          python3 -m http.server 8705 --bind 127.0.0.1 > /tmp/velar-test-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          curl --fail --retry 5 --retry-connrefused --silent http://127.0.0.1:8705/ > /dev/null
+          node tests/featured-crystal-browser.cjs

@@ -44,7 +44,11 @@
    return 'enabled';
  }
  function supportsMotion(){return motionStatus()==='enabled';}
- function phaseFor(p){return p<.31?0:p<.68?1:2;}
+ function phaseFor(p,count){
+   count=count||3;
+   if(count===3)return p<.31?0:p<.68?1:2;
+   return Math.min(count-1,Math.floor(clamp(p)*count));
+ }
  function apply(){
    scheduled=0;if(!active||!chapter)return;
    var rect=chapter.getBoundingClientRect();
@@ -60,7 +64,7 @@
    far.style.transform='translate3d(0,'+Math.round(-p*24)+'px,0)';
    near.style.transform='translate3d(0,'+Math.round(p*36)+'px,0)';
    beams.forEach(function(b,i){b.style.opacity=String(.17+p*(i===0?.57:.49));});
-   var phase=phaseFor(p);
+   var phase=phaseFor(p,stanzas.length);
    if(phase!==currentPhase){
      currentPhase=phase;
      stanzas.forEach(function(el,i){
@@ -127,7 +131,7 @@
    var outerRing=chapter.querySelector('.crystal-journey-ring--outer');
    var innerRing=chapter.querySelector('.crystal-journey-ring--inner');
    var captions=chapter.querySelectorAll('.crystal-journey-stanza');
-   if(!stage||!image||!outerRing||!innerRing||!captions||captions.length!==3)return;
+   if(!stage||!image||!outerRing||!innerRing||!captions||!captions.length)return;
    var reduced=false,saveData=false;
    try{reduced=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);}
    catch(ignore){}
@@ -137,7 +141,7 @@
    var queued=false,lastPhase=-1;
    function draw(){
      queued=false;
-     if(document.hidden)return;
+     if(document.hidden||chapter.hidden)return;
      var r=chapter.getBoundingClientRect(),viewport=window.innerHeight;
      var duration=Math.max(1,chapter.offsetHeight-viewport);
      // Before chapter: ordinary flow. In chapter: fixed to viewport.
@@ -153,10 +157,11 @@
      }
      if(r.bottom<0||r.top>viewport)return;
      var p=clamp(-r.top/duration);
+     captions=chapter.querySelectorAll('.crystal-journey-stanza');
      image.style.transform='translate(-50%,-50%) scale('+(0.90+.27*p).toFixed(3)+')';
      outerRing.style.transform='translate(-50%,-50%) rotate('+Math.round(65*p)+'deg)';
      innerRing.style.transform='translate(-50%,-50%) rotate('+Math.round(-75*p)+'deg)';
-     var phase=phaseFor(p);
+     var phase=phaseFor(p,captions.length);
      if(phase!==lastPhase){
        lastPhase=phase;
        for(var i=0;i<captions.length;i++)
@@ -169,6 +174,7 @@
    window.addEventListener('resize',schedule,false);
    window.addEventListener('orientationchange',schedule,false);
    document.addEventListener('visibilitychange',schedule,false);
+   window.VELAR_JOURNEY_REFRESH=function(){lastPhase=-1;schedule();};
    schedule();
  }
  function init(){
@@ -196,7 +202,7 @@
    near=chapter.querySelector('.crystal-journey-stars--near');
    beams=Array.prototype.slice.call(chapter.querySelectorAll('.crystal-journey-beam'));
    stanzas=Array.prototype.slice.call(chapter.querySelectorAll('.crystal-journey-stanza'));
-   if(!crystal||!outer||!inner||!far||!near||stanzas.length!==3)return;
+   if(!crystal||!outer||!inner||!far||!near||!stanzas.length)return;
    started=true;
    watcher=new window.IntersectionObserver(enter,{threshold:0});
    watcher.observe(chapter);
@@ -220,6 +226,7 @@
      if(bounds.bottom>0&&bounds.top<window.innerHeight)attach();
    });
  }
+ window.VELAR_JOURNEY_REFRESH=function(){if(!chapter)return;stanzas=Array.prototype.slice.call(chapter.querySelectorAll('.crystal-journey-stanza'));currentPhase=-1;schedule();};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
  else init();
  window.VELAR_LIVING_ART={scrollProgress:scrollProgress,phaseFor:phaseFor,motionStatus:motionStatus};

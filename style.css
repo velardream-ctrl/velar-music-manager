@@ -540,7 +540,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 }
 /* Progressive enhancement only when IntersectionObserver, rAF, viewport and
    reduced-motion/data-saver checks all allow it. Static art is the fallback. */
-.has-living-art .crystal-journey{height:190vh;min-height:1100px;padding:0}
+.has-living-art .crystal-journey{height:190vh;min-height:1100px;height:calc(190vh + var(--journey-scroll-delta, 0vh));min-height:calc(1100px + var(--journey-min-delta, 0px));padding:0}
 .has-living-art .crystal-journey-stage{
  position:sticky;top:0;height:100vh;max-width:none;min-height:560px;
 }
@@ -579,7 +579,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .crystal-journey-ring{top:34%}
  .crystal-journey-beam{top:34%}
  .crystal-journey-copy{top:58%;left:14px;right:14px}
- .has-living-art .crystal-journey{height:160vh;min-height:900px}
+ .has-living-art .crystal-journey{height:160vh;min-height:900px;height:calc(160vh + var(--journey-scroll-delta, 0vh));min-height:calc(900px + var(--journey-min-delta, 0px))}
  .has-living-art .crystal-journey-stage{min-height:520px}
 }
 @media(max-width:610px){
@@ -596,7 +596,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
  .crystal-journey-kicker{font-size:.58rem;letter-spacing:.13em}
  .crystal-journey-stanzas{gap:4px;margin:9px auto 13px}
  .crystal-journey-stanza{font-size:.64rem;padding:5px 8px}
- .has-living-art .crystal-journey{height:158vh;min-height:825px}
+ .has-living-art .crystal-journey{height:158vh;min-height:825px;height:calc(158vh + var(--journey-scroll-delta, 0vh));min-height:calc(825px + var(--journey-min-delta, 0px))}
  .has-living-art .crystal-journey-stage{min-height:500px}
  .universe-core{
    position:relative;left:auto;top:auto;transform:none;
@@ -2333,7 +2333,7 @@ html.legacy-ipad-crystal .crystal-journey-beam{
    This is scoped to the JS-assigned iPhone class, never iPad or desktop. */
 @media(max-width:1100px){
  html.ios-scroll-stable.has-living-art .crystal-journey{
-   height:200vh;min-height:0;padding:0;
+   height:200vh;height:calc(200vh + var(--journey-scroll-delta, 0vh));min-height:0;padding:0;
  }
  html.ios-scroll-stable.has-living-art .crystal-journey-stage{
    position:-webkit-sticky;position:sticky;top:0;
@@ -2361,7 +2361,7 @@ html.legacy-ipad-crystal .crystal-journey-stage{
    iPhone's RUN-174 rules and desktop/modern iPad selectors remain untouched. */
 html.legacy-ipad-crystal body.public-site{overflow-x:visible}
 html.legacy-ipad-crystal .crystal-journey{
- position:relative;height:200vh;min-height:0;padding:0;overflow:visible;
+ position:relative;height:200vh;height:calc(200vh + var(--journey-scroll-delta, 0vh));min-height:0;padding:0;overflow:visible;
 }
 html.legacy-ipad-crystal .crystal-journey-stage{
  position:-webkit-sticky;position:sticky;top:0;
@@ -2493,4 +2493,33 @@ html.legacy-ipad-crystal .velar-radio > .station-help > .station-help-button::-w
 }
 .cms-music-entry.is-playing>.cms-music-player:not(:empty)>*{
  position:static;width:100%;max-width:100%;margin:0;
+}
+
+/* RUN-205: the editable journey needs a full scroll range at desktop widths.
+   The static layout keeps its existing long form for reduced motion and older browsers. */
+@media (min-width:851px){
+ .has-living-art .crystal-journey{
+   height:190vh;min-height:1100px;padding:0;
+   height:calc(190vh + var(--journey-scroll-delta, 0vh));
+   min-height:calc(1100px + var(--journey-min-delta, 0px));
+ }
+ .has-living-art .crystal-journey-stage{
+   position:sticky;top:0;height:100vh;min-height:0;max-width:none;padding:0;overflow:hidden;
+ }
+ html.ios-scroll-stable.has-living-art .crystal-journey{
+   height:200vh;min-height:0;
+   height:calc(200vh + var(--journey-scroll-delta, 0vh));
+ }
+ html.ios-scroll-stable.has-living-art .crystal-journey-stage{position:-webkit-sticky;position:sticky}
+ html.legacy-ipad-crystal .crystal-journey-stage{padding:0}
+ .has-living-art .crystal-journey-ring,.has-living-art .crystal-journey-crystal,.has-living-art .crystal-journey-beam,
+ html.legacy-ipad-crystal .crystal-journey-ring,html.legacy-ipad-crystal .crystal-journey-crystal,
+ html.legacy-ipad-crystal .crystal-journey-beam{top:38%}
+ .has-living-art .crystal-journey-copy,html.legacy-ipad-crystal .crystal-journey-copy{
+   position:absolute;top:auto;bottom:3vh;left:16px;right:16px;margin:auto;padding:0;
+ }
+}
+.has-living-art [data-many-stages] .crystal-journey-stanza:not(.is-current),
+html.legacy-ipad-crystal [data-many-stages][data-journey-phase] .crystal-journey-stanza:not(.is-current){
+ display:none;
 }

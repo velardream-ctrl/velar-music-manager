@@ -272,7 +272,7 @@
    });
  }
  var openedArtistDetails={};
- var tabs={hero:'Оформление главной',distribution:'Распределение песен',artists:'Артисты',releases:'Музыка и релизы',albums:'Альбомы',playlists:'Плейлисты и подписки',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',analytics:'Статистика посещений',about:'О проекте',publish:'Публикация'};
+ var tabs={hero:'Оформление главной',distribution:'Распределение песен',artists:'Артисты',releases:'Музыка и релизы',albums:'Альбомы',playlists:'Плейлисты и подписки',crystal:'Анимация кристалла',radio:'VELAR RADIO',universe:'Созвездия',languages:'Языки песен',topics:'Темы песен',assistant:'Помощник VELAR',genres:'Жанры',analytics:'Статистика посещений',about:'О проекте',publish:'Публикация'};
  function id(k){return document.getElementById(k);}
  function clear(el){while(el.firstChild)el.removeChild(el.firstChild);}
  function text(el,t){if(el)el.textContent=String(t==null?'':t);}
@@ -1038,7 +1038,42 @@
      parent.appendChild(preview);
    }
  }
+ function visibilityField(parent,label,settings){
+   var row=document.createElement('label');row.className='landing-checkbox';
+   var input=document.createElement('input');input.type='checkbox';input.checked=settings.enabled;
+   input.onchange=function(){settings.enabled=this.checked;updateButtons();};
+   row.appendChild(input);row.appendChild(document.createTextNode(' '+label));parent.appendChild(row);
+ }
+ function featuredPlaylistEditor(parent){
+   var playlist=data.hero.featuredPlaylist;
+   heading(parent,'Главный Spotify-плейлист');
+   visibilityField(parent,'Показывать главный плейлист',playlist);
+   field(parent,'Название главного плейлиста',playlist.title,function(v){playlist.title=v;});
+   field(parent,'Описание главного плейлиста',playlist.description,function(v){playlist.description=v;},true);
+   field(parent,'Официальная ссылка Spotify',playlist.url,function(v){playlist.url=v;});
+ }
+ function crystalEditor(parent){
+   var crystal=data.hero.crystalJourney,stages=crystal.stages;
+   heading(parent,'Анимация кристалла','От 1 до 12 этапов прокрутки.');
+   visibilityField(parent,'Показывать анимацию кристалла',crystal);
+   field(parent,'Надпись сверху',crystal.kicker,function(v){crystal.kicker=v;});
+   field(parent,'Заголовок',crystal.title,function(v){crystal.title=v;});
+   field(parent,'Описание',crystal.description,function(v){crystal.description=v;},true);
+   field(parent,'Текст кнопки',crystal.linkText,function(v){crystal.linkText=v;});
+   stages.forEach(function(value,i){
+     var box=document.createElement('div');box.className='landing-card';
+     field(box,'Этап '+(i+1),value,function(v){stages[i]=v;});
+     var up=button('↑ Выше',function(){stages.splice(i-1,0,stages.splice(i,1)[0]);render();});
+     var down=button('↓ Ниже',function(){stages.splice(i+1,0,stages.splice(i,1)[0]);render();});
+     var remove=button('Удалить этап',function(){stages.splice(i,1);render();});
+     up.disabled=i===0;down.disabled=i===stages.length-1;remove.disabled=stages.length===1;
+     box.appendChild(up);box.appendChild(down);box.appendChild(remove);parent.appendChild(box);
+   });
+   var add=button('+ Добавить этап',function(){stages.push('Новый этап');render();},'landing-add');
+   add.disabled=stages.length>=12;parent.appendChild(add);
+ }
  function playAndFollowEditor(parent){
+   featuredPlaylistEditor(parent);
    heading(parent,'Плейлисты и подписки','Редактируй музыкальные подборки и ссылки независимо от плавающего радио.');
    parent.appendChild(button('Настроить VELAR RADIO',function(){
      tab='radio';render();
@@ -1050,13 +1085,15 @@
      heading(box,'Плейлист '+(index+1));
      field(box,'Название',item.title,function(v){item.title=v;});
      field(box,'Короткое описание',item.description||'',function(v){item.description=v;});
-     selectField(box,'Площадка',[['spotify','Spotify'],['youtube','YouTube']],
+     selectField(box,'Площадка',[['spotify','Spotify'],['youtube','YouTube'],['appleMusic','Apple Music']],
        item.provider||'spotify',function(v){item.provider=v;item.url='';render();});
      field(box,'Официальная ссылка на плейлист',item.url||'',function(v){item.url=v;});
      var row=document.createElement('label');row.className='landing-checkbox';
      var tick=document.createElement('input');tick.type='checkbox';tick.checked=item.visible===true;
      tick.onchange=function(){item.visible=this.checked;updateButtons();};
      row.appendChild(tick);row.appendChild(document.createTextNode(' Показывать плейлист'));box.appendChild(row);
+     box.appendChild(button('↑ Выше',function(){if(index===0)return;var prev=data.releases.playlists[index-1];data.releases.playlists[index-1]=item;data.releases.playlists[index]=prev;render();}));
+     box.appendChild(button('↓ Ниже',function(){if(index>=data.releases.playlists.length-1)return;var next=data.releases.playlists[index+1];data.releases.playlists[index+1]=item;data.releases.playlists[index]=next;render();}));
      box.appendChild(button('Удалить плейлист',function(){
        if(!window.confirm('Убрать плейлист из черновика?'))return;
        data.releases.playlists.splice(index,1);render();
@@ -2741,7 +2778,6 @@
      data.hero.skin=v;
    });
    var sourceArea=document.createElement('div');
-   headingBlock.appendChild(sourceArea);
    var source=selectField(sourceArea,'Источник главной песни',
      [['all','Все песни'],['genres','Жанры'],['topics','Темы'],['languages','Языки'],['artists','Артисты'],['albums','Альбомы']],
      data.hero.featureSource||'all',function(value){
@@ -2773,7 +2809,7 @@
      showSongSettings();
    });
    // Keep dependent controls directly below the fourth mode selector.
-   headingBlock.insertBefore(sourceArea,mode.parentNode.nextSibling);
+   headingBlock.appendChild(sourceArea);
    var listRotationFields=document.createElement('div');sourceArea.appendChild(listRotationFields);
    selectField(listRotationFields,'Когда менять песню',
      [['open','При открытии страницы'],['timer','По таймеру'],['day','Одна песня на весь день']],
@@ -3055,6 +3091,8 @@
      albumsEditor(panel);
    }else if(tab==='playlists'){
      playAndFollowEditor(panel);
+   }else if(tab==='crystal'){
+     crystalEditor(panel);
    }else if(tab==='radio'){
      radioEditor(panel);
    }else if(tab==='universe'){

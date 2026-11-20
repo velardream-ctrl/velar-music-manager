@@ -150,6 +150,8 @@
     return {
       hero:{
         skin:'classic',
+        featuredPlaylist:{enabled:true,title:'Лучшее от Velar Dream Records',description:'Избранные композиции наших артистов',url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh'},
+        crystalJourney:{enabled:true,kicker:'VELARDREAM / DIGITAL ART EXPERIENCE',title:'Музыка рождает свет. Свет создаёт вселенную.',description:'Один кристалл. Тысячи музыкальных историй. Прокручивайте страницу — пространство раскрывает новые грани.',linkText:'Открыть музыкальные миры',stages:['01 — Рождение света','02 — Пробуждение созвездий','03 — Путешествие к музыке']},
         featureMode:'random',featureUrl:'',featureMinutes:5,featureSource:'all',featureGroup:'',featureDaily:false,featureListRotation:'open',
         subtitle:'Разные голоса. Разные жанры. Одна вселенная музыки.',
         intro:'Здесь рождается пространство для артистов, авторских релизов и музыкальных историй — от оперы и этно до рока, поп-музыки и кроссоверов.',
@@ -377,6 +379,10 @@
       m=/^https:\/\/(?:(?:www|music)\.)?youtube\.com\/playlist\?list=([A-Za-z0-9_-]{12,80})(?:&[^#\s]*)?$/i.exec(value);
       return m?'https://www.youtube.com/playlist?list='+m[1]:'';
     }
+    if(provider==='appleMusic'){
+      m=/^https:\/\/music\.apple\.com\/([a-z]{2})\/playlist\/[a-z0-9-]+\/pl\.[A-Za-z0-9]+(?:\?[^#\s]*)?$/i.exec(value);
+      return m?value.split('?')[0]:'';
+    }
     return '';
   }
   var radioProviders=['youtube','spotify','appleMusic'];
@@ -407,7 +413,7 @@
     // opted into the new Studio-wide radio switch. Keep them OFF until the
     // owner explicitly republishes settings using this control version.
     var enabled=x.enabled===true&&x.controlVersion===2;
-    var provider=x.provider==='youtube'?'youtube':'spotify';
+    var provider=['youtube','spotify','appleMusic'].indexOf(x.provider)>=0?x.provider:'spotify';
     if(typeof x.provider!=='undefined'&&x.provider!=='youtube'&&x.provider!=='spotify')
       throw new Error('VELAR RADIO: выбери Spotify или YouTube.');
     var link=playlistUrl(x.url||'',provider);
@@ -491,8 +497,8 @@
   }
   function playlistCard(x,i){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Плейлист '+i+': неправильная запись.');
-    var provider=x.provider==='youtube'?'youtube':'spotify';
-    if(x.provider&&x.provider!==provider)throw new Error('Плейлист '+i+': только Spotify или YouTube.');
+    var provider=['youtube','spotify','appleMusic'].indexOf(x.provider)>=0?x.provider:'spotify';
+    if(x.provider&&x.provider!==provider)throw new Error('Плейлист '+i+': только Spotify, YouTube или Apple Music.');
     var link=playlistUrl(x.url||'',provider);
     if(x.visible===true&&!link)throw new Error('Плейлист '+i+': нужна публичная ссылка на плейлист.');
     if(x.url&&!link)throw new Error('Плейлист '+i+': неверная ссылка.');
@@ -1032,6 +1038,8 @@
     var d=defaults(),hero=value.hero||{},artists=value.artists||{},albums=value.albums||{},releases=value.releases||{},genres=value.genres||{},about=value.about||{};
     var result={
       hero:{
+        featuredPlaylist:(function(){var x=hero.featuredPlaylist||d.hero.featuredPlaylist;var url=playlistUrl(x.url||'','spotify');if(x.enabled!==false&&!url)throw new Error('Главный плейлист: нужна ссылка Spotify.');return {enabled:x.enabled!==false,title:plain(x.title||'','Главный плейлист — заголовок',120,true),description:plain(x.description||'','Главный плейлист — описание',350,false),url:url};}()),
+        crystalJourney:(function(){var x=hero.crystalJourney||d.hero.crystalJourney;var stages=typeof x.stages==='undefined'?d.hero.crystalJourney.stages:x.stages;if(!Array.isArray(stages)||stages.length<1||stages.length>12)throw new Error('Анимация кристалла: от 1 до 12 этапов.');return {enabled:x.enabled!==false,kicker:plain(x.kicker||'','Анимация — надпись',120,false),title:plain(x.title||'','Анимация — заголовок',180,true),description:plain(x.description||'','Анимация — описание',500,false),linkText:plain(x.linkText||'','Анимация — кнопка',100,true),stages:stages.map(function(v,i){return plain(v,'Этап '+(i+1),120,true);})};}()),
         skin:hero.skin==='compact'?'compact':'classic',
         featureMode:['fixed','rotate','list'].indexOf(hero.featureMode)>=0?hero.featureMode:'random',
         featureUrl:typeof hero.featureUrl==='string'?hero.featureUrl.slice(0,2048):'',
