@@ -1360,6 +1360,9 @@
        var kicker=chapter.querySelector('.crystal-journey-kicker'),description=chapter.querySelector('.crystal-journey-description'),button=chapter.querySelector('.crystal-journey-link');
        if(kicker)kicker.textContent=c.kicker;assign('crystal-journey-title',c.title);if(description)description.textContent=c.description;
        if(button){var first=button.firstChild;if(first&&first.nodeType===3)first.nodeValue=c.linkText+' ';}
+       // Give additional captions scroll distance without changing the original three-step layout.
+       if(c.stages.length>3){chapter.style.height=(190+(c.stages.length-3)*35)+'vh';chapter.style.minHeight=(1100+(c.stages.length-3)*180)+'px';}
+       else{chapter.style.height='';chapter.style.minHeight='';}
        var list=chapter.querySelector('.crystal-journey-stanzas');if(list){while(list.firstChild)list.removeChild(list.firstChild);
          c.stages.forEach(function(t,i){var span=document.createElement('span');span.className='crystal-journey-stanza'+(i===0?' is-current':'');span.textContent=t;list.appendChild(span);});
          if(window.VELAR_JOURNEY_REFRESH)window.VELAR_JOURNEY_REFRESH();
