@@ -728,11 +728,11 @@
    paint();
  }
 
- function playlistGallery(value,featured){
+ function playlistGallery(value){
    var grid=byId('public-playlists-cards'),follow=byId('public-subscriptions');
    if(!grid||!follow)return;
    empty(grid);empty(follow);
-   var playlists=value.playlists.filter(function(row){return row.visible&&row.url&&!(featured.enabled&&row.provider==='spotify'&&row.url===featured.url);});
+   var playlists=value.playlists.filter(function(row){return row.visible&&row.url;});
    playlists.forEach(function(item,index){
      var card=create('article','cms-playlist-card'+(index===0?' cms-playlist-card--featured':''));
      var decoration=create('div','cms-playlist-art');
@@ -1404,7 +1404,7 @@
    section('artists',function(){cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums,value.artists.songViewMode||value.genres.songViewMode);});
    section('albums',function(){if(window.VELAR_ALBUMS&&window.VELAR_ALBUMS.render)window.VELAR_ALBUMS.render(value.albums);});
    section('releases',function(){releaseGallery(value.releases);});
-   section('playlists',function(){playlistGallery(value.releases,featured);});
+   section('playlists',function(){playlistGallery(value.releases);});
    // A new snapshot of another section must never restart an active radio iframe.
    var radioSignature=radioPlaybackSignature(value.releases.radio);
    if(radioSignature!==landingRadioSettings){
