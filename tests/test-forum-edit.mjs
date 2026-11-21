@@ -10,6 +10,13 @@ const rules = load('firestore.rules');
 assert.doesNotMatch(html, /<a\s+href="\/contacts\/"[^>]*>Контакты<\/a>/,
   'The forum header must not include the Contacts link');
 assert.match(html, /На главную сайта/, 'The home navigation stays available');
+assert.match(html, /class="masthead forum-public-header"/, 'Public header has independent two-row layout');
+assert.match(html, /class="forum-session-actions"/);
+assert.match(html, /class="forum-primary-actions"/);
+assert.match(html, /class="forum-home-link"/);
+assert.match(css, /\.forum-public-header\s*\{[\s\S]*?display:grid;/);
+assert.match(css, /\.forum-primary-actions\s*\{[\s\S]*?justify-content:space-between;/);
+assert.doesNotMatch(css, /Landscape phones and compact tablets: brand on top/, 'Legacy landscape layout removed');
 assert.match(html, /id="edit-dialog"/);
 assert.match(html, /id="edit-topic"/);
 assert.match(html, /id="edit-form"/);

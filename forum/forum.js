@@ -502,7 +502,8 @@
     user = account;
     $('sign-in').hidden = !!account;
     $('sign-out').hidden = !account;
-    $('sign-out').textContent = usingStudio ? 'Выйти из Studio и форума' : 'Выйти';
+    $('sign-out').textContent = 'Выйти';
+    $('sign-out').title = usingStudio ? 'Выйти из Studio и форума' : 'Выйти с форума';
     $('set-password').hidden = usingStudio || !account || !account.emailVerified || hasPassword(account);
     $('verify-email').hidden = !account || account.emailVerified;
     if (account && account.emailVerified && afterSignIn) {
