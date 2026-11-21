@@ -72,34 +72,106 @@ dialog::backdrop{background:#020611b8}
 .post-actions button{min-height:36px;padding:.3rem .7rem;font-size:.875rem}
 .reply .post-actions{margin-top:.6rem}
 
-/* Landscape phones and compact tablets: brand on top, navigation in two orderly rows.
-   Scope to the public masthead so dialog and editor action buttons are unaffected. */
-@media (orientation:landscape) and (max-width:980px) {
-  .masthead {
-    flex-direction:column;
-    align-items:flex-start;
-    justify-content:flex-start;
-    gap:.9rem;
-    padding:1rem max(1rem,4vw);
+/* Forum-only navigation: exactly two clear rows in portrait and landscape.
+   Admin Studio and dialog .actions retain their original layout. */
+.forum-public-header {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-rows:auto auto;
+  align-items:center;
+  gap:.65rem clamp(.5rem,2vw,1.25rem);
+}
+.forum-public-header > .brand {
+  grid-column:1;
+  grid-row:1;
+  justify-self:start;
+  min-width:0;
+  white-space:nowrap;
+}
+.forum-session-actions {
+  grid-column:2;
+  grid-row:1;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:.4rem;
+  min-width:0;
+}
+.forum-primary-actions {
+  grid-column:1 / -1;
+  grid-row:2;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:.6rem;
+  min-width:0;
+}
+.forum-home-link {
+  display:inline-flex;
+  align-items:center;
+  min-height:44px;
+  min-width:0;
+  padding:0;
+  white-space:nowrap;
+}
+.forum-primary-actions #new-topic {
+  flex-shrink:0;
+  min-height:44px;
+  padding:.65rem 1rem;
+  white-space:nowrap;
+}
+@media (max-width:520px) {
+  .forum-public-header {
+    padding:.85rem 1rem;
+    gap:.6rem .5rem;
   }
-  .masthead > .actions {
-    display:grid;
-    width:100%;
-    grid-template-columns:max-content max-content;
-    align-items:center;
-    justify-content:start;
-    column-gap:1rem;
-    row-gap:.75rem;
+  .forum-public-header > .brand {
+    gap:.4rem;
+    font-size:.85rem;
+    letter-spacing:.1em;
   }
-  .masthead > .actions > a,
-  .masthead > .actions > button {
-    margin:0;
-    max-width:100%;
-    white-space:nowrap;
+  .forum-public-header > .brand small {
+    font-size:.72em;
+    letter-spacing:.12em;
   }
-  .masthead > .actions > #new-topic {
-    grid-column:1 / -1;
-    justify-self:start;
-    padding:.75rem 1.1rem;
+  .forum-public-header > .brand img {
+    width:32px;
+    height:39px;
+  }
+  .forum-session-actions > button {
+    padding:.48rem .65rem;
+    min-height:44px;
+  }
+  .forum-primary-actions {
+    font-size:.94rem;
+  }
+  .forum-primary-actions #new-topic {
+    padding:.55rem .75rem;
+  }
+}
+@media (max-width:360px) {
+  .forum-public-header > .brand {
+    gap:.25rem;
+    font-size:.74rem;
+    letter-spacing:.065em;
+  }
+  .forum-public-header > .brand small {
+    font-size:.68em;
+  }
+  .forum-public-header > .brand img {
+    width:28px;
+    height:34px;
+  }
+  .forum-session-actions > button {
+    font-size:.82rem;
+    padding:.4rem .5rem;
+  }
+  .forum-primary-actions {
+    gap:.3rem;
+    font-size:.8rem;
+  }
+  .forum-primary-actions #new-topic {
+    padding:.5rem .45rem;
   }
 }
