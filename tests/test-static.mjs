@@ -33,7 +33,7 @@ const sw = read('sw.js');
 assert.match(sw, /CACHE_PREFIX/);
 assert.match(sw, /isPublicAsset/);
 assert.match(sw, /velardream-crystal\.png/);
-assert.match(sw, /CACHE_PREFIX \+ 'v97'/);
+assert.match(sw, /CACHE_PREFIX \+ 'v98'/);
 const css = read('style.css');
 assert.ok(homepage.includes('class="brand-emblem brand-emblem-header"'), 'Header emblem missing');
 assert.ok(homepage.includes('class="brand-emblem brand-emblem-footer"'), 'Footer emblem missing');
@@ -44,9 +44,9 @@ assert.ok(!css.includes('.mini-mark{'), 'Old diamond CSS present');
 assert.match(css, /\.art-wrap\{max-width:315px;width:100%;margin:-8px auto 12px;/);
 assert.match(css, /\.art-wrap\{max-width:215px;margin:-5px auto 12px/);
 assert.ok(!css.includes('margin:-12px auto -30px') && !css.includes('margin:-12px auto -32px'), 'Logo must not overlap title');
-assert.match(homepage, /href="style\.css\?v=82&consent=190&clips=1&cms=205"/);
+assert.match(homepage, /href="style\.css\?v=84&consent=190&clips=1&cms=205"/);
 assert.match(sw, /url\.pathname\.slice\(-10\) === '\/style\.css'/);
-assert.match(sw, /'\.\/style\.css\?v=82&consent=190&clips=1&cms=205'/);
+assert.match(sw, /'\.\/style\.css\?v=84&consent=190&clips=1&cms=205'/);
 assert.match(homepage, /max-width:215px!important;margin:-5px auto 12px!important/);
 assert.ok(!sw.includes('cache.put(req, response)'), 'Never cache unfiltered responses');
 assert.match(read('firestore.rules'), /allow read, write: if false;/);
@@ -119,7 +119,16 @@ assert.match(resonance, /requestAnimationFrame/);
 assert.match(resonance, /addEventListener\('scroll',schedule,\{passive:true\}\)/);
 assert.match(resonance, /data-resonance-ready/);
 assert.ok(!/setInterval|WebGL|fetch\(/.test(resonance), 'Playlist artwork must stay lightweight');
-assert.match(read('landing-public.js'), /VELAR_PLAYLIST_RESONANCE\.decorate\(decoration\)/);
+const playlistRenderer = read('landing-public.js');
+assert.match(homepage, /class="cms-playlists-shared-art"/);
+assert.equal((homepage.match(/class="cms-playlist-art"/g)||[]).length,1,
+  'The playlist section must have exactly one shared crystal');
+assert.ok(!playlistRenderer.includes("var decoration=create('div','cms-playlist-art')"),
+  'No per-card resonance should be generated');
+assert.match(playlistRenderer,/var activePlayer=null,activeButton=null/);
+assert.match(playlistRenderer,/choose\.setAttribute\('aria-expanded','true'\)/);
+assert.match(css,/#playlists \.cms-playlists-grid\{[\s\S]*?flex-direction:column/);
+assert.match(css,/#playlists \.cms-playlist-player:empty\{display:none\}/);
 assert.match(css, /playlist-resonance-crystal/);
 
 // RUN-144: keep all three orbits circular using the artwork width, even on tall iPhones.

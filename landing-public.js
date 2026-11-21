@@ -733,13 +733,10 @@
    if(!grid||!follow)return;
    empty(grid);empty(follow);
    var playlists=value.playlists.filter(function(row){return row.visible&&row.url;});
+   // RUN-206: one active inline player; shared crystal lives outside these cards.
+   var activePlayer=null,activeButton=null;
    playlists.forEach(function(item,index){
      var card=create('article','cms-playlist-card'+(index===0?' cms-playlist-card--featured':''));
-     var decoration=create('div','cms-playlist-art');
-     decoration.appendChild(create('span','cms-playlist-vinyl'));
-     if(window.VELAR_PLAYLIST_RESONANCE&&window.VELAR_PLAYLIST_RESONANCE.decorate)
-       window.VELAR_PLAYLIST_RESONANCE.decorate(decoration);
-     card.appendChild(decoration);
      var details=create('div','cms-playlist-copy');
      if(index===0)details.appendChild(create('span','cms-release-type','ВЫБОР VELAR'));
      details.appendChild(create('h3','',item.title));
@@ -749,15 +746,34 @@
      choose.type='button';
      choose.setAttribute('aria-label','Открыть официальный плейлист: '+item.title);
      var player=create('div','cms-playlist-player');
+     player.id='cms-playlist-player-'+index;
+     choose.setAttribute('aria-controls',player.id);
+     choose.setAttribute('aria-expanded','false');
      choose.setAttribute('aria-pressed','false');
+     function closeInlinePlayer(){
+       empty(player);
+       choose.setAttribute('aria-pressed','false');
+       choose.setAttribute('aria-expanded','false');
+       if(activePlayer===player){activePlayer=null;activeButton=null;}
+     }
      choose.onclick=function(){
-       if(hasEmbed(player)){
-         empty(player);choose.setAttribute('aria-pressed','false');return;
-       }
+       if(hasEmbed(player)){closeInlinePlayer();return;}
        var src=officialEmbed(item.url,item.provider,'playlist');
        if(!src)return;
+       // Collapse a previously opened playlist before opening the next.
+       if(activePlayer&&activePlayer!==player){
+         empty(activePlayer);
+         if(activeButton){
+           activeButton.setAttribute('aria-pressed','false');
+           activeButton.setAttribute('aria-expanded','false');
+         }
+         activePlayer=null;activeButton=null;
+       }
        if(item.provider==='youtube'&&legacyYouTubeModal(item.url,item.title))return;
-       pauseOtherEmbeds();empty(player);choose.setAttribute('aria-pressed','true');
+       pauseOtherEmbeds();empty(player);
+       choose.setAttribute('aria-pressed','true');
+       choose.setAttribute('aria-expanded','true');
+       activePlayer=player;activeButton=choose;
        var frame=create('iframe','cms-release-iframe'+(item.provider==='youtube'?' cms-release-iframe--video':''));
        frame.src=src;frame.title=item.title+' — официальный плейлист '+item.provider;
        frame.loading='lazy';frame.referrerPolicy='strict-origin-when-cross-origin';
@@ -765,7 +781,7 @@
        frame.setAttribute('allowfullscreen','');
        appendOfficialFrame(player,frame,item.provider,false);
        var close=create('button','cms-release-close','Закрыть плеер');
-       close.type='button';close.onclick=function(){empty(player);choose.setAttribute('aria-pressed','false');};player.appendChild(close);
+       close.type='button';close.onclick=closeInlinePlayer;player.appendChild(close);
      };
      if(item.provider!=='appleMusic')actions.appendChild(choose);
      var external=create('a','cms-card-link','Открыть в '+(item.provider==='spotify'?'Spotify':item.provider==='appleMusic'?'Apple Music':'YouTube'));

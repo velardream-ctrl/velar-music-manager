@@ -20,7 +20,7 @@ for(const rule of back){
 }
 assert.match(css,/velar-radio-halo/,'Do not remove heartbeat halo');
 assert.match(css,/animation:velar-radio-heartbeat/,'Do not remove logo animation');
-assert.match(sw,/CACHE_PREFIX \+ 'v97'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v98'/);
 assert.ok(sw.includes("'./"+filename+"'"),'Service Worker must cache approved PNG offline');
 assert.match(html,/style\.css\?v=82/);
 assert.match(station,/style\.css\?v=80/);

@@ -163,7 +163,10 @@ delete previous.content.hero.crystalJourney;
     landing.hero.skin=skin;render();await settle();
     assert(!playlist.hidden&&frame.src.includes('/embed/playlist/'),'missing player');
     assert(document.body.classList.contains('skin-compact')===(skin==='compact'),'skin mismatch');
-    assert(document.querySelectorAll('#public-playlists-cards a[href="'+landing.hero.featuredPlaylist.url+'"]').length===0,'duplicate playlist');
+    assert(document.querySelectorAll('#public-playlists-cards a[href="'+landing.hero.featuredPlaylist.url+'"]').length===1,'playlist must remain in gallery when featured in header');
+    assert(document.querySelectorAll('.cms-playlists-shared-art .cms-playlist-art').length===1,'one shared playlist crystal');
+    assert(document.querySelectorAll('#public-playlists-cards .cms-playlist-art').length===0,'no repeated playlist crystal');
+    assert(getComputedStyle(document.querySelector('#public-playlists-cards')).flexDirection==='column','playlist cards must stack vertically');
     assert(playlist.getBoundingClientRect().right<=innerWidth+1,'playlist width');
     assert(playlist.scrollWidth<=playlist.clientWidth+1,'playlist horizontal overflow');
    }
