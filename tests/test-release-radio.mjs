@@ -281,7 +281,7 @@ assert.match(css,/.cms-release-art::before/);
 assert.match(css,/\.velar-radio--bubble/);
 assert.match(css,/min-height:200px/);
 assert.match(html,/universe\.js\?v=7/);
-assert.match(html,/style\.css\?v=82/);
+assert.match(html,/style\.css\?v=84/);
 assert.match(sw,/CACHE_PREFIX \+ 'v98'/);
 assert.match(sw,/STUDIO_PREFIX\+'v63'/);
 assert.match(admin,/function releaseCatalogPicker/);
