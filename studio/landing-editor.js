@@ -123,7 +123,7 @@
  // Only replace separators; API.normalize still rejects other invalid symbols
  // and duplicate album IDs instead of overwriting data.
  function cleanAlbumCode(value){
-   return String(value||'').trim().toLowerCase().replace(/[_\\s]+/g,'-');
+   return String(value||'').trim().toLowerCase().replace(/[_\s]+/g,'-');
  }
  function repairLegacyAlbumCodes(raw){
    var rows=raw&&raw.albums&&raw.albums.entries,corrected=null;
