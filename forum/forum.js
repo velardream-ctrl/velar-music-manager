@@ -10,6 +10,8 @@
   const emailKey = 'velar-forum-email';
   const topicForm = $('topic-form');
   const replyForm = $('reply-form');
+  const editForm = $('edit-form');
+  let editTarget = null;
   const emailForm = $('email-form');
   const board = $('board');
   const thread = $('thread');
@@ -37,7 +39,15 @@
     return element;
   }
   function timeLabel(value) {
-    return value && value.toDate ? new Intl.DateTimeFormat('ru', {dateStyle:'medium'}).format(value.toDate()) : '';
+    const date = value && (typeof value.toDate === 'function' ? value.toDate() : value instanceof Date ? value : null);
+    return date ? new Intl.DateTimeFormat('ru', {dateStyle:'medium'}).format(date) : '';
+  }
+  function editedLabel(post) {
+    return post.editedAt ? ' · изменено ' + timeLabel(post.editedAt) : '';
+  }
+  function canEditPost(post) {
+    return !!(post && post.visible !== false && !post.deleted &&
+      (demo ? post.uid === 'demo' : user && user.emailVerified && post.uid === user.uid));
   }
   function matches(topic, term) {
     return [topic.title, topic.author, topic.body].join(' ').toLowerCase().includes(term.toLowerCase());
@@ -143,19 +153,32 @@
     board.hidden = true;
     thread.hidden = false;
     $('thread-title').textContent = topic.title;
-    $('thread-meta').textContent = [topic.author, timeLabel(topic.createdAt)].filter(Boolean).join(' · ');
+    $('thread-meta').textContent = [topic.author, timeLabel(topic.createdAt)].filter(Boolean).join(' · ') + editedLabel(topic);
     $('thread-body').textContent = topic.body;
+    const editableTopic = canEditPost(topic);
+    $('thread-actions').hidden = !editableTopic;
+    $('edit-topic').onclick = editableTopic ? () => openEdit('topic', id, topic) : null;
     $('replies').textContent = 'Загрузка…';
     const replies = demo ? sampleReplies[id] || [] : await topicPath(id).collection('replies')
       .where('visible', '==', true).orderBy('createdAt').limit(100).get()
-      .then(snapshot => snapshot.docs.map(doc => doc.data()));
+      .then(snapshot => snapshot.docs.map(doc => Object.assign({id: doc.id}, doc.data())));
     if (active !== id || revision !== replyRequest) return;
     const list = $('replies');
     list.textContent = '';
     if (!replies.length) list.appendChild(node('p', 'Ответов пока нет.', 'muted'));
     replies.forEach(reply => {
       const item = node('article', '', 'reply');
-      item.append(node('strong', reply.author), node('p', reply.body, 'message'));
+      item.append(node('strong', reply.author));
+      if (reply.editedAt) item.append(node('span', editedLabel(reply), 'muted'));
+      item.append(node('p', reply.body, 'message'));
+      if (canEditPost(reply)) {
+        const actions = node('div', '', 'post-actions');
+        const button = node('button', 'Изменить', 'outline');
+        button.type = 'button';
+        button.onclick = () => openEdit('reply', reply.id, reply);
+        actions.appendChild(button);
+        item.appendChild(actions);
+      }
       list.appendChild(item);
     });
   }
@@ -209,6 +232,23 @@
     }
   }
 
+  function openEdit(kind, id, post) {
+    if (!id || !canEditPost(post) || (kind !== 'topic' && kind !== 'reply')) return;
+    editTarget = {kind, id, topicId:active, post};
+    const isTopic = kind === 'topic';
+    const heading = editForm.elements.namedItem('title');
+    const body = editForm.elements.namedItem('body');
+    $('edit-title').textContent = isTopic ? 'Изменить тему' : 'Изменить ответ';
+    $('edit-heading-field').hidden = !isTopic;
+    heading.required = isTopic;
+    heading.value = isTopic ? post.title : '';
+    body.maxLength = isTopic ? 3000 : 2000;
+    body.value = post.body;
+    $('edit-status').textContent = '';
+    presentModal($('edit-dialog'));
+    body.focus();
+  }
+
   function openTopic() {
     topicForm.elements.namedItem('author').value = forumAuthor(user);
     if (category) topicForm.elements.namedItem('category').value = category;
@@ -250,7 +290,7 @@
       const authorAccount = user;
       if (demo) {
         id = 'demo-' + Date.now();
-        samples.unshift(Object.assign({id}, data));
+        samples.unshift(Object.assign({id,uid:'demo'}, data));
       } else {
         const doc = await db.collection('velar_forum_topics').add(
           Object.assign(data, {uid:authorAccount.uid, createdAt:postStamp()}));
@@ -276,7 +316,10 @@
       const body = cleaned(replyForm, 'body');
       if (!id || !body) validation('Введите ответ.');
       const author = forumAuthor(user) || 'Участник форума';
-      if (demo) (sampleReplies[id] || (sampleReplies[id] = [])).push({author,body});
+      if (demo) (sampleReplies[id] || (sampleReplies[id] = [])).push({
+        id:'demo-reply-' + Date.now() + '-' + Math.random().toString(36).slice(2,7),
+        uid:'demo',author,body,visible:true
+      });
       else await topicPath(id).collection('replies').add({
         author,body,uid:user.uid,visible:true,createdAt:postStamp()
       });
@@ -284,6 +327,48 @@
       if (active === id) await renderThread(id);
     });
   };
+
+  editForm.onsubmit = event => {
+    event.preventDefault();
+    const target = editTarget;
+    if (!target) return;
+    submit(editForm, $('edit-status'), async () => {
+      if (!canEditPost(target.post)) validation('Редактировать сообщение может только его автор.');
+      const body = cleaned(editForm, 'body');
+      const isTopic = target.kind === 'topic';
+      const title = isTopic ? cleaned(editForm, 'title') : '';
+      if (!body || body.length > (isTopic ? 3000 : 2000) ||
+          (isTopic && (title.length < 3 || title.length > 100)))
+        validation('Проверьте длину заголовка и текста сообщения.');
+      if (body === target.post.body && (!isTopic || title === target.post.title)) {
+        editTarget = null;
+        dismissModal($('edit-dialog'));
+        return;
+      }
+      if (demo) {
+        const record = isTopic ? samples.find(post => post.id === target.id) :
+          (sampleReplies[target.topicId] || []).find(reply => reply.id === target.id);
+        if (!record || record.uid !== 'demo') validation('Сообщение больше недоступно.');
+        Object.assign(record, {body, editedAt:new Date()});
+        if (isTopic) record.title = title;
+      } else {
+        const ref = isTopic ? topicPath(target.id) :
+          topicPath(target.topicId).collection('replies').doc(target.id);
+        const changes = {body, editedAt:postStamp()};
+        if (isTopic) changes.title = title;
+        try { await ref.update(changes); }
+        catch (error) {
+          if (error.code === 'permission-denied')
+            validation('Сервер пока не разрешает редактирование. Обратитесь к администратору форума.');
+          throw error;
+        }
+      }
+      editTarget = null;
+      dismissModal($('edit-dialog'));
+      if (active === target.topicId) await refresh();
+    });
+  };
+  $('edit-dialog').addEventListener('close', () => { editTarget = null; });
 
   const callback = location.origin + location.pathname;
   let completing = false;
@@ -426,6 +511,7 @@
       dismissModal($('email-dialog'));
       action();
     }
+    if (active) route().catch(() => { $('status').textContent = 'Не удалось обновить тему.'; });
   }
 
   async function finish(email) {

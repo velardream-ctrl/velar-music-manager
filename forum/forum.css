@@ -66,3 +66,8 @@ dialog::backdrop{background:#020611b8}
 
 #login-options{margin:.8rem 0;padding:.2rem .8rem;border:1px solid var(--line);border-radius:.65rem}
 #login-options input{width:auto;margin-right:.35rem}
+
+/* Public edit controls remain compact beside each author's message. */
+.post-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0}
+.post-actions button{min-height:36px;padding:.3rem .7rem;font-size:.875rem}
+.reply .post-actions{margin-top:.6rem}

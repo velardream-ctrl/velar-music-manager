@@ -39,12 +39,21 @@ jobs:
             await page.locator('#reply-form textarea').fill('Хорошая идея для песни!');
             await page.getByRole('button',{name:'Ответить'}).click();
             await page.getByText('Хорошая идея для песни!').waitFor();
+            await page.getByRole('button',{name:'Изменить', exact:true}).click();
+            await page.locator('#edit-form textarea').fill('Исправленный ответ.');
+            await page.getByRole('button',{name:'Сохранить изменения'}).click();
+            await page.getByText('Исправленный ответ.').waitFor();
             await page.getByRole('button',{name:/Создать тему/}).click();
             await page.getByLabel('Имя на форуме').fill('Tester');
-            await page.getByLabel('Заголовок').fill('Новая музыкальная идея');
-            await page.getByLabel('Сообщение').fill('Обсудим будущий релиз.');
+            await page.locator('#topic-form input[name="title"]').fill('Новая музыкальная идея');
+            await page.locator('#topic-form textarea[name="body"]').fill('Обсудим будущий релиз.');
             await page.getByRole('button',{name:'Опубликовать'}).click();
             await page.getByRole('heading',{name:'Новая музыкальная идея'}).waitFor();
+            await page.getByRole('button',{name:'Изменить сообщение'}).click();
+            await page.locator('#edit-form input[name="title"]').fill('Уточнённая музыкальная идея');
+            await page.locator('#edit-form textarea').fill('Исправленное описание будущего релиза.');
+            await page.getByRole('button',{name:'Сохранить изменения'}).click();
+            await page.getByRole('heading',{name:'Уточнённая музыкальная идея'}).waitFor();
             assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth > innerWidth),false);
             console.log('Mobile preview: categories, search, thread, reply and new topic passed.');
           } finally {

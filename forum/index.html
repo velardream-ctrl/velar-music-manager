@@ -6,13 +6,12 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="theme-color" content="#071020">
   <title>Созвездия — форум VELARDREAM</title>
-  <link rel="stylesheet" href="forum.css?v=6">
+  <link rel="stylesheet" href="forum.css?v=7">
 </head>
 <body>
   <header class="masthead">
     <a class="brand" href="../"><img src="../assets/velardream-crystal.png" alt="" width="36" height="44">VELARDREAM <small>RECORDS</small></a>
     <div class="actions">
-      <a href="/contacts/">Контакты</a>
       <a href="/" style="display:inline-flex;align-items:center;min-height:44px;padding:0 .5rem"><span aria-hidden="true">←&nbsp;</span>На главную сайта</a>
       <button id="sign-in" class="outline" hidden>Войти</button>
       <button id="verify-email" hidden>Подтвердить email</button>
@@ -41,6 +40,7 @@
         <a href="./" id="back">← Все обсуждения</a>
         <h2 id="thread-title"></h2>
         <p id="thread-meta" class="muted"></p>
+        <div id="thread-actions" class="post-actions" hidden><button id="edit-topic" type="button" class="outline">Изменить сообщение</button></div>
         <p id="thread-body" class="message"></p>
         <h3>Ответы</h3>
         <div id="replies"></div>
@@ -90,11 +90,23 @@
       <div class="actions"><button type="button" data-close>Закрыть</button><button type="submit" class="gold">Опубликовать</button></div>
     </form>
   </dialog>
+  <dialog id="edit-dialog">
+    <form id="edit-form">
+      <h2 id="edit-title">Изменить сообщение</h2>
+      <label id="edit-heading-field">Заголовок темы<input name="title" minlength="3" maxlength="100"></label>
+      <label>Текст сообщения<textarea name="body" minlength="1" maxlength="3000" required></textarea></label>
+      <p id="edit-status" role="status"></p>
+      <div class="actions">
+        <button type="button" data-close>Отмена</button>
+        <button type="submit" class="gold">Сохранить изменения</button>
+      </div>
+    </form>
+  </dialog>
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script defer src="../studio/firebase-config.js"></script>
   <script defer src="sections.js"></script>
-  <script defer src="forum.js?v=12"></script>
+  <script defer src="forum.js?v=13"></script>
 </body>
 </html>
