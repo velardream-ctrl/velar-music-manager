@@ -363,7 +363,7 @@ body:not(.public-site) footer{text-align:center;color:#8295b2;padding:24px 14px 
 @media(max-width:560px){
  .cms-release-grid{grid-template-columns:minmax(0,1fr)}
  .cms-playlist-card{display:block}
- .cms-playlist-art{min-height:170px}
+ .cms-playlist-art{height:auto;min-height:170px}
  .cms-playlist-copy{padding:18px}
  .cms-release-iframe,.velar-radio-iframe{min-height:352px}
  .cms-subscriptions{padding:14px}
