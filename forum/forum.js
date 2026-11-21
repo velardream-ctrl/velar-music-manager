@@ -539,7 +539,9 @@
     }
     const app = firebase.initializeApp(window.VELAR_FIREBASE_CONFIG, 'velar-forum');
     auth = app.auth();
-    auth.languageCode = 'ru';
+    const languages = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
+    const preferred = languages.map(tag => String(tag).toLowerCase().split('-')[0]).find(lang => lang === 'ru' || lang === 'en');
+    auth.languageCode = preferred || 'en';
     db = app.firestore();
     db.collection('velar_forum_settings').doc('public').get().then(snapshot => {
       if (!snapshot.exists) return;
