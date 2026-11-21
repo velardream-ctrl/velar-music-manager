@@ -227,7 +227,10 @@ assert.equal(doc.querySelectorAll('iframe.velar-radio-iframe')[0],radioBeforeSna
 radio.children[0].onclick();
 assert.equal(map['public-playlists-cards'].children.length,1);
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,0);
-const openPlaylist=map['public-playlists-cards'].children[0].children[1].children[3].children[0];
+const playlistCard=map['public-playlists-cards'].children[0];
+const playlistDetails=playlistCard.children.find(c=>c.className==='cms-playlist-copy');
+const playlistActions=playlistDetails.children.find(c=>c.className==='cms-playlist-actions');
+const openPlaylist=playlistActions.children[0];
 openPlaylist.onclick();
 assert.equal(doc.querySelectorAll('iframe.cms-release-iframe').length,1);
 openPlaylist.onclick();
