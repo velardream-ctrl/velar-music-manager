@@ -164,8 +164,13 @@ delete previous.content.hero.crystalJourney;
     assert(!playlist.hidden&&frame.src.includes('/embed/playlist/'),'missing player');
     assert(document.body.classList.contains('skin-compact')===(skin==='compact'),'skin mismatch');
     assert(document.querySelectorAll('#public-playlists-cards a[href="'+landing.hero.featuredPlaylist.url+'"]').length===1,'playlist must remain in gallery when featured in header');
-    assert(document.querySelectorAll('.cms-playlists-shared-art .cms-playlist-art').length===1,'one shared playlist crystal');
-    assert(document.querySelectorAll('#public-playlists-cards .cms-playlist-art').length===0,'no repeated playlist crystal');
+    assert(document.querySelectorAll('.cms-playlists-shared-art .cms-playlist-art').length===1,'shared playlist crystal is present');
+    assert(document.querySelectorAll('#public-playlists-cards .cms-playlist-art').length===1,'one crystal per gallery card');
+    const sharedArt=document.querySelector('.cms-playlists-shared-art');
+    const cardArt=document.querySelector('#public-playlists-cards .cms-playlist-art');
+    const wide=innerWidth>=640;
+    assert(getComputedStyle(sharedArt).display===(wide?'none':'block'),'shared art visibility at '+innerWidth);
+    assert(getComputedStyle(cardArt).display===(wide?'block':'none'),'per-card art visibility at '+innerWidth);
     assert(getComputedStyle(document.querySelector('#public-playlists-cards')).flexDirection==='column','playlist cards must stack vertically');
     assert(playlist.getBoundingClientRect().right<=innerWidth+1,'playlist width');
     assert(playlist.scrollWidth<=playlist.clientWidth+1,'playlist horizontal overflow');
@@ -193,6 +198,39 @@ delete previous.content.hero.crystalJourney;
    assert(!chapter.hidden&&frame.src.includes('0123456789ABCDEFGHIJKL'),'re-enable / URL change');
    return counts;
   },name);
+  if(name.indexOf('iPhone 11')===0){
+    // RUN-207: rotation changes CSS without rebuilding cards or affecting controls.
+    await p.setViewportSize({width:896,height:414});
+    const landscape=await p.evaluate(()=>{
+      const grid=document.querySelector('#public-playlists-cards');
+      const card=grid.querySelector('.cms-playlist-card');
+      const shared=document.querySelector('.cms-playlists-shared-art');
+      const art=card.querySelector('.cms-playlist-art');
+      const details=card.querySelector('.cms-playlist-copy');
+      return {
+        shared:getComputedStyle(shared).display,art:getComputedStyle(art).display,
+        layout:getComputedStyle(card).display,
+        left:art.getBoundingClientRect().left,right:details.getBoundingClientRect().left,
+        overflow:card.scrollWidth>card.clientWidth+1
+      };
+    });
+    assert.equal(landscape.shared,'none','Landscape phone hides shared artwork');
+    assert.equal(landscape.art,'block','Landscape phone shows art for each card');
+    assert.equal(landscape.layout,'grid','Landscape phone uses side-by-side card layout');
+    assert.ok(landscape.left<landscape.right&&!landscape.overflow,'Landscape card fits');
+    await p.setViewportSize({width:414,height:896});
+    const portrait=await p.evaluate(()=>{
+      const card=document.querySelector('#public-playlists-cards .cms-playlist-card');
+      return {
+        shared:getComputedStyle(document.querySelector('.cms-playlists-shared-art')).display,
+        art:getComputedStyle(card.querySelector('.cms-playlist-art')).display,
+        card:getComputedStyle(card).display
+      };
+    });
+    assert.equal(portrait.shared,'block','Portrait phone shows single shared artwork');
+    assert.equal(portrait.art,'none','Portrait phone hides card artwork');
+    assert.equal(portrait.card,'block','Portrait phone keeps compact cards');
+  }
   console.log('PASS '+name+' 1/3/12 stages, viewport pin, two skins, dedup, visibility and URL. Scene heights: '+result.join(', '));
   await c.close();
  }

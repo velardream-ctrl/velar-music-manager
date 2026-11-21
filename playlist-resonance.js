@@ -34,7 +34,11 @@
    arts.push(art);schedule();
  }
  function draw(){
-   pending=false;if(reduced)return;
+   pending=false;
+   // RUN-207: discard artworks removed by a re-render, to avoid retaining
+   // the old card DOM after dynamic playlist changes.
+   arts=arts.filter(function(art){return !!(document.documentElement&&document.documentElement.contains(art));});
+   if(reduced)return;
    var height=window.innerHeight||700;
    arts.forEach(function(art){
      if(!art.getBoundingClientRect)return;
