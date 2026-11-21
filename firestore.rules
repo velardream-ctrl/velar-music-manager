@@ -86,6 +86,14 @@ service cloud.firestore {
     match /vmm_recordings/{itemId} { allow read, write: if studioAdmin(); }
     match /vmm_platforms/{itemId} { allow read, write: if studioAdmin(); }
     match /vmm_links/{itemId} { allow read, write: if studioAdmin(); }
+    match /velar_contact_settings/topics {
+      allow get: if true;
+      allow create, update: if studioAdmin()
+        && request.resource.data.keys().hasOnly(['names'])
+        && request.resource.data.names is string
+        && request.resource.data.names.size() > 0
+        && request.resource.data.names.size() <= 4000;
+    }
     match /vmm_contacts/{itemId} { allow read, write: if studioAdmin(); }
     match /vmm_outreach/{itemId} { allow read, write: if studioAdmin(); }
     match /vmm_audit/{itemId} { allow read, write: if studioAdmin(); }

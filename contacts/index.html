@@ -36,6 +36,19 @@
     const form = document.getElementById('contact-form');
     const hints = {'Ошибка на сайте':'Укажите страницу, устройство и что произошло.', 'Заказ песни':'Песни на заказ — платная услуга. Расскажите о поводе, пожеланиях и нужной дате.', 'Вопрос администратору':''};
     form.elements['Тема'].onchange = event => { document.getElementById('hint').textContent = hints[event.target.value] || ''; };
+    fetch('https://firestore.googleapis.com/v1/projects/velardream-records-studio/databases/(default)/documents/velar_contact_settings/topics')
+      .then(function(response){return response.ok ? response.json() : null;})
+      .then(function(doc){
+        var field=doc && doc.fields && doc.fields.names;
+        if(!field || typeof field.stringValue!=='string')return;
+        var names=field.stringValue.split('\n').filter(Boolean);
+        if(!names.length)return;
+        var select=form.elements['Тема'], previous=select.value;
+        select.options.length=1;
+        names.forEach(function(name){select.add(new Option(name,name));});
+        select.value=names.indexOf(previous)>=0?previous:'';
+        select.dispatchEvent(new Event('change'));
+      }).catch(function(){ /* Keep built-in topics when offline. */ });
   </script>
 </body>
 </html>
