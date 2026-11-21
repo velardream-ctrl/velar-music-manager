@@ -26,6 +26,7 @@
   let replyRequest = 0;
   let auth, db, user;
   let authReady = false;
+  let usingStudio = false;
   let afterSignIn = null;
   const pageError = 'Форум пока недоступен. Попробуйте обновить страницу позже.';
 
@@ -195,7 +196,7 @@
     if (!saved && !demo) {
       try { saved = localStorage.getItem('velar-forum-author:' + uid); } catch (_) {}
     }
-    return saved || topics.find(topic => topic.uid === uid)?.author || '';
+    return saved || topics.find(topic => topic.uid === uid)?.author || (usingStudio ? (account.displayName || '').slice(0, 32) : '');
   }
 
   function rememberAuthor(account, name) {
@@ -412,11 +413,12 @@
   }
 
   function showAccount(account) {
-    if (account && !demo) syncMember(account).catch(() => console.warn('Не удалось обновить профиль форума.'));
+    if (account && !demo && !usingStudio) syncMember(account).catch(() => console.warn('Не удалось обновить профиль форума.'));
     user = account;
     $('sign-in').hidden = !!account;
     $('sign-out').hidden = !account;
-    $('set-password').hidden = !account || !account.emailVerified || hasPassword(account);
+    $('sign-out').textContent = usingStudio ? 'Выйти из Studio и форума' : 'Выйти';
+    $('set-password').hidden = usingStudio || !account || !account.emailVerified || hasPassword(account);
     $('verify-email').hidden = !account || account.emailVerified;
     if (account && account.emailVerified && afterSignIn) {
       const action = afterSignIn;
@@ -556,7 +558,28 @@
       await refresh();
       return;
     }
-    const app = firebase.initializeApp(window.VELAR_FIREBASE_CONFIG, 'velar-forum');
+    const studio = firebase.initializeApp(window.VELAR_FIREBASE_CONFIG);
+    const forum = firebase.initializeApp(window.VELAR_FIREBASE_CONFIG, 'velar-forum');
+    // An explicit email sign-in link belongs to the forum account that requested it.
+    const emailLink = forum.auth().isSignInWithEmailLink(location.href);
+    const studioUid = account => account && account.emailVerified &&
+      account.providerData.some(provider => provider.providerId === 'google.com') ? account.uid : null;
+    const firstUid = await new Promise((resolve, reject) => {
+      let initialized = false;
+      let initialUid;
+      studio.auth().onAuthStateChanged(account => {
+        const uid = studioUid(account);
+        if (!initialized) {
+          initialized = true;
+          initialUid = uid;
+          resolve(uid);
+        } else if (!emailLink && initialUid !== uid) {
+          location.reload();
+        }
+      }, reject);
+    });
+    usingStudio = Boolean(firstUid && !emailLink);
+    const app = usingStudio ? studio : forum;
     auth = app.auth();
     const languages = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
     const preferred = languages.map(tag => String(tag).toLowerCase().split('-')[0]).find(lang => lang === 'ru' || lang === 'en');
