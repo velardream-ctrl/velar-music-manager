@@ -394,6 +394,55 @@
     } finally { refresh.disabled = false; }
   }
 
+  const memberPanel = document.getElementById('member-panel');
+  const memberList = document.getElementById('member-list');
+  const memberSearch = document.getElementById('member-search');
+  let members = [];
+  let memberRequest = 0;
+
+  function renderMembers() {
+    const query = memberSearch.value.trim().toLowerCase();
+    memberList.replaceChildren();
+    members.filter(member => (member.name + ' ' + member.email).toLowerCase().includes(query)).forEach(member => {
+      const row = element('article', '', 'topic moderator-row');
+      const joined = member.joinedAt.toDate().toLocaleDateString('ru');
+      row.append(element('strong', member.name || 'Участник'), element('p', member.email),
+        element('p', (member.verified ? 'Почта подтверждена' : 'Ожидает подтверждения') + ' · В списке с ' + joined));
+      if (member.uid !== adminUid) row.append(action('Запретить публикации', async () => {
+        await db.collection('velar_forum_bans').doc(member.uid).set({
+          author: member.name || 'Участник', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await loadBans(session);
+      }, 'Запретить участнику публиковать темы и ответы?'));
+      memberList.append(row);
+    });
+    if (!memberList.children.length) memberList.textContent = query ? 'Совпадений нет.' : 'Участников пока нет.';
+  }
+
+  memberSearch.oninput = renderMembers;
+  memberPanel.ontoggle = async () => {
+    const request = ++memberRequest;
+    if (!permitted || !memberPanel.open) return;
+    const revision = session;
+    memberList.textContent = 'Загрузка участников…';
+    const loaded = [];
+    const query = db.collection('velar_forum_members').orderBy('joinedAt').limit(100);
+    let page = query;
+    try {
+      while (true) {
+        const snapshot = await page.get();
+        if (revision !== session || request !== memberRequest) return;
+        snapshot.forEach(doc => loaded.push({...doc.data(), uid: doc.id}));
+        if (snapshot.size < 100) break;
+        page = query.startAfter(snapshot.docs[snapshot.size - 1]);
+      }
+      members = loaded;
+      renderMembers();
+    } catch (_) {
+      if (revision === session && request === memberRequest) memberList.textContent = 'Не удалось загрузить участников.';
+    }
+  };
+
   refresh.onclick = loadTopics;
   try {
     const app = firebase.initializeApp(window.VELAR_FIREBASE_CONFIG);
@@ -415,6 +464,10 @@
       sectionList.replaceChildren();
       sectionArchive.hidden = true;
       archivedSections.replaceChildren();
+      members = [];
+      memberPanel.open = false;
+      memberList.replaceChildren();
+      memberSearch.value = '';
       list.textContent = '';
       bans.textContent = '';
       if (!user) { showAccessError(denied); return; }

@@ -204,6 +204,7 @@
     authorNames.set(uid, name);
     if (!demo) {
       try { localStorage.setItem('velar-forum-author:' + uid, name); } catch (_) {}
+      syncMember(account).catch(() => console.warn('Не удалось обновить имя участника.'));
     }
   }
 
@@ -393,7 +394,25 @@
     if (user && user.uid === account.uid) $('set-password').hidden = true;
   }
 
+  async function syncMember(account) {
+    const token = await account.getIdTokenResult();
+    if (token.signInProvider !== 'password') return;
+    const ref = db.collection('velar_forum_members').doc(account.uid);
+    const data = {name: forumAuthor(account).slice(0, 32), email: token.claims.email,
+      verified: token.claims.email_verified === true};
+    await db.runTransaction(async transaction => {
+      const previous = await transaction.get(ref);
+      if (!previous.exists) {
+        transaction.set(ref, {...data, joinedAt: firebase.firestore.FieldValue.serverTimestamp()});
+      } else {
+        if (!data.name) data.name = previous.get('name') || '';
+        if (Object.keys(data).some(key => previous.get(key) !== data[key])) transaction.update(ref, data);
+      }
+    });
+  }
+
   function showAccount(account) {
+    if (account && !demo) syncMember(account).catch(() => console.warn('Не удалось обновить профиль форума.'));
     user = account;
     $('sign-in').hidden = !!account;
     $('sign-out').hidden = !account;
