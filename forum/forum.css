@@ -71,3 +71,35 @@ dialog::backdrop{background:#020611b8}
 .post-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0}
 .post-actions button{min-height:36px;padding:.3rem .7rem;font-size:.875rem}
 .reply .post-actions{margin-top:.6rem}
+
+/* Landscape phones and compact tablets: brand on top, navigation in two orderly rows.
+   Scope to the public masthead so dialog and editor action buttons are unaffected. */
+@media (orientation:landscape) and (max-width:980px) {
+  .masthead {
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:flex-start;
+    gap:.9rem;
+    padding:1rem max(1rem,4vw);
+  }
+  .masthead > .actions {
+    display:grid;
+    width:100%;
+    grid-template-columns:max-content max-content;
+    align-items:center;
+    justify-content:start;
+    column-gap:1rem;
+    row-gap:.75rem;
+  }
+  .masthead > .actions > a,
+  .masthead > .actions > button {
+    margin:0;
+    max-width:100%;
+    white-space:nowrap;
+  }
+  .masthead > .actions > #new-topic {
+    grid-column:1 / -1;
+    justify-self:start;
+    padding:.75rem 1.1rem;
+  }
+}
