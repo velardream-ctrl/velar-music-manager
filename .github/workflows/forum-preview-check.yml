@@ -45,8 +45,8 @@ jobs:
             await page.getByText('Исправленный ответ.').waitFor();
             await page.getByRole('button',{name:/Создать тему/}).click();
             await page.getByLabel('Имя на форуме').fill('Tester');
-            await page.getByLabel('Заголовок').fill('Новая музыкальная идея');
-            await page.getByLabel('Сообщение').fill('Обсудим будущий релиз.');
+            await page.locator('#topic-form input[name="title"]').fill('Новая музыкальная идея');
+            await page.locator('#topic-form textarea[name="body"]').fill('Обсудим будущий релиз.');
             await page.getByRole('button',{name:'Опубликовать'}).click();
             await page.getByRole('heading',{name:'Новая музыкальная идея'}).waitFor();
             await page.getByRole('button',{name:'Изменить сообщение'}).click();
