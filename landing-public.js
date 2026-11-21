@@ -1366,7 +1366,7 @@
        if(kicker)kicker.textContent=c.kicker;assign('crystal-journey-title',c.title);if(description)description.textContent=c.description;
        if(button){var first=button.firstChild;if(first&&first.nodeType===3)first.nodeValue=c.linkText+' ';}
        var delta=c.stages.length-3;
-       if(delta>0)chapter.setAttribute('data-many-stages','');
+       if(c.stages.length>4)chapter.setAttribute('data-many-stages','');
        else chapter.removeAttribute('data-many-stages');
        chapter.style.setProperty('--journey-scroll-delta',(delta*25)+'vh');
        chapter.style.setProperty('--journey-min-delta',(delta*90)+'px');
