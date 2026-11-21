@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Контакты — Velar Dream Records</title>
+  <link rel="stylesheet" href="../forum/forum.css?v=6">
+  <style>
+    .contact-page { max-width: 42rem; margin: auto; padding: 1.5rem 1rem 4rem }
+    .contact-page h1 { font-size: clamp(2.4rem, 7vw, 4rem); margin: 1.5rem 0 .75rem }
+    .contact-page form { display: grid; gap: 1rem; margin: 2rem 0 }
+    .contact-page label { display: grid; gap: .35rem }
+    .contact-page :is(input,select,textarea) { width: 100%; padding: .7rem }
+    .contact-page button { justify-self: start }
+  </style>
+</head>
+<body>
+  <header class="masthead"><a class="brand" href="/"><img src="../assets/velardream-crystal.png" alt="" width="36" height="44">VELARDREAM <small>RECORDS</small></a><a href="/">← На главную сайта</a></header>
+  <main class="contact-page">
+    <h1>Контакты</h1>
+    <p>Здесь можно лично написать администратору Velar Dream Records. Ответ придёт на указанную вами почту.</p>
+    <form action="https://formspree.io/f/mgaklgbw" method="post" id="contact-form">
+      <label>Тема обращения
+        <select name="Тема" required><option value="">Выберите тему</option><option>Ошибка на сайте</option><option>Заказ песни</option><option>Вопрос администратору</option></select>
+      </label>
+      <label>Ваша электронная почта<input type="email" name="email" autocomplete="email" required maxlength="254"></label>
+      <label>Сообщение<textarea name="message" rows="7" minlength="3" maxlength="5000" required></textarea></label>
+      <p id="hint" class="muted" aria-live="polite"></p>
+      <p>Сообщение и ваш адрес получит администратор через Formspree. При отправке может появиться проверка reCAPTCHA.</p>
+      <button class="gold" type="submit">Отправить сообщение</button>
+      <p>Также можно написать на <a href="mailto:velardream@gmail.com">velardream@gmail.com</a>.</p>
+    </form>
+  </main>
+  <script>
+    const form = document.getElementById('contact-form');
+    const hints = {'Ошибка на сайте':'Укажите страницу, устройство и что произошло.', 'Заказ песни':'Песни на заказ — платная услуга. Расскажите о поводе, пожеланиях и нужной дате.', 'Вопрос администратору':''};
+    form.elements['Тема'].onchange = event => { document.getElementById('hint').textContent = hints[event.target.value] || ''; };
+  </script>
+</body>
+</html>
