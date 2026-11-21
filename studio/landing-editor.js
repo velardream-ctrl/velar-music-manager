@@ -119,11 +119,31 @@
  // RUN-185: targeted correction of a common ambiguity: three official
  // links per song, not one. Only repair when denominator exactly equals
  // the clearly labelled song count; never overwrite any other user number.
+ // Use the same slug correction in the editor and for older iPhone offline drafts.
+ // Only replace separators; API.normalize still rejects other invalid symbols
+ // and duplicate album IDs instead of overwriting data.
+ function cleanAlbumCode(value){
+   return String(value||'').trim().toLowerCase().replace(/[_\s]+/g,'-');
+ }
+ function repairLegacyAlbumCodes(raw){
+   var rows=raw&&raw.albums&&raw.albums.entries,corrected=null;
+   if(!Array.isArray(rows))return raw;
+   rows.forEach(function(album,i){
+     if(!album||typeof album.id!=='string')return;
+     var fixed=cleanAlbumCode(album.id);
+     if(fixed!==album.id){
+       if(!corrected)corrected=clone(raw);
+       corrected.albums.entries[i].id=fixed;
+     }
+   });
+   return corrected||raw;
+ }
  function normalizeWithLinkCapacity(raw){
-   try{return API.normalize(raw);}
+   var candidate=repairLegacyAlbumCodes(raw);
+   try{return API.normalize(candidate);}
    catch(err){
      if(String(err.message||'').indexOf('Заполненных ссылок не может быть больше общего числа')<0)throw err;
-     var candidate=clone(raw),progress=candidate.about&&candidate.about.progress;
+     candidate=clone(candidate);var progress=candidate.about&&candidate.about.progress;
      if(!progress||!Array.isArray(progress.metrics))throw err;
      var songs=null;
      progress.metrics.forEach(function(m){
@@ -144,13 +164,17 @@
      var value=saved.value;
      if(!value.content)return null;
      var clean=normalizeWithLinkCapacity(value.content);
+     var albumCodeRepaired=JSON.stringify((clean.albums||{}).entries||[])!==
+       JSON.stringify(((value.content||{}).albums||{}).entries||[]);
      // An offline revision may be older than the currently fetched server doc;
      // retain it visibly, but don't blindly overwrite the cloud.
      data=clean;
      baseline=value.baseBaseline||baseline;
      draftRev=Number(value.baseRevision)||0;
      offlineNonce=saved.nonce;offlineSavedSignature=JSON.stringify(clean);render();
-     offlineStatus('Восстановлен локальный черновик. Синхронизация после подключения; при конфликте данные останутся на устройстве.');
+     offlineStatus(albumCodeRepaired?
+       'Восстановлен локальный черновик. Неверный код альбома исправлен: подчёркивание заменено на дефис. Проверь альбом перед публикацией.':
+       'Восстановлен локальный черновик. Синхронизация после подключения; при конфликте данные останутся на устройстве.');
      return saved;
    }).catch(function(err){offlineStatus('Не удалось восстановить локальные изменения: '+err.message);return null;});
  }
@@ -1637,15 +1661,38 @@
    var box=document.createElement('section');box.className='landing-card landing-album-editor';
    heading(box,'Альбом: '+(active.title||'Новая коллекция'),
      'Обложка будет публичной после отдельной публикации. Песни не дублируются и сохраняют свои Spotify/YouTube ссылки.');
-   field(box,'Код альбома (латиница и дефис)',active.id,function(v){active.id=v.trim().toLowerCase();albumEditorId=active.id;});
+   var albumCodeInput=field(box,'Код альбома (латиница и дефис)',active.id,function(v){
+     var fixed=cleanAlbumCode(v);
+     active.id=fixed;albumEditorId=fixed;
+     if(v!==fixed){
+       albumCodeInput.value=fixed;
+       info('Код альбома: пробелы и знак _ заменены на дефисы. Сохрани черновик, затем опубликуй.');
+     }
+     updateAlbumCodeHint();
+   });
+   albumCodeInput.maxLength=55;albumCodeInput.autocapitalize='off';albumCodeInput.spellcheck=false;
+   var albumCodeHint=document.createElement('p');albumCodeHint.className='sync-note';
+   function updateAlbumCodeHint(){
+     var valid=/^[a-z0-9-]{2,55}$/.test(active.id);
+     albumCodeHint.textContent=valid?
+       'Код подходит. Сначала сохрани черновик в облако.':
+       'Исправь код: разрешены только латинские буквы, цифры и дефис (-).';
+     albumCodeInput.setAttribute('aria-invalid',valid?'false':'true');
+   }
+   updateAlbumCodeHint();box.appendChild(albumCodeHint);
    field(box,'Название альбома',active.title,function(v){active.title=v;});
    field(box,'Исполнитель',active.artist,function(v){active.artist=v;});
    field(box,'Описание',active.description||'',function(v){active.description=v;},true);
    selectField(box,'Тип',
      [['collection','Авторская коллекция из синглов'],['official','Официально выпущенный альбом']],
      active.kind,function(v){active.kind=v;if(v==='collection')active.mediaUrl='';render();});
-   if(active.kind==='official')field(box,'Ссылка на официальный альбом Spotify (не трек)',
-     active.mediaUrl||'',function(v){active.mediaUrl=v;});
+   if(active.kind==='official'){
+     field(box,'Ссылка на официальный альбом Spotify (не трек)',
+       active.mediaUrl||'',function(v){active.mediaUrl=v;});
+     var songHint=document.createElement('p');songHint.className='sync-note';
+     songHint.textContent='Ссылка Spotify подтверждает официальный альбом, но не импортирует его песни. Добавь композиции через «Каталог песен — быстрый выбор» ниже, затем сохрани черновик и опубликуй.';
+     box.appendChild(songHint);
+   }
    var mark=document.createElement('label');mark.className='landing-checkbox';
    var tick=document.createElement('input');tick.type='checkbox';tick.checked=active.visible===true;
    tick.onchange=function(){active.visible=this.checked;updateButtons();};
@@ -3211,7 +3258,18 @@
        .catch(function(e){info('Ошибка локального черновика: '+e.message);});
      return;
    }
-   var cleanData;try{cleanData=normalizeWithLinkCapacity(data);if(cleanData.about.progress.total!==data.about.progress.total){data=clone(cleanData);render();info('Исправлено: максимальное число ссылок = число композиций × 3. Проверь данные и снова нажми «Сохранить черновик».');return;}}catch(e){info('Проверь поля: '+e.message);return;}
+   var cleanData;try{
+     cleanData=normalizeWithLinkCapacity(data);
+     var codesChanged=JSON.stringify(cleanData.albums.entries.map(function(a){return a.id;}))!==
+       JSON.stringify(data.albums.entries.map(function(a){return a.id;}));
+     var linksChanged=cleanData.about.progress.total!==data.about.progress.total;
+     if(codesChanged||linksChanged){
+       data=clone(cleanData);render();
+       info(codesChanged?'Исправлены коды альбомов: подчёркивания заменены на дефисы. Проверь и снова нажми «Сохранить черновик».':
+         'Исправлено: максимальное число ссылок = число композиций × 3. Проверь данные и снова нажми «Сохранить черновик».');
+       return;
+     }
+   }catch(e){info('Проверь поля: '+e.message);return;}
    var savedRevision=draftRev,account=uid;
    busy=true;updateButtons();info('Сохраняем черновик…');
    authorized().then(function(a){
