@@ -441,6 +441,34 @@
     var q=tr(filter).toLowerCase(),a=auxiliary.filter(function(x){return JSON.stringify(x).toLowerCase().indexOf(q)>=0;});
     var title=labels[type],descr=type==='outreach'?'Создание и хранение черновиков. Автоматическая отправка выключена.':'Записи хранятся в защищённой базе владельца.';
     pane.innerHTML=heading(title,descr)+'<div class="vmm-filter"><input id="vmm-search" type="search" placeholder="Поиск по записям" value="'+esc(filter)+'"><button data-act="new-extra">+ Добавить</button></div><p class="sync-note">Всего записей: '+auxiliary.length+'</p><div class="vmm-rows">'+a.slice(0,150).map(function(x){return '<button data-act="edit-extra" data-id="'+esc(x.id)+'"><strong>'+esc(x.name||x.subject||x.title||x.platform||'(Без названия)')+'</strong><small>'+esc(x.organization||x.type||x.recipient||x.url||'Открыть для редактирования')+'</small></button>';}).join('')+'</div><p id="vmm-w-status" class="sync-note"></p>';
+    if(type==='contacts'){
+      var edit=el('button',{type:'button'});
+      edit.textContent='Редактировать темы обращений';
+      pane.insertBefore(edit,pane.querySelector('.vmm-filter'));
+      edit.onclick=function(){
+        var doc=db.collection('velar_contact_settings').doc('topics');
+        var defaults='Ошибка на сайте\nЗаказ песни\nВопрос администратору';
+        doc.get({source:'server'}).then(function(snapshot){
+          if(!pane.contains(edit))return;
+          var original=snapshot.exists?snapshot.data().names:null;
+          var form=el('form',{}),label=el('label',{}),area=el('textarea',{rows:'7',maxlength:'4000',required:'required'}),save=el('button',{type:'submit'});
+          label.textContent='Темы обращения — по одной на строку. Можно добавить, переименовать или убрать тему.';
+          area.value=original===null?defaults:original;
+          label.appendChild(area);form.appendChild(label);save.textContent='Сохранить темы на сайте';form.appendChild(save);
+          edit.parentNode.replaceChild(form,edit);
+          form.onsubmit=function(event){
+            event.preventDefault();
+            var rows=area.value.split(/\n/).map(tr).filter(Boolean);
+            if(!rows.length||rows.some(function(row,i){return rows.indexOf(row)!==i;})){tell('Укажите хотя бы одну тему без повторов.');return;}
+            var names=rows.join('\n');save.disabled=true;
+            db.runTransaction(function(tx){return tx.get(doc).then(function(latest){
+              if((latest.exists?latest.data().names:null)!==original)throw new Error('Темы уже изменены. Обновите раздел.');
+              tx.set(doc,{names:names});
+            });}).then(function(){original=names;tell('Темы опубликованы.');save.disabled=false;}).catch(function(e){tell(e.message);save.disabled=false;});
+          };
+        }).catch(function(e){tell('Не удалось загрузить темы: '+e.message);});
+      };
+    }
     id('vmm-search').oninput=function(){filter=this.value;additionalPage(type);refocus();};
   }
   function extraEditor(type,identifier){
