@@ -78,3 +78,28 @@ tests/test-static.mjs
 ## Выбор плейлиста для классической главной
 
 В «Оформлении главной» компактный вид показывает настройки песни, а классический — список Spotify-плейлистов из «Плейлистов и подписок». Существующий плейлист доступен как текущий вариант. После выбора плейлиста из списка первый экран использует название, описание и ссылку его карточки. Порядок карточек не меняет выбранный плейлист. Если карточка удалена или её ссылка перестала быть ссылкой Spotify, блок скрывается до нового выбора. Для отката кода используется обратный коммит PR.
+
+21 ноября 2026 г. PR №197 объединён и опубликован, коммит `944952fab3f0090ef0dd619d22974c8f27e6a48e`. Все три проверки GitHub Actions прошли (запуск 44824189002), включая Chromium и WebKit с тестовыми данными. После выпуска все шесть изменённых файлов сайта получены с velardream.com и побайтово совпали с коммитом. Физические устройства и запись в рабочую базу при этой проверке не использовались. Откат этого выпуска: `git revert -m 1 944952f` через PR.
+
+Изменённые файлы PR №197:
+
+```
+docs/RUN205_HOMEPAGE_CMS_RU.md
+index.html
+landing-public.js
+landing-schema.js
+studio/index.html
+studio/landing-editor.js
+sw.js
+tests/featured-crystal-browser.cjs
+tests/featured-crystal-schema.test.js
+tests/test-analytics-tab.mjs
+tests/test-artist-photo.mjs
+tests/test-consent-followup-and-reports.mjs
+tests/test-eager-images.mjs
+tests/test-featured-music.mjs
+tests/test-image-loading.mjs
+tests/test-landing-schema.mjs
+tests/test-rule-audit-jokes.mjs
+tests/test-song-catalog-pagination.mjs
+```
