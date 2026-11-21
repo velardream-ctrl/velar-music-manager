@@ -102,6 +102,41 @@ delete previous.content.hero.crystalJourney;
  await published.waitForFunction(value=>document.querySelector('#crystal-journey-title').textContent===value,initial);
  assert.equal(await published.locator('#vd-feature-title').textContent(),initialPlaylist);
  console.log('PASS Studio browser draft saved/reloaded, restore from published, publication and restoration via second publication. Legacy published schema used as fixture.');
+ await studio.getByRole('button',{name:'+ Добавить плейлист',exact:true}).click();
+ const newCard=studio.locator('#landing-fields .landing-card').filter({hasText:'Плейлист 2'});
+ await newCard.getByLabel('Название',{exact:true}).fill('Классический плейлист');
+ const chosenUrl='https://open.spotify.com/playlist/0123456789ABCDEFGHIJKL';
+ await newCard.getByLabel('Официальная ссылка на плейлист',{exact:true}).fill(chosenUrl);
+ await tab('hero');
+ const selectWithCaption=caption=>studio.locator('label.landing-field').filter({
+  has:studio.getByText(caption,{exact:true})
+ }).locator('select');
+ const skin=selectWithCaption('Вид главной страницы');
+ const classicSelector=selectWithCaption('Плейлист на классической главной');
+ const songSelector=selectWithCaption('Главная песня компактного вида');
+ await skin.selectOption('classic');
+ assert.equal(await classicSelector.isVisible(),true);
+ assert.equal(await songSelector.isVisible(),false);
+ await classicSelector.selectOption({label:'Классический плейлист'});
+ await skin.selectOption('compact');
+ assert.equal(await classicSelector.isVisible(),false);
+ assert.equal(await songSelector.isVisible(),true);
+ await songSelector.selectOption('rotate');
+ await skin.selectOption('classic');
+ assert.equal(await classicSelector.locator('option:checked').textContent(),'Классический плейлист');
+ await save();
+ await open();
+ await classicSelector.waitFor({state:'visible'});
+ assert.equal(await classicSelector.locator('option:checked').textContent(),'Классический плейлист');
+ await studio.locator('#landing-publish').click();
+ await published.waitForFunction(()=>document.querySelector('#vd-feature-title').textContent==='Классический плейлист');
+ assert.match(await published.locator('#vd-feature-iframe').getAttribute('src'),/0123456789ABCDEFGHIJKL/);
+ await skin.selectOption('compact');
+ assert.equal(await songSelector.inputValue(),'rotate');
+ await save();
+ await studio.locator('#landing-publish').click();
+ await published.waitForFunction(value=>document.querySelector('#vd-feature-title').textContent===value,initialPlaylist);
+ console.log('PASS mode-specific editor, catalog playlist selection, draft reload and independent public modes.');
  await admin.close();
  const profiles=[
   ['Desktop '+engine.name(), {viewport:{width:1440,height:900}}],

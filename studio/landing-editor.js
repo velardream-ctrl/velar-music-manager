@@ -1046,7 +1046,8 @@
  }
  function featuredPlaylistEditor(parent){
    var playlist=data.hero.featuredPlaylist;
-   heading(parent,'Главный Spotify-плейлист');
+   heading(parent,'Главный Spotify-плейлист',
+     'Отдельная настройка компактного вида и текущего плейлиста классического вида. Чтобы выбрать плейлист из каталога для классического вида, открой «Оформление главной».');
    visibilityField(parent,'Показывать главный плейлист',playlist);
    field(parent,'Название главного плейлиста',playlist.title,function(v){playlist.title=v;});
    field(parent,'Описание главного плейлиста',playlist.description,function(v){playlist.description=v;},true);
@@ -2769,14 +2770,29 @@
    update();speed.oninput=function(){settings.speed=Number(speed.value);update();updateButtons();};
    label.appendChild(caption);label.appendChild(speed);block.appendChild(label);
  }
- function homepageDisplaySettings(parent){
-   var headingBlock=document.createElement('section');
-   headingBlock.className='landing-display-settings';
-   heading(headingBlock,'Оформление блоков главной страницы',
-     'Здесь собраны все способы показа песен посетителям на главной. Каждый блок независим. Для длинных подборок рекомендуется компактный список с поиском и страницами.');
-   selectField(headingBlock,'Вид главной страницы',[['classic','Классический'],['compact','Компактный']],data.hero.skin||'classic',function(v){
-     data.hero.skin=v;
+ function classicPlaylistSettings(parent){
+   var catalog=data.releases.playlists||[],selected=data.hero.classicPlaylistId||'';
+   var options=[['','Текущий Spotify-плейлист — '+data.hero.featuredPlaylist.title],['off','Не показывать плейлист']];
+   catalog.forEach(function(item,index){
+     if((item.provider||'spotify')==='spotify'&&item.title.trim()&&API.playlistUrl(item.url,'spotify'))
+       options.push([String(index),item.title]);
    });
+   var index=catalog.findIndex(function(item){return selected&&item.id===selected;});
+   var chosen=index>=0?String(index):selected;
+   if(selected&&selected!=='off'&&!options.some(function(option){return option[0]===chosen;})){
+     chosen='missing';
+     options.push([chosen,'Выбранный плейлист недоступен']);
+   }
+   selectField(parent,'Плейлист на классической главной',options,chosen,function(value){
+     if(value==='missing')return;
+     if(value===''||value==='off'){data.hero.classicPlaylistId=value;return;}
+     var item=catalog[Number(value)];
+     if(!item.id)item.id='playlist-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+     data.hero.classicPlaylistId=item.id;
+   });
+   parent.appendChild(button('Открыть «Плейлисты и подписки»',function(){tab='playlists';render();},'landing-small'));
+ }
+ function compactSongSettings(headingBlock){
    var sourceArea=document.createElement('div');
    var source=selectField(sourceArea,'Источник главной песни',
      [['all','Все песни'],['genres','Жанры'],['topics','Темы'],['languages','Языки'],['artists','Артисты'],['albums','Альбомы']],
@@ -2835,6 +2851,27 @@
      dailyFields.hidden=mode.value!=='random';
    }
    showSongSettings();
+ }
+ function homepageDisplaySettings(parent){
+   var headingBlock=document.createElement('section');
+   headingBlock.className='landing-display-settings';
+   heading(headingBlock,'Оформление блоков главной страницы',
+     'Здесь собраны все способы показа песен посетителям на главной. Каждый блок независим. Для длинных подборок рекомендуется компактный список с поиском и страницами.');
+   var classicFields=document.createElement('div');
+   var compactFields=document.createElement('div');
+   function showMode(skin){
+     classicFields.hidden=skin==='compact';
+     compactFields.hidden=skin!=='compact';
+   }
+   selectField(headingBlock,'Вид главной страницы',[['classic','Классический'],['compact','Компактный']],data.hero.skin||'classic',function(v){
+     data.hero.skin=v;
+     showMode(v);
+   });
+   classicPlaylistSettings(classicFields);
+   compactSongSettings(compactFields);
+   headingBlock.appendChild(classicFields);
+   headingBlock.appendChild(compactFields);
+   showMode(data.hero.skin);
    var artistBlock=document.createElement('section');artistBlock.className='landing-display-group';
    heading(artistBlock,'Артисты на главной',
      'Только подборка «Лучшие песни» рядом с карточками артистов. Отдельная страница артиста настраивается в разделе «Артисты».');

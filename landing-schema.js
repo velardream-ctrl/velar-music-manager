@@ -495,6 +495,9 @@
       intro:plain(typeof a.intro==='string'?a.intro:def.intro,'Альбомы — описание',700,true),
       view:view,trackView:trackView,entries:entries};
   }
+  function playlistId(value){
+    return typeof value==='string'&&/^playlist-[a-z0-9-]{1,64}$/.test(value)?value:'';
+  }
   function playlistCard(x,i){
     if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('Плейлист '+i+': неправильная запись.');
     var provider=['youtube','spotify','appleMusic'].indexOf(x.provider)>=0?x.provider:'spotify';
@@ -502,9 +505,12 @@
     var link=playlistUrl(x.url||'',provider);
     if(x.visible===true&&!link)throw new Error('Плейлист '+i+': нужна публичная ссылка на плейлист.');
     if(x.url&&!link)throw new Error('Плейлист '+i+': неверная ссылка.');
-    return {title:plain(x.title||'','Название плейлиста '+i,100,x.visible===true),
+    var card={title:plain(x.title||'','Название плейлиста '+i,100,x.visible===true),
       description:plain(x.description||'','Описание плейлиста '+i,240,false),
       provider:provider,url:link,visible:x.visible===true};
+    var id=playlistId(x.id);
+    if(id)card.id=id;
+    return card;
   }
   function subscriptionUrl(raw,provider){
     if(typeof raw!=='string')return '';
@@ -1040,6 +1046,7 @@
       hero:{
         featuredPlaylist:(function(){var x=hero.featuredPlaylist||d.hero.featuredPlaylist;var url=playlistUrl(x.url||'','spotify');if(x.enabled!==false&&!url)throw new Error('Главный плейлист: нужна ссылка Spotify.');return {enabled:x.enabled!==false,title:plain(x.title||'','Главный плейлист — заголовок',120,true),description:plain(x.description||'','Главный плейлист — описание',350,false),url:url};}()),
         crystalJourney:(function(){var x=hero.crystalJourney||d.hero.crystalJourney;var stages=typeof x.stages==='undefined'?d.hero.crystalJourney.stages:x.stages;if(!Array.isArray(stages)||stages.length<1||stages.length>12)throw new Error('Анимация кристалла: от 1 до 12 этапов.');return {enabled:x.enabled!==false,kicker:plain(x.kicker||'','Анимация — надпись',120,false),title:plain(x.title||'','Анимация — заголовок',180,true),description:plain(x.description||'','Анимация — описание',500,false),linkText:plain(x.linkText||'','Анимация — кнопка',100,true),stages:stages.map(function(v,i){return plain(v,'Этап '+(i+1),120,true);})};}()),
+        classicPlaylistId:hero.classicPlaylistId==='off'?'off':playlistId(hero.classicPlaylistId),
         skin:hero.skin==='compact'?'compact':'classic',
         featureMode:['fixed','rotate','list'].indexOf(hero.featureMode)>=0?hero.featureMode:'random',
         featureUrl:typeof hero.featureUrl==='string'?hero.featureUrl.slice(0,2048):'',
@@ -1172,8 +1179,17 @@
       return [song.url,song.alternateUrl,song.thirdUrl].some(function(url){return url&&links[url];});
     });
   }
+  function homepagePlaylist(value){
+    var hero=value.hero;
+    if(hero.skin==='compact'||!hero.classicPlaylistId)return hero.featuredPlaylist;
+    var selected=value.releases.playlists.filter(function(row){
+      return row.id===hero.classicPlaylistId&&row.provider==='spotify'&&row.url&&row.title;
+    })[0];
+    return selected?{enabled:true,title:selected.title,description:selected.description,url:selected.url}:
+      {enabled:false,title:'',description:'',url:''};
+  }
   function blankCard(){return {title:'',subtitle:'',description:'',url:'',imageUrl:'',visible:false};}
-  window.VMM_LANDING_SCHEMA={homepageSongs:homepageSongs,featuredSourceSongs:featuredSourceSongs,featuredSourceGroups:featuredSourceGroups,defaults:defaults,normalize:normalize,blankCard:blankCard,
+  window.VMM_LANDING_SCHEMA={homepagePlaylist:homepagePlaylist,homepageSongs:homepageSongs,featuredSourceSongs:featuredSourceSongs,featuredSourceGroups:featuredSourceGroups,defaults:defaults,normalize:normalize,blankCard:blankCard,
     songUrl:songUrl,featuredTrack:featuredTrack,featuredTracks:featuredTracks,
     releaseMediaUrl:releaseMediaUrl,playlistUrl:playlistUrl,radioConfig:radioConfig,radioCatalog:radioCatalog,
     albumsConfig:albumsConfig,albumEntry:albumEntry,
