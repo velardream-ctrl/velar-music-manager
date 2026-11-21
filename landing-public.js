@@ -737,6 +737,13 @@
    var activePlayer=null,activeButton=null;
    playlists.forEach(function(item,index){
      var card=create('article','cms-playlist-card'+(index===0?' cms-playlist-card--featured':''));
+     // RUN-207: the artwork is hidden on narrow screens and visible beside
+     // each playlist on wider screens. CSS switches instantly on rotation.
+     var decoration=create('div','cms-playlist-art');
+     decoration.appendChild(create('span','cms-playlist-vinyl'));
+     if(window.VELAR_PLAYLIST_RESONANCE&&window.VELAR_PLAYLIST_RESONANCE.decorate)
+       window.VELAR_PLAYLIST_RESONANCE.decorate(decoration);
+     card.appendChild(decoration);
      var details=create('div','cms-playlist-copy');
      if(index===0)details.appendChild(create('span','cms-release-type','ВЫБОР VELAR'));
      details.appendChild(create('h3','',item.title));
