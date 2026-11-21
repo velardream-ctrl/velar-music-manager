@@ -149,6 +149,24 @@ service cloud.firestore {
       );
     }
 
+    match /velar_forum_members/{uid} {
+      function ownProfile() {
+        return request.auth != null && request.auth.uid == uid
+          && request.auth.token.firebase.sign_in_provider == 'password';
+      }
+      function validProfile() {
+        let data = request.resource.data;
+        return data.keys().hasOnly(['name', 'email', 'verified', 'joinedAt'])
+          && data.email == request.auth.token.email
+          && data.verified == request.auth.token.email_verified
+          && data.name is string && data.name.size() <= 32;
+      }
+      allow get: if ownProfile() || studioAdmin();
+      allow list: if studioAdmin() && request.query.limit <= 100;
+      allow create: if ownProfile() && validProfile() && request.resource.data.joinedAt == request.time;
+      allow update: if ownProfile() && validProfile() && request.resource.data.joinedAt == resource.data.joinedAt;
+    }
+
     match /velar_forum_bans/{uid} {
       allow get: if studioAdmin();
       allow list: if studioAdmin() && request.query.limit <= 100;
