@@ -6,19 +6,21 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="theme-color" content="#071020">
   <title>Созвездия — форум VELARDREAM</title>
-  <link rel="stylesheet" href="forum.css?v=8">
+  <link rel="stylesheet" href="forum.css?v=9">
 </head>
 <body>
-  <header class="masthead">
+  <header class="masthead forum-public-header">
     <a class="brand" href="../"><img src="../assets/velardream-crystal.png" alt="" width="36" height="44">VELARDREAM <small>RECORDS</small></a>
-    <div class="actions">
-      <a href="/" style="display:inline-flex;align-items:center;min-height:44px;padding:0 .5rem"><span aria-hidden="true">←&nbsp;</span>На главную сайта</a>
+    <div class="forum-session-actions" aria-label="Аккаунт форума">
       <button id="sign-in" class="outline" hidden>Войти</button>
       <button id="verify-email" hidden>Подтвердить email</button>
       <button id="set-password" hidden>Задать пароль</button>
       <button id="sign-out" hidden>Выйти</button>
-      <button id="new-topic" class="gold">＋ Создать тему</button>
     </div>
+    <nav class="forum-primary-actions" aria-label="Навигация форума">
+      <a href="/" class="forum-home-link"><span aria-hidden="true">←&nbsp;</span>На главную сайта</a>
+      <button id="new-topic" class="gold" type="button">＋ Создать тему</button>
+    </nav>
   </header>
   <main>
     <section class="sky" aria-labelledby="forum-title">
