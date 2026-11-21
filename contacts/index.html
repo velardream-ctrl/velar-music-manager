@@ -20,22 +20,22 @@
   <main class="contact-page">
     <h1>Контакты</h1>
     <p>Здесь можно лично написать администратору Velar Dream Records. Ответ придёт на указанную вами почту.</p>
-    <form method="post" id="contact-form">
+    <form action="https://formspree.io/f/mgaklgbw" method="post" id="contact-form">
       <label>Тема обращения
         <select name="Тема" required><option value="">Выберите тему</option><option>Ошибка на сайте</option><option>Заказ песни</option><option>Вопрос администратору</option></select>
       </label>
       <label>Ваша электронная почта<input type="email" name="email" autocomplete="email" required maxlength="254"></label>
       <label>Сообщение<textarea name="message" rows="7" minlength="3" maxlength="5000" required></textarea></label>
       <p id="hint" class="muted" aria-live="polite"></p>
-      <button class="gold" type="submit" disabled>Отправить сообщение</button>
-      <p id="availability">Пока форма подключается, напишите на <a href="mailto:velardream@gmail.com">velardream@gmail.com</a>.</p>
+      <p>Сообщение и ваш адрес получит администратор через Formspree. При отправке может появиться проверка reCAPTCHA.</p>
+      <button class="gold" type="submit">Отправить сообщение</button>
+      <p>Также можно написать на <a href="mailto:velardream@gmail.com">velardream@gmail.com</a>.</p>
     </form>
   </main>
   <script>
     const form = document.getElementById('contact-form');
     const hints = {'Ошибка на сайте':'Укажите страницу, устройство и что произошло.', 'Заказ песни':'Песни на заказ — платная услуга. Расскажите о поводе, пожеланиях и нужной дате.', 'Вопрос администратору':''};
     form.elements['Тема'].onchange = event => { document.getElementById('hint').textContent = hints[event.target.value] || ''; };
-    form.addEventListener('submit', event => { if (!form.hasAttribute('action')) event.preventDefault(); });
   </script>
 </body>
 </html>
