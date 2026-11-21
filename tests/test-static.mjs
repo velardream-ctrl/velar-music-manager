@@ -119,7 +119,16 @@ assert.match(resonance, /requestAnimationFrame/);
 assert.match(resonance, /addEventListener\('scroll',schedule,\{passive:true\}\)/);
 assert.match(resonance, /data-resonance-ready/);
 assert.ok(!/setInterval|WebGL|fetch\(/.test(resonance), 'Playlist artwork must stay lightweight');
-assert.match(read('landing-public.js'), /VELAR_PLAYLIST_RESONANCE\.decorate\(decoration\)/);
+const playlistRenderer = read('landing-public.js');
+assert.match(homepage, /class="cms-playlists-shared-art"/);
+assert.equal((homepage.match(/class="cms-playlist-art"/g)||[]).length,1,
+  'The playlist section must have exactly one shared crystal');
+assert.ok(!playlistRenderer.includes("var decoration=create('div','cms-playlist-art')"),
+  'No per-card resonance should be generated');
+assert.match(playlistRenderer,/var activePlayer=null,activeButton=null/);
+assert.match(playlistRenderer,/choose\.setAttribute\('aria-expanded','true'\)/);
+assert.match(css,/#playlists \.cms-playlists-grid\{[\s\S]*?flex-direction:column/);
+assert.match(css,/#playlists \.cms-playlist-player:empty\{display:none\}/);
 assert.match(css, /playlist-resonance-crystal/);
 
 // RUN-144: keep all three orbits circular using the artwork width, even on tall iPhones.
