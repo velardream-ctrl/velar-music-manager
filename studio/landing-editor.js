@@ -1686,8 +1686,13 @@
    selectField(box,'Тип',
      [['collection','Авторская коллекция из синглов'],['official','Официально выпущенный альбом']],
      active.kind,function(v){active.kind=v;if(v==='collection')active.mediaUrl='';render();});
-   if(active.kind==='official')field(box,'Ссылка на официальный альбом Spotify (не трек)',
-     active.mediaUrl||'',function(v){active.mediaUrl=v;});
+   if(active.kind==='official'){
+     field(box,'Ссылка на официальный альбом Spotify (не трек)',
+       active.mediaUrl||'',function(v){active.mediaUrl=v;});
+     var songHint=document.createElement('p');songHint.className='sync-note';
+     songHint.textContent='Ссылка Spotify подтверждает официальный альбом, но не импортирует его песни. Добавь композиции через «Каталог песен — быстрый выбор» ниже, затем сохрани черновик и опубликуй.';
+     box.appendChild(songHint);
+   }
    var mark=document.createElement('label');mark.className='landing-checkbox';
    var tick=document.createElement('input');tick.type='checkbox';tick.checked=active.visible===true;
    tick.onchange=function(){active.visible=this.checked;updateButtons();};
