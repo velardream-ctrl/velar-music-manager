@@ -55,7 +55,32 @@ jobs:
             await page.getByRole('button',{name:'Сохранить изменения'}).click();
             await page.getByRole('heading',{name:'Уточнённая музыкальная идея'}).waitFor();
             assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth > innerWidth),false);
-            console.log('Mobile preview: categories, search, thread, reply and new topic passed.');
+            // Landscape phones: logo stays on top; home + sign-out share row 1,
+            // and "Create topic" starts a second row, without changing dialogs.
+            await page.evaluate(() => {document.getElementById('sign-out').hidden = false;});
+            for (const width of [667, 896]) {
+              await page.setViewportSize({width, height:375});
+              const layout = await page.evaluate(() => {
+                const rect = selector => document.querySelector(selector).getBoundingClientRect();
+                const brand = rect('.masthead .brand');
+                const home = rect('.masthead .actions > a');
+                const exit = rect('#sign-out');
+                const create = rect('#new-topic');
+                return {
+                  hasLandscape:matchMedia('(orientation:landscape) and (max-width:980px)').matches,
+                  brandAbove:brand.bottom <= home.top + 1,
+                  buttonsInRow:Math.abs(home.top - exit.top) <= 2 && home.right < exit.left,
+                  createBelow:create.top >= Math.max(home.bottom, exit.bottom),
+                  noOverflow:document.documentElement.scrollWidth <= innerWidth,
+                  dialogActionsRemainFlex:getComputedStyle(document.querySelector('#topic-dialog .actions')).display === 'flex'
+                };
+              });
+              assert.deepEqual(layout, {hasLandscape:true,brandAbove:true,buttonsInRow:true,createBelow:true,noOverflow:true,dialogActionsRemainFlex:true});
+            }
+            await page.setViewportSize({width:390,height:844});
+            assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.masthead > .actions')).display), 'flex');
+            assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth > innerWidth),false);
+            console.log('Mobile portrait and landscape preview passed.');
           } finally {
             await browser.close();
           }
