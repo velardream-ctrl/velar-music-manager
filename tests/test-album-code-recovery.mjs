@@ -7,7 +7,7 @@ const studio = readFileSync(new URL('../studio/index.html', import.meta.url), 'u
 const schema = readFileSync(new URL('../landing-schema.js', import.meta.url), 'utf8');
 
 new vm.Script(editor, {filename:'studio/landing-editor.js'});
-assert.match(studio,/landing-editor\.js\?v=50&fix=album-code/);
+assert.match(studio,/landing-editor\.js\?v=49&fix=185.*albumCode=209/);
 assert.match(editor,/albumCodeInput\.value=fixed/);
 assert.match(editor,/updateAlbumCodeHint\(\)/);
 assert.match(editor,/recoverLocal\(\)/);
