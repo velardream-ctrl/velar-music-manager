@@ -204,6 +204,7 @@
     authorNames.set(uid, name);
     if (!demo) {
       try { localStorage.setItem('velar-forum-author:' + uid, name); } catch (_) {}
+      syncMember(account).catch(() => console.warn('Не удалось обновить имя участника.'));
     }
   }
 
@@ -403,8 +404,9 @@
       const previous = await transaction.get(ref);
       if (!previous.exists) {
         transaction.set(ref, {...data, joinedAt: firebase.firestore.FieldValue.serverTimestamp()});
-      } else if (Object.keys(data).some(key => previous.get(key) !== data[key])) {
-        transaction.update(ref, data);
+      } else {
+        if (!data.name) data.name = previous.get('name') || '';
+        if (Object.keys(data).some(key => previous.get(key) !== data[key])) transaction.update(ref, data);
       }
     });
   }
