@@ -2523,3 +2523,33 @@ html.legacy-ipad-crystal .velar-radio > .station-help > .station-help-button::-w
 html.legacy-ipad-crystal [data-many-stages][data-journey-phase] .crystal-journey-stanza:not(.is-current){
  display:none;
 }
+
+
+/* RUN-206 — one shared playlist crystal, compact cards, inline player in normal flow.
+   The artwork is intentionally a fixed square also in older Safari. */
+#playlists .cms-playlists-shared-art{
+  width:340px;max-width:100%;margin:0 auto 22px;
+  border:1px solid rgba(223,192,139,.5);border-radius:16px;overflow:hidden;
+}
+#playlists .cms-playlists-shared-art .cms-playlist-art--resonance{
+  display:block;height:340px;min-height:0;
+}
+#playlists .cms-playlists-grid{
+  display:flex;flex-direction:column;gap:14px;max-width:900px;margin:0 auto;
+}
+#playlists .cms-playlist-card{
+  display:block;min-width:0;overflow:hidden;
+}
+#playlists .cms-playlist-copy{padding:19px 22px}
+#playlists .cms-playlist-player:empty{display:none}
+#playlists .cms-playlist-player:not(:empty){
+  padding:16px 20px 20px;border-top:1px solid rgba(223,192,139,.30);
+}
+@media(max-width:400px){
+  #playlists .cms-playlists-shared-art{width:300px}
+  #playlists .cms-playlists-shared-art .cms-playlist-art--resonance{height:300px}
+}
+@media(max-width:560px){
+  #playlists .cms-playlist-copy{padding:17px}
+  #playlists .cms-playlist-player:not(:empty){padding:12px 12px 16px}
+}
