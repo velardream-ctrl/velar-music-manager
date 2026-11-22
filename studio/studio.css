@@ -893,3 +893,9 @@ body.vmm-print-open{overflow:hidden}
 #panel-landing .landing-display-group .landing-field{margin:12px 0 3px}
 #panel-landing .landing-display-group select{width:100%;max-width:100%;min-height:44px}
 @media(max-width:540px){#panel-landing .landing-display-group{padding:11px}}
+
+/* Album-to-catalog matching: scoped to owner-only Studio panel. */
+#panel-landing .landing-album-auto-match{margin:1rem 0;padding:1rem;min-width:0}
+#panel-landing .landing-album-match-input{display:block;width:100%;min-height:115px;resize:vertical}
+#panel-landing .landing-album-match-results{max-height:340px;overflow:auto;overflow-wrap:anywhere}
+#panel-landing .landing-album-match-results p{margin:.4rem 0}
