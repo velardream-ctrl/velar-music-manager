@@ -79,7 +79,7 @@
  var languageEditorCode='',languageCatalogSearch='',languageTrackFilter='',languageCatalogPage=0;
  var topicEditorSlug='',topicCatalogSearch='',topicTrackFilter='',topicCatalogPage=0;
  var genreEditorId='',genreCatalogSearch='',genreTrackFilter='',genreCatalogPage=0;
- var albumEditorId='',albumCatalogSearch='',albumTrackFilter='',albumCatalogPage=0;
+ var albumEditorId='',albumCatalogSearch='',albumTrackFilter='',albumCatalogPage=0,albumAutoText='';
  var faqSearch='',faqGroup='',faqPage=0;
  // Offline admin: private IndexedDB outbox, no publication without explicit click.
  var offlineSyncing=false,offlineNonce='',offlineConflict=false,offlineTimer=null,
@@ -1618,6 +1618,75 @@
 
  // RUN-073: editorial tagging. A public song can be assigned to any number
  // of topics, like private artist-track assignments, without copying audio.
+ // Match an album tracklist copied from Spotify against the owner's local catalog.
+ // Spotify album API itself requires OAuth; do not scrape embeds or leak tokens.
+ function albumAutoMatchEditor(parent,album){
+   var wrap=document.createElement('section');wrap.className='landing-card landing-album-auto-match';
+   heading(wrap,'Автосопоставление песен альбома',
+     'Открой альбом в Spotify и скопируй его список песен. Вставь сюда названия по одному в строке: «Название — Исполнитель» или просто название, если исполнитель указан выше. Можно вставить прямые ссылки на Spotify-треки. В каталоге будут найдены только точные совпадения.');
+   var source=document.createElement('textarea');source.className='landing-album-match-input';
+   source.rows=5;source.value=albumAutoText;source.maxLength=12000;
+   source.placeholder='Первая песня — Velar\nВторая песня — Velar\nТретья песня';
+   source.setAttribute('aria-label','Список композиций из Spotify для сопоставления');
+   source.oninput=function(){albumAutoText=this.value;clear(results);apply.disabled=true;};
+   wrap.appendChild(source);
+   var actions=document.createElement('div');actions.className='landing-item-actions';
+   var results=document.createElement('div');results.className='landing-album-match-results';
+   var apply=button('Добавить найденные песни',function(){
+     if(!window.VMM_ALBUM_MATCH||!catalogLoaded)return;
+     var suggested=window.VMM_ALBUM_MATCH.propose(source.value,attachedCatalogOptions(),album.artist,album.tracks);
+     if(!suggested.matchCount){info('Нет новых точных совпадений. Проверь названия или используй ручной каталог.');return;}
+     var staged={tracks:clone(album.tracks)},added=0;
+     try{
+       suggested.rows.forEach(function(row){
+         if(row.state!=='match'||staged.tracks.length>=60)return;
+         var song=row.song;
+         if(attachedFind(staged,song))return;
+         var sources={spotify:song.spotify,youtube:song.youtube,appleMusic:song.appleMusic};
+         var mode=attachedCheckMode('',sources.spotify,sources.youtube,sources.appleMusic);
+         attachedReplace(staged,null,song,mode,sources);
+         added++;
+       });
+       if(!added){info('Совпадения уже добавлены либо достигнут лимит 60 песен.');return;}
+       var candidate=clone(data),target=candidate.albums.entries.filter(function(t){return t.id===album.id;})[0];
+       if(!target)throw new Error('Альбом изменился. Открой его заново.');
+       target.tracks=staged.tracks;
+       API.normalize(candidate); // validate before changing the live editor state
+       album.tracks=staged.tracks;
+     }catch(err){info('Автосопоставление остановлено, ничего не изменено: '+err.message);return;}
+     render();
+     info('Сопоставлено и добавлено '+added+' песен. Остальные записи не изменены. Теперь сохрани черновик в облако, затем опубликуй.');
+   },'landing-add');
+   apply.disabled=true;
+   var scan=button('Найти совпадения в каталоге',function(){
+     clear(results);apply.disabled=true;
+     if(!window.VMM_ALBUM_MATCH){info('Модуль сопоставления не загрузился. Обнови Studio.');return;}
+     if(!catalogLoaded){info('Сначала загрузи защищённый каталог песен.');loadCatalogArtists();return;}
+     var preview=window.VMM_ALBUM_MATCH.propose(source.value,attachedCatalogOptions(),album.artist,album.tracks);
+     var summary=document.createElement('p');summary.className='sync-note';
+     summary.textContent='Найдено '+preview.matchCount+' новых совпадений; уже назначено: '+preview.existingCount+
+       '; неоднозначно: '+preview.ambiguousCount+'; нет совпадения: '+preview.missingCount+
+       (preview.truncated?'. Проверены первые 60 строк.':'');
+     results.appendChild(summary);
+     preview.rows.forEach(function(row,i){
+       var item=document.createElement('p');item.className='sync-note';
+       var label=row.state==='match'?'✓ '+row.song.title+' · '+row.song.artist:
+         row.state==='already'?'Уже добавлена':
+         row.state==='ambiguous'?'Несколько похожих записей — выбери вручную':'Не найдена в каталоге';
+       item.textContent=(i+1)+'. '+row.input+' — '+label;
+       results.appendChild(item);
+     });
+     apply.disabled=!preview.matchCount;
+   },'landing-small');
+   actions.appendChild(scan);actions.appendChild(apply);
+   wrap.appendChild(actions);wrap.appendChild(results);
+   if(!catalogLoaded){
+     var loadHint=document.createElement('p');loadHint.className='sync-note';
+     loadHint.textContent='Сначала загрузи каталог ниже. Ссылка на альбом Spotify сама по себе не предоставляет список песен для сопоставления без доступа к Spotify API.';
+     wrap.appendChild(loadHint);
+   }
+   parent.appendChild(wrap);
+ }
  // RUN-096: one shared song editor for official albums AND collections from singles.
  function albumsEditor(parent){
    var cfg=data.albums,entries=cfg.entries;
@@ -1632,7 +1701,7 @@
    entries.forEach(function(album,index){
      var group=document.createElement('div');group.className='landing-language-menu-item';
      var select=button((album.title||album.id)+' · '+album.tracks.length+' песен',function(){
-       albumEditorId=album.id;albumCatalogSearch='';albumTrackFilter='';albumCatalogPage=0;render();
+       albumEditorId=album.id;albumCatalogSearch='';albumTrackFilter='';albumCatalogPage=0;albumAutoText='';render();
      },'landing-small');
      if(albumEditorId===album.id)select.className+=' is-active';
      group.appendChild(select);
@@ -1653,7 +1722,7 @@
      var i=1,key;do{key='album-'+i++;}while(entries.some(function(a){return a.id===key;}));
      entries.push({id:key,title:'',artist:'',description:'',kind:'collection',
        mediaProvider:'spotify',mediaUrl:'',imageData:'',imageUrl:'',visible:false,tracks:[]});
-     albumEditorId=key;albumCatalogSearch='';albumTrackFilter='';albumCatalogPage=0;render();
+     albumEditorId=key;albumCatalogSearch='';albumTrackFilter='';albumCatalogPage=0;albumAutoText='';render();
    },'landing-add'));
    var active=entries.filter(function(album){return album.id===albumEditorId;})[0];
    if(!active){active=entries[0];if(active)albumEditorId=active.id;}
@@ -1700,6 +1769,7 @@
    field(box,'HTTPS-ссылка на публичную обложку (не Google Drive) — необязательно',
      active.imageUrl||'',function(v){active.imageUrl=v;});
    releaseCover(box,active);
+   albumAutoMatchEditor(box,active);
    attachedSongsEditor(box,active,{mode:'album',
      getFilter:function(){return albumTrackFilter;},
      setFilter:function(v){albumTrackFilter=v;},
