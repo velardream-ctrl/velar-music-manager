@@ -105,8 +105,8 @@
    if(!q)return null;
    function has(path){return entries.some(function(e){return e.target===path;});}
    var contacts=has('/contacts/'),forum=has('/forum/');
-   var asksContact=/(?:личн\w*\s+сообщени|написать\s+(?:лично|администратору|автору|сообщени)|связаться\s+с|контакт|обратн\w*\s+связ|написать\s+письмо|в\s+личку|электронн\w*\s+почт|заказ\s+песн|заказать\s+песн|ошибк\w*\s+на\s+сайт|сообщить\s+об\s+ошибк)/.test(q);
-   var asksCollaboration=/(?:сотруднич|коллаборац|совместн\w*\s+проект|ищу\s+партнер|партнерств|партнёрств)/.test(q);
+   var asksContact=/(?:личн[а-яa-z]*\s+сообщени|написать\s+(?:лично|администратору|автору|сообщени)|связаться\s+с|контакт|обратн[а-яa-z]*\s+связ|написать\s+письмо|в\s+личку|электронн[а-яa-z]*\s+почт|заказ\s+песн|заказать\s+песн|ошибк[а-яa-z]*\s+на\s+сайт|сообщить\s+об\s+ошибк)/.test(q);
+   var asksCollaboration=/(?:сотруднич|коллаборац|совместн[а-яa-z]*\s+проект|ищу\s+партнер|партнерств|партнёрств)/.test(q);
    if(asksCollaboration&&(forum||contacts)){
      var choices=[];
      if(forum)choices.push(option(categories.some(function(c){return c.id==='collaboration';})?
@@ -120,7 +120,7 @@
      var matched=categories.filter(function(c){return matchSection(q,c);})[0];
      if(matched)return {text:'На форуме есть раздел «'+matched.label+'». Можно перейти к обсуждениям и создать свою тему.',
        actions:[option('Перейти к «'+matched.label+'»',forumPath(matched.id))]};
-     if(/(?:форум|обсуждени\w*|сообществ\w*|создать\s+тему|написать\s+на\s+форум)/.test(q))
+     if(/(?:форум|обсуждени[а-яa-z]*|сообществ[а-яa-z]*|создать\s+тему|написать\s+на\s+форум)/.test(q))
        return {text:'На нашем форуме можно обсудить музыку, предложить идею или присоединиться к разговору.',
          actions:[option('Открыть форум','/forum/')]};
    }
