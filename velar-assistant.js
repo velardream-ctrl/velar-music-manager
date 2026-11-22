@@ -170,6 +170,10 @@
    }
    var search=window.VELAR_NAVIGATION&&window.VELAR_NAVIGATION.command(raw,data);
    if(search)return search;
+   // RUN-212: current public routes are verified by the site navigation catalog.
+   // Owner-edited rules above still take precedence. Never trust AI-supplied URLs.
+   var siteRoute=window.VELAR_SITE_NAV&&window.VELAR_SITE_NAV.answer(raw);
+   if(siteRoute)return siteRoute;
    // RUN-087: contextual music guide keeps owner rules above defaults.
    var guide=window.VELAR_FAQ&&window.VELAR_FAQ.guide&&window.VELAR_FAQ.guide(q,data,settings);
    if(guide)return guide;
@@ -282,7 +286,12 @@
        a.type='button';
        a.onclick=function(){
          if(choice.action==='navigate-song'){visitSong(choice);}
-         else if(choice.action==='email'){
+         else if(choice.action==='page'){
+           var openedPage=window.VELAR_SITE_NAV&&
+             window.VELAR_SITE_NAV.open(choice.target);
+           if(!openedPage)itemMessage('assistant',
+             'Этот раздел сейчас недоступен. Попробуй открыть меню сайта.',null,'neutral',false);
+         }else if(choice.action==='email'){
            var email=config&&config.contactEmail;
            if(!email)return;
            var subject='VELARDREAM — предложение о сотрудничестве';
