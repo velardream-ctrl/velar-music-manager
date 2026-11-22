@@ -56,5 +56,48 @@
       ambiguousCount:count('ambiguous'),missingCount:count('missing'),
       truncated:String(value||'').split(/\r?\n/).filter(function(x){return !!x.trim();}).length>60};
   }
-  root.VMM_ALBUM_MATCH={parse:parse,propose:propose,clean:clean,spotifyTrack:spotifyTrack};
+  // RUN-211: the owner provided the original 15-track Spotify sequence.
+  // Pre-fill an editor *proposal* for this album only; nothing is written
+  // to Firestore until the owner reviews, saves and publishes it.
+  var springOrder=[
+    'Игристая весна','Ты как весна','Ветром по крышам',
+    'Весна придумала нас','Весна внутри','Кто ты','Вишенка в вине',
+    'Белые розы в апреле','Сирень за окном','С тобой цветёт весна',
+    'Весна зовёт','Пьяная весна','Сама себе верна',
+    'Весна на репит','Океан любви'
+  ];
+  function presetForAlbum(album){
+    if(!album||clean(album.artist)!=='velar')return '';
+    var name=clean(album.title),code=String(album.id||'').toLowerCase();
+    return name==='игристая весна'||code==='igristaja-vesna'?
+      springOrder.join('\n'):'';
+  }
+  // Reorder only EXACTLY identifiable songs; preserve unmatched/ambiguous
+  // records in their original order. Never replace URLs, add or delete songs.
+  function orderTracks(tracks,text,albumArtist){
+    var original=(tracks||[]).slice(),unused=original.slice(),ordered=[];
+    var rows=parse(text),albumKey=clean(albumArtist);
+    rows.forEach(function(line){
+      var options=unused.filter(function(t){
+        if(line.url)return [t.url,t.alternateUrl,t.thirdUrl].some(function(src){
+          return spotifyTrack(src)===line.url;
+        });
+        if(clean(t.title)!==clean(line.title))return false;
+        if(line.artist)return clean(t.artist)===clean(line.artist);
+        return !albumKey||clean(t.artist)===albumKey;
+      });
+      if(!options.length&&!line.url&&!line.artist){
+        options=unused.filter(function(t){return clean(t.title)===clean(line.title);});
+      }
+      if(options.length!==1)return;
+      var chosen=options[0];ordered.push(chosen);
+      unused.splice(unused.indexOf(chosen),1);
+    });
+    var all=ordered.concat(unused);
+    return {tracks:all,changed:all.some(function(t,i){return t!==original[i];}),
+      ordered:ordered.length,remaining:unused.length};
+  }
+  root.VMM_ALBUM_MATCH={parse:parse,propose:propose,clean:clean,spotifyTrack:spotifyTrack,
+    orderTracks:orderTracks,presetForAlbum:presetForAlbum};
+
 }(window));
