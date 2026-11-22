@@ -23,6 +23,8 @@
   ];
   const sampleReplies = Object.create(null);
   let topics = [];
+  // Deep-link only to enabled PUBLIC categories: /forum/?section=collaboration
+  const initialSection = new URLSearchParams(location.search).get('section') || '';
   let category = '';
   let active = '';
   let replyRequest = 0;
@@ -682,7 +684,13 @@
       document.title = name + ' — VELARDREAM';
     }).catch(() => {});
     sections.load(db).then(rows => {
-      if (category && !rows.some(section => section.id === category && section.enabled)) category = '';
+      // Never follow an unverified/disabled category from a URL.
+      if (/^[a-zA-Z0-9_-]{1,32}$/.test(initialSection) &&
+          rows.some(section => section.id === initialSection && section.enabled && !section.deleted)) {
+        category = initialSection;
+      } else if (category && !rows.some(section => section.id === category && section.enabled && !section.deleted)) {
+        category = '';
+      }
       renderSections(rows);
       if (!active) renderBoard();
     }).catch(() => {});
