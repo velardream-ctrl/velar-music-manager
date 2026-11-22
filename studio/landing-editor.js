@@ -1391,7 +1391,7 @@
          var up=button('↑',function(){
            var at=entry.tracks.indexOf(t);if(at<=0)return;
            entry.tracks.splice(at,1);entry.tracks.splice(at-1,0,t);
-           drawAssigned();drawCatalog();updateButtons();
+           drawAssigned();if(catalogLoaded)drawCatalog();updateButtons();
          },'landing-small');
          up.setAttribute('aria-label','Поднять песню '+t.title);
          up.disabled=position===0;
