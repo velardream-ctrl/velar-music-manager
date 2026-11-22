@@ -15,7 +15,7 @@ new vm.Script(editor);
 
 const window = {};
 vm.runInNewContext(matcher,{window,String,Array,Object},{timeout:1000});
-const {propose,parse,spotifyTrack}=window.VMM_ALBUM_MATCH;
+const {propose,parse,spotifyTrack,presetForAlbum,orderTracks}=window.VMM_ALBUM_MATCH;
 const one='https://open.spotify.com/track/ABCDEFGHIJKLMNOPQRSTUV';
 const two='https://open.spotify.com/track/ABCDEFGHIJKLMNOPQRSTUW';
 const catalog=[
@@ -40,13 +40,45 @@ assert.equal(propose('Песня',catalog,'',[]).ambiguousCount,1);
 assert.equal(propose('Неизвестный трек',catalog,'Velar',[]).missingCount,1);
 assert.equal(propose('Игристая Весна\nИгристая Весна',catalog,'Velar',[]).matchCount,1);
 assert.equal(propose('Игристая Весна\n'.repeat(61),catalog,'Velar',[]).truncated,true);
+const spotifySequence=[
+ 'Игристая весна','Ты как весна','Ветром по крышам',
+ 'Весна придумала нас','Весна внутри','Кто ты','Вишенка в вине',
+ 'Белые розы в апреле','Сирень за окном','С тобой цветёт весна',
+ 'Весна зовёт','Пьяная весна','Сама себе верна',
+ 'Весна на репит','Океан любви'
+];
+const preset=presetForAlbum({title:'Игристая Весна',artist:'Velar',id:'igristaja-vesna'});
+assert.deepEqual(preset.split('\\n'),spotifySequence,'User-confirmed Spotify sequence is exact');
+assert.equal(presetForAlbum({title:'Другой альбом',artist:'Velar',id:'other'}),'');
+const original=[
+ {title:'Ветром по крышам',artist:'Velar',provider:'spotify',url:one},
+ {title:'Игристая весна',artist:'Velar',provider:'spotify',url:two},
+ {title:'Неизвестная',artist:'Velar',provider:'spotify',url:'https://open.spotify.com/track/ABCDEFGHIJKLMNOPQRSTUX'}
+];
+const wanted=orderTracks(original,preset,'Velar');
+assert.equal(wanted.changed,true);
+assert.deepEqual(wanted.tracks.map(x=>x.title),
+ ['Игристая весна','Ветром по крышам','Неизвестная']);
+assert.equal(original[0].title,'Ветром по крышам','Do not mutate saved order before owner applies');
+assert.equal(orderTracks(wanted.tracks,preset,'Velar').changed,false);
+const duplicateNames=[
+ {title:'Игристая весна',artist:'Velar',url:one},
+ {title:'Игристая весна',artist:'Velar',url:two}
+];
+assert.equal(orderTracks(duplicateNames,preset,'Velar').changed,false,
+ 'Never guess when there are two same-name recordings');
+assert.match(editor,/if\(mode!==['"]album['"]\)found\.sort\(compareSong\)/);
+assert.match(editor,/Поднять песню/);
+assert.match(editor,/Опустить песню/);
+assert.match(editor,/orderTracks\(staged\.tracks,source\.value,album\.artist\)/);
+
 assert.match(editor,/function albumAutoMatchEditor\(parent,album\)/);
 assert.match(editor,/API\.normalize\(candidate\)/);
 assert.match(editor,/albumAutoMatchEditor\(box,active\)/);
-assert.match(studio,/album-auto-match\.js\?v=1/);
-assert.match(home,/albums-public\.js\?v=4&tracklist=210/);
-assert.match(sw,/\.\/studio\/album-auto-match\.js\?v=1/);
-assert.match(sw,/\.\/albums-public\.js\?v=4&tracklist=210/);
+assert.match(studio,/album-auto-match\.js\?v=2/);
+assert.match(home,/albums-public\.js\?v=4&tracklist=210&order=211/);
+assert.match(sw,/\.\/studio\/album-auto-match\.js\?v=2/);
+assert.match(sw,/\.\/albums-public\.js\?v=4&tracklist=210&order=211/);
 
 // The album embed is inserted ONLY after deliberate user expansion.
 function node(tag='div'){
