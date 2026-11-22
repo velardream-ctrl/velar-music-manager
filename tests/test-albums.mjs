@@ -68,21 +68,23 @@ assert.equal(toggle.attributes['aria-expanded'],'true');
 assert.ok(card.className.includes('is-expanded'),'Expanded album must allow non-flowing player');
 const list=card.children[2];
 assert.equal(list.children.length,2,'Two singles under one album cover');
-// RUN-104: album songs are displayed alphabetically, not in input order.
+// RUN-211: album sequence must follow the owner's Spotify track order, not the alphabet.
 assert.equal(list.children[0].children[0].children[2].children[0].textContent,
- 'Журавли','First song is alphabetically first (even when saved second)');
+ 'Северный олень','First song must remain first in the published album');
+assert.equal(list.children[1].children[0].children[2].children[0].textContent,
+ 'Журавли','Second song must remain second');
 assert.equal(cfg.albums.entries[0].tracks[0].title,'Северный олень',
- 'Alphabetic display must not rewrite published/source album track order');
+ 'Public ordering must not mutate the source album track array');
 const row=list.children[1],title=row.children[0];
 assert.match(row.className,/public-song-entry--covers/);
 assert.equal(title.children[1].className.includes('--empty'),true,
  'YouTube-only album track uses local note, never the album or video thumbnail');
-const primary=row.children[2].children[0];
+const spotifyRow=list.children[0],primary=spotifyRow.children[2].children[0];
 primary.onclick();
-assert.equal(row.children[1].children[1].className,'spotify-embed-viewport');
+assert.equal(spotifyRow.children[1].children[1].className,'spotify-embed-viewport');
 assert.equal(stopped,1);
 primary.onclick();
-assert.equal(row.children[1].children.length,0,'Click second time unloads Spotify embed');
+assert.equal(spotifyRow.children[1].children.length,0,'Click second time unloads Spotify embed');
 toggle.onclick();
 assert.equal(card.children[2].children.length,0);
 assert.equal(toggle.attributes['aria-expanded'],'false');
