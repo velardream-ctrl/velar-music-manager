@@ -78,7 +78,7 @@
        var player=null;
        if(album.tracks.length&&window.VELAR_PUBLIC_SONGS){
          player=window.VELAR_PUBLIC_SONGS.mount(songs,album.tracks,{
-           prefix:'album',batch:12,view:config.trackView||'rows',cover:cover
+           prefix:'album',batch:12,view:config.trackView||'rows',cover:cover,keepOrder:true
          });
        }else if(!spotifyEmbedUrl(album.mediaUrl)){
          songs.appendChild(el('p','cms-album-empty','Песни ещё не добавлены.'));

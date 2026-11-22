@@ -1324,7 +1324,9 @@
      var q=filter().toLocaleLowerCase('ru').replace(/ё/g,'е');
      var found=entry.tracks.filter(function(t){
        return !q||(t.title+' '+t.artist).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)>=0;
-     }).sort(compareSong);
+     });
+     // Preserve the record sequence for official/curated albums only.
+     if(mode!=='album')found.sort(compareSong);
      found.slice(0,40).forEach(function(t){
        var outer=document.createElement('div');outer.className='landing-attached-song';
        var line=document.createElement('div');line.className='landing-language-song-row';
@@ -1384,6 +1386,24 @@
          var index=entry.tracks.indexOf(t);if(index<0)return;
          entry.tracks.splice(index,1);drawAssigned();if(catalogLoaded)drawCatalog();updateButtons();
        },'landing-danger'));
+       if(mode==='album'){
+         var position=entry.tracks.indexOf(t);
+         var up=button('↑',function(){
+           var at=entry.tracks.indexOf(t);if(at<=0)return;
+           entry.tracks.splice(at,1);entry.tracks.splice(at-1,0,t);
+           drawAssigned();if(catalogLoaded)drawCatalog();updateButtons();
+         },'landing-small');
+         up.setAttribute('aria-label','Поднять песню '+t.title);
+         up.disabled=position===0;
+         var down=button('↓',function(){
+           var at=entry.tracks.indexOf(t);if(at<0||at>=entry.tracks.length-1)return;
+           entry.tracks.splice(at,1);entry.tracks.splice(at+1,0,t);
+           drawAssigned();if(catalogLoaded)drawCatalog();updateButtons();
+         },'landing-small');
+         down.setAttribute('aria-label','Опустить песню '+t.title);
+         down.disabled=position>=entry.tracks.length-1;
+         line.appendChild(up);line.appendChild(down);
+       }
        outer.appendChild(line);
        var editArea=document.createElement('div');editArea.className='landing-attached-editor';
        editArea.setAttribute('data-open','false');outer.appendChild(editArea);
@@ -1623,20 +1643,26 @@
  function albumAutoMatchEditor(parent,album){
    var wrap=document.createElement('section');wrap.className='landing-card landing-album-auto-match';
    heading(wrap,'Автосопоставление песен альбома',
-     'Открой альбом в Spotify и скопируй его список песен. Вставь сюда названия по одному в строке: «Название — Исполнитель» или просто название, если исполнитель указан выше. Можно вставить прямые ссылки на Spotify-треки. В каталоге будут найдены только точные совпадения.');
+     'Порядок строк задаёт порядок песен на сайте. Вставь названия из Spotify по одному в строке: «Название — Исполнитель» или только название, если исполнитель указан выше. Можно вставить прямые ссылки на Spotify-треки. Неоднозначные совпадения не добавляются.');
    var source=document.createElement('textarea');source.className='landing-album-match-input';
-   source.rows=5;source.value=albumAutoText;source.maxLength=12000;
+   var preset=window.VMM_ALBUM_MATCH&&window.VMM_ALBUM_MATCH.presetForAlbum(album)||'';
+   if(!albumAutoText&&preset)albumAutoText=preset;
+   source.rows=7;source.value=albumAutoText;source.maxLength=12000;
    source.placeholder='Первая песня — Velar\nВторая песня — Velar\nТретья песня';
    source.setAttribute('aria-label','Список композиций из Spotify для сопоставления');
    source.oninput=function(){albumAutoText=this.value;clear(results);apply.disabled=true;};
    wrap.appendChild(source);
+   if(preset){
+     var presetNote=document.createElement('p');presetNote.className='sync-note';
+     presetNote.textContent='Подставлен порядок 15 песен «Игристой весны», подтверждённый владельцем по Spotify. Это предложение — сначала проверь совпадения в каталоге.';
+     wrap.appendChild(presetNote);
+   }
    var actions=document.createElement('div');actions.className='landing-item-actions';
    var results=document.createElement('div');results.className='landing-album-match-results';
-   var apply=button('Добавить найденные песни',function(){
+   var apply=button('Добавить песни и применить порядок',function(){
      if(!window.VMM_ALBUM_MATCH||!catalogLoaded)return;
      var suggested=window.VMM_ALBUM_MATCH.propose(source.value,attachedCatalogOptions(),album.artist,album.tracks);
-     if(!suggested.matchCount){info('Нет новых точных совпадений. Проверь названия или используй ручной каталог.');return;}
-     var staged={tracks:clone(album.tracks)},added=0;
+     var staged={tracks:clone(album.tracks)},added=0,reordered=false;
      try{
        suggested.rows.forEach(function(row){
          if(row.state!=='match'||staged.tracks.length>=60)return;
@@ -1647,7 +1673,13 @@
          attachedReplace(staged,null,song,mode,sources);
          added++;
        });
-       if(!added){info('Совпадения уже добавлены либо достигнут лимит 60 песен.');return;}
+       var planned=window.VMM_ALBUM_MATCH.orderTracks(staged.tracks,source.value,album.artist);
+       reordered=planned.changed;
+       if(!added&&!reordered){
+         info('Новых совпадений и изменений порядка нет. Неопознанные песни выбери вручную.');
+         return;
+       }
+       staged.tracks=planned.tracks;
        var candidate=clone(data),target=candidate.albums.entries.filter(function(t){return t.id===album.id;})[0];
        if(!target)throw new Error('Альбом изменился. Открой его заново.');
        target.tracks=staged.tracks;
@@ -1655,7 +1687,8 @@
        album.tracks=staged.tracks;
      }catch(err){info('Автосопоставление остановлено, ничего не изменено: '+err.message);return;}
      render();
-     info('Сопоставлено и добавлено '+added+' песен. Остальные записи не изменены. Теперь сохрани черновик в облако, затем опубликуй.');
+     info('Добавлено '+added+' песен; порядок '+(reordered?'применён':'уже совпадает')+
+       '. Сначала сохрани черновик в облако, затем опубликуй.');
    },'landing-add');
    apply.disabled=true;
    var scan=button('Найти совпадения в каталоге',function(){
@@ -1664,8 +1697,10 @@
      if(!catalogLoaded){info('Сначала загрузи защищённый каталог песен.');loadCatalogArtists();return;}
      var preview=window.VMM_ALBUM_MATCH.propose(source.value,attachedCatalogOptions(),album.artist,album.tracks);
      var summary=document.createElement('p');summary.className='sync-note';
+     var ordering=window.VMM_ALBUM_MATCH.orderTracks(album.tracks,source.value,album.artist);
      summary.textContent='Найдено '+preview.matchCount+' новых совпадений; уже назначено: '+preview.existingCount+
        '; неоднозначно: '+preview.ambiguousCount+'; нет совпадения: '+preview.missingCount+
+       '. Порядок: '+(ordering.changed?'можно обновить':'уже совпадает')+
        (preview.truncated?'. Проверены первые 60 строк.':'');
      results.appendChild(summary);
      preview.rows.forEach(function(row,i){
@@ -1676,7 +1711,7 @@
        item.textContent=(i+1)+'. '+row.input+' — '+label;
        results.appendChild(item);
      });
-     apply.disabled=!preview.matchCount;
+     apply.disabled=!preview.matchCount&&!ordering.changed;
    },'landing-small');
    actions.appendChild(scan);actions.appendChild(apply);
    wrap.appendChild(actions);wrap.appendChild(results);
