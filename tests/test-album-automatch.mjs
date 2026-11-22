@@ -48,7 +48,7 @@ const spotifySequence=[
  'Весна на репит','Океан любви'
 ];
 const preset=presetForAlbum({title:'Игристая Весна',artist:'Velar',id:'igristaja-vesna'});
-assert.deepEqual(preset.split('\\n'),spotifySequence,'User-confirmed Spotify sequence is exact');
+assert.deepEqual(preset.split('\n'),spotifySequence,'User-confirmed Spotify sequence is exact');
 assert.equal(presetForAlbum({title:'Другой альбом',artist:'Velar',id:'other'}),'');
 const original=[
  {title:'Ветром по крышам',artist:'Velar',provider:'spotify',url:one},
