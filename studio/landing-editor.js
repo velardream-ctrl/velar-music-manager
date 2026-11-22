@@ -1398,7 +1398,7 @@
          var down=button('↓',function(){
            var at=entry.tracks.indexOf(t);if(at<0||at>=entry.tracks.length-1)return;
            entry.tracks.splice(at,1);entry.tracks.splice(at+1,0,t);
-           drawAssigned();drawCatalog();updateButtons();
+           drawAssigned();if(catalogLoaded)drawCatalog();updateButtons();
          },'landing-small');
          down.setAttribute('aria-label','Опустить песню '+t.title);
          down.disabled=position>=entry.tracks.length-1;
