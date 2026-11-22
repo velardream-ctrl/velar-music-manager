@@ -47,6 +47,16 @@
        }else add(target,label,target);
      });
    }
+   // Public utility pages in the footer are also discoverable, without
+   // scanning private /studio/ or arbitrary external URLs.
+   var footer=document.querySelector('.site-footer');
+   if(footer){
+     Array.prototype.forEach.call(footer.querySelectorAll('a[href]'),function(a){
+       if(!isPublic(a))return;
+       var target=safePage(a.getAttribute('href'));
+       if(target&&target.charAt(0)==='/')add(target,a.textContent&&a.textContent.trim(),target);
+     });
+   }
    // Newly added PUBLIC sections automatically become discoverable without
    // updating this assistant, even when the site nav lacks a matching link.
    Array.prototype.forEach.call(document.querySelectorAll('main section[id]'),function(el){
@@ -105,6 +115,10 @@
    if(!q)return null;
    function has(path){return entries.some(function(e){return e.target===path;});}
    var contacts=has('/contacts/'),forum=has('/forum/');
+   if(has('/mp3-converter/')&&/(?:mp3|мп3|конвертир|конвертер|преобразовать\s+(?:аудио|музык)|перевести\s+(?:аудио|музык|файл))/i.test(q)){
+     return {text:'На сайте есть бесплатный конвертер аудиофайлов в MP3. Файл обрабатывается в браузере без загрузки на сервер. Поддержка исходного формата зависит от браузера.',
+       actions:[option('Открыть MP3-конвертер','/mp3-converter/')]};
+   }
    var asksContact=/(?:личн[а-яa-z]*\s+сообщени|написать\s+(?:лично|администратору|автору|сообщени)|связаться\s+с|контакт|обратн[а-яa-z]*\s+связ|написать\s+письмо|в\s+личку|электронн[а-яa-z]*\s+почт|заказ\s+песн|заказать\s+песн|ошибк[а-яa-z]*\s+на\s+сайт|сообщить\s+об\s+ошибк)/.test(q);
    var asksCollaboration=/(?:сотруднич|коллаборац|совместн[а-яa-z]*\s+проект|ищу\s+партнер|партнерств|партнёрств)/.test(q);
    if(asksCollaboration&&(forum||contacts)){
