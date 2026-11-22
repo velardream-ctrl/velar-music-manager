@@ -57,8 +57,9 @@ const original=[
 ];
 const wanted=orderTracks(original,preset,'Velar');
 assert.equal(wanted.changed,true);
-assert.deepEqual(wanted.tracks.map(x=>x.title),
- ['Игристая весна','Ветром по крышам','Неизвестная']);
+assert.equal(wanted.tracks.map(x=>x.title).join('|'),
+ ['Игристая весна','Ветром по крышам','Неизвестная'].join('|'),
+ 'Reordered VM array has the expected sequence');
 assert.equal(original[0].title,'Ветром по крышам','Do not mutate saved order before owner applies');
 assert.equal(orderTracks(wanted.tracks,preset,'Velar').changed,false);
 const duplicateNames=[
