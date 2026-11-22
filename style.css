@@ -2591,3 +2591,7 @@ html.legacy-ipad-crystal [data-many-stages][data-journey-phase] .crystal-journey
   #playlists .cms-playlist-card{display:block}
   #playlists .cms-playlist-card > .cms-playlist-art{display:none}
 }
+
+/* Official Spotify tracklist appears only after a visitor opens the album. */
+.cms-album-spotify-label{margin:12px 0 8px;color:#e8cb99;font-size:.86rem}
+.cms-album-spotify-embed{display:block;width:100%;height:360px;border:0;border-radius:12px;background:#111b2b;max-width:100%}

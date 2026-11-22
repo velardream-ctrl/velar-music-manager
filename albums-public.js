@@ -18,6 +18,10 @@
    if(active.card)active.card.className=active.card.className.replace(/ is-expanded/g,'');
    active=null;
  }
+ function spotifyEmbedUrl(link){
+   var match=/^https:\/\/open\.spotify\.com\/album\/([A-Za-z0-9]{22})$/.exec(String(link||''));
+   return match?'https://open.spotify.com/embed/album/'+match[1]:'';
+ }
  function render(config){
    var host=document.getElementById('public-albums-cards');
    if(!host||!config)return;
@@ -54,7 +58,10 @@
      body.appendChild(el('h3','',album.title));
      body.appendChild(el('p','cms-album-artist',album.artist));
      if(album.description)body.appendChild(el('p','cms-album-description',album.description));
-     body.appendChild(el('p','cms-album-count',album.tracks.length+' песен'));
+     body.appendChild(el('p','cms-album-count',album.tracks.length?
+       album.tracks.length+' песен сопоставлено с каталогом':
+       (album.kind==='official'&&spotifyEmbedUrl(album.mediaUrl)?
+         'Полный список композиций — в Spotify':'Песни пока не назначены')));
      if(album.kind==='official'&&album.mediaUrl){
        var official=el('a','cms-card-link','Открыть официальный альбом в Spotify');
        official.href=album.mediaUrl;official.target='_blank';official.rel='noopener noreferrer';
@@ -73,7 +80,23 @@
          player=window.VELAR_PUBLIC_SONGS.mount(songs,album.tracks,{
            prefix:'album',batch:12,view:config.trackView||'rows',cover:cover
          });
-       }else songs.appendChild(el('p','cms-album-empty','Песни ещё не добавлены.'));
+       }else if(!spotifyEmbedUrl(album.mediaUrl)){
+         songs.appendChild(el('p','cms-album-empty','Песни ещё не добавлены.'));
+       }
+       // Spotify owns the official album tracklist. Its embed is shown only
+       // after a visitor clicks: no unauthorized API reads or pre-click tracking.
+       var spotifySrc=album.kind==='official'?spotifyEmbedUrl(album.mediaUrl):'';
+       if(spotifySrc){
+         songs.appendChild(el('p','cms-album-spotify-label',
+           'Полный список песен официального альбома в Spotify'));
+         var frame=el('iframe','cms-album-spotify-embed');
+         frame.src=spotifySrc;
+         frame.title='Spotify: альбом «'+album.title+'»';
+         frame.loading='lazy';
+         frame.setAttribute('allow','encrypted-media; fullscreen; picture-in-picture');
+         frame.setAttribute('referrerpolicy','strict-origin-when-cross-origin');
+         songs.appendChild(frame);
+       }
        active={button:open,host:songs,player:player,card:card};
      };
      openers[album.id]=function(){
