@@ -249,6 +249,7 @@
       lyrics=[];result[1].forEach(function(doc){var x=doc.data();x.id=doc.id;lyrics.push(x);});
       lyrics.sort(function(a,b){return name(a.title).localeCompare(name(b.title),'ru');});
       songOptions();
+      if(window.VMM_STYLE_LIBRARY)window.VMM_STYLE_LIBRARY.refresh();
       if(window.VMM_OFFLINE_LYRICS&&user)
         window.VMM_OFFLINE_LYRICS.cacheDataset(user.uid,catalog,lyrics);
       text(el('sync-status'),(result[0]?'Песен в каталоге: '+catalog.length:'Каталог временно недоступен')+' · сохранено текстов: '+lyrics.length+(navigator.onLine?' · в сети':' · офлайн'));
@@ -265,6 +266,7 @@
         return window.VMM_OFFLINE_LYRICS.cachedDataset(user.uid).then(function(saved){
           if(!saved||!Array.isArray(saved.catalog)||!Array.isArray(saved.lyrics))throw e;
           catalog=saved.catalog;lyrics=saved.lyrics;songOptions();
+          if(window.VMM_STYLE_LIBRARY)window.VMM_STYLE_LIBRARY.refresh();
           text(el('sync-status'),'Загружен личный офлайн-каталог · '+lyrics.length+' текстов');
           if(id){chooseVersion(id);}else if(songKey)chooseSong(songKey);
           return true;
@@ -637,6 +639,28 @@
     rememberedPanel:rememberedPanel,
     openData:function(){selectPanel('data');},
     getLyricsMeta:function(){return metadata();},
+    styleLibraryData:function(){
+      if(!authorized||!user)return [];
+      return lyrics.map(function(x){
+        var linked=songForLyric(x);
+        return {id:x.id,title:name(x.title),artist:name(linked?linked.artist:x.artist),
+          version:name(x.version),language:name(x.language),
+          sunoStyle:name(x.sunoStyle),sunoCues:name(x.sunoCues),
+          styleNotes:name(x.styleNotes),styleVerdict:name(x.styleVerdict)||'unrated'};
+      });
+    },
+    openLyricStyle:function(recordId){
+      if(!authorized||!user||!db)return false;
+      if(!confirmDiscard())return false;
+      var record=null;
+      for(var i=0;i<lyrics.length;i++)if(lyrics[i].id===recordId){record=lyrics[i];break;}
+      if(!record)return false;
+      var song=songForLyric(record),key=song?'catalog:'+song.id:'legacy:'+record.id;
+      songKey=key;
+      selectPanel('lyrics');renderSongChoices();chooseVersion(record.id);
+      el('lyric-suno-style-details').open=true;
+      return true;
+    },
     isLyricsDirty:isDirty,
     offlineAdminContext:function(){
       return authorized&&user&&db?{uid:user.uid,db:db}:null;
@@ -648,21 +672,31 @@
         meta:{title:metadata().title,upc:metadata().upc,
           catalogRow:metadata().catalogRow,language:metadata().language,
           version:metadata().version},
-        text:body().value,baseText:baseline,dirty:isDirty()};
+        text:body().value,baseText:baseline,
+        styles:stylesFromForm(),baseStyles:styleHelper().fields(baselineStyles),
+        dirty:isDirty()};
     },
-    offlineRestoreLyric:function(value,oldBaseline){
+    offlineRestoreLyric:function(value,oldBaseline,styleFields,originalStyles){
       if(!authorized||!songKey)return;
-      baseline=String(oldBaseline||'');body().value=String(value||'');
+      baseline=String(oldBaseline||'');
+      baselineStyles=styleHelper().fields(originalStyles);
+      body().value=String(value||'');
+      var f=styleHelper().fields(styleFields);
+      el('lyric-suno-style').value=f.sunoStyle;
+      el('lyric-suno-cues').value=f.sunoCues;
+      el('lyric-style-notes').value=f.styleNotes;
+      el('lyric-style-verdict').value=f.styleVerdict;
       refreshToolbar();
       text(el('save-message'),'Восстановлен локальный текст; он ожидает безопасной синхронизации.');
     },
-    offlineLyricSynced:function(key,meta,value,recordId){
-      if(songKey!==key||!metadata()||body().value!==value)return;
+    offlineLyricSynced:function(key,meta,value,recordId,styleFields){
+      if(songKey!==key||!metadata()||body().value!==value||
+         !styleHelper().equal(stylesFromForm(),styleFields))return;
       var active=metadata();
       if(titleKey(active.title)!==titleKey(meta.title)||
          titleKey(active.language)!==titleKey(meta.language)||
          titleKey(active.version)!==titleKey(meta.version))return;
-      baseline=value;refreshToolbar();
+      baseline=value;baselineStyles=styleHelper().fields(styleFields);refreshToolbar();
       text(el('save-message'),'Текст синхронизирован с облаком. Другие устройства смогут увидеть его после обновления.');
       updateLoaded(recordId).catch(function(){});
     },
