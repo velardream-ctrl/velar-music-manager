@@ -603,6 +603,7 @@
    copy.appendChild(create('h3','',item.title));
    if(item.subtitle)copy.appendChild(create('p','cms-release-artist',item.subtitle));
    if(item.description)copy.appendChild(create('p','cms-release-description',item.description));
+   if(item.searchDescription)copy.appendChild(create('p','cms-release-search-description',item.searchDescription));
    var actions=create('div','cms-release-actions'),media=officialEmbed(item.mediaUrl,item.mediaProvider,'release');
    var player=create('div','cms-release-player');
    // The existing cover is the video/player stage: do not add another
@@ -662,7 +663,54 @@
    copy.appendChild(actions);card.appendChild(copy);
    return card;
  }
- function releaseGallery(value){
+ // RUN-221: search only published, owner-approved song links and metadata.
+ function createSongDiscovery(page){
+   var searchApi=window.VELAR_PUBLIC_SONG_SEARCH;
+   if(!searchApi)return null;
+   var section=create('section','cms-song-discovery');
+   section.setAttribute('role','search');
+   var heading=create('h3','cms-song-discovery-title','Найти песню по имени или теме');
+   section.appendChild(heading);
+   var intro=create('p','cms-song-discovery-intro',
+     'Введите имя, повод или тему песни. Например: Миша, Михаил, свадьба или день рождения.');
+   section.appendChild(intro);
+   var field=create('input','cms-song-discovery-input');field.type='search';
+   field.placeholder='Имя, название или тема песни…';
+   field.setAttribute('aria-label','Поиск опубликованных песен по имени и теме');
+   field.autocomplete='off';section.appendChild(field);
+   var status=create('p','cms-song-discovery-status','');status.setAttribute('role','status');
+   status.setAttribute('aria-live','polite');section.appendChild(status);
+   var host=create('div','cms-song-discovery-results');section.appendChild(host);
+   var mounted=null;
+   function redraw(){
+     if(mounted){mounted.close();mounted=null;}
+     empty(host);
+     var q=String(field.value||'').trim();
+     if(q.length<2){status.textContent='Введите не менее двух символов для поиска.';return;}
+     var matches=searchApi.find(page,q,40);
+     status.textContent=matches.length?'Найдено песен: '+matches.length+
+       (matches.length===40?' (показаны первые 40)':''):
+       'По вашему запросу опубликованных песен пока не найдено.';
+     if(!matches.length)return;
+     if(window.VELAR_PUBLIC_SONGS&&window.VELAR_PUBLIC_SONGS.mount){
+       mounted=window.VELAR_PUBLIC_SONGS.mount(host,matches,{
+         prefix:'search',forceView:'rows',view:'rows',batch:40,keepOrder:true
+       });
+     }else{
+       // Safe basic links if advanced media UI is unavailable on an old device.
+       matches.forEach(function(item){
+         var link=create('a','cms-song-discovery-link',item.title+
+           (item.artist?' — '+item.artist:''));
+         link.href=item.url;link.rel='noopener noreferrer';link.target='_blank';
+         host.appendChild(link);
+       });
+     }
+   }
+   field.oninput=redraw;
+   redraw();
+   return section;
+ }
+ function releaseGallery(value,page){
    var target=byId('public-releases-cards');
    if(!target)return;
    if(!original['public-releases-cards'])original['public-releases-cards']={
@@ -671,6 +719,8 @@
    if(!shown.length){
      target.className=original['public-releases-cards'].css;
      target.innerHTML=original['public-releases-cards'].markup;
+     var emptySearch=createSongDiscovery(page);
+     if(emptySearch)target.appendChild(emptySearch);
      return;
    }
    empty(target);target.className='cms-release-showcase';
@@ -724,7 +774,9 @@
        grid.appendChild(create('p','cms-release-empty','Пока нет релизов в этой категории.'));
    }
    more.onclick=function(){limit+=6;paint();};
-   target.appendChild(filters);if(clips.length)target.appendChild(clipHost);target.appendChild(grid);target.appendChild(more);
+   target.appendChild(filters);
+   var discovery=createSongDiscovery(page);if(discovery)target.appendChild(discovery);
+   if(clips.length)target.appendChild(clipHost);target.appendChild(grid);target.appendChild(more);
    paint();
  }
 
@@ -1426,7 +1478,7 @@
    });
    section('artists',function(){cards('public-artists-cards',value.artists.cards,'artists',value.artists.featuredView,value.albums,value.artists.songViewMode||value.genres.songViewMode);});
    section('albums',function(){if(window.VELAR_ALBUMS&&window.VELAR_ALBUMS.render)window.VELAR_ALBUMS.render(value.albums);});
-   section('releases',function(){releaseGallery(value.releases);});
+   section('releases',function(){releaseGallery(value.releases,value);});
    section('playlists',function(){playlistGallery(value.releases);});
    // A new snapshot of another section must never restart an active radio iframe.
    var radioSignature=radioPlaybackSignature(value.releases.radio);
