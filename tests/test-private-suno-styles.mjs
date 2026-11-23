@@ -11,6 +11,8 @@ const lyrics='[Verse 1]\nПривет, Миша!\n\n[Chorus: huge male choir, re
 assert.equal(h.extractCues(lyrics),
   '[Chorus: huge male choir, reverb]\n[Guitar Solo]\n[Female whisper]');
 assert.equal(h.extractCues('[Verse 1]\n[Chorus]\n[Bridge]\n[Outro]'),'');
+assert.equal(h.extractCues('[Instrumental]\n[Verse 1]\n[Interlude]'),
+  '[Instrumental]\n[Interlude]');
 assert.equal(h.extractCues('ordinary [Verse] lyric'),'', 'Do not move inline literal brackets');
 assert.equal(h.mergeCues('[Guitar Solo]','[Guitar Solo]\n[Female whisper]'),
   '[Guitar Solo]\n[Female whisper]');
