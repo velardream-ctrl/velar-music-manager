@@ -35,7 +35,9 @@ let allowDiscard=false,asked=0;
 const window={VELAR_FIREBASE_CONFIG:null,addEventListener(){},
  confirm(){asked++;return allowDiscard;},
  VMM_LYRICS_TOOLS:{onRecordLoaded(){},refreshPreview(){},notifyDirty(){}}};
-vm.runInNewContext(code,{document,window,navigator:{onLine:true},Promise,Object,Number,Array,String,Math,Date,Error},{timeout:1000});
+const context={document,window,navigator:{onLine:true},Promise,Object,Number,Array,String,Math,Date,Error};
+vm.runInNewContext(read('studio/suno-style-data.js'),context,{timeout:1000});
+vm.runInNewContext(code,context,{timeout:1000});
 const t=window.__test;
 const catalog=[
  {id:'a',title:'Дикая вишня',artist:'Velar',sourceRow:1},
