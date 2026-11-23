@@ -321,9 +321,13 @@
     if(provider!=='spotify'&&provider!=='youtube'&&provider!=='appleMusic')
       throw new Error('Лучшая песня '+index+': можно использовать только Spotify, YouTube или Apple Music.');
     var track={title:plain(x.title||'','Название песни '+index,110,true),
-      provider:provider,url:songUrl(x.url,provider),
-      searchDescription:plain(x.searchDescription||'','О чём песня '+index,280,false),
-      searchTags:plain(x.searchTags||'','Поисковые теги песни '+index,640,false)};
+      provider:provider,url:songUrl(x.url,provider)};
+    // Optional fields: avoid bloating large published collections and preserve
+    // the exact legacy shape when no metadata has been authored.
+    var searchDescription=plain(x.searchDescription||'','О чём песня '+index,280,false),
+        searchTags=plain(x.searchTags||'','Поисковые теги песни '+index,640,false);
+    if(searchDescription)track.searchDescription=searchDescription;
+    if(searchTags)track.searchTags=searchTags;
     if(!track.url)throw new Error('Для песни '+index+' нужна прямая ссылка на трек '+provider+'.');
     if(x.alternateUrl||x.alternateProvider){
       var secondary=plain(x.alternateProvider||'','Вторая площадка песни '+index,20,true);
@@ -585,9 +589,11 @@
     if(!link)throw new Error('Для песни нужна прямая ссылка Spotify/YouTube/Apple Music.');
     var track={title:plain(raw.title||'','Название песни '+i,110,true),
       artist:plain(raw.artist||'','Исполнитель '+i,100,false),
-      searchDescription:plain(raw.searchDescription||'','О чём песня '+i,280,false),
-      searchTags:plain(raw.searchTags||'','Поисковые теги песни '+i,640,false),
       provider:provider,url:link};
+    var searchDescription=plain(raw.searchDescription||'','О чём песня '+i,280,false),
+        searchTags=plain(raw.searchTags||'','Поисковые теги песни '+i,640,false);
+    if(searchDescription)track.searchDescription=searchDescription;
+    if(searchTags)track.searchTags=searchTags;
     if(raw.alternateUrl||raw.alternateProvider){
       var alt=plain(raw.alternateProvider||'','Вторая площадка песни '+i,20,true);
       if(!valid[alt]||alt===provider)
@@ -987,8 +993,10 @@
         (image&&!/^data:image\/(webp|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(image)))
         throw new Error('Обложка релиза: сжатое WebP/JPEG до 90 КБ.');
       result.kind=kind;result.spotlight=spotlight;result.mediaProvider=provider;
-      result.searchDescription=plain(x.searchDescription||'','О чём релиз '+index,280,false);
-      result.searchTags=plain(x.searchTags||'','Поисковые теги релиза '+index,640,false);
+      var searchDescription=plain(x.searchDescription||'','О чём релиз '+index,280,false),
+          searchTags=plain(x.searchTags||'','Поисковые теги релиза '+index,640,false);
+      if(searchDescription)result.searchDescription=searchDescription;
+      if(searchTags)result.searchTags=searchTags;
       result.mediaUrl=media;result.imageData=image;
     }
     return result;
