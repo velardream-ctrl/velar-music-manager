@@ -899,3 +899,32 @@ body.vmm-print-open{overflow:hidden}
 #panel-landing .landing-album-match-input{display:block;width:100%;min-height:115px;resize:vertical}
 #panel-landing .landing-album-match-results{max-height:340px;overflow:auto;overflow-wrap:anywhere}
 #panel-landing .landing-album-match-results p{margin:.4rem 0}
+
+/* RUN-222: collapsed private Suno style cabinet (old iPad and mobile friendly). */
+.vmm-style-details{margin:17px 0 15px;border:1px solid rgba(229,198,137,.38);border-radius:15px;background:#111d36;overflow:hidden}
+.vmm-style-details>summary{list-style-position:inside;cursor:pointer;padding:14px 17px;color:#f0d397;font-weight:680;line-height:1.5}
+.vmm-style-details[open]>summary{border-bottom:1px solid rgba(229,198,137,.25)}
+.vmm-style-count{color:#bac9db;font-size:.83rem;font-weight:400}
+.vmm-style-details-body{padding:16px 18px 20px}
+.vmm-style-details-body label{display:block;color:#e9dac0;font-weight:600;font-size:.91rem;margin:15px 0 7px}
+.vmm-style-details-body textarea,.vmm-style-details-body select,.vmm-style-details-body input{
+ display:block;width:100%;max-width:100%;min-height:44px;
+ padding:10px 12px;background:#0b1730;color:#f7f3eb;
+ border:1px solid #607ba2;border-radius:9px;font:inherit;box-sizing:border-box
+}
+.vmm-style-details-body textarea{min-height:93px;resize:vertical;line-height:1.48}
+.vmm-style-details-body input:focus,.vmm-style-details-body textarea:focus,.vmm-style-details-body select:focus{outline:2px solid #e9c786;outline-offset:2px}
+.vmm-style-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:11px;margin:14px 0}
+.vmm-style-card{border:1px solid rgba(223,191,132,.3);border-radius:13px;background:#182846;padding:15px;min-width:0}
+.vmm-style-card h4{font:400 1.11rem/1.35 Georgia,serif;color:#f5deb0;margin:0 0 9px;overflow-wrap:anywhere}
+.vmm-style-card-summary{color:#bccbe2;font-size:.83rem;margin:0 0 8px}
+.vmm-style-card-detail>summary{cursor:pointer;color:#f3d59b;font-size:.91rem;margin-bottom:10px}
+.vmm-style-card-detail strong{display:block;margin:10px 0 4px;font-size:.83rem}
+.vmm-style-pre{white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-height:180px;overflow:auto;
+ background:#0b1730;color:#e0e6f1;padding:12px;border-radius:9px;font:inherit;font-size:.81rem}
+.vmm-style-song{border-top:1px solid rgba(225,193,130,.21);padding:9px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.vmm-style-song span{flex:1 1 150px;overflow-wrap:anywhere;font-size:.84rem}
+.vmm-style-song button,.vmm-style-copy{border-radius:9px;min-height:40px;padding:8px 12px;font-size:.86rem}
+.vmm-style-song-note{flex-basis:100%;margin:0;font-size:.83rem;color:#c5d1e3}
+#style-library-export{margin:13px 0}
+@media(max-width:480px){.vmm-style-details>summary{padding:12px}.vmm-style-details-body{padding:12px}}
