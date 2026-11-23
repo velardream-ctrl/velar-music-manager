@@ -21,6 +21,8 @@ let allowDiscard=false;
 const window={VELAR_FIREBASE_CONFIG:null,addEventListener(){},confirm(){return allowDiscard;},
  VMM_LYRICS_TOOLS:{onRecordLoaded(){},refreshPreview(){},notifyDirty(){}}};
 const ctx={window,document,navigator:{onLine:true},Promise,Array,Object,Number,String,Math,Date,Error,parseInt,isFinite};
+const styleSource=fs.readFileSync(new URL('../studio/suno-style-data.js',import.meta.url),'utf8');
+vm.runInNewContext(styleSource,ctx,{timeout:1000});
 vm.runInNewContext(script,ctx,{timeout:1000});
 const t=window.__test;
 const catalog=[
