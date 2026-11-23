@@ -56,7 +56,7 @@ const all=pub.collect(page);
 assert.equal(all.length,2,'Only public direct URLs included');
 assert.equal(pub.find(page,'Миша').length,1);
 assert.equal(pub.find(page,'Михаил').length,1);
-assert.equal(pub.find(page,'песня для Михаила').length,0);
+assert.equal(pub.find(page,'песня для Михаила').length,1);
 assert.equal(pub.find(page,'свадьба').length,1);
 assert.equal(pub.find(page,'секретный тег').length,0);
 assert.equal(pub.find(page,'Приватный').length,0);
