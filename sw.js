@@ -1,7 +1,7 @@
 /* VELAR public shell only. NEVER cache authenticated API responses or personal lyrics here. ES5 compatible. */
 'use strict';
 var CACHE_PREFIX = 'velar-public-shell-';
-var CACHE_NAME = CACHE_PREFIX + 'v100' + '-shared-skins-groups2-owner-skin-song' + '-smart201-clips' + '-progress184' + '-analytics186' + '-velar188' + '-tab189' + '-tab189' + '-bubble190-typing191-ai196-gateway199-live202-lab203-usage204-forum-run205-classic-playlist-run206-shared-resonance-run207-responsive-album210-order211-navigation212';
+var CACHE_NAME = CACHE_PREFIX + 'v99' + '-shared-skins-groups2-owner-skin-song' + '-smart201-clips' + '-progress184' + '-analytics186' + '-velar188' + '-tab189' + '-tab189' + '-bubble190-typing191-ai196-gateway199-live202-lab203-usage204-forum-run205-classic-playlist-run206-shared-resonance-run207-responsive-album210-order211-navigation212';
 /* Only private studio SOURCE FILES are cached. Never cache Firestore, Drive files,
    authenticated responses, user lyrics or audio through this Service Worker. */
 var STUDIO_PREFIX='velar-studio-shell-';
