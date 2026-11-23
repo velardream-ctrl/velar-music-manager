@@ -49,6 +49,14 @@ a:focus-visible{outline:2px solid #f1d9ac;outline-offset:4px}
 .genre-tags{display:flex;gap:11px;flex-wrap:wrap;justify-content:flex-start}
 .genre-tags span{display:inline-block;color:#ebdcc5;background:rgba(33,47,80,.7);border:1px solid rgba(230,210,174,.27);border-radius:100px;padding:8px 16px;font-size:.88rem}
 .about-section{border-bottom:0}
+/* RUN-216: Explicit public heading matches the top-menu destination.
+   Preserve #about-title as the CMS-editable project / label name. */
+.about-section .section-heading .about-brand-heading{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(1.15rem,3vw,1.45rem);
+  font-weight:400;line-height:1.35;letter-spacing:.045em;
+  color:#e7c992;margin:0 0 17px;
+}
 .construction{border-left:2px solid #cfb286;padding:12px 18px}
 .site-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;max-width:1100px;margin:auto;border-top:1px solid rgba(230,212,183,.13);padding:24px 36px 45px;color:#92a0ba;font-size:.76rem}
 .footer-brand{display:flex;align-items:center;gap:8px;color:#e4d1b3;letter-spacing:.12em;font-size:.8rem;font-weight:700}
