@@ -349,7 +349,9 @@
     e.preventDefault();
     if(saveBusy)return;
     if(!authorized||!user||!db){text(el('save-message'),'Недостаточно прав.');return;}
-    var meta=metadata(),current=body().value;
+    var meta=metadata(),current=body().value,styleFields;
+    try{styleFields=styleHelper().validate(stylesFromForm());}
+    catch(err){text(el('save-message'),'Ошибка полей стиля: '+err.message);return;}
     if(!meta||!songKey||!name(current)){text(el('save-message'),'Сначала выбери песню и введи её текст.');return;}
     if(!navigator.onLine){
       if(!window.VMM_OFFLINE_LYRICS){text(el('save-message'),'Локальное хранилище недоступно. Скопируй текст.');return;}
@@ -386,16 +388,22 @@
     db.runTransaction(function(tx){
       if(isEdit)return tx.get(ref).then(function(snapshot){
         if(!snapshot.exists)throw new Error('Версия удалена на другом устройстве. Сохранение отменено.');
-        if(String(snapshot.data().text||'')!==before)throw new Error('Этот текст изменился на другом устройстве. Скопируй свои правки и обнови страницу, чтобы избежать потери.');
-        tx.update(ref,{text:current,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:user.uid});
+        if(String(snapshot.data().text||'')!==before||
+           !styleHelper().equal(snapshot.data(),baselineStyles))
+          throw new Error('Текст или стиль изменён на другом устройстве. Скопируй свои правки и обнови страницу.');
+        var update={text:current,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:user.uid};
+        Object.keys(styleFields).forEach(function(k){update[k]=styleFields[k];});
+        tx.update(ref,update);
         tx.set(audit,{time:firebase.firestore.FieldValue.serverTimestamp(),operation:'Текст песни изменён',subject:meta.title,result:[meta.language,meta.version].join(' · '),referenceId:recordId,actor:user.uid});
       });
-      tx.set(ref,{title:meta.title,upc:meta.upc||'',catalogRow:meta.catalogRow||'',language:meta.language||'Русский',version:meta.version||'Основная',text:current,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:user.uid});
+      tx.set(ref,{title:meta.title,upc:meta.upc||'',catalogRow:meta.catalogRow||'',language:meta.language||'Русский',version:meta.version||'Основная',text:current,
+        sunoStyle:styleFields.sunoStyle,sunoCues:styleFields.sunoCues,
+        styleNotes:styleFields.styleNotes,styleVerdict:styleFields.styleVerdict,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:user.uid});
       tx.set(audit,{time:firebase.firestore.FieldValue.serverTimestamp(),operation:'Текст песни создан',subject:meta.title,result:[meta.language,meta.version].join(' · '),referenceId:recordId,actor:user.uid});
       return Promise.resolve();
     }).then(function(){
       // Do not silently discard the user's current editor if a later read fails.
-      baseline=current;saveBusy=false;body().readOnly=false;refreshToolbar();
+      baseline=current;baselineStyles=styleHelper().fields(styleFields);saveBusy=false;body().readOnly=false;refreshToolbar();
       if(window.VMM_OFFLINE_LYRICS)window.VMM_OFFLINE_LYRICS.syncAll();
       text(el('save-message'),'Сохранено. Связь с песней сохранена; изменение записано в журнал.');
       updateLoaded(recordId).catch(function(){text(el('save-message'),'Запись сохранена, но список пока не обновился. Содержимое редактора не потеряно.');});
@@ -593,6 +601,16 @@
   body().addEventListener('input',refreshToolbar);
   body().addEventListener('input',function(){
     if(window.VMM_OFFLINE_LYRICS)window.VMM_OFFLINE_LYRICS.edited();
+  });
+  ['lyric-suno-style','lyric-suno-cues','lyric-style-notes','lyric-style-verdict'].forEach(function(id){
+    el(id).addEventListener('input',function(){
+      refreshToolbar();
+      if(window.VMM_OFFLINE_LYRICS)window.VMM_OFFLINE_LYRICS.edited();
+    });
+    el(id).addEventListener('change',function(){
+      refreshToolbar();
+      if(window.VMM_OFFLINE_LYRICS)window.VMM_OFFLINE_LYRICS.edited();
+    });
   });
   el('print-lyric').onclick=function(){if(window.VMM_LYRICS_TOOLS)window.VMM_LYRICS_TOOLS.print();else text(el('save-message'),'Печать пока не загружена.');};
   el('share-lyric').onclick=function(){if(window.VMM_LYRICS_TOOLS&&window.VMM_LYRICS_TOOLS.share)window.VMM_LYRICS_TOOLS.share();else text(el('save-message'),'Функция передачи пока недоступна.');};
