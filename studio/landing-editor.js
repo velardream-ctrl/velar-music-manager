@@ -2637,6 +2637,69 @@
    details.appendChild(add);
    card.appendChild(details);
  }
+ // RUN-221: copy metadata ONLY to already curated public draft entries.
+ // Exact song title AND one confirmed direct URL must match. No lyrics/IDs copied.
+ function syncPublicSearchMetadata(){
+   if(!catalogLoaded){info('Сначала загрузи закрытый каталог.');return;}
+   var meta=window.VELAR_SONG_SEARCH_META;
+   if(!meta){info('Не загрузился модуль тегов. Обнови Studio.');return;}
+   var updated=0,unmatched=0,ambiguous=0,examined=0;
+   var prepared=(catalogArtists||[]).map(function(song){
+     var links=song.links||{},urls={};
+     ['spotify','youtube','appleMusic'].forEach(function(k){
+       var url=API.songUrl(links[k]||(k==='appleMusic'?links.apple:'')||'',k);
+       if(url)urls[url]=true;
+     });
+     return {song:song,urls:urls};
+   });
+   function fold(v){return String(v||'').trim().toLocaleLowerCase('ru').replace(/ё/g,'е');}
+   function sync(row,isRelease){
+     if(!row||!row.title)return;
+     var candidates=[],urls=[];
+     function push(provider,url){
+       var safe=API.songUrl(url||'',provider||'');
+       if(safe)urls.push(safe);
+     }
+     if(isRelease)push(row.mediaProvider,row.mediaUrl);
+     else{
+       push(row.provider,row.url);
+       push(row.alternateProvider,row.alternateUrl);
+       push(row.thirdProvider,row.thirdUrl);
+     }
+     if(!urls.length)return;
+     examined++;
+     prepared.forEach(function(it){
+       if(fold(it.song.title)!==fold(row.title))return;
+       if(urls.some(function(u){return it.urls[u];}))candidates.push(it.song);
+     });
+     if(candidates.length!==1){
+       if(candidates.length>1)ambiguous++;else unmatched++;
+       return;
+     }
+     var song=candidates[0],tags='',description='';
+     try{tags=meta.normalizeTags(song.searchTags||'');
+       description=meta.normalizeDescription(song.searchDescription||'');}
+     catch(error){ambiguous++;return;}
+     if(tags&&tags!==row.searchTags){row.searchTags=tags;updated++;}
+     if(description&&description!==row.searchDescription){row.searchDescription=description;updated++;}
+   }
+   (data.releases.cards||[]).forEach(function(row){sync(row,true);});
+   (data.artists.cards||[]).forEach(function(a){
+     (a.featuredTracks||[]).forEach(function(row){sync(row,false);});
+   });
+   [data.albums.entries,data.genres.entries,
+     data.genres.languages.entries,data.genres.topics.entries].forEach(function(groups){
+       (groups||[]).forEach(function(group){
+         (group.tracks||[]).forEach(function(row){sync(row,false);});
+       });
+   });
+   if(!updated){info('Нет новых тегов для переноса. Проверено '+examined+
+     ' публичных связей; без пары: '+unmatched+', неоднозначных: '+ambiguous+'.');return;}
+   render();updateButtons();
+   info('В ЧЕРНОВИК перенесено '+updated+' полей темы/тегов. Проверено '+examined+
+     ' связей, без пары: '+unmatched+', неоднозначных: '+ambiguous+
+     '. Проверь черновик, сохрани и отдельно опубликуй.');
+ }
  function cardFields(parent,key){
    var list=data[key].cards,wrap=document.createElement('div');wrap.className='landing-cards';parent.appendChild(wrap);
    list.forEach(function(item,index){
@@ -2695,6 +2758,11 @@
      wrap.appendChild(card);
    });
    if(key==='releases'){
+     var sync=button('↻ Обновить темы и теги из каталога (только черновик)',function(){
+       syncPublicSearchMetadata();
+     },'landing-add');
+     sync.disabled=!catalogLoaded;
+     parent.appendChild(sync);
      releaseCatalogPicker(parent);
      var add=button('+ Добавить релиз',function(){
        if(list.length>=12){info('В одном разделе допускается максимум 12 карточек.');return;}
