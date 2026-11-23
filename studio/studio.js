@@ -35,6 +35,13 @@
     baselineStyles=styleHelper().fields(f);
     styleIndicator();
   }
+  function lockLyricEditor(busy){
+    body().readOnly=busy;
+    ['lyric-suno-style','lyric-suno-cues','lyric-style-notes'].forEach(function(id){
+      el(id).readOnly=busy;
+    });
+    el('lyric-style-verdict').disabled=busy;
+  }
   function styleIndicator(){
     var f=stylesFromForm(),pieces=[];
     if(f.sunoStyle.trim())pieces.push('промпт');
@@ -323,6 +330,8 @@
       el('forum-admin-frame').removeAttribute('src');
       if(window.VMM_ANALYTICS_REPORT)window.VMM_ANALYTICS_REPORT.reset();
       lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';baselineStyles=null;songKey='';
+      if(window.VMM_STYLE_LIBRARY)window.VMM_STYLE_LIBRARY.clear();
+      if(window.VMM_STYLE_LIBRARY)window.VMM_STYLE_LIBRARY.clear();
       if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
       if(window.VMM_LANDING&&window.VMM_LANDING.reset)window.VMM_LANDING.reset();
     }
@@ -364,15 +373,15 @@
     }
     if(!isDirty()){text(el('save-message'),'Изменений для сохранения нет.');return;}
     if(window.VMM_OFFLINE_LYRICS){
-      saveBusy=true;body().readOnly=true;refreshToolbar();
+      saveBusy=true;lockLyricEditor(true);refreshToolbar();
       text(el('save-message'),'Сохраняем локально и проверяем очередь синхронизации…');
       window.VMM_OFFLINE_LYRICS.saveNow().then(function(){
         return window.VMM_OFFLINE_LYRICS.syncAll();
       }).then(function(){
-        saveBusy=false;body().readOnly=false;refreshToolbar();
+        saveBusy=false;lockLyricEditor(false);refreshToolbar();
         if(isDirty())text(el('save-message'),'Локальная копия сохранена. Если облако изменилось, сравни версии перед продолжением.');
       }).catch(function(err){
-        saveBusy=false;body().readOnly=false;refreshToolbar();
+        saveBusy=false;lockLyricEditor(false);refreshToolbar();
         text(el('save-message'),'Локальная копия/синхронизация: '+err.message);
       });
       return;
@@ -385,7 +394,7 @@
     }
     var ref=isEdit?db.collection('vmm_lyrics').doc(selectedRecord.id):db.collection('vmm_lyrics').doc();
     var audit=db.collection('vmm_audit').doc(),before=baseline,recordId=ref.id;
-    saveBusy=true;body().readOnly=true;refreshToolbar();
+    saveBusy=true;lockLyricEditor(true);refreshToolbar();
     text(el('save-message'),'Проверяем актуальную версию и сохраняем…');
     db.runTransaction(function(tx){
       if(isEdit)return tx.get(ref).then(function(snapshot){
@@ -405,12 +414,12 @@
       return Promise.resolve();
     }).then(function(){
       // Do not silently discard the user's current editor if a later read fails.
-      baseline=current;baselineStyles=styleHelper().fields(styleFields);saveBusy=false;body().readOnly=false;refreshToolbar();
+      baseline=current;baselineStyles=styleHelper().fields(styleFields);saveBusy=false;lockLyricEditor(false);refreshToolbar();
       if(window.VMM_OFFLINE_LYRICS)window.VMM_OFFLINE_LYRICS.syncAll();
       text(el('save-message'),'Сохранено. Связь с песней сохранена; изменение записано в журнал.');
       updateLoaded(recordId).catch(function(){text(el('save-message'),'Запись сохранена, но список пока не обновился. Содержимое редактора не потеряно.');});
     }).catch(function(err){
-      saveBusy=false;body().readOnly=false;refreshToolbar();
+      saveBusy=false;lockLyricEditor(false);refreshToolbar();
       text(el('save-message'),'Не удалось сохранить: '+err.message);
     });
   }
