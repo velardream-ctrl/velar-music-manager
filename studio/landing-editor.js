@@ -2759,7 +2759,12 @@
    });
    if(key==='releases'){
      var sync=button('↻ Обновить темы и теги из каталога (только черновик)',function(){
-       syncPublicSearchMetadata();
+       if(catalogLoading){info('Каталог ещё загружается.');return;}
+       info('Обновляем подтверждённые данные каталога перед переносом тегов…');
+       loadCatalogArtists(true).then(function(){
+         if(!catalogLoaded||catalogError){info('Не удалось обновить каталог: '+(catalogError||'попробуй позже'));return;}
+         syncPublicSearchMetadata();
+       });
      },'landing-add');
      sync.disabled=!catalogLoaded;
      parent.appendChild(sync);
