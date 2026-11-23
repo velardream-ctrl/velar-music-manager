@@ -156,8 +156,8 @@
      clear(list);list.className+=' public-song-compact';
      var toolbar=el('div','public-song-compact-toolbar');
      var search=el('input','public-song-compact-search');
-     search.type='search';search.placeholder='Найти песню или исполнителя…';
-     search.setAttribute('aria-label','Поиск песни по названию или исполнителю');
+     search.type='search';search.placeholder='Название, имя или тема песни…';
+     search.setAttribute('aria-label','Поиск песни по названию, имени или теме');
      var state=el('span','public-song-compact-status');
      toolbar.appendChild(search);toolbar.appendChild(state);
      var rows=el('div','public-song-compact-results');
@@ -173,7 +173,11 @@
        if(current)current.close();
        clear(rows);filtered=tracks.filter(function(track){
          var needle=String(search.value||'').trim().toLocaleLowerCase('ru').replace(/ё/g,'е');
-         return !needle||(String(track.title||'')+' '+String(track.artist||'')).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(needle)>=0;
+         var meta=window.VELAR_SONG_SEARCH_META;
+         if(meta&&meta.matches)return meta.matches(track,needle);
+         return !needle||(String(track.title||'')+' '+String(track.artist||'')+' '+
+           String(track.searchTags||'')+' '+String(track.searchDescription||''))
+           .toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(needle)>=0;
        });
        var totalPages=Math.max(1,Math.ceil(filtered.length/size));
        currentPage=Math.min(Math.max(0,currentPage),totalPages-1);
