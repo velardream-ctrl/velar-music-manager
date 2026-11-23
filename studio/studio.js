@@ -405,18 +405,18 @@
         var update={text:current,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:user.uid};
         Object.keys(styleFields).forEach(function(k){update[k]=styleFields[k];});
         tx.update(ref,update);
-        tx.set(audit,{time:firebase.firestore.FieldValue.serverTimestamp(),operation:'Текст песни изменён',subject:meta.title,result:[meta.language,meta.version].join(' · '),referenceId:recordId,actor:user.uid});
+        tx.set(audit,{time:firebase.firestore.FieldValue.serverTimestamp(),operation:'Текст песни / стиль Suno изменён',subject:meta.title,result:[meta.language,meta.version].join(' · '),referenceId:recordId,actor:user.uid});
       });
       tx.set(ref,{title:meta.title,upc:meta.upc||'',catalogRow:meta.catalogRow||'',language:meta.language||'Русский',version:meta.version||'Основная',text:current,
         sunoStyle:styleFields.sunoStyle,sunoCues:styleFields.sunoCues,
         styleNotes:styleFields.styleNotes,styleVerdict:styleFields.styleVerdict,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:user.uid});
-      tx.set(audit,{time:firebase.firestore.FieldValue.serverTimestamp(),operation:'Текст песни создан',subject:meta.title,result:[meta.language,meta.version].join(' · '),referenceId:recordId,actor:user.uid});
+      tx.set(audit,{time:firebase.firestore.FieldValue.serverTimestamp(),operation:'Текст песни / стиль Suno создан',subject:meta.title,result:[meta.language,meta.version].join(' · '),referenceId:recordId,actor:user.uid});
       return Promise.resolve();
     }).then(function(){
       // Do not silently discard the user's current editor if a later read fails.
       baseline=current;baselineStyles=styleHelper().fields(styleFields);saveBusy=false;lockLyricEditor(false);refreshToolbar();
       if(window.VMM_OFFLINE_LYRICS)window.VMM_OFFLINE_LYRICS.syncAll();
-      text(el('save-message'),'Сохранено. Связь с песней сохранена; изменение записано в журнал.');
+      text(el('save-message'),'Текст и карточка Suno сохранены в личной базе. Изменение записано в журнал.');
       updateLoaded(recordId).catch(function(){text(el('save-message'),'Запись сохранена, но список пока не обновился. Содержимое редактора не потеряно.');});
     }).catch(function(err){
       saveBusy=false;lockLyricEditor(false);refreshToolbar();
@@ -654,8 +654,8 @@
         var linked=songForLyric(x);
         return {id:x.id,title:name(x.title),artist:name(linked?linked.artist:x.artist),
           version:name(x.version),language:name(x.language),
-          sunoStyle:name(x.sunoStyle),sunoCues:name(x.sunoCues),
-          styleNotes:name(x.styleNotes),styleVerdict:name(x.styleVerdict)||'unrated'};
+          sunoStyle:stylesFromRecord(x).sunoStyle,sunoCues:stylesFromRecord(x).sunoCues,
+          styleNotes:stylesFromRecord(x).styleNotes,styleVerdict:stylesFromRecord(x).styleVerdict};
       });
     },
     openLyricStyle:function(recordId){
