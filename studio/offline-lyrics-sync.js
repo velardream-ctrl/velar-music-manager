@@ -112,7 +112,7 @@
        }
        var audit=db.collection('vmm_audit').doc();
        tx.set(audit,{time:firebase.firestore.FieldValue.serverTimestamp(),
-         operation:p.isEdit?'Текст песни изменён (офлайн)':'Текст песни создан (офлайн)',
+         operation:p.isEdit?'Текст / стиль Suno изменён (офлайн)':'Текст / стиль Suno создан (офлайн)',
          subject:p.meta.title,result:p.meta.language+' · '+p.meta.version,
          referenceId:p.recordId,actor:uid});
        return 'written';
