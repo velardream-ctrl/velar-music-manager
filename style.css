@@ -2595,3 +2595,23 @@ html.legacy-ipad-crystal [data-many-stages][data-journey-phase] .crystal-journey
 /* Official Spotify tracklist appears only after a visitor opens the album. */
 .cms-album-spotify-label{margin:12px 0 8px;color:#e8cb99;font-size:.86rem}
 .cms-album-spotify-embed{display:block;width:100%;height:360px;border:0;border-radius:12px;background:#111b2b;max-width:100%}
+
+/* RUN-221: song search by subject/name, published songs only. */
+.cms-song-discovery{
+  margin:18px 0 25px;padding:clamp(15px,3vw,24px);
+  border:1px solid rgba(226,193,135,.34);border-radius:18px;
+  background:linear-gradient(140deg,rgba(30,46,76,.9),rgba(11,22,43,.97));
+}
+.cms-song-discovery-title{font:400 clamp(1.35rem,3.7vw,1.75rem)/1.25 Georgia,serif;color:#f4d6a2;margin:0 0 8px}
+.cms-song-discovery-intro{color:#c1cce0;line-height:1.5;margin:0 0 12px}
+.cms-song-discovery-input{
+  display:block;box-sizing:border-box;width:100%;min-height:48px;
+  border:1px solid #7086a7;border-radius:11px;background:#101e38;
+  color:#f8f5ed;font:inherit;font-size:1rem;padding:10px 14px
+}
+.cms-song-discovery-input:focus{outline:2px solid #eccb89;outline-offset:2px}
+.cms-song-discovery-status{font-size:.87rem;color:#c3d5ec;margin:10px 0}
+.cms-song-discovery-results:empty{display:none}
+.cms-song-discovery-results .public-song-list{margin-top:12px}
+.cms-song-discovery-link{display:block;padding:9px 0;color:#f1d49a;text-decoration:underline}
+.cms-release-search-description{font-size:.88rem;line-height:1.5;color:#dfca9b;margin:7px 0 10px}
