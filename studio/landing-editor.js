@@ -667,7 +667,8 @@
      var links=t.links||{},spotify=songUrl(links.spotify||'','spotify'),
        youtube=songUrl(links.youtube||'','youtube'),appleMusic=songUrl(links.appleMusic||links.apple||'','appleMusic');
      if(spotify||youtube||appleMusic)options.push({title:String(t.title||'Без названия'),
-       id:t.id,spotify:spotify,youtube:youtube,appleMusic:appleMusic});
+       id:t.id,spotify:spotify,youtube:youtube,appleMusic:appleMusic,
+       searchTags:String(t.searchTags||''),searchDescription:String(t.searchDescription||'')});
    });
    if(!options.length){
      var empty=document.createElement('p');empty.className='sync-note';
@@ -758,7 +759,9 @@
          var enabled=['spotify','youtube','appleMusic'].filter(function(k){return k==='spotify'?sOn:k==='youtube'?yOn:aOn;});
          var primary=old&&enabled.indexOf(old.provider)>=0?old.provider:enabled[0];
          var rest=enabled.filter(function(k){return k!==primary;});
-         var raw={title:old?old.title:t.title,provider:primary,url:t[primary]};
+         var raw={title:old?old.title:t.title,provider:primary,url:t[primary],
+           searchTags:t.searchTags||old&&old.searchTags||'',
+           searchDescription:t.searchDescription||old&&old.searchDescription||''};
          if(rest[0]){raw.alternateProvider=rest[0];raw.alternateUrl=t[rest[0]];}
          if(rest[1]){raw.thirdProvider=rest[1];raw.thirdUrl=t[rest[1]];}
          var clean=API.featuredTrack(raw,foundAt<0?selected.length+1:foundAt+1);
@@ -850,7 +853,7 @@
      parent.appendChild(wrap);return;
    }
    var search=document.createElement('input');search.type='search';search.className='landing-release-search';
-   search.placeholder='Название или артист';search.setAttribute('aria-label','Найти песню в каталоге');wrap.appendChild(search);
+   search.placeholder='Название, имя или тема';search.setAttribute('aria-label','Найти песню по названию, имени или теме');wrap.appendChild(search);
    var choices=document.createElement('select');choices.className='landing-release-select';
    choices.setAttribute('aria-label','Песня для добавления');wrap.appendChild(choices);
    var sources=document.createElement('select');sources.className='landing-release-select';
@@ -860,6 +863,7 @@
      var urls=song.links||{},spotify=API.releaseMediaUrl(urls.spotify||'','spotify'),
        youtube=API.releaseMediaUrl(urls.youtube||'','youtube');
      if(spotify||youtube)songs.push({title:String(song.title||''),artist:String(song.artist||''),
+       searchTags:String(song.searchTags||''),searchDescription:String(song.searchDescription||''),
        spotify:spotify,youtube:youtube});
    });
    // Alphabetize the entire protected catalog, not just the first search results.
@@ -875,7 +879,7 @@
      var q=String(search.value||'').toLocaleLowerCase('ru').replace(/ё/g,'е').trim();
      var count=0;
      songs.forEach(function(song,i){
-       if(q&&(song.title+' '+song.artist).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)<0)return;
+       if(q&&(song.title+' '+song.artist+' '+song.searchTags+' '+song.searchDescription).toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)<0)return;
        if(count++>=60)return;
        var option=document.createElement('option');option.value=String(i);
        option.textContent=song.title+' · '+song.artist;choices.appendChild(option);
@@ -896,6 +900,8 @@
      var item=API.blankCard();
      item.title=row.title;item.subtitle=row.artist;item.kind=provider==='youtube'?'video':'single';
      item.mediaProvider=provider;item.mediaUrl=url;item.url=url;item.spotlight='none';
+     // Copy only approved public metadata for this selected track; never private lyrics.
+     item.searchTags=row.searchTags||'';item.searchDescription=row.searchDescription||'';
      item.visible=false;
      data.releases.cards.push(item);render();
      info('Релиз добавлен в черновик (пока скрыт). Проверь тип, обложку и отметь «Показывать».');
@@ -1222,6 +1228,7 @@
        appleMusic=API.songUrl(links.appleMusic||'','appleMusic');
      if(spotify||youtube||appleMusic)rows.push({
        title:String(song.title||'Без названия'),artist:String(song.artist||''),
+       searchTags:String(song.searchTags||''),searchDescription:String(song.searchDescription||''),
        spotify:spotify,youtube:youtube,appleMusic:appleMusic
      });
    });
@@ -1263,6 +1270,7 @@
  }
  function attachedBuildSong(song,mode,sources){
    var parts=String(mode||'').split('+'),raw={title:song.title,artist:song.artist,
+     searchTags:song.searchTags||'',searchDescription:song.searchDescription||'',
      provider:parts[0],url:sources[parts[0]]||''};
    if(parts[1]){raw.alternateProvider=parts[1];raw.alternateUrl=sources[parts[1]]||'';}
    if(parts[2]){raw.thirdProvider=parts[2];raw.thirdUrl=sources[parts[2]]||'';}
@@ -1285,6 +1293,8 @@
    if(!old&&target.tracks.length>=300)throw new Error('Максимум 300 песен на подборку.');
    if(old){
      old.title=clean.title;old.artist=clean.artist;old.provider=clean.provider;old.url=clean.url;
+     old.searchTags=clean.searchTags||old.searchTags||'';
+     old.searchDescription=clean.searchDescription||old.searchDescription||'';
      delete old.alternateProvider;delete old.alternateUrl;delete old.thirdProvider;delete old.thirdUrl;
      if(clean.alternateUrl){old.alternateProvider=clean.alternateProvider;old.alternateUrl=clean.alternateUrl;}
      if(clean.thirdUrl){old.thirdProvider=clean.thirdProvider;old.thirdUrl=clean.thirdUrl;}
@@ -2656,6 +2666,13 @@
      field(card,key==='artists'?'Имя / название артиста':'Название релиза',item.title,function(v){item.title=v;});
      field(card,key==='artists'?'Роль / стиль':'Исполнитель',item.subtitle,function(v){item.subtitle=v;});
      field(card,'Краткое публичное описание',item.description,function(v){item.description=v;},true);
+     if(key==='releases'){
+       field(card,'О чём песня? (подсказка для слушателей)',item.searchDescription||'',function(v){item.searchDescription=v;},true);
+       field(card,'Поисковые теги через запятую',item.searchTags||'',function(v){item.searchTags=v;});
+       var tagTip=document.createElement('p');tagTip.className='sync-note';
+       tagTip.textContent='Например: Миша, Михаил, песня про имя, подарок. По этим словам песню можно найти без изменения названия. Сначала сохрани черновик, потом опубликуй.';
+       card.appendChild(tagTip);
+     }
      field(card,'Публичная HTTPS-ссылка (профиль, Spotify, YouTube…) — необязательно',item.url,function(v){item.url=v;});
      if(key==='artists'){
        artistPhotoControls(card,item);
