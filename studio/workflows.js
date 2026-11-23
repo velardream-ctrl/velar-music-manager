@@ -122,7 +122,7 @@
   function searchRows(){
     var q=tr(filter).toLocaleLowerCase('ru').replace(/ё/g,'е');
     return catalog.filter(function(t){
-      if(q && [t.title,t.artist,siteArtist(t),t.album,t.upc,t.isrc].join(' ').toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)<0)return false;
+      if(q && [t.title,t.artist,siteArtist(t),t.album,t.upc,t.isrc,t.searchTags,t.searchDescription].join(' ').toLocaleLowerCase('ru').replace(/ё/g,'е').indexOf(q)<0)return false;
       if(artist!=='all'&&siteArtist(t)!==artist)return false;
       if(mode==='missing')return !direct('spotify',urlValue(t,'spotify'))||!direct('appleMusic',urlValue(t,'appleMusic'))||!direct('youtube',urlValue(t,'youtube'));
       if(mode==='ready')return ['spotify','appleMusic','youtube'].every(function(k){return direct(k,urlValue(t,k));});
@@ -212,6 +212,9 @@
       '<label>Официальный исполнитель релиза<input name="artist" maxlength="220" value="'+esc(t?t.artist:'')+'" placeholder="Как указано на площадках"></label>'+
       '<label>UPC (можно позже)<input name="upc" maxlength="40" value="'+esc(t?t.upc:'')+'"></label>'+
       '<label>ISRC (можно позже)<input name="isrc" maxlength="40" value="'+esc(t?t.isrc:'')+'"></label>'+
+      '<label>О чём песня? (публичное описание темы)<textarea name="searchDescription" maxlength="280" rows="3" placeholder="Например: Именная песня-подарок для Михаила">'+esc(t?t.searchDescription||'':'')+'</textarea></label>'+ 
+      '<label>Поисковые теги через запятую<input name="searchTags" maxlength="640" value="'+esc(t?t.searchTags||'':'')+'" placeholder="Миша, Михаил, именная песня, подарок, день рождения"></label>'+ 
+      '<p class="sync-note">Теги помогают найти песню по имени и теме. Не меняют официальное название; на сайте появляются только после отдельной публикации релиза.</p>'+ 
       '<label>Статус<select name="releaseStatus"><option value="draft">Черновик</option><option value="scheduled">Ожидает релиза</option><option value="released">Выпущена</option></select></label>'+
       '<label>Дата релиза<input name="releaseDate" type="date" value="'+esc(t?t.releaseDate||'':'')+'"></label>'+
       '<div class="vmm-actions"><button type="submit">Сохранить</button><button type="button" data-act="catalog">Отмена</button><button type="button" data-act="artist-manager">+ Исполнитель</button></div><p id="vmm-w-status" class="sync-note"></p></form>';
@@ -220,6 +223,10 @@
       e.preventDefault();if(busy)return;
       var f=this.elements,title=tr(f.title.value),siteArtist=tr(f.siteArtist.value),official=tr(f.artist.value)||siteArtist;
       var upc=tr(f.upc.value),isrc=tr(f.isrc.value),status=f.releaseStatus.value,date=f.releaseDate.value;
+      var meta=window.VELAR_SONG_SEARCH_META,searchTags='',searchDescription='';
+      if(!meta)return tell('Не загрузился модуль поисковых тегов. Обнови страницу.');
+      try{searchTags=meta.normalizeTags(f.searchTags.value);searchDescription=meta.normalizeDescription(f.searchDescription.value);}
+      catch(tagError){return tell('Ошибка тегов: '+tagError.message);}
       if(!title||!siteArtist||!artistList().some(function(n){return n===siteArtist;}))return tell('Выбери существующего артиста и укажи название.');
       if(status==='scheduled'&&!date)return tell('Для ожидающего релиза укажи дату.');
       if(catalog.some(function(x){return x.id!==docId&&tr(x.title).toLowerCase()===title.toLowerCase()&&tr(x.artist).toLowerCase()===official.toLowerCase()&&((isrc&&tr(x.isrc)===isrc)||(!isrc&&(!upc||tr(x.upc)===upc)))}))return tell('Похожая песня уже есть в каталоге. Проверь дубликат.');
@@ -233,7 +240,9 @@
           return Promise.all([tx.get(counter),tx.get(assignmentRef)]).then(function(results){
             var c=results[0],a=results[1];
             var sequence=Math.max(max,Number(c.exists&&c.data().lastRow)||1,1000000)+1;
-            var data={title:title,releaseStatus:status,releaseDate:date,updatedBy:user.uid,updatedAt:ts()};
+            var data={title:title,releaseStatus:status,releaseDate:date,
+              searchTags:searchTags,searchDescription:searchDescription,
+              updatedBy:user.uid,updatedAt:ts()};
             if(!docId||t&&t.origin==='studio-manual'){data.artist=official;data.upc=upc;data.isrc=isrc;}
             else if(official!==tr(t.artist)||upc!==tr(t.upc)||isrc!==tr(t.isrc))throw new Error('Официальные кредиты импортированного релиза защищены от изменения.');
             if(!docId){data.sourceRow=sequence;data.createdAt=ts();data.origin='studio-manual';data.links={};tx.set(counter,{lastRow:sequence,updatedAt:ts()});tx.set(target,data);}
@@ -258,8 +267,8 @@
     var allArtists=Object.create(null);artistList().forEach(function(n){allArtists[n]=true;});
     var actorOptions=Object.keys(allArtists).sort().map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>';}).join('');
     var picked=Object.keys(chosen).filter(function(k){return chosen[k];}).length;
-    pane.innerHTML=heading('Каталог релизов','Поиск по названию, артисту, UPC и ISRC')+
-      '<div class="vmm-actions"><button data-act="new-release">+ Добавить песню</button><button data-act="artist-manager">Управление артистами</button></div><div class="vmm-filter"><input id="vmm-search" type="search" placeholder="Поиск композиции, UPC, ISRC" value="'+esc(filter)+'">'+
+    pane.innerHTML=heading('Каталог релизов','Поиск по названию, артисту, теме, тегам, UPC и ISRC')+
+      '<div class="vmm-actions"><button data-act="new-release">+ Добавить песню</button><button data-act="artist-manager">Управление артистами</button></div><div class="vmm-filter"><input id="vmm-search" type="search" placeholder="Название, имя, тема, тег, UPC, ISRC" value="'+esc(filter)+'">'+
       '<select id="vmm-mode"><option value="all">Все</option><option value="missing">Недостающие ссылки</option><option value="ready">Все три площадки</option><option value="spotify">Без Spotify</option><option value="appleMusic">Без Apple Music</option><option value="youtube">Без YouTube</option></select>'+
       '<select id="vmm-artist"><option value="all">Все артисты</option>'+actorOptions+'</select></div>'+
       '<div class="vmm-action-links"><button data-act="bulk-artist">Перенести выбранные песни к артисту</button><button data-act="print-catalog">Печать / PDF каталога</button><button data-act="clear-selection">Снять отметки</button><span id="vmm-selected-count" class="sync-note">Выбрано: '+picked+' (если ничего не выбрано, печатается весь каталог)</span></div>'+
@@ -336,7 +345,8 @@
     if(t.links&&safeUrl(t.links.yandex)&&/^https:\/\/music\.yandex\.(?:ru|com)\/album\//i.test(t.links.yandex))body+='<div class="vmm-detail"><strong>Яндекс Музыка · альбом</strong><span>'+linkButton(t.links.yandex,'Открыть альбом')+'</span></div>';
     if(t.links&&safeUrl(t.links.vkArtist))body+='<div class="vmm-detail"><strong>VK · профиль исполнителя</strong><span>'+linkButton(t.links.vkArtist,'Открыть профиль')+'</span></div>';
     body+='</div><div class="vmm-card"><h3>Найти композицию</h3><div class="vmm-action-links">'+['spotify','appleMusic','youtube'].map(function(k){return linkButton(searchUrl(k,t),platforms[k]);}).join('')+'</div><p class="sync-note">Поисковые ссылки не считаются прямыми URL треков.</p></div>';
-    body+='<div class="vmm-actions"><button data-act="edit-release" data-id="'+esc(t.id)+'">✎ Редактировать запись</button><button data-act="propose" data-row="'+row(t.sourceRow)+'">+ Предложить ссылку</button><button data-act="lyrics-track" data-row="'+row(t.sourceRow)+'">✎ Текст песни</button><button data-act="catalog">← К каталогу</button></div>';
+    body+='<div class="vmm-card"><h3>Темы и поисковые теги</h3><p>'+esc(t.searchDescription||'Тема ещё не описана')+'</p><p class="sync-note">'+esc(t.searchTags||'Теги не указаны')+'</p></div>'+ 
+      '<div class="vmm-actions"><button data-act="edit-release" data-id="'+esc(t.id)+'">✎ Редактировать запись</button><button data-act="propose" data-row="'+row(t.sourceRow)+'">+ Предложить ссылку</button><button data-act="lyrics-track" data-row="'+row(t.sourceRow)+'">✎ Текст песни</button><button data-act="catalog">← К каталогу</button></div>';
     pane.innerHTML=body;
   }
   function proposalForm(n){
