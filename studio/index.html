@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0a1023">
   <meta name="color-scheme" content="dark">
   <link rel="icon" href="../favicon.svg?v=2" type="image/svg+xml">
-  <link rel="stylesheet" href="studio.css?v=31">
+  <link rel="stylesheet" href="studio.css?v=32&styles=222">
   <link rel="stylesheet" href="forum-menu.css">
   <link rel="stylesheet" href="recordings.css?v=12">
   <title>VELARDREAM RECORDS · Studio</title>
@@ -87,7 +87,28 @@
               <div id="vmm-editor-view">
                 <div id="vmm-lyrics-toolbar"></div>
                 <label class="poem-label" for="lyric-body">Текст песни</label>
-                <textarea name="text" id="lyric-body" rows="18" placeholder="[Verse 1]&#10;Текст песни…&#10;&#10;[Chorus]&#10;Припев…&#10;&#10;Команды Suno удаляются автоматически после вставки, но оригинал можно восстановить." spellcheck="true"></textarea>
+                <textarea name="text" id="lyric-body" rows="18" placeholder="[Verse 1]&#10;Текст песни…&#10;&#10;[Chorus]&#10;Припев…&#10;&#10;Команды Suno сохраняются в личной карточке стиля перед очисткой текста." spellcheck="true"></textarea>
+                <details id="lyric-suno-style-details" class="vmm-style-details">
+                  <summary>🎼 Стиль Suno и музыкальные указания <span class="vmm-style-count" id="lyric-style-indicator">· не заполнено</span></summary>
+                  <div class="vmm-style-details-body">
+                    <p class="sync-note">Личная картотека. Эти данные не видны посетителям и не входят в печать текста. Открывай раздел только когда он нужен.</p>
+                    <label for="lyric-suno-style">Style of Music / промпт Suno (как в оригинале)</label>
+                    <textarea id="lyric-suno-style" rows="4" maxlength="6000" spellcheck="false" placeholder="Например: melodic dance pop, male deep baritone, warm synths, 115 BPM…"></textarea>
+                    <label for="lyric-suno-cues">Команды и стилистические пометки из текста песни</label>
+                    <textarea id="lyric-suno-cues" rows="4" maxlength="16000" spellcheck="false" placeholder="[Chorus: powerful layered voices]&#10;[Guitar Solo]"></textarea>
+                    <p class="sync-note">При очистке Suno команды в отдельных квадратных скобках сохраняются сюда автоматически. Обычные [Verse 1] и [Chorus] не дублируются. Проверь поле после вставки — некоторые нестандартные команды могут оставаться в тексте.</p>
+                    <label for="lyric-style-verdict">Моя оценка результата (не публичные лайки)</label>
+                    <select id="lyric-style-verdict">
+                      <option value="unrated">Без оценки</option>
+                      <option value="successful">Удачный стиль</option>
+                      <option value="candidate">Нужно ещё проверить</option>
+                      <option value="weak">Не подошёл</option>
+                    </select>
+                    <label for="lyric-style-notes">Личные заметки: что сработало и что изменить</label>
+                    <textarea id="lyric-style-notes" rows="3" maxlength="2400" placeholder="Голос, аранжировка, настроение, замечания для следующей генерации…"></textarea>
+                    <p class="sync-note">Для сохранения текста и стиля используется общая кнопка «Сохранить» выше. При редактировании они синхронизируются вместе.</p>
+                  </div>
+                </details>
               </div>
               <div id="vmm-paper-view" class="hidden" aria-label="Лист песни в двух колонках">
                 <div class="vmm-reader-actions"><button type="button" id="vmm-read-mode" aria-pressed="false">Читать крупно</button><span class="sync-note">Режим сцены · без печати</span></div>
@@ -99,6 +120,26 @@
               </div>
               <p class="save-message" id="save-message" role="status"></p>
             </form>
+            <details class="vmm-style-details vmm-style-library" id="vmm-style-library">
+              <summary>📚 Моя картотека стилей Suno <span id="style-library-count" class="vmm-style-count">· нет данных</span></summary>
+              <div class="vmm-style-details-body">
+                <p class="sync-note">Закрытая коллекция из сохранённых версий песен. Помогает найти удачные музыкальные решения для следующих композиций. Открывается только после входа владельца.</p>
+                <label for="style-library-search">Найти стиль, исполнителя или песню</label>
+                <input id="style-library-search" type="search" autocomplete="off" placeholder="Например: baritone, dance, christmas…">
+                <label for="style-library-filter">Показать</label>
+                <select id="style-library-filter">
+                  <option value="all">Все стили</option>
+                  <option value="successful">Удачные</option>
+                  <option value="candidate">На проверке</option>
+                  <option value="weak">Не подошли</option>
+                  <option value="unrated">Без оценки</option>
+                </select>
+                <button type="button" id="style-library-export" class="secondary">Скачать личную картотеку JSON</button>
+                <p class="sync-note">Файл содержит стили и заметки, но не тексты песен. Храни его приватно; при необходимости его можно передать для анализа творческих приёмов.</p>
+                <p id="style-library-status" class="sync-note" role="status"></p>
+                <div id="style-library-results" class="vmm-style-results"></div>
+              </div>
+            </details>
             <div id="no-lyric-selected" class="placeholder lyrics-empty">Выбери композицию сверху. Откроется её текст — можно редактировать, читать со сцены или посмотреть лист A4.</div>
           </section>
           <section id="panel-landing" class="panel landing-admin hidden" aria-labelledby="landing-title">
@@ -195,8 +236,9 @@
   <script src="firebase-config.js"></script>
   <script src="offline-admin.js?v=1"></script>
   <script src="analytics-report.js?v=1"></script>
-  <script src="studio.js?v=16"></script>
-  <script src="offline-lyrics-sync.js?v=1"></script>
+  <script src="suno-style-data.js?v=222"></script>
+  <script src="studio.js?v=17&styles=222"></script>
+  <script src="offline-lyrics-sync.js?v=2&styles=222"></script>
   <script src="../landing-schema.js?v=34&clips=1&carousel=201&heroSong=194"></script>
   <script src="artist-choices.js?v=3"></script>
   <script src="artist-track-links.js?v=1"></script>
@@ -213,7 +255,8 @@
   <script src="import.js?v=1"></script>
   <script src="workflows.js?v=12"></script>
   <script src="print-export.js?v=1"></script>
-  <script src="lyrics-tools.js?v=4"></script>
+  <script src="lyrics-tools.js?v=5&styles=222"></script>
+  <script src="style-library.js?v=222"></script>
   <script src="offline-repertoire.js?v=3"></script>
   <script src="offline-cloud-sync.js?v=1"></script>
   <script src="recordings.js?v=12"></script>

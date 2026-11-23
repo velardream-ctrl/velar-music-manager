@@ -7,9 +7,9 @@ assert.match(html,/id="lyric-search-results"/);
 assert.match(html,/aria-controls="lyric-search-results"/);
 assert.match(css,/\.lyrics-search-hit/);
 assert.match(css,/min-height:48px/);
-assert.ok(html.includes('src="studio.js?v=16"'));
-assert.ok(html.includes('href="studio.css?v=31"'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v63'"));
+assert.ok(html.includes('src="studio.js?v=17&styles=222"'));
+assert.ok(html.includes('href="studio.css?v=32&styles=222"'));
+assert.ok(sw.includes("STUDIO_PREFIX+'v64'"));
 assert.doesNotMatch(src,/localStorage\.setItem|sessionStorage\.setItem/);
 assert.match(src,/function pickLyricSearchResult\(key\)/);
 assert.match(src,/key!==songKey&&!chooseSong\(key\)/);
@@ -35,7 +35,9 @@ let allowDiscard=false,asked=0;
 const window={VELAR_FIREBASE_CONFIG:null,addEventListener(){},
  confirm(){asked++;return allowDiscard;},
  VMM_LYRICS_TOOLS:{onRecordLoaded(){},refreshPreview(){},notifyDirty(){}}};
-vm.runInNewContext(code,{document,window,navigator:{onLine:true},Promise,Object,Number,Array,String,Math,Date,Error},{timeout:1000});
+const context={document,window,navigator:{onLine:true},Promise,Object,Number,Array,String,Math,Date,Error};
+vm.runInNewContext(read('studio/suno-style-data.js'),context,{timeout:1000});
+vm.runInNewContext(code,context,{timeout:1000});
 const t=window.__test;
 const catalog=[
  {id:'a',title:'Дикая вишня',artist:'Velar',sourceRow:1},

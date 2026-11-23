@@ -39,6 +39,21 @@
     var x=String(cue||'').trim();
     return /^(?:instrumental|interlude|solo|guitar|piano|drums?|bass|saxophone|violin|synth|outro|intro|breakdown|break|fade|build|drop|riff|vocal(?:s)?|spoken|whisper|harmony|adlib|echo|reverb|music|beat|tempo|bpm|style|genre|mood|key|repeat|distorted|quiet|loud|soft|female|male|duet|choir|music\s+fades|проигрыш|инструментал|соло|голос|хор|ритм|темп|музыка)(?:$|[\s:,_;./!()—–-])/i.test(x);
   }
+  function archiveSunoDirections(raw){
+    // Never remove a direction if the owner-only archive cannot hold it.
+    var engine=window.VMM_SUNO_STYLE_DATA,field=el('lyric-suno-cues');
+    if(!engine||!field)return false;
+    var original=engine.extractCues(raw),merged=engine.mergeCues(field.value,original);
+    if(merged.length>16000){
+      note('Архив команд Suno заполнен. Очистка остановлена: скопируй команды вручную.');
+      return false;
+    }
+    if(original&&merged!==field.value){
+      field.value=merged;
+      field.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+    return true;
+  }
   function cleanSuno(input){
     var count=0,recognized=0;var text=String(input||'').replace(/\r\n?/g,'\n');
     // Only replace standalone one-line tags. Inline brackets in actual lyrics
@@ -146,11 +161,12 @@
   function autoCleanEditor(reason,original){
     var current=body.value,result=cleanSuno(current);
     if(!result.removed)return false;
+    if(!archiveSunoDirections(original===undefined?current:original))return false;
     // Preserve the unmodified raw input for explicit undo (never save raw input by accident).
     undoClean={before:original===undefined?current:original,after:result.text};
     body.value=result.text;
     el('vmm-undo-clean').className='';
-    note('Автоматически обработано команд Suno: '+result.removed+'. Чтобы вернуть исходный код, нажми «Отменить очистку».');
+    note('Обработано команд Suno: '+result.removed+'. Музыкальные указания сохранены в свёрнутом разделе «Стиль Suno». Для отмены очистки текста нажми «Отменить очистку».');
     body.dispatchEvent(new Event('input',{bubbles:true}));
     return true;
   }
@@ -221,7 +237,7 @@
     body.value=undoClean.before;
     undoClean=null;this.className='hidden';suppressAutoOnce=true;autoDisabledAfterUndo=true;
     body.dispatchEvent(new Event('input',{bubbles:true}));
-    note('Предыдущий текст восстановлен в редакторе. Сохранённая запись Firestore не менялась.');
+    note('Исходный текст восстановлен. Архив команд Suno остаётся в карточке стиля, чтобы музыкальные указания не потерялись.');
   };
 
   el('vmm-clean-suno').onclick=function(){
@@ -232,9 +248,10 @@
   };
   el('vmm-apply-clean').onclick=function(){
     if(cleanOriginal!==body.value){note('Текст изменился после предварительного просмотра. Сначала повтори очистку.');return;}
+    if(!archiveSunoDirections(cleanOriginal))return;
     if(!window.confirm('Применить очищенный вариант? Автоматически сохранён он НЕ будет — для сохранения отдельно нажми кнопку «Сохранить текст».'))return;
     undoClean={before:cleanOriginal,after:el('vmm-clean-result').value};el('vmm-undo-clean').className='';body.value=undoClean.after;body.dispatchEvent(new Event('input',{bubbles:true}));
-    el('vmm-clean-preview').className='hidden';lastProof=null;schedulePreview();note('Очистка применена в редакторе. Проверь слова и нажми «Сохранить текст» только после сверки.');
+    el('vmm-clean-preview').className='hidden';lastProof=null;schedulePreview();note('Очистка применена. Указания Suno сохранены отдельно. Проверь слова и нажми общую кнопку «Сохранить».');
   };
   el('vmm-cancel-clean').onclick=function(){el('vmm-clean-preview').className='hidden';note('Очистка отменена; исходный текст не изменён.');};
 

@@ -24,6 +24,7 @@ function loadLyrics(){
   nodes['vmm-paper-view']=elem();nodes['vmm-paper-view'].className='hidden';
   const doc={getElementById(k){if(k==='lyric-form')return form;if(k==='lyric-body')return body;return nodes[k]||(nodes[k]=elem());},createElement(){return elem();}};
   const ctx={document:doc,window:{addEventListener(){},VMM_STUDIO:{getLyricsMeta(){return {title:'Тестовая песня',language:'Русский',version:'Основная'};}}},Event:function(type){this.type=type;},String,Array,Promise,Number,Math};
+  vm.runInNewContext(read('studio/suno-style-data.js'),ctx,{timeout:1000});
   vm.runInNewContext(altered,ctx,{timeout:1000});
   return {api:ctx.window.__test,body,ui:nodes};
 }

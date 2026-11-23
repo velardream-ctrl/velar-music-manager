@@ -23,14 +23,14 @@ assert.match(studio,/db\.runTransaction/);
 assert.match(studio,/tx\.get\(ref\)/);
 assert.match(studio,/String\(snapshot\.data\(\)\.text\|\|''\)!==before/);
 // An existing lyric edit must not send catalog identity fields, not even their previous values.
-const edit=studio.match(/tx\.update\(ref,\{([^}]+)\}\);/);
+const edit=studio.match(/var update=\{([^}]+)\};\s*Object\.keys\(styleFields\)[\s\S]*?tx\.update\(ref,update\)/);
 assert.ok(edit,'Existing-lyric update must exist');
 assert.ok(edit[1].includes('text:current'));
 for(const forbidden of ['title:','upc:','catalogRow:','language:','version:']){
  assert.ok(!edit[1].includes(forbidden),'Immutable lyric field accidentally written on edit: '+forbidden);
 }
 assert.match(studio,/if\(!navigator\.onLine\)/);
-assert.match(studio,/saveBusy=true;body\(\)\.readOnly=true/);
+assert.match(studio,/saveBusy=true;lockLyricEditor\(true\)/);
 assert.match(studio,/window\.VMM_STUDIO/);
 assert.match(tools,/function autoCleanEditor/);
 assert.match(tools,/cleanSuno\(current\)/);
