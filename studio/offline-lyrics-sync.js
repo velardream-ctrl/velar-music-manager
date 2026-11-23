@@ -3,8 +3,9 @@
 (function(){
  'use strict';
  var store=window.VMM_OFFLINE_ADMIN,queue=Promise.resolve(),timer=null,syncing=false;
- var persistedKey='',persistedText='';
+ var persistedKey='',persistedText='',persistedStyles=null;
  function studio(){return window.VMM_STUDIO;}
+ function styleHelper(){return window.VMM_SUNO_STYLE_DATA;}
  function ctx(){return studio()&&studio().offlineLyricContext&&studio().offlineLyricContext();}
  function status(s){var el=document.getElementById('lyrics-offline-status');if(el)el.textContent=s;}
  function key(c){
@@ -19,12 +20,15 @@
    var snapshot={uid:c.uid,key:c.key,meta:{
      title:c.meta.title,upc:c.meta.upc||'',catalogRow:c.meta.catalogRow||'',
      language:c.meta.language||'Русский',version:c.meta.version||'Основная'
-   },text:c.text,baseText:c.baseText,isEdit:!!c.recordId,recordId:c.recordId||''};
+   },text:c.text,baseText:c.baseText,
+       styles:styleHelper().validate(c.styles),baseStyles:styleHelper().fields(c.baseStyles),
+       isEdit:!!c.recordId,recordId:c.recordId||''};
    queue=queue.catch(function(){}).then(function(){
      return store.get(snapshot.uid,name).then(function(existing){
        if(existing&&existing.value){
          // Preserve the initial cloud baseline and stable new Firestore document ID.
          snapshot.baseText=existing.value.baseText;
+          snapshot.baseStyles=styleHelper().fields(existing.value.baseStyles);
          snapshot.recordId=existing.value.recordId;
          snapshot.isEdit=existing.value.isEdit;
        }else if(!snapshot.recordId){
@@ -34,7 +38,7 @@
      });
    });
    return queue.then(function(item){
-     persistedKey=name;persistedText=snapshot.text;
+     persistedKey=name;persistedText=snapshot.text;persistedStyles=styleHelper().fields(snapshot.styles);
      status('Текст сохранён на этом устройстве. Синхронизация с облаком будет проверена при подключении.');
      return item;
    }).catch(function(err){
@@ -53,14 +57,16 @@
  function recover(){
    var c=ctx();
    if(!store||!c||!c.uid||!c.meta)return Promise.resolve(null);
-   var k=key(c),oldText=c.text,oldBase=c.baseText;
+   var k=key(c),oldText=c.text,oldBase=c.baseText,oldStyles=styleHelper().fields(c.styles),oldStyleBase=styleHelper().fields(c.baseStyles);
    return store.get(c.uid,k).then(function(saved){
      if(!saved||!saved.value)return null;
      if(!studio()||!studio().offlineLyricContext)return null;
      var now=ctx();
-     if(key(now)!==k||now.text!==oldText||now.baseText!==oldBase)return null;
-     studio().offlineRestoreLyric(saved.value.text,saved.value.baseText);
-     persistedKey=k;persistedText=saved.value.text;
+     if(key(now)!==k||now.text!==oldText||now.baseText!==oldBase||
+       !styleHelper().equal(now.styles,oldStyles)||!styleHelper().equal(now.baseStyles,oldStyleBase))return null;
+     studio().offlineRestoreLyric(saved.value.text,saved.value.baseText,
+       saved.value.styles,saved.value.baseStyles);
+     persistedKey=k;persistedText=saved.value.text;persistedStyles=styleHelper().fields(saved.value.styles);
      status('Восстановлен локальный текст. Он ещё не подтверждён облаком; при конфликте останется здесь.');
      return saved;
    }).catch(function(err){status('Ошибка восстановления локального текста: '+err.message);return null;});
@@ -74,7 +80,8 @@
  }
  function uploadOne(db,uid,item){
    var p=item.value,ref=db.collection('vmm_lyrics').doc(p.recordId);
-   var before=p.baseText||'',current=p.text;
+   var before=p.baseText||'',current=p.text,
+      beforeStyles=styleHelper().fields(p.baseStyles),currentStyles=styleHelper().validate(p.styles);
    if(!p.recordId||!p.meta||!current||current.length>500000)
      return Promise.reject(new Error('Некорректный локальный текст'));
    var verify=p.isEdit?Promise.resolve():db.collection('vmm_lyrics').limit(500).get({source:'server'}).then(function(list){
@@ -84,16 +91,22 @@
    });
    return verify.then(function(){return db.runTransaction(function(tx){
      return tx.get(ref).then(function(snapshot){
-       if(snapshot.exists&&String(snapshot.data().text||'')===current)return 'already';
+       if(snapshot.exists&&String(snapshot.data().text||'')===current&&
+          styleHelper().equal(snapshot.data(),currentStyles))return 'already';
        if(p.isEdit){
          if(!snapshot.exists)throw new Error('Облачная версия удалена: требуется ручная сверка.');
-         if(String(snapshot.data().text||'')!==before)
-           throw new Error('КОНФЛИКТ: текст изменён с другого устройства. Локальная версия сохранена.');
-         tx.update(ref,{text:current,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:uid});
+         if(String(snapshot.data().text||'')!==before||
+           !styleHelper().equal(snapshot.data(),beforeStyles))
+           throw new Error('КОНФЛИКТ: текст или стиль изменён с другого устройства. Локальная версия сохранена.');
+         var updated={text:current,updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:uid};
+         Object.keys(currentStyles).forEach(function(k){updated[k]=currentStyles[k];});
+         tx.update(ref,updated);
        }else{
          if(snapshot.exists)throw new Error('Документ песни уже существует с другим текстом.');
          tx.set(ref,{title:p.meta.title,upc:p.meta.upc,catalogRow:p.meta.catalogRow,
            language:p.meta.language,version:p.meta.version,text:current,
+           sunoStyle:currentStyles.sunoStyle,sunoCues:currentStyles.sunoCues,
+           styleNotes:currentStyles.styleNotes,styleVerdict:currentStyles.styleVerdict,
            createdAt:firebase.firestore.FieldValue.serverTimestamp(),
            updatedAt:firebase.firestore.FieldValue.serverTimestamp(),updatedBy:uid});
        }
@@ -107,13 +120,14 @@
    });}).then(function(){
      return store.acknowledge(uid,item.name,item.nonce).then(function(ack){
        if(ack&&studio()&&studio().offlineLyricSynced)
-         studio().offlineLyricSynced(p.key,p.meta,current,p.recordId);
+         studio().offlineLyricSynced(p.key,p.meta,current,p.recordId,currentStyles);
        return ack;
      });
    });
  }
  function savedCurrent(){
-   var c=ctx();return !!(c&&key(c)===persistedKey&&c.text===persistedText);
+   var c=ctx();return !!(c&&key(c)===persistedKey&&c.text===persistedText&&
+     styleHelper().equal(c.styles,persistedStyles));
  }
  function pendingCurrent(){
    var c=ctx();return c&&store?store.get(c.uid,key(c)).then(function(v){return !!v;}):Promise.resolve(false);
