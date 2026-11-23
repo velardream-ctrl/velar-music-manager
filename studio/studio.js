@@ -8,7 +8,7 @@
   var gateStatus=document.getElementById('gate-status'),signIn=document.getElementById('sign-in');
   var db=null,auth=null,user=null,authorized=false,authorizedUid='',saveBusy=false;
   var signInAttempt=0,signInWatchdog=null;
-  var lyrics=[],catalog=[],songs=[],songKey='',selectedRecord=null,selectedDraft=null,baseline='';
+  var lyrics=[],catalog=[],songs=[],songKey='',selectedRecord=null,selectedDraft=null,baseline='',baselineStyles=null;
   var sections={lyrics:'Тексты песен',catalog:'Каталог релизов',recordings:'Фонограммы',platforms:'Площадки и ссылки',contacts:'Контакты',outreach:'Рассылки',audit:'Журнал',data:'Данные'};
   function el(n){return document.getElementById(n);}
   function text(n,v){if(n)n.textContent=v==null?'':String(v);}
@@ -16,9 +16,39 @@
   function message(s){text(gateStatus,s);}
   function form(){return el('lyric-form');}
   function body(){return el('lyric-body');}
+  function styleHelper(){return window.VMM_SUNO_STYLE_DATA;}
+  function stylesFromRecord(record){return styleHelper().fields(record||{});}
+  function stylesFromForm(){
+    return styleHelper().fields({
+      sunoStyle:el('lyric-suno-style').value,
+      sunoCues:el('lyric-suno-cues').value,
+      styleNotes:el('lyric-style-notes').value,
+      styleVerdict:el('lyric-style-verdict').value
+    });
+  }
+  function applyStyles(record){
+    var f=stylesFromRecord(record);
+    el('lyric-suno-style').value=f.sunoStyle;
+    el('lyric-suno-cues').value=f.sunoCues;
+    el('lyric-style-notes').value=f.styleNotes;
+    el('lyric-style-verdict').value=f.styleVerdict;
+    baselineStyles=styleHelper().fields(f);
+    styleIndicator();
+  }
+  function styleIndicator(){
+    var f=stylesFromForm(),pieces=[];
+    if(f.sunoStyle.trim())pieces.push('промпт');
+    if(f.sunoCues.trim())pieces.push('команды');
+    if(f.styleNotes.trim())pieces.push('заметки');
+    if(f.styleVerdict!=='unrated')pieces.push('оценка');
+    text(el('lyric-style-indicator'),pieces.length?' · '+pieces.join(' · '):' · не заполнено');
+  }
   function name(s){return String(s==null?'':s).trim();}
   function titleKey(s){return name(s).toLocaleLowerCase('ru').replace(/ё/g,'е').replace(/\s+/g,' ');}
-  function isDirty(){return !!(selectedRecord||selectedDraft) && body().value!==baseline;}
+  function isDirty(){
+    return !!(selectedRecord||selectedDraft) &&
+      (body().value!==baseline||!styleHelper().equal(stylesFromForm(),baselineStyles));
+  }
   function confirmDiscard(){
     if(saveBusy){text(el('save-message'),'Сохранение ещё выполняется; дождись подтверждения записи.');return false;}
     if(!isDirty())return true;
@@ -157,6 +187,7 @@
     el('new-lyric').disabled=!songKey||saveBusy;
     text(el('lyric-selected-title'),songByKey(songKey)?songByKey(songKey).title:'');
     text(el('lyric-selected-artist'),songByKey(songKey)?songByKey(songKey).artist:'');
+    styleIndicator();
     if(window.VMM_LYRICS_TOOLS&&window.VMM_LYRICS_TOOLS.notifyDirty)window.VMM_LYRICS_TOOLS.notifyDirty(isDirty());
   }
   function fillLyric(x,isNew){
@@ -165,6 +196,8 @@
     body().value=isNew?'':name(x.text); // text is preserved exactly except raw nulls
     if(!isNew&&typeof x.text==='string')body().value=x.text;
     baseline=body().value;
+    applyStyles(x);
+    el('lyric-suno-style-details').open=false;
     show(form(),true);show(el('no-lyric-selected'),false);
     text(el('save-message'),'');
     text(el('lyric-loaded-at'),isNew?'Новая версия · пока не сохранена':'Загружено: '+(formattedWhen(x.updatedAt)||'из архива'));
@@ -287,7 +320,7 @@
     if(authorized&&authorizedUid!==user.uid){
       el('forum-admin-frame').removeAttribute('src');
       if(window.VMM_ANALYTICS_REPORT)window.VMM_ANALYTICS_REPORT.reset();
-      lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
+      lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';baselineStyles=null;songKey='';
       if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
       if(window.VMM_LANDING&&window.VMM_LANDING.reset)window.VMM_LANDING.reset();
     }
@@ -305,7 +338,7 @@
     }).catch(function(){});
   }
   function unauthorized(note){
-    authorized=false;authorizedUid='';saveBusy=false;lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';songKey='';
+    authorized=false;authorizedUid='';saveBusy=false;lyrics=[];catalog=[];songs=[];selectedRecord=null;selectedDraft=null;baseline='';baselineStyles=null;songKey='';
     if(window.VMM_RECORDINGS&&window.VMM_RECORDINGS.reset)window.VMM_RECORDINGS.reset();
     if(window.VMM_LANDING&&window.VMM_LANDING.reset)window.VMM_LANDING.reset();
     el('forum-admin-frame').removeAttribute('src');
