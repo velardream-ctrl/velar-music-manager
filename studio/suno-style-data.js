@@ -28,7 +28,7 @@
     return FIELDS.every(function(k){return left[k]===right[k];});
   }
   function pureHeading(cue){
-    return /^(?:(?:verse|куплет|chorus|припев|pre[- ]?chorus|предприпев|post[- ]?chorus|постприпев|bridge|бридж|переход|intro|вступление|outro|ending|финал|instrumental|инструментал|interlude|проигрыш)\s*\d*)$/i.test(cue.trim());
+    return /^(?:(?:verse|куплет|chorus|припев|pre[- ]?chorus|предприпев|post[- ]?chorus|постприпев|bridge|бридж|переход|intro|вступление|outro|ending|финал|instrumental)\s*\d*)$/i.test(cue.trim());
   }
   function extractCues(raw){
     var result=[],text=str(raw).replace(/\r\n?/g,'\n');
