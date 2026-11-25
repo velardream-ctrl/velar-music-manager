@@ -62,10 +62,14 @@
             <p id="lyrics-offline-status" class="sync-note" role="status" aria-live="polite">Локальное сохранение текстов готово после входа.</p>
             <button type="button" id="lyrics-export-offline" class="vmm-offline-backup">Скачать резервную копию несинхронизированных текстов</button>
             <div class="lyrics-picker">
+              <label for="lyric-group">Раздел каталога</label>
+              <select id="lyric-group"><option value="all">Все композиции</option><option value="instrumental">Инструментальные · без вокала</option><option value="missing">Требуется текст</option></select>
               <label for="lyrics-filter">Композиция</label>
               <input id="lyrics-filter" type="search" placeholder="Начни вводить название или исполнителя…" autocomplete="off" aria-controls="lyric-search-results" aria-label="Найти текст песни">
               <div id="lyric-search-results" class="lyrics-search-results hidden" role="region" aria-label="Совпадения поиска песен"></div>
               <select id="lyric-song-select" aria-label="Выбрать композицию"><option value="">Выбери песню…</option></select>
+              <label id="instrumental-label" hidden><input type="checkbox" id="instrumental-check"> Инструментальная композиция (без вокала)</label>
+              <span id="instrumental-status" role="status"></span>
               <div class="lyrics-version-head">
                 <label for="lyric-version-select">Сохранённая версия</label>
                 <button type="button" id="new-lyric" class="btn-small secondary" disabled>+ Версия</button>
@@ -195,7 +199,7 @@
   <script src="firebase-config.js"></script>
   <script src="offline-admin.js?v=1"></script>
   <script src="analytics-report.js?v=1"></script>
-  <script src="studio.js?v=16"></script>
+  <script src="studio.js?v=17"></script>
   <script src="offline-lyrics-sync.js?v=1"></script>
   <script src="../landing-schema.js?v=34&clips=1&carousel=201&heroSong=194"></script>
   <script src="artist-choices.js?v=3"></script>

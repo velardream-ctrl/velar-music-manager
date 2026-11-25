@@ -51,7 +51,21 @@
     }
     return null;
   }
+  var hasWords=Object.create(null), marking=false;
+  function inLyricGroup(song){
+    var group=el('lyric-group').value;
+    if(group==='all')return true;
+    if(!song.track)return false;
+    if(group==='instrumental')return song.track.instrumental===true;
+    return song.track.instrumental!==true&&!hasWords[song.key];
+  }
   function songOptions(){
+    hasWords=Object.create(null);
+    lyrics.forEach(function(record){
+      if(!name(record.text).replace(/\[[^\]]*\]/g,'').trim())return;
+      var track=songForLyric(record);
+      if(track)hasWords['catalog:'+track.id]=true;
+    });
     songs=catalog.map(function(t){return {key:'catalog:'+t.id,title:name(t.title),artist:name(t.artist),upc:name(t.upc),sourceRow:name(t.sourceRow),track:t};});
     lyrics.forEach(function(x){
       if(songForLyric(x))return;
@@ -75,7 +89,7 @@
     var q=titleKey(query);
     if(!q)return[];
     return songs.filter(function(s){
-      return titleKey(s.title+' '+s.artist).indexOf(q)>=0;
+      return inLyricGroup(s)&&titleKey(s.title+' '+s.artist).indexOf(q)>=0;
     });
   }
   function pickLyricSearchResult(key){
@@ -119,6 +133,7 @@
     var query=titleKey(el('lyrics-filter').value),list=[{value:'',label:'Выбери песню…'}],seenSelected=false;
     var matches=lyricSearchMatches(query);
     songs.forEach(function(s){
+      if(!inLyricGroup(s)&&s.key!==songKey)return;
       var label=s.title+(s.artist?' — '+s.artist:'');
       if(query&&titleKey(label).indexOf(query)<0&&s.key!==songKey)return;
       if(s.key===songKey)seenSelected=true;
@@ -126,6 +141,10 @@
     });
     options(el('lyric-song-select'),list);
     el('lyric-song-select').value=seenSelected?songKey:'';
+    var selected=songByKey(songKey),track=selected&&selected.track;
+    el('instrumental-label').hidden=!track;
+    el('instrumental-check').checked=!!track&&track.instrumental===true;
+    el('instrumental-check').disabled=!track||marking;
     renderLyricSearchResults(matches,query);
   }
   function formattedWhen(value){
@@ -517,6 +536,31 @@
   el('sign-out').onclick=function(){
     if(!confirmDiscard()||(window.VMM_LANDING&&!window.VMM_LANDING.canLeave()))return;
     if(auth)auth.signOut().then(function(){try{var here=window.location;window.history.replaceState(null,'',here.pathname+here.search);}catch(ignore){}unauthorized('Вы вышли из рабочего кабинета.');}).catch(function(err){message(err.message);});
+  };
+  el('lyric-group').onchange=function(){
+    var song=songByKey(songKey);
+    if(song&&!inLyricGroup(song)&&!chooseSong(''))this.value=this.dataset.previous||'all';
+    this.dataset.previous=this.value;
+    renderSongChoices();
+  };
+  el('instrumental-check').onchange=function(){
+    var selected=songByKey(songKey),track=selected&&selected.track,value=this.checked;
+    if(!track||!authorized||marking)return;
+    marking=true;
+    renderSongChoices();
+    text(el('instrumental-status'),'Сохранение отметки…');
+    db.collection('vmm_catalog').doc(track.id).update({instrumental:value}).then(function(){
+      var current=songByKey(selected.key);
+      if(current&&current.track)current.track.instrumental=value;
+      if(current&&current.key===songKey&&!inLyricGroup(current)){
+        el('lyric-group').value='all';
+        el('lyric-group').dataset.previous='all';
+      }
+      text(el('instrumental-status'),'Отметка сохранена.');
+    }).catch(function(err){text(el('instrumental-status'),'Не удалось сохранить: '+err.message);}).then(function(){
+      marking=false;
+      renderSongChoices();
+    });
   };
   el('lyric-song-select').onchange=function(){
     var previous=songKey;
