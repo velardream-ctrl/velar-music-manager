@@ -258,7 +258,10 @@
        var nearest=position,dist=Infinity;
        for(var j=0;j<rail.children.length;j++){
          var row=rail.children[j];if(typeof row.velarIndex!=='number')continue;
-         var delta=Math.abs(center(row)-rail.scrollLeft);
+         // RUN-208: compare reachable scroll destinations, not raw center offsets.
+          // With no leading spacer the first card has a clamped target of 0.
+          var target=Math.max(0,Math.min(Math.max(0,rail.scrollWidth-rail.clientWidth),center(row)));
+          var delta=Math.abs(target-rail.scrollLeft);
          if(delta<dist){dist=delta;nearest=row.velarIndex;}
        }
        if(nearest!==position){position=nearest;updateCarousel();}
@@ -558,9 +561,8 @@
        }
        firstRendered=first;rail.scrollLeft+=anchor.getBoundingClientRect().left-before;
      }
-     if(direction<0&&tracks.length>1)window.requestAnimationFrame(function(){
-       if(index<0&&!moving){windowAt(tracks.length-1);margins();rail.scrollLeft=center(entries[tracks.length-1]);}
-     });
+     // RUN-208: start even reverse auto carousels on the first item at the left.
+     // The loop prepends earlier items only when reverse motion starts.
      function extendLoop(){
        var forward=direction>0,anchor=forward?rail.lastElementChild:rail.firstElementChild;
        var k=(anchor.velarIndex+direction+tracks.length)%tracks.length;
