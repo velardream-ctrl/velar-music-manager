@@ -16,7 +16,7 @@ window.fetch=url=>{
  })});
 };
 function node(tag='div'){
- return {tagName:tag,className:'',children:[],style:{},attributes:{},
+ return {tagName:tag,className:'',children:[],style:{setProperty(key,value){this[key]=value;}},attributes:{},
   scrollLeft:0,clientWidth:300,scrollWidth:1300,offsetLeft:0,
   appendChild(child){child.parentNode=this;this.children.push(child);return child;},
   removeChild(child){const i=this.children.indexOf(child);if(i>=0)this.children.splice(i,1);
@@ -80,8 +80,20 @@ controls.children[2].onclick();
 assert.equal(controls.children[1].textContent,'3 / 3','Arrow grows lazy batch');
 assert.equal(rail.children.length,3,'All three songs after next advances beyond batch');
 assert.equal(controls.children[2].disabled,true);
-rail.scrollLeft=0;rail.onscroll();
-assert.equal(typeof carousel.openByUrl,'function');
+// RUN-208: on a wide rail the first item's theoretical center is negative.
+ // The visible first card at scrollLeft=0 must still be item 1, not item 2.
+ rail.clientWidth=880;rail.scrollWidth=1350;
+ rail.getBoundingClientRect=()=>({left:0});
+ rail.children.forEach((card,i)=>{
+   card.offsetWidth=395;
+   card.getBoundingClientRect=()=>({left:i*409-rail.scrollLeft});
+ });
+ rail.scrollLeft=0;rail.onscroll();
+ assert.equal(controls.children[1].textContent,'1 / 3',
+   'Left-aligned opening must not select the second song');
+ assert.equal(controls.children[0].disabled,true,
+   'Previous arrow stays disabled at the visual beginning');
+ assert.equal(typeof carousel.openByUrl,'function');
 carousel.openByUrl(spotify);
 assert.equal(controls.children[1].textContent,'1 / 3','Deep link reaches correct card');
 await Promise.resolve();await Promise.resolve();await Promise.resolve();await Promise.resolve();
@@ -150,7 +162,20 @@ assert.match(hugeCarousel.className,/public-song-carousel/,
  'Long collections retain the selected carousel layout');
 
 const css=read('style.css');
-assert.match(css,/\.public-song-carousel-track\{/);
+ // RUN-208: no leading filler across artist, genre, language, topic, album or video rails.
+ assert.match(css,/\.public-song-carousel-track--focus::before\{content:"";flex:0 0 var\(--song-edge,0px\)/,
+   'Explicit song search can center the first cover');
+ assert.match(player,/function focusCenter\(item\)/,
+   'Shared renderer enables centering after explicit song navigation');
+ assert.match(css,/\.public-song-carousel-track::after\{content:"";flex:0 0 var\(--song-edge,0px\)/,
+   'Keep space after the last card for centering navigation results');
+ assert.doesNotMatch(css,/\.public-song-carousel-track::before,\.public-song-carousel-track::after\{/,
+   'Do not center the first song using an invisible leading flex spacer');
+ assert.doesNotMatch(player,/windowAt\(tracks\.length-1\)/,
+   'Reverse auto carousels also begin with the first song at the left');
+ assert.match(player,/Math\.max\(0,Math\.min\(Math\.max\(0,rail\.scrollWidth-rail\.clientWidth\),center\(row\)\)\)/,
+   'Scroll state compares clamped destinations so the first card remains selected');
+ assert.match(css,/\.public-song-carousel-track\{/);
 assert.match(css,/scroll-snap-type:x mandatory/);
 assert.ok(css.includes('.public-song-entry--carousel .public-song-index{display:none}'),
  'Carousel 01/02/03 numbers must be removed from visual layout');

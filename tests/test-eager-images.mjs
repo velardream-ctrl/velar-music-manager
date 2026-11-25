@@ -27,14 +27,14 @@ assert.ok(read('universe.js').includes('window.VELAR_IMAGE_LOADING.apply'));
 assert.ok(read('artist-detail.js').includes('window.VELAR_IMAGE_LOADING.apply'));
 const index=read('index.html'),artist=read('artist.html'),sw=read('sw.js');
 for(const versioned of [
-  'landing-public.js?v=63&clips=1','universe.js?v=7','public-song-ui.js?v=25&clips=1','albums-public.js?v=4'
+  'landing-public.js?v=63&clips=1','universe.js?v=7','public-song-ui.js?v=26&clips=1','albums-public.js?v=4'
 ]){
   assert.ok(index.includes(versioned),'Homepage must load '+versioned);
   assert.ok(sw.includes('./'+versioned),'Service worker should precache '+versioned);
 }
 assert.ok(artist.includes('artist-detail.js?v=5'));
 assert.ok(sw.includes('./artist-detail.js?v=5'));
-assert.ok(sw.includes("CACHE_PREFIX + 'v99'"));
+assert.ok(sw.includes("CACHE_PREFIX + 'v100'"));
 assert.match(read('public-song-ui.js'),/frame\.loading='lazy'/,
   'Music players remain click-to-open without preloading');
 const window={location:{search:''}};const promises=[],requests=[];

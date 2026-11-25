@@ -222,6 +222,15 @@
      if(!item.getBoundingClientRect)return Number(item.offsetLeft)||0;
      return rail.scrollLeft+item.getBoundingClientRect().left-rail.getBoundingClientRect().left+(item.offsetWidth-rail.clientWidth)/2;
    }
+   // RUN-208: new rails open flush left. Explicitly selected songs can still
+   // be centered, including the very first card, with a focus-only spacer.
+   function focusCenter(item){
+     if(!rail||!item)return;
+     var space=Math.max(0,(rail.clientWidth-item.offsetWidth)/2);
+     rail.style.setProperty('--song-edge',space+'px');
+     if(rail.className.indexOf('public-song-carousel-track--focus')<0)
+       rail.className+=' public-song-carousel-track--focus';
+   }
    function showAt(n){
      if(!isCarousel)return;
      if(n<0||n>=tracks.length)return;
@@ -258,7 +267,10 @@
        var nearest=position,dist=Infinity;
        for(var j=0;j<rail.children.length;j++){
          var row=rail.children[j];if(typeof row.velarIndex!=='number')continue;
-         var delta=Math.abs(center(row)-rail.scrollLeft);
+         // RUN-208: compare reachable scroll destinations, not raw center offsets.
+          // With no leading spacer the first card has a clamped target of 0.
+          var target=Math.max(0,Math.min(Math.max(0,rail.scrollWidth-rail.clientWidth),center(row)));
+          var delta=Math.abs(target-rail.scrollLeft);
          if(delta<dist){dist=delta;nearest=row.velarIndex;}
        }
        if(nearest!==position){position=nearest;updateCarousel();}
@@ -290,7 +302,7 @@
      clearActive();
      index=i;source=src.provider;activeMount=instance;
      if(entries[i])entries[i].className+=' is-playing';
-     if(isCarousel)showAt(i);
+     if(isCarousel){focusCenter(entries[i]);showAt(i);}
      var host=slots[i],frame=el('iframe','cms-release-iframe '+classes+'-song-iframe'+
        (src.provider==='youtube'?' cms-release-iframe--video':''));
      frame.title=tracks[i].title+' — официальный плеер '+platformName(src.provider);
@@ -470,6 +482,7 @@
          while(!entries[i]&&i>=count)appendBatch(); // Preserve mounted players when growing.
          var card=entries[i],ticket=++navigation;
          if(!card)return false;
+         if(isCarousel)focusCenter(card);
          var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
          if(card.scrollIntoView){
            (rail||card).scrollIntoView({block:'start',behavior:reduced?'auto':'smooth'});
@@ -558,9 +571,8 @@
        }
        firstRendered=first;rail.scrollLeft+=anchor.getBoundingClientRect().left-before;
      }
-     if(direction<0&&tracks.length>1)window.requestAnimationFrame(function(){
-       if(index<0&&!moving){windowAt(tracks.length-1);margins();rail.scrollLeft=center(entries[tracks.length-1]);}
-     });
+     // RUN-208: start even reverse auto carousels on the first item at the left.
+     // The loop prepends earlier items only when reverse motion starts.
      function extendLoop(){
        var forward=direction>0,anchor=forward?rail.lastElementChild:rail.firstElementChild;
        var k=(anchor.velarIndex+direction+tracks.length)%tracks.length;

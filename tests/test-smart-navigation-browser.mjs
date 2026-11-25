@@ -89,13 +89,23 @@ try {
     VMM_LANDING_SCHEMA.normalize(d);
   });
   for(const videoView of ['grid','carousel','auto']){
-    assert.ok(await page.evaluate(view=>{
+    const videoStart=await page.evaluate(view=>{
       fixture.releases.videoView=view;
       fixture.releases.cards=Array.from({length:4},(_,i)=>({title:'Видео '+i,
         visible:true,kind:'video',spotlight:i===0?'video':'none',mediaProvider:'youtube',
         mediaUrl:'https://www.youtube.com/watch?v='+String(i).padStart(11,'0')}));
-      return VMM_PUBLIC_LANDING.render(fixture);
-    },videoView));
+      if(!VMM_PUBLIC_LANDING.render(fixture))return {ok:false};
+      if(view==='grid')return {ok:true};
+      const rail=document.querySelector('.video-carousel .public-song-carousel-track');
+      const first=rail&&rail.firstElementChild;
+      return {ok:true,gap:first.getBoundingClientRect().left-rail.getBoundingClientRect().left,
+        scrollLeft:rail.scrollLeft};
+    },videoView);
+    assert.ok(videoStart.ok);
+    if(videoView!=='grid'){
+      assert.ok(Math.abs(videoStart.gap)<=3,'First video at left on mount: '+videoStart.gap);
+      assert.equal(videoStart.scrollLeft,0,'Video carousel starts at first clip');
+    }
     const gallery=page.locator('#public-releases-cards');
     assert.equal(await gallery.locator('.cms-release-card').count(),4);
     if(videoView==='grid')continue;
@@ -121,10 +131,32 @@ try {
   }
   await page.evaluate(()=>{fixture.releases.cards=[];fixture.releases.videoView='grid';});
   for(const mode of ['rows','carousel','auto','compact','tiles','covers']){
-    assert.ok(await page.evaluate(mode=>{
+    const songStart=await page.evaluate(mode=>{
       fixture.genres.displayModes.topics=mode;
-      return VMM_PUBLIC_LANDING.render(fixture);
-    },mode));
+      if(!VMM_PUBLIC_LANDING.render(fixture))return {ok:false};
+      if(mode!=='carousel'&&mode!=='auto')return {ok:true};
+      const rail=document.querySelector('#public-topic-detail .public-song-carousel-track');
+      const first=rail&&rail.firstElementChild;
+      return {ok:true,gap:first.getBoundingClientRect().left-rail.getBoundingClientRect().left,
+        scrollLeft:rail.scrollLeft};
+    },mode);
+    assert.ok(songStart.ok);
+    if(mode==='carousel'||mode==='auto'){
+      assert.ok(Math.abs(songStart.gap)<=3,'First topic song at left on mount: '+songStart.gap);
+      assert.equal(songStart.scrollLeft,0,'Song carousel starts at first track');
+      for(const width of [390,844]){
+        await page.setViewportSize({width,height:800});
+        const mobileStart=await page.evaluate(()=>{
+          if(!VMM_PUBLIC_LANDING.render(fixture))throw Error('Re-render failed');
+          const rail=document.querySelector('#public-topic-detail .public-song-carousel-track');
+          return {gap:rail.firstElementChild.getBoundingClientRect().left-
+            rail.getBoundingClientRect().left,left:rail.scrollLeft};
+        });
+        assert.ok(Math.abs(mobileStart.gap)<=3,'First song at left at '+width+'px');
+        assert.equal(mobileStart.left,0,'Song starts at position zero on '+width+'px');
+      }
+      await page.setViewportSize({width:980,height:800});
+    }
     const command=text=>page.evaluate(text=>{
       const result=VELAR_NAVIGATION.command(text,fixture);
       return VELAR_NAVIGATION.navigate(result.selection);

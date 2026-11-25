@@ -136,7 +136,7 @@ assert.match(elements['artist-message'].textContent,/не опубликован
 assert.match(html,/noindex,nofollow/);
 assert.match(html,/artist-detail\.js\?v=5/);
 assert.match(sw,/artist-detail\.js\?v=5/);
-assert.match(html,/public-song-ui\.js\?v=25/,'Same public art module is loaded before profile');
+assert.match(html,/public-song-ui\.js\?v=26/,'Same public art module is loaded before profile');
 assert.ok(html.indexOf('public-song-ui.js')<html.indexOf('artist-detail.js'));
 assert.match(sw,/artist-detail\.css\?v=3/);
 assert.match(css,/artist-track-source--spotify::after/);

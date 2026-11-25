@@ -2440,7 +2440,9 @@ html.legacy-ipad-crystal .velar-radio > .station-help > .station-help-button::-w
  background:#1b2d4e;border:1px solid #d1af76;color:#f6deb1;cursor:pointer;font:inherit}
 .public-song-page-button:disabled{opacity:.4;cursor:default}
 .public-song-carousel-track{position:relative;scroll-snap-type:x proximity;overflow-anchor:none;scroll-margin-top:6rem}
-.public-song-carousel-track::before,.public-song-carousel-track::after{content:"";flex:0 0 var(--song-edge,0px);margin:0}
+/* RUN-208: first cover at left; retain only trailing room to center the last result. */
+.public-song-carousel-track::after{content:"";flex:0 0 var(--song-edge,0px);margin:0}
+.public-song-carousel-track--focus::before{content:"";flex:0 0 var(--song-edge,0px);margin:0}
 .public-song-carousel-track>.public-song-entry--carousel{scroll-snap-align:center}
 .public-song-entry,.cms-music-entry{scroll-margin-top:6rem}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
