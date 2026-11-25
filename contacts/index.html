@@ -14,6 +14,7 @@
     .contact-page :is(input,select,textarea) { width: 100%; padding: .7rem }
     .contact-page button { justify-self: start }
   </style>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
   <header class="masthead"><a class="brand" href="/"><img src="../assets/velardream-crystal.png" alt="" width="36" height="44">VELARDREAM <small>RECORDS</small></a><a href="/">← На главную сайта</a></header>
@@ -27,7 +28,8 @@
       <label>Ваша электронная почта<input type="email" name="email" autocomplete="email" required maxlength="254"></label>
       <label>Сообщение<textarea name="message" rows="7" minlength="3" maxlength="5000" required></textarea></label>
       <p id="hint" class="muted" aria-live="polite"></p>
-      <p>Сообщение и ваш адрес получит администратор через Formspree. При отправке может появиться проверка reCAPTCHA.</p>
+      <p>Сообщение и ваш адрес получит администратор через Formspree.</p>
+      <div class="cf-turnstile" data-sitekey="REPLACE_WITH_VELARDREAM_PUBLIC_SITE_KEY" data-size="flexible" data-language="ru"></div>
       <button class="gold" type="submit">Отправить сообщение</button>
       <p>Также можно написать на <a href="mailto:velardream@gmail.com">velardream@gmail.com</a>.</p>
     </form>
