@@ -7,9 +7,9 @@ assert.match(html,/id="lyric-search-results"/);
 assert.match(html,/aria-controls="lyric-search-results"/);
 assert.match(css,/\.lyrics-search-hit/);
 assert.match(css,/min-height:48px/);
-assert.ok(html.includes('src="studio.js?v=16"'));
+assert.ok(html.includes('src="studio.js?v=17"'));
 assert.ok(html.includes('href="studio.css?v=31"'));
-assert.ok(sw.includes("STUDIO_PREFIX+'v63'"));
+assert.ok(sw.includes("STUDIO_PREFIX+'v64'"));
 assert.doesNotMatch(src,/localStorage\.setItem|sessionStorage\.setItem/);
 assert.match(src,/function pickLyricSearchResult\(key\)/);
 assert.match(src,/key!==songKey&&!chooseSong\(key\)/);
@@ -28,6 +28,7 @@ function node(){
  return el;
 }
 const nodes={},get=id=>nodes[id]||(nodes[id]=node());
+get('lyric-group').value='all';
 get('lyric-form').className='hidden';
 get('no-lyric-selected').className='';
 const document={getElementById:get,querySelectorAll:()=>[],createElement:node,head:{appendChild(){}}};
