@@ -16,7 +16,7 @@ window.fetch=url=>{
  })});
 };
 function node(tag='div'){
- return {tagName:tag,className:'',children:[],style:{},attributes:{},
+ return {tagName:tag,className:'',children:[],style:{setProperty(key,value){this[key]=value;}},attributes:{},
   scrollLeft:0,clientWidth:300,scrollWidth:1300,offsetLeft:0,
   appendChild(child){child.parentNode=this;this.children.push(child);return child;},
   removeChild(child){const i=this.children.indexOf(child);if(i>=0)this.children.splice(i,1);
@@ -163,6 +163,10 @@ assert.match(hugeCarousel.className,/public-song-carousel/,
 
 const css=read('style.css');
  // RUN-208: no leading filler across artist, genre, language, topic, album or video rails.
+ assert.match(css,/\.public-song-carousel-track--focus::before\{content:"";flex:0 0 var\(--song-edge,0px\)/,
+   'Explicit song search can center the first cover');
+ assert.match(player,/function focusCenter\(item\)/,
+   'Shared renderer enables centering after explicit song navigation');
  assert.match(css,/\.public-song-carousel-track::after\{content:"";flex:0 0 var\(--song-edge,0px\)/,
    'Keep space after the last card for centering navigation results');
  assert.doesNotMatch(css,/\.public-song-carousel-track::before,\.public-song-carousel-track::after\{/,

@@ -222,6 +222,15 @@
      if(!item.getBoundingClientRect)return Number(item.offsetLeft)||0;
      return rail.scrollLeft+item.getBoundingClientRect().left-rail.getBoundingClientRect().left+(item.offsetWidth-rail.clientWidth)/2;
    }
+   // RUN-208: new rails open flush left. Explicitly selected songs can still
+   // be centered, including the very first card, with a focus-only spacer.
+   function focusCenter(item){
+     if(!rail||!item)return;
+     var space=Math.max(0,(rail.clientWidth-item.offsetWidth)/2);
+     rail.style.setProperty('--song-edge',space+'px');
+     if(rail.className.indexOf('public-song-carousel-track--focus')<0)
+       rail.className+=' public-song-carousel-track--focus';
+   }
    function showAt(n){
      if(!isCarousel)return;
      if(n<0||n>=tracks.length)return;
@@ -293,7 +302,7 @@
      clearActive();
      index=i;source=src.provider;activeMount=instance;
      if(entries[i])entries[i].className+=' is-playing';
-     if(isCarousel)showAt(i);
+     if(isCarousel){focusCenter(entries[i]);showAt(i);}
      var host=slots[i],frame=el('iframe','cms-release-iframe '+classes+'-song-iframe'+
        (src.provider==='youtube'?' cms-release-iframe--video':''));
      frame.title=tracks[i].title+' — официальный плеер '+platformName(src.provider);
@@ -473,6 +482,7 @@
          while(!entries[i]&&i>=count)appendBatch(); // Preserve mounted players when growing.
          var card=entries[i],ticket=++navigation;
          if(!card)return false;
+         if(isCarousel)focusCenter(card);
          var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
          if(card.scrollIntoView){
            (rail||card).scrollIntoView({block:'start',behavior:reduced?'auto':'smooth'});

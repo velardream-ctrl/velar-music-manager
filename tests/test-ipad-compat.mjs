@@ -36,7 +36,7 @@ assert.match(css,/\.topic-planet-name\{line-height:1\.24;word-wrap:break-word;/)
 // Only public static assets change; Studio cache and audio remain untouched.
 assert.match(html,/href="style\.css\?v=85&consent=190&clips=1&cms=205"/);
 assert.match(sw,/'\.\/style\.css\?v=85&consent=190&clips=1&cms=205'/);
-assert.match(sw,/CACHE_PREFIX \+ 'v99'/);
+assert.match(sw,/CACHE_PREFIX \+ 'v100'/);
 assert.match(sw,/STUDIO_PREFIX\+'v63'/);
 assert.match(css,/\.public-artist-song-list \.public-song-copy,[^}]*word-wrap:break-word;overflow-wrap:break-word;overflow-wrap:anywhere/);
 assert.match(css,/\.public-artist-song-list \.public-song-carousel,[^}]*max-width:100%;min-width:0;box-sizing:border-box/);
