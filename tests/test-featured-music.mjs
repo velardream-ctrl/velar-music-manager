@@ -240,7 +240,7 @@ assert.match(editor,/attachedSourceCheckbox\(sources,'youtube'/);
 assert.match(editor,/markChanged\(\)/);
 assert.match(studio,/show\(el\('vmm-workflows'\),false\)/);
 assert.match(workflows,/show\(id\('panel-landing'\),false\)/);
-assert.match(html,/style\.css\?v=85/);
+assert.match(html,/style\.css\?v=86/);
 assert.match(html,/landing-public\.js\?v=63/);
 assert.match(sw,/CACHE_PREFIX \+ 'v100'/);
 assert.match(css,/\.cms-music-play-icon::before\{/);

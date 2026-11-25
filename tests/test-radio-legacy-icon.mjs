@@ -22,6 +22,6 @@ assert.match(css,/velar-radio-halo/,'Do not remove heartbeat halo');
 assert.match(css,/animation:velar-radio-heartbeat/,'Do not remove logo animation');
 assert.match(sw,/CACHE_PREFIX \+ 'v100'/);
 assert.ok(sw.includes("'./"+filename+"'"),'Service Worker must cache approved PNG offline');
-assert.match(html,/style\.css\?v=85/);
+assert.match(html,/style\.css\?v=86/);
 assert.match(station,/style\.css\?v=80/);
 console.log('PASS: RUN-170 legacy Safari displays the original gold radio PNG with working halo and SW fallback');
