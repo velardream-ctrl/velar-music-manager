@@ -1,0 +1,6 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),window={};
+for(const p of ['landing-schema.js','velar-assistant.js'])vm.runInNewContext(fs.readFileSync(p,'utf8'),{window});
+const api=window.VMM_LANDING_SCHEMA,d=api.defaults(),tc=d.genres.topics,u='https://open.spotify.com/track/0123456789ABCDEFGHIJKL',song={title:'Радость',artist:'Velar',provider:'spotify',url:u};
+tc.entries.find(t=>t.slug==='happiness').tracks=[song];tc.entries.find(t=>t.slug==='humor').tracks=[song];let v=api.normalize(d),cfg=v.genres.topics.moods;assert.equal(cfg.entries.length,6);assert.equal(api.moodTracks(v.genres.topics,cfg.entries[0]).length,1);
+const a=window.VELAR_ASSISTANT.answer('Хочу весёлую музыку',v,v.genres.assistant);assert.equal(a.action,'mood');assert.equal(a.target,'happy');
+v.genres.topics.moods.enabled=false;assert.notEqual(window.VELAR_ASSISTANT.answer('Хочу весёлую музыку',v,v.genres.assistant).action,'mood');d.genres.topics.moods.entries.reverse();assert.equal(api.normalize(d).genres.topics.moods.entries[0].id,'energy');console.log('PASS: six editable mood collections, deduplication, assistant, visibility');

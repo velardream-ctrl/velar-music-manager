@@ -196,7 +196,7 @@
           entries:defaultLanguages()},
         topics:{heading:'Созвездия чувств и историй',
           intro:'Откройте музыку по теме: от свадебных песен и любви до космоса, юмора и светлой грусти.',
-          entries:defaultTopics()},
+          entries:defaultTopics(),moods:defaultMoods()},
         assistant:{enabled:true,greetingEnabled:true,title:'VELAR · помощник',
           welcome:'Добро пожаловать во вселенную VELARDREAM! Какое настроение у вас сегодня?',
           favoriteSongTitle:'Velar Superstar', // RUN-087: editorial favorite, not evidence of public availability
@@ -694,6 +694,40 @@
         songIds:chosen,tracks:consolidateAttachedTracks(tracks,'Жанр '+name)};
     });
   }
+  function defaultMoods(){
+    return {enabled:true,heading:'Какое у вас сегодня настроение?',entries:[
+      {id:'happy',label:'Весёлая',visible:true,topics:['happiness','humor','celebration']},
+      {id:'sad',label:'Грустная',visible:true,topics:['sadness','separation','nostalgia']},
+      {id:'dance',label:'Танцевальная',visible:true,topics:['dance']},
+      {id:'romance',label:'Романтическая',visible:true,topics:['love','wedding','loyalty']},
+      {id:'calm',label:'Спокойная',visible:true,topics:['calm','meditation','dreams','nature','nostalgia']},
+      {id:'energy',label:'Энергичная',visible:true,topics:['upbeat','dance','hope','happiness']}
+    ]};
+  }
+  function moodConfig(raw){
+    var d=defaultMoods(),v=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{},rows=v.entries===undefined?d.entries:v.entries;
+    if(!Array.isArray(rows)||rows.length!==6)throw Error('Настроения: требуется шесть карточек.');
+    var seen=Object.create(null);
+    return {enabled:v.enabled!==false,heading:plain(typeof v.heading==='string'?v.heading:d.heading,'Заголовок настроений',120,true),entries:rows.map(function(r){
+      if(!r||!d.entries.some(function(x){return x.id===r.id;})||seen[r.id])throw Error('Настроения: неверный код карточки.');
+      seen[r.id]=true;
+      if(!Array.isArray(r.topics)||r.topics.length>60)throw Error('Настроения: неверный список тем.');
+      var topics=[];r.topics.forEach(function(t){if(typeof t!=='string'||!/^[a-z0-9-]{2,35}$/.test(t))throw Error('Настроения: неверный код темы.');if(topics.indexOf(t)<0)topics.push(t);});
+      return {id:r.id,label:plain(r.label,'Название настроения',50,true),visible:r.visible!==false,topics:topics};
+    })};
+  }
+  function moodTracks(config,mood){
+    var rows=(config&&config.entries||[]).filter(function(t){return t.visible===true&&!t.searchOnly&&mood.topics.indexOf(t.slug)>=0;});
+    var tracks=[],seen=Object.create(null);
+    // Explicit mappings only. Parent themes do not implicitly include sad or unrelated children.
+    rows.forEach(function(t){(t.tracks||[]).forEach(function(s){
+      var urls=[s.url,s.alternateUrl,s.thirdUrl].filter(Boolean);
+      if(!urls.length)return;
+      if(!urls.some(function(u){return seen[u];}))tracks.push(s);
+      urls.forEach(function(u){seen[u]=true;});
+    });});
+    return tracks;
+  }
   function topicsConfig(raw,def){
     var x=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
     var topics=typeof x.entries==='undefined'?def.entries:x.entries;
@@ -730,7 +764,7 @@
     return {heading:plain(typeof x.heading==='string'?x.heading:def.heading,
       'Заголовок тематических миров',160,true),
       intro:plain(typeof x.intro==='string'?x.intro:def.intro,
-      'Описание тематических миров',450,true),entries:result};
+      'Описание тематических миров',450,true),entries:result,moods:moodConfig(x.moods)};
   }
   // RUN-074 — only safe public chat configuration, not visitor messages or
   // keys. No server-side LLM, email API or per-message Firestore writes.
@@ -1221,7 +1255,7 @@
     universeConfig:universeConfig,languagesConfig:languagesConfig,
     languageTrack:languageTrack,consolidateAttachedTracks:consolidateAttachedTracks,
     defaultUniverseNodes:defaultUniverseNodes,defaultLanguages:defaultLanguages,
-    defaultTopics:defaultTopics,topicsConfig:topicsConfig,genreEntries:genreEntries,
+    defaultTopics:defaultTopics,topicsConfig:topicsConfig,genreEntries:genreEntries,defaultMoods:defaultMoods,moodTracks:moodTracks,
     assistantConfig:assistantConfig,auditAssistantRules:auditAssistantRules,
     recommendedAssistantRules:recommendedAssistantRules,
     addRecommendedAssistantRules:addRecommendedAssistantRules};
