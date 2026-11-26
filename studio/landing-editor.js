@@ -3004,6 +3004,48 @@
    }
    showSongSettings();
  }
+ function storySettings(parent){
+   var box=document.createElement('details'),summary=document.createElement('summary');
+   summary.textContent='У каждой песни своя история';box.appendChild(summary);parent.appendChild(box);
+   var config=data.hero.songStories||(data.hero.songStories={mode:'showcase',entries:[]});
+   selectField(box,'Показ раздела',[['showcase','Одна история + открыть каталог'],['open','Каталог открыт сразу'],['off','Скрыть раздел']],config.mode,function(v){config.mode=v;});
+   heading(box,'Краткие описания','Только публичные песни и короткие описания. Полный текст и стили Suno никогда не копируются. Сохранение и публикация — обычными кнопками сайта.');
+   var songs=API.homepageSongs(data),seed=[["Taxi de Paris","Ночная поездка по Парижу превращается в гонку со временем: герой спешит в аэропорт, где его ждёт любимая.","Любовь|Путешествия","париж такси дорога франция встреча"],["Cyber Love","История любви в цифровом мире, где электронное пространство становится местом встречи двух сердец.","Любовь|Цифровой мир","интернет виртуальная любовь технологии неон"],["Ласковая, нежная","Нежное признание супруге, благодарность судьбе за встречу и любовь, которая остаётся с ними сквозь годы.","Любовь|Семья|Верность|Ностальгия","жена жены жене жену супруге супруга супруги годовщина признание"],["Galaxy Rave","Танцевальное путешествие по воображаемой галактике, где музыка объединяет людей.","Танцы|Космос","звезды галактика вселенная рейв дискотека"],["В поход","Весёлая история летнего похода с друзьями, лесными тропами и песнями у костра.","Путешествия|Дружба|Счастье|Природа","поход костер лес друзья лето"],["Дом у озера","Вдали от городского шума друзья отдыхают у озера, поют до утра и радуются простым мгновениям природы.","Счастье|Дружба|Природа","озеро сауна отдых друзья природа"],["Hiljaiset sanat","Двое гуляют по уснувшему городу, держась за руки. В тишине ночи близость говорит больше любых слов.","Любовь","финская свидание ночная прогулка тихие слова"],["Белые розы в апреле","Несостоявшееся свидание и букет белых роз остаются воспоминанием о несбывшейся любви.","Расставание|Грусть|Ностальгия|Любовь","розы разлука несчастная любовь воспоминания"],["Куда ведёт нас детство","Воспоминания о детских мечтах, дружбе и вере в чудеса помогают вспомнить, к чему мы когда-то стремились.","Ностальгия|Мечты|Надежда|Дети|Дружба","детство мечта взросление радуга вдохновение"],["Надежда","Вечер в караоке неожиданно становится началом романтической истории: голос девушки по имени Надежда покоряет героя.","Любовь|Юмор|Музыка и творчество|Имена","надежда надя нади наде надю надежде наденька караоке именная знакомство"],["Новый год","Праздничная песня о зимнем городе, общих желаниях и радости быть вместе в полночь.","Праздник|Счастье|Танцы","новый год елка куранты праздник новогодняя"],["Разбитый хрусталь","После обмана и разрушенных отношений героиня находит силы оставить прошлое и вновь открыть сердце любви.","Расставание|Грусть|Любовь|Сила духа","предательство обман разрыв не сдаваться пережить расставание"],["Самый верный друг","Песня о любимой собаке, которая ждёт хозяина, разделяет его радости и заботы и остаётся преданным другом.","Дружба|Верность|Природа","собака собаке пес питомец животные верный друг"],["Свет и Тьма","Внутренняя борьба света и тьмы становится историей выбора собственного пути и преодоления сомнений.","Сила духа|Надежда","не сдаваться выбор внутренняя борьба мотивация трудности"]];
+   function key(x){return String(x||'').trim().toLowerCase().replace(/ё/g,'е');}
+   function existing(s){return config.entries.filter(function(r){return [s.url,s.alternateUrl,s.thirdUrl].indexOf(r.url)>=0;})[0];}
+   var status=document.createElement('p');status.className='sync-note';box.appendChild(status);
+   var opts=[['','Выбрать опубликованную песню']].concat(songs.map(function(s){return [s.url,s.title+' · '+(s.artist||'')];}));
+   var editor=document.createElement('div'),pick=selectField(box,'Песня',opts,'',function(v){draw(v);});box.appendChild(editor);
+   function refresh(){status.textContent='Описаний в черновике: '+config.entries.filter(function(r){return !!r.description;}).length+' / песен в публичных подборках: '+songs.length;}
+   function draw(url){clear(editor);var s=songs.filter(function(t){return t.url===url;})[0];if(!s)return;
+     var r=existing(s)||{url:s.url,description:'',keywords:''};
+     function set(k,v){if(!existing(s))config.entries.push(r);r[k]=v;refresh();}
+     field(editor,'Краткое описание (до 420 знаков)',r.description,function(v){set('description',v.slice(0,420));},true);
+     field(editor,'Поисковые слова (до 250 знаков)',r.keywords,function(v){set('keywords',v.slice(0,250));},true);
+     var proposed=seed.filter(function(row){return key(row[0])===key(s.title);});
+     if(proposed.length===1&&songs.filter(function(t){return key(t.title)===key(s.title);}).length===1){
+       heading(editor,'Предложение из утверждённого прототипа',proposed[0][1]);
+       editor.appendChild(button('Вставить описание и поисковые слова',function(){if(!r.description)set('description',proposed[0][1]);if(!r.keywords)set('keywords',proposed[0][3]);draw(url);updateButtons();}));
+     }
+   }
+   box.appendChild(button('Подготовить 14 описаний из прототипа (только черновик)',function(){
+     var added=0,skipped=0;seed.forEach(function(row){var matches=songs.filter(function(s){return key(s.title)===key(row[0]);});if(matches.length!==1){skipped++;return;}var s=matches[0],r=existing(s);if(r&&r.description){skipped++;return;}if(!r){r={url:s.url,description:'',keywords:''};config.entries.push(r);}r.description=row[1];if(!r.keywords)r.keywords=row[3];added++;});
+     refresh();status.textContent+=' · Добавлено '+added+', пропущено '+skipped+'. Проверь названия и версии перед публикацией.';draw(pick.value);updateButtons();
+   }));
+   var paste=field(box,'Импорт JSON: массив {url, description, keywords} (официальные ссылки)','',function(){},true);
+   // field callback must be callable; paste is temporary, never stored in landing data.
+   paste.addEventListener('input',function(){});
+   box.appendChild(button('Сопоставить импорт с публичными песнями',function(){try{
+     var rows=JSON.parse(paste.value);if(!Array.isArray(rows)||rows.length>400)throw new Error('Ожидается массив до 400 записей.');
+     var added=0,skipped=0;rows.forEach(function(row){if(!row||typeof row.url!=='string'||typeof row.description!=='string'||!row.description.trim()){skipped++;return;}
+       var url=API.songUrl(row.url,'spotify')||API.songUrl(row.url,'youtube')||API.songUrl(row.url,'appleMusic');
+       var matches=songs.filter(function(s){return url&&[s.url,s.alternateUrl,s.thirdUrl].indexOf(url)>=0;});
+       if(matches.length!==1||existing(matches[0])){skipped++;return;}
+       config.entries.push({url:matches[0].url,description:row.description.trim().slice(0,420),keywords:typeof row.keywords==='string'?row.keywords.slice(0,250):''});added++;
+     });refresh();status.textContent+=' · Добавлено '+added+', пропущено '+skipped+'.';draw(pick.value);updateButtons();
+   }catch(e){status.textContent='Импорт не выполнен: '+e.message;}}));
+   refresh();
+ }
  function homepageDisplaySettings(parent){
    var headingBlock=document.createElement('section');
    headingBlock.className='landing-display-settings';
@@ -3019,6 +3061,8 @@
      data.hero.skin=v;
      showMode(v);
    });
+   selectField(headingBlock,'Цветовое оформление',[['classic','Классика · синий и золото'],['amethyst','Аметист и золото']],data.hero.palette||'amethyst',function(v){data.hero.palette=v;});
+   storySettings(headingBlock);
    classicPlaylistSettings(classicFields);
    compactSongSettings(compactFields);
    headingBlock.appendChild(classicFields);

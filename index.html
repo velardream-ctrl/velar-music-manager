@@ -52,6 +52,7 @@
   <script src="albums-public.js?v=4&tracklist=210&order=211" defer></script>
   <script src="languages-public.js?v=3" defer></script>
   <script src="topics-public.js?v=3" defer></script>
+  <script src="song-stories.js?v=1" defer></script>
   <script src="genres-public.js?v=1" defer></script>
   <script src="velar-faq-engine.js?v=3" defer></script>
   <script src="site-navigation-catalog.js?v=1" defer></script>
@@ -62,6 +63,7 @@
   <script src="main.js" defer></script>
   <link rel="stylesheet" href="home-skin.css?cms=205">
   <script src="home-skin.js?v=3" defer></script>
+  <link rel="stylesheet" href="amethyst.css?v=1">
 </head>
 <body class="public-site">
   <a class="skip-link" href="#content">Перейти к содержанию</a>
@@ -77,6 +79,7 @@
       <a href="#genres">Жанры</a>
       <a href="#languages">Языки</a>
       <a href="#topics">Темы песен</a>
+      <a id="story-nav" href="#song-stories" hidden>Истории песен</a>
       <a href="/forum/">Форум</a>
       <a href="/contacts/">Контакты</a>
       <a href="#about">О проекте</a>
@@ -281,6 +284,12 @@
         </div>
       </section>
 
+      <section id="song-stories" class="topics-section song-stories-section" aria-labelledby="song-stories-title" hidden>
+        <p class="universe-overline">VELARDREAM / SONG STORIES</p>
+        <h2 id="song-stories-title">У каждой песни своя история</h2>
+        <p class="topics-intro">Найдите музыку, созвучную вашей душе. Краткие истории, темы, жанры и языки.</p>
+        <div id="song-stories-host"></div>
+      </section>
       <section id="genres" class="showcase genres-section" aria-labelledby="genres-title">
         <div class="section-heading">
           <span class="section-number">05 / MOODS &amp; GENRES</span>

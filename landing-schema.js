@@ -150,6 +150,7 @@
     return {
       hero:{
         skin:'classic',
+        palette:'amethyst',songStories:{mode:'showcase',entries:[]},
         featuredPlaylist:{enabled:true,title:'Лучшее от Velar Dream Records',description:'Избранные композиции наших артистов',url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh'},
         crystalJourney:{enabled:true,kicker:'VELARDREAM / DIGITAL ART EXPERIENCE',title:'Музыка рождает свет. Свет создаёт вселенную.',description:'Один кристалл. Тысячи музыкальных историй. Прокручивайте страницу — пространство раскрывает новые грани.',linkText:'Открыть музыкальные миры',stages:['01 — Рождение света','02 — Пробуждение созвездий','03 — Путешествие к музыке']},
         featureMode:'random',featureUrl:'',featureMinutes:5,featureSource:'all',featureGroup:'',featureDaily:false,featureListRotation:'open',
@@ -1039,6 +1040,20 @@
     if(!Array.isArray(rows)||rows.length>12)throw new Error(type+': максимум 12 карточек.');
     return rows.map(function(row,i){return card(row,type,i+1);});
   }
+  // Only short, explicitly curated public descriptions and approved music URLs.
+  function storyConfig(raw){
+    var x=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
+    var rows=x.entries===undefined?[]:x.entries;
+    if(!Array.isArray(rows)||rows.length>400)throw new Error('Истории песен: максимум 400 записей.');
+    var seen=Object.create(null);
+    return {mode:['showcase','open','off'].indexOf(x.mode)>=0?x.mode:'showcase',entries:rows.map(function(r,i){
+      if(!r||typeof r!=='object')throw new Error('История '+(i+1)+': неверная запись.');
+      var url=songUrl(r.url,'spotify')||songUrl(r.url,'youtube')||songUrl(r.url,'appleMusic');
+      if(!url||seen[url])throw new Error('История песни: нужна уникальная официальная ссылка.');
+      seen[url]=true;
+      return {url:url,description:plain(r.description||'','Краткое описание',420,false),keywords:plain(r.keywords||'','Поисковые слова',250,false)};
+    })};
+  }
   function normalize(value){
     if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Нет данных главной страницы.');
     var d=defaults(),hero=value.hero||{},artists=value.artists||{},albums=value.albums||{},releases=value.releases||{},genres=value.genres||{},about=value.about||{};
@@ -1048,6 +1063,8 @@
         crystalJourney:(function(){var x=hero.crystalJourney||d.hero.crystalJourney;var stages=typeof x.stages==='undefined'?d.hero.crystalJourney.stages:x.stages;if(!Array.isArray(stages)||stages.length<1||stages.length>12)throw new Error('Анимация кристалла: от 1 до 12 этапов.');return {enabled:x.enabled!==false,kicker:plain(x.kicker||'','Анимация — надпись',120,false),title:plain(x.title||'','Анимация — заголовок',180,true),description:plain(x.description||'','Анимация — описание',500,false),linkText:plain(x.linkText||'','Анимация — кнопка',100,true),stages:stages.map(function(v,i){return plain(v,'Этап '+(i+1),120,true);})};}()),
         classicPlaylistId:hero.classicPlaylistId==='off'?'off':playlistId(hero.classicPlaylistId),
         skin:hero.skin==='compact'?'compact':'classic',
+        palette:hero.palette==='classic'?'classic':'amethyst',
+        songStories:storyConfig(hero.songStories),
         featureMode:['fixed','rotate','list'].indexOf(hero.featureMode)>=0?hero.featureMode:'random',
         featureUrl:typeof hero.featureUrl==='string'?hero.featureUrl.slice(0,2048):'',
         featureMinutes:[1,5,15,30,60].indexOf(hero.featureMinutes)>=0?hero.featureMinutes:5,

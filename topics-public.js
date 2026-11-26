@@ -93,6 +93,12 @@
    });
    available.forEach(function(t){
      var chip=el('button','topic-tag',t.label);
+     var seen=Object.create(null),count=0;
+     [t].concat(all.filter(function(c){return c.parentSlug===t.slug&&!c.searchOnly;})).forEach(function(g){g.tracks.forEach(function(s){var urls=[s.url,s.alternateUrl,s.thirdUrl].filter(Boolean);if(!urls.some(function(u){return seen[u];}))count++;urls.forEach(function(u){seen[u]=true;});});});
+     chip.style.fontSize=(13+Math.min(10,Math.sqrt(count)*2))+'px';
+     var tones={love:'rose',family:'gold',loyalty:'gold',space:'blue',nature:'blue',journey:'blue',dance:'violet',dreams:'violet',hope:'gold',friendship:'gold',happiness:'gold',humor:'gold',sadness:'blue',separation:'rose',nostalgia:'violet',names:'rose'};
+     chip.setAttribute('data-tone',tones[t.slug]||'violet');
+     chip.setAttribute('title',count+' песен');
      chip.type='button';chip.setAttribute('aria-pressed','false');
      chip.setAttribute('aria-label','Подборка: '+t.label);
      chip.onclick=function(){select(t.slug);pulse();};

@@ -175,6 +175,8 @@
    var siteRoute=window.VELAR_SITE_NAV&&window.VELAR_SITE_NAV.answer(raw);
    if(siteRoute)return siteRoute;
    // RUN-087: contextual music guide keeps owner rules above defaults.
+   var story=window.VELAR_STORIES&&window.VELAR_STORIES.answer(raw,data);
+   if(story)return story;
    var guide=window.VELAR_FAQ&&window.VELAR_FAQ.guide&&window.VELAR_FAQ.guide(q,data,settings);
    if(guide)return guide;
    var suggested=window.VELAR_FAQ&&window.VELAR_FAQ.answer(q,data,settings);
@@ -324,9 +326,10 @@
          }else if(choice.action==='ask'){
            say(choice.target);
          }else if(choice.action==='link'&&choice.target&&choice.target.charAt(0)==='#'){
+           if(choice.target==='#song-stories'&&window.VELAR_STORIES&&window.VELAR_STORIES.open)window.VELAR_STORIES.open(choice.query||'');
            window.location.hash=choice.target.slice(1);
            // On narrow screens reveal the requested section instead of covering it with chat.
-           if(choice.target==='#topics'&&root&&root.querySelector){
+           if((choice.target==='#topics'||choice.target==='#song-stories')&&root&&root.querySelector){
              var closeChat=root.querySelector('.velar-assistant-close');
              if(closeChat&&closeChat.onclick)closeChat.onclick();
            }
