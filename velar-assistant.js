@@ -326,9 +326,10 @@
          }else if(choice.action==='ask'){
            say(choice.target);
          }else if(choice.action==='link'&&choice.target&&choice.target.charAt(0)==='#'){
+           if(choice.target==='#song-stories'&&window.VELAR_STORIES&&window.VELAR_STORIES.open)window.VELAR_STORIES.open(choice.query||'');
            window.location.hash=choice.target.slice(1);
            // On narrow screens reveal the requested section instead of covering it with chat.
-           if(choice.target==='#topics'&&root&&root.querySelector){
+           if((choice.target==='#topics'||choice.target==='#song-stories')&&root&&root.querySelector){
              var closeChat=root.querySelector('.velar-assistant-close');
              if(closeChat&&closeChat.onclick)closeChat.onclick();
            }

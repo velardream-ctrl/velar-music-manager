@@ -49,8 +49,9 @@
    }update();
  }
  function render(v){data=v;var palette=v.hero.palette==='classic'?'classic':'amethyst';if(document.body&&document.body.setAttribute)document.body.setAttribute('data-velar-palette',palette);
-   host=document.getElementById('song-stories-host');var section=document.getElementById('song-stories');if(!section||!host)return;var config=v.hero.songStories||{mode:'showcase'};section.hidden=config.mode==='off';if(!section.hidden)draw();
+   host=document.getElementById('song-stories-host');var section=document.getElementById('song-stories');if(!section||!host)return;var config=v.hero.songStories||{mode:'showcase'};section.hidden=config.mode==='off';var nav=document.getElementById('story-nav');if(nav)nav.hidden=section.hidden;if(!section.hidden)draw();
  }
- function answer(q,v){if(!v||!v.hero.songStories||v.hero.songStories.mode==='off'||!/песн|музык|композиц|послуш|song|music/i.test(q))return null;var found=lookup(v,q).slice(0,3);if(!found.length)return null;return {text:found.map(function(r){return r.song.title+' — '+r.description;}).join('\n\n'),actions:[{action:'link',target:'#song-stories',label:'Открыть музыкальные истории'}]};}
- window.VELAR_STORIES={render:render,model:model,lookup:lookup,answer:answer};
+ function answer(q,v){if(!v||!v.hero.songStories||v.hero.songStories.mode==='off'||!/песн|музык|композиц|послуш|song|music/i.test(q))return null;var found=lookup(v,q).slice(0,3);if(!found.length)return null;return {text:found.map(function(r){return r.song.title+' — '+r.description;}).join('\n\n'),actions:[{action:'link',target:'#song-stories',query:q,label:'Открыть музыкальные истории'}]};}
+ function open(q){if(!data||!host||data.hero.songStories.mode==='off')return false;opened=true;query=String(q||'');topic=language=genre='';page=0;draw();return true;}
+ window.VELAR_STORIES={render:render,model:model,lookup:lookup,answer:answer,open:open};
 }());
