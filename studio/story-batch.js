@@ -48,5 +48,19 @@
      if(addTopics)(row.topics||[]).forEach(function(slug){var g=copy.genres.topics.entries.filter(function(t){return t.slug===slug&&t.visible&&!t.searchOnly;})[0];if(!g||g.tracks.some(function(t){return overlap(links(s),links(t))||key(t.title)===key(s.title)&&key(t.artist)===key(s.artist);}))return;g.tracks.push(api.languageTrack(s,g.tracks.length+1));assigned++;});
    });var validated=api.normalize(copy);return {hero:validated.hero.songStories,topics:validated.genres.topics,added:added,assigned:assigned};
  }
- window.VMM_STORY_BATCH={build:build,review:review,apply:apply};
+ // Owner-only aggregation; never returns lyric content, titles, IDs or links.
+ function coverage(data,catalog,lyrics,api){
+   var c=data.about.progress.coverage||{},done=Object.create(null);
+   lyrics.forEach(function(l){
+     var song=matchLyric(l,catalog),text=words(l.text);
+     // Formatting-only records are not words; count each matched song once, not versions.
+     if(song&&song.instrumental!==true&&/[A-Za-z\u00C0-\u02AF\u0370-\u052F\u0590-\u08FF\u0900-\u1FFF\u3040-\u30FF\u3400-\u9FFF]/.test(text))done[song.id]=true;
+   });
+   var songs=api.homepageSongs(data),entries=data.hero.songStories.entries||[];
+   return {automatic:c.automatic!==false,showLyrics:c.showLyrics!==false,showStories:c.showStories!==false,
+     lyricsTotal:catalog.filter(function(s){return s.instrumental!==true;}).length,lyricsCompleted:Object.keys(done).length,
+     storiesTotal:songs.length,storiesCompleted:songs.filter(function(s){return entries.some(function(r){return str(r.description)&&links(s).indexOf(r.url)>=0;})||(data.releases.cards||[]).some(function(r){return r.visible&&r.kind==='single'&&key(r.title)===key(s.title)&&links(s).indexOf(r.mediaUrl)>=0&&str(r.description);});}).length,
+     updatedAt:new Date().toISOString().slice(0,10)};
+ }
+ window.VMM_STORY_BATCH={build:build,review:review,apply:apply,coverage:coverage};
 }());

@@ -1478,6 +1478,21 @@
      progress.appendChild(create('p','catalog-progress-intro',p.completed+' из '+p.total+' ссылок добавлено'));
      host.appendChild(progress);
    }
+   var c=p.coverage;
+   function coverageBar(label,done,total,kind,detail){
+     if(!total)return;
+     var block=create('div','catalog-progress-summary catalog-coverage-summary catalog-coverage-'+kind);
+     var head=create('div','catalog-progress-barhead'),percent=Math.round(done*100/total);
+     head.appendChild(create('span','',label));head.appendChild(create('strong','',percent+'%'));block.appendChild(head);
+     var track=create('div','catalog-progress-track'),fill=create('span','catalog-progress-fill');fill.style.width=(done*100/total)+'%';track.appendChild(fill);
+     track.setAttribute('role','progressbar');track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax',String(total));track.setAttribute('aria-valuenow',String(done));track.setAttribute('aria-label',label);
+     block.appendChild(track);block.appendChild(create('p','catalog-progress-intro',done+' из '+total+' '+detail));host.appendChild(block);
+   }
+   if(c){
+     if(c.showLyrics)coverageBar('Заполненность текстов песен',c.lyricsCompleted,c.lyricsTotal,'lyrics','песен с сохранённым текстом (без инструментальных)');
+     if(c.showStories)coverageBar('Краткие истории композиций',c.storiesCompleted,c.storiesTotal,'stories','публичных композиций с описанием');
+     if(c.updatedAt&&((c.showLyrics&&c.lyricsTotal)||(c.showStories&&c.storiesTotal)))host.appendChild(create('p','catalog-progress-date','Тексты и истории: данные на '+c.updatedAt));
+   }
    if(p.note)host.appendChild(create('p','catalog-progress-note',p.note));
    if(p.updatedAt)host.appendChild(create('p','catalog-progress-date','Данные на '+p.updatedAt));
    host.hidden=false;
