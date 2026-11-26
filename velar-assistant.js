@@ -175,6 +175,8 @@
    var siteRoute=window.VELAR_SITE_NAV&&window.VELAR_SITE_NAV.answer(raw);
    if(siteRoute)return siteRoute;
    // RUN-087: contextual music guide keeps owner rules above defaults.
+   var story=window.VELAR_STORIES&&window.VELAR_STORIES.answer(raw,data);
+   if(story)return story;
    var guide=window.VELAR_FAQ&&window.VELAR_FAQ.guide&&window.VELAR_FAQ.guide(q,data,settings);
    if(guide)return guide;
    var suggested=window.VELAR_FAQ&&window.VELAR_FAQ.answer(q,data,settings);

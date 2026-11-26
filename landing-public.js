@@ -1365,6 +1365,7 @@
      byId('station-status').textContent=config.enabled?'':'Радио сейчас выключено владельцем.';
      return true;
    }
+   if(window.VELAR_STORIES)window.VELAR_STORIES.render(value);
    if(window.VelarHomeSkin)window.VelarHomeSkin.render(value);
    if(imagePolicy()&&imagePolicy().configure)imagePolicy().configure(value.hero.imageLoadingLevel);
    configureSections(imagePolicy()&&imagePolicy().getLevel?imagePolicy().getLevel():0);
