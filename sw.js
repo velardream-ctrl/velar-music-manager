@@ -1,11 +1,11 @@
 /* VELAR public shell only. NEVER cache authenticated API responses or personal lyrics here. ES5 compatible. */
 'use strict';
 var CACHE_PREFIX = 'velar-public-shell-';
-var CACHE_NAME = CACHE_PREFIX + 'v100' + '-shared-skins-groups2-owner-skin-song-amethyst-stories' + '-smart201-clips' + '-progress184' + '-analytics186' + '-velar188' + '-tab189' + '-tab189' + '-bubble190-typing191-ai196-gateway199-live202-lab203-usage204-forum-run205-classic-playlist-run206-shared-resonance-run207-responsive-album210-order211-navigation212';
+var CACHE_NAME = CACHE_PREFIX + 'v100' + '-shared-skins-groups2-owner-skin-song-amethyst-stories-coverage1' + '-smart201-clips' + '-progress184' + '-analytics186' + '-velar188' + '-tab189' + '-tab189' + '-bubble190-typing191-ai196-gateway199-live202-lab203-usage204-forum-run205-classic-playlist-run206-shared-resonance-run207-responsive-album210-order211-navigation212';
 /* Only private studio SOURCE FILES are cached. Never cache Firestore, Drive files,
    authenticated responses, user lyrics or audio through this Service Worker. */
 var STUDIO_PREFIX='velar-studio-shell-';
-var STUDIO_CACHE=STUDIO_PREFIX+'v64' + '-groups2-owner-skin-song-amethyst-stories-batch1' + '-smart201-refresh-clips'+'-progress184-run185'+'-analytics186' + '-velar188' + '-reports191-ai192-run193-catalog194-fallback195-budget198-run205-classic-playlist-album210-order211';
+var STUDIO_CACHE=STUDIO_PREFIX+'v64' + '-groups2-owner-skin-song-amethyst-stories-batch1-coverage1' + '-smart201-refresh-clips'+'-progress184-run185'+'-analytics186' + '-velar188' + '-reports191-ai192-run193-catalog194-fallback195-budget198-run205-classic-playlist-album210-order211';
 var STUDIO_ASSETS=[
   './studio/','./studio/index.html','./studio/studio.css?v=31','./studio/artist-choices.js?v=1','./studio/artist-track-links.js?v=1','./studio/artist-image-editor.js?v=1','./studio/title-language.js?v=2', './studio/landing-merge.js?v=1',
   './studio/song-distribution.js?v=3','./studio/story-batch.js?v=1','./studio/existing-links-reconcile.js?v=1','./ai-fallback.js?v=1','./studio/ai-public-catalog.js?v=1','./studio/ai-lab.js?v=5&layout=203&usage=204', './landing-schema.js?v=34&clips=1&carousel=201&heroSong=194', './studio/album-auto-match.js?v=2', './studio/landing-editor.js?v=49&fix=185&analytics=189&reports=191&ai=192&carousel=201&clips=1&heroSong=194&albumCode=209&albumMatch=210&albumOrder=211',

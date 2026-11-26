@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),window={};
+for(const p of ['landing-schema.js','studio/story-batch.js'])vm.runInNewContext(fs.readFileSync(p,'utf8'),{window});
+const api=window.VMM_LANDING_SCHEMA,b=window.VMM_STORY_BATCH,d=api.defaults(),u='https://open.spotify.com/track/0123456789ABCDEFGHIJKL';
+d.genres.topics.entries.find(t=>t.slug==='friendship').tracks=[{title:'Друг',artist:'Velar',provider:'spotify',url:u}];
+d.hero.songStories.entries=[{url:u,description:'История о дружбе',keywords:'друг'}];
+const cat=[{id:'a',title:'Друг',sourceRow:1},{id:'b',title:'Другая',sourceRow:2},{id:'c',title:'Инструментал',sourceRow:3,instrumental:true},{id:'d',title:'Пустая',sourceRow:4}];
+const lyrics=[{title:'Друг',catalogRow:1,text:'PRIVATE words'},{title:'Друг',catalogRow:1,text:'Second version'},{title:'Инструментал',catalogRow:3,text:'words'},{title:'Пустая',catalogRow:4,text:'# Пустая\n**Куплет**\n[Instrumental]'},{title:'Чужая',catalogRow:2,text:'words'}];
+const c=b.coverage(d,cat,lyrics,api);assert.equal(c.textTotal,3);assert.equal(c.textCompleted,1);assert.equal(c.storiesTotal,1);assert.equal(c.storiesCompleted,1);assert.doesNotMatch(JSON.stringify(c),/PRIVATE|Друг|spotify/);
+d.about.progress.coverage=c;assert.equal(api.normalize(d).about.progress.coverage.textCompleted,1);d.about.progress.coverage.textCompleted=4;assert.throws(()=>api.normalize(d),/больше/);
+console.log('PASS: catalog coverage aggregate, instrumental and duplicate exclusion, formatting-only exclusion, public stories, schema bounds');

@@ -2840,6 +2840,25 @@
      if(p.metrics.length>=12){info('Допускается до 12 публичных показателей.');return;}
      p.metrics.push({label:'Новый показатель',value:0,visible:false});render();
    },'landing-add'));
+   var coverage=p.coverage||(p.coverage=API.defaults().about.progress.coverage);
+   heading(section,'Заполненность текстов и историй','Автоматический режим пересчитывает показатели по защищённому каталогу при каждой публикации главной. Считается наличие текста, а не его полнота. Инструментальные исключены только из показателя текстов. Истории считаются по публичным композициям.');
+   toggle('Автоматически пересчитывать при публикации',coverage,'automatic');
+   toggle('Показывать заполненность текстами',coverage,'showTexts');
+   toggle('Показывать заполненность краткими историями',coverage,'showStories');
+   numberControl(section,'Песен с сохранённым текстом',coverage,'textCompleted');
+   numberControl(section,'Песен, которым нужен текст (без инструментальных)',coverage,'textTotal');
+   numberControl(section,'Публичных композиций с описанием',coverage,'storiesCompleted');
+   numberControl(section,'Всего публичных композиций',coverage,'storiesTotal');
+   var coverageNote=document.createElement('p');coverageNote.className='sync-note';coverageNote.textContent='Для ручного ввода отключи автоматический пересчёт. Чтобы получить актуальные числа сейчас, нажми кнопку ниже; затем сохрани и опубликуй.';section.appendChild(coverageNote);
+   var refreshCoverage=button('↻ Пересчитать тексты и истории из каталога',function(){
+     if(!loaded||busy||!navigator.onLine)return info('Нужны интернет и доступ администратора.');
+     var account=uid,generation=loadGeneration;refreshCoverage.disabled=true;
+     info('Считаем заполненность текстов и историй…');
+     authorized().then(function(a){if(a.user.uid!==account)throw Error('Учётная запись изменилась.');return readCoverage(a.db,data);}).then(function(c){
+       if(uid!==account||loadGeneration!==generation||data.about.progress!==p)throw Error('Сессия или черновик изменились.');
+       p.coverage=c;render();updateButtons();info('В черновик внесены только числа: тексты '+c.textCompleted+' из '+c.textTotal+', истории '+c.storiesCompleted+' из '+c.storiesTotal+'. Сохрани и опубликуй.');
+     }).catch(function(e){info('Не удалось пересчитать: '+safeStatus(e));}).then(function(){refreshCoverage.disabled=false;});
+   },'landing-small');section.appendChild(refreshCoverage);
    toggle('Показывать полосу готовности ссылок',p,'showBar');
    field(section,'Название полосы готовности',p.barLabel||'',function(v){p.barLabel=v;});
    numberControl(section,'Ссылок заполнено',p,'completed');
@@ -3486,6 +3505,14 @@
      updateButtons();info('Черновик не сохранён: '+message);
    });
  }
+ function readCoverage(database,value){
+   var engine=window.VMM_STORY_BATCH;if(!engine||!engine.coverage)return Promise.reject(new Error('Обнови админку: модуль статистики не загрузился.'));
+   return Promise.all([database.collection('vmm_catalog').limit(1200).get({source:'server'}),database.collection('vmm_lyrics').limit(1000).get({source:'server'})]).then(function(s){
+     var lists=s.map(function(snapshot){var rows=[];snapshot.forEach(function(doc){var row=doc.data()||{};row.id=doc.id;rows.push(row);});return rows;});
+     if(lists[0].length>=1200||lists[1].length>=1000)throw Error('Достигнут лимит чтения; статистика не обновлена.');
+     return engine.coverage(value,lists[0],lists[1],API);
+   });
+ }
  function publish(){
    if(!loaded||busy||!draftRev)return;
    if(dirty()||offlineSyncing||offlineNonce&&draftDirty()){info('Сначала дождись облачной синхронизации черновика и привязок.');return;}
@@ -3535,6 +3562,12 @@
        });
        liveData=API.normalize(liveData); // enforce public-data whitelist
      });
+   }).then(function(){
+     var p=liveData.about.progress;
+     if(!p.enabled||!p.coverage.automatic)return;
+     // Recompute from authoritative private data only while the owner publishes.
+     // Keep draft snapshot unchanged for the revision comparison below.
+     return readCoverage(db,liveData).then(function(c){liveData=clone(liveData);liveData.about.progress.coverage=c;liveData=API.normalize(liveData);});
    }).then(function(){
      if(uid!==account)throw new Error('Учётная запись изменилась.');
      var r=refs();

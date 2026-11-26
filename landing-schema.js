@@ -269,6 +269,7 @@
             {label:'Готовятся к публикации',value:0,visible:false},
             {label:'Альбомы в работе',value:0,visible:false}],
           showBar:true,barLabel:'Заполненность ссылок на музыкальные площадки',completed:0,total:0,
+          coverage:{automatic:true,showTexts:true,showStories:true,textTotal:0,textCompleted:0,storiesTotal:0,storiesCompleted:0,updatedAt:''},
           note:'Часть песен и альбомов ещё находится в подготовке и пока не представлена в публичных подборках.',updatedAt:''}
       }
     };
@@ -1007,7 +1008,13 @@
     if(completed>total)throw new Error('Заполненных ссылок не может быть больше общего числа.');
     var updatedAt=plain(typeof p.updatedAt==='string'?p.updatedAt:d.updatedAt,'Дата обновления',10,false);
     if(updatedAt&&!/^\d{4}-\d{2}-\d{2}$/.test(updatedAt))throw new Error('Дата обновления: формат YYYY-MM-DD.');
-    return {enabled:p.enabled===true,
+    var c=p.coverage&&typeof p.coverage==='object'&&!Array.isArray(p.coverage)?p.coverage:{};
+    var coverage={automatic:c.automatic!==false,showTexts:c.showTexts!==false,showStories:c.showStories!==false};
+    ['textTotal','textCompleted','storiesTotal','storiesCompleted'].forEach(function(k){coverage[k]=nonNegative(c[k]===undefined?0:c[k],'Заполненность коллекции');});
+    if(coverage.textCompleted>coverage.textTotal||coverage.storiesCompleted>coverage.storiesTotal)throw new Error('Заполненных песен не может быть больше общего числа.');
+    coverage.updatedAt=plain(typeof c.updatedAt==='string'?c.updatedAt:'','Дата заполненности',10,false);
+    if(coverage.updatedAt&&!/^\d{4}-\d{2}-\d{2}$/.test(coverage.updatedAt))throw new Error('Дата заполненности: формат YYYY-MM-DD.');
+    return {enabled:p.enabled===true,coverage:coverage,
       title:plain(typeof p.title==='string'?p.title:d.title,'Название статистики',110,true),
       intro:plain(typeof p.intro==='string'?p.intro:d.intro,'Описание статистики',350,false),
       metrics:clean,showBar:p.showBar!==false,
