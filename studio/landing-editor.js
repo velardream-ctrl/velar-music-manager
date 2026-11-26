@@ -3004,6 +3004,40 @@
    }
    showSongSettings();
  }
+ function storyBatchSettings(parent,refresh,redraw){
+   var engine=window.VMM_STORY_BATCH;if(!engine)return;
+   var section=document.createElement('section');section.className='landing-display-group';parent.appendChild(section);
+   heading(section,'Массовое заполнение историй','1. Скачать пакет только недостающих историй. 2. Передать его для анализа ChatGPT. 3. Загрузить файл готовых описаний, проверить и применить. Никакого ручного JSON. Тексты не отправляются автоматически.');
+   var note=document.createElement('p');note.className='sync-note';section.appendChild(note);
+   var exportBtn=button('Скачать песни с текстами для анализа',function(){
+     if(!loaded||!uid||!db||busy)return;var account=uid,generation=loadGeneration;exportBtn.disabled=true;note.textContent='Читаем защищённый каталог и тексты…';
+     authorized().then(function(a){if(a.user.uid!==account)throw Error('Учётная запись изменилась.');
+       return Promise.all([a.db.collection('vmm_catalog').limit(1200).get({source:'server'}),a.db.collection('vmm_lyrics').limit(1000).get({source:'server'})]);
+     }).then(function(s){if(uid!==account||loadGeneration!==generation)throw Error('Сессия изменилась.');
+       var lists=s.map(function(snapshot){var arr=[];snapshot.forEach(function(doc){var row=doc.data();row.id=doc.id;arr.push(row);});return arr;});
+       if(lists[0].length>=1200||lists[1].length>=1000)throw Error('Достигнут лимит чтения; пакет не создан во избежание пропусков.');
+       var pack=engine.build(data,lists[0],lists[1],API);note.textContent='Готово к анализу: '+pack.items.length+' · уже описаны: '+pack.stats.existing+' · инструментальные: '+pack.stats.instrumental+' · без текста: '+pack.stats.missing+' · неоднозначные: '+pack.stats.ambiguous;
+       if(!pack.items.length)return;
+       var url=window.URL.createObjectURL(new Blob([JSON.stringify(pack,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='VelarDream_story_analysis.json';a.textContent='Скачать файл анализа';section.appendChild(a);a.click();window.setTimeout(function(){window.URL.revokeObjectURL(url);if(a.parentNode)a.parentNode.removeChild(a);},60000);
+     }).catch(function(e){note.textContent='Не удалось подготовить пакет: '+e.message;}).then(function(){exportBtn.disabled=false;});
+   });section.appendChild(exportBtn);
+   var label=document.createElement('label');label.className='landing-field';label.textContent='Загрузить готовый файл описаний';var input=document.createElement('input');input.type='file';input.accept='.json,application/json';label.appendChild(input);section.appendChild(label);
+   var result=document.createElement('div');section.appendChild(result);
+   input.onchange=function(){var file=this.files&&this.files[0];this.value='';if(!file)return;if(file.size>2000000){note.textContent='Файл слишком большой (до 2 МБ).';return;}
+     var account=uid,generation=loadGeneration,reader=new FileReader();reader.onerror=function(){note.textContent='Не удалось прочитать файл.';};reader.onload=function(){try{
+       if(uid!==account||loadGeneration!==generation||!loaded)throw Error('Сессия изменилась.');
+       var reviewed=engine.review(JSON.parse(reader.result),data,API);clear(result);
+       var stat=document.createElement('p');stat.textContent='Готово к проверке: '+reviewed.items.length+' · пропущено: '+reviewed.skipped.length;result.appendChild(stat);
+       var addLabel=document.createElement('label'),add=document.createElement('input');add.type='checkbox';add.checked=true;addLabel.appendChild(add);addLabel.appendChild(document.createTextNode(' Добавить также существующие темы'));result.appendChild(addLabel);
+       var choices=[];reviewed.items.forEach(function(row){var wrap=document.createElement('label');wrap.className='landing-field';var check=document.createElement('input');check.type='checkbox';check.checked=true;wrap.appendChild(check);var title=document.createElement('strong');title.textContent=row.title+' · '+row.artist;wrap.appendChild(title);var desc=document.createElement('span');desc.textContent=row.description;wrap.appendChild(desc);var tags=document.createElement('small');tags.textContent='Темы: '+row.topics.map(function(slug){return data.genres.topics.entries.filter(function(t){return t.slug===slug;})[0].label;}).join(', ')+(row.unknown.length?' · не найдены: '+row.unknown.join(', '):'');wrap.appendChild(tags);result.appendChild(wrap);choices.push({row:row,check:check});});
+       if(reviewed.skipped.length){var skip=document.createElement('details'),sum=document.createElement('summary');sum.textContent='Причины пропуска';skip.appendChild(sum);reviewed.skipped.forEach(function(r){var p=document.createElement('p');p.textContent=r.title+': '+r.reason;skip.appendChild(p);});result.appendChild(skip);}
+       result.appendChild(button('Применить выбранные в черновик',function(){try{if(uid!==account||loadGeneration!==generation||!loaded||busy)throw Error('Сессия изменилась или выполняется сохранение.');
+         var applied=engine.apply(choices.filter(function(x){return x.check.checked;}).map(function(x){return x.row;}),data,API,add.checked);
+         data.hero.songStories.entries=applied.hero.entries;data.genres.topics=applied.topics;clear(result);note.textContent='Добавлено описаний: '+applied.added+' · тематических привязок: '+applied.assigned+'. Сохрани черновик и опубликуй после проверки.';refresh();redraw();updateButtons();
+       }catch(e){note.textContent='Ничего не применено: '+e.message;}}));
+     }catch(e){clear(result);note.textContent='Файл не принят: '+e.message;}};reader.readAsText(file);
+   };
+ }
  function storySettings(parent){
    var box=document.createElement('details'),summary=document.createElement('summary');
    summary.textContent='У каждой песни своя история';box.appendChild(summary);parent.appendChild(box);
@@ -3032,10 +3066,13 @@
      var added=0,skipped=0;seed.forEach(function(row){var matches=songs.filter(function(s){return key(s.title)===key(row[0]);});if(matches.length!==1){skipped++;return;}var s=matches[0],r=existing(s);if(r&&r.description){skipped++;return;}if(!r){r={url:s.url,description:'',keywords:''};config.entries.push(r);}r.description=row[1];if(!r.keywords)r.keywords=row[3];added++;});
      refresh();status.textContent+=' · Добавлено '+added+', пропущено '+skipped+'. Проверь названия и версии перед публикацией.';draw(pick.value);updateButtons();
    }));
-   var paste=field(box,'Импорт JSON: массив {url, description, keywords} (официальные ссылки)','',function(){},true);
+   storyBatchSettings(box,refresh,function(){draw(pick.value);});
+   var advanced=document.createElement('details'),advancedTitle=document.createElement('summary');advancedTitle.textContent='Дополнительно: ручной импорт JSON';advanced.appendChild(advancedTitle);box.appendChild(advanced);
+   var paste=field(advanced,'Импорт JSON: массив {url, description, keywords} (официальные ссылки)','',function(){},true);
    // field callback must be callable; paste is temporary, never stored in landing data.
    paste.addEventListener('input',function(){});
-   box.appendChild(button('Сопоставить импорт с публичными песнями',function(){try{
+   advanced.appendChild(button('Сопоставить импорт с публичными песнями',function(){try{
+     if(!paste.value.trim())throw new Error('Выбери файл в массовом заполнении или вставь готовые данные.');
      var rows=JSON.parse(paste.value);if(!Array.isArray(rows)||rows.length>400)throw new Error('Ожидается массив до 400 записей.');
      var added=0,skipped=0;rows.forEach(function(row){if(!row||typeof row.url!=='string'||typeof row.description!=='string'||!row.description.trim()){skipped++;return;}
        var url=API.songUrl(row.url,'spotify')||API.songUrl(row.url,'youtube')||API.songUrl(row.url,'appleMusic');
