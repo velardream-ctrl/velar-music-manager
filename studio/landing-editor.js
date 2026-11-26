@@ -2843,10 +2843,10 @@
    var coverage=p.coverage||(p.coverage=API.defaults().about.progress.coverage);
    heading(section,'Заполненность текстов и историй','Автоматический режим пересчитывает показатели по защищённому каталогу при каждой публикации главной. Считается наличие текста, а не его полнота. Инструментальные исключены только из показателя текстов. Истории считаются по публичным композициям.');
    toggle('Автоматически пересчитывать при публикации',coverage,'automatic');
-   toggle('Показывать заполненность текстами',coverage,'showLyrics');
+   toggle('Показывать заполненность текстами',coverage,'showTexts');
    toggle('Показывать заполненность краткими историями',coverage,'showStories');
-   numberControl(section,'Песен с сохранённым текстом',coverage,'lyricsCompleted');
-   numberControl(section,'Песен, которым нужен текст (без инструментальных)',coverage,'lyricsTotal');
+   numberControl(section,'Песен с сохранённым текстом',coverage,'textCompleted');
+   numberControl(section,'Песен, которым нужен текст (без инструментальных)',coverage,'textTotal');
    numberControl(section,'Публичных композиций с описанием',coverage,'storiesCompleted');
    numberControl(section,'Всего публичных композиций',coverage,'storiesTotal');
    var coverageNote=document.createElement('p');coverageNote.className='sync-note';coverageNote.textContent='Для ручного ввода отключи автоматический пересчёт. Чтобы получить актуальные числа сейчас, нажми кнопку ниже; затем сохрани и опубликуй.';section.appendChild(coverageNote);
@@ -2856,7 +2856,7 @@
      info('Считаем заполненность текстов и историй…');
      authorized().then(function(a){if(a.user.uid!==account)throw Error('Учётная запись изменилась.');return readCoverage(a.db,data);}).then(function(c){
        if(uid!==account||loadGeneration!==generation||data.about.progress!==p)throw Error('Сессия или черновик изменились.');
-       p.coverage=c;render();updateButtons();info('В черновик внесены только числа: тексты '+c.lyricsCompleted+' из '+c.lyricsTotal+', истории '+c.storiesCompleted+' из '+c.storiesTotal+'. Сохрани и опубликуй.');
+       p.coverage=c;render();updateButtons();info('В черновик внесены только числа: тексты '+c.textCompleted+' из '+c.textTotal+', истории '+c.storiesCompleted+' из '+c.storiesTotal+'. Сохрани и опубликуй.');
      }).catch(function(e){info('Не удалось пересчитать: '+safeStatus(e));}).then(function(){refreshCoverage.disabled=false;});
    },'landing-small');section.appendChild(refreshCoverage);
    toggle('Показывать полосу готовности ссылок',p,'showBar');

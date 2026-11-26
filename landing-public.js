@@ -1489,9 +1489,9 @@
      block.appendChild(track);block.appendChild(create('p','catalog-progress-intro',done+' из '+total+' '+detail));host.appendChild(block);
    }
    if(c){
-     if(c.showLyrics)coverageBar('Заполненность текстов песен',c.lyricsCompleted,c.lyricsTotal,'lyrics','песен с сохранённым текстом (без инструментальных)');
+     if(c.showTexts)coverageBar('Заполненность текстов песен',c.textCompleted,c.textTotal,'lyrics','песен с сохранённым текстом (без инструментальных)');
      if(c.showStories)coverageBar('Краткие истории композиций',c.storiesCompleted,c.storiesTotal,'stories','публичных композиций с описанием');
-     if(c.updatedAt&&((c.showLyrics&&c.lyricsTotal)||(c.showStories&&c.storiesTotal)))host.appendChild(create('p','catalog-progress-date','Тексты и истории: данные на '+c.updatedAt));
+     if(c.updatedAt&&((c.showTexts&&c.textTotal)||(c.showStories&&c.storiesTotal)))host.appendChild(create('p','catalog-progress-date','Тексты и истории: данные на '+c.updatedAt));
    }
    if(p.note)host.appendChild(create('p','catalog-progress-note',p.note));
    if(p.updatedAt)host.appendChild(create('p','catalog-progress-date','Данные на '+p.updatedAt));

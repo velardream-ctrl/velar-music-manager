@@ -57,8 +57,8 @@
      if(song&&song.instrumental!==true&&/[A-Za-z\u00C0-\u02AF\u0370-\u052F\u0590-\u08FF\u0900-\u1FFF\u3040-\u30FF\u3400-\u9FFF]/.test(text))done[song.id]=true;
    });
    var songs=api.homepageSongs(data),entries=data.hero.songStories.entries||[];
-   return {automatic:c.automatic!==false,showLyrics:c.showLyrics!==false,showStories:c.showStories!==false,
-     lyricsTotal:catalog.filter(function(s){return s.instrumental!==true;}).length,lyricsCompleted:Object.keys(done).length,
+   return {automatic:c.automatic!==false,showTexts:c.showTexts!==false,showStories:c.showStories!==false,
+     textTotal:catalog.filter(function(s){return s.instrumental!==true;}).length,textCompleted:Object.keys(done).length,
      storiesTotal:songs.length,storiesCompleted:songs.filter(function(s){return entries.some(function(r){return str(r.description)&&links(s).indexOf(r.url)>=0;})||(data.releases.cards||[]).some(function(r){return r.visible&&r.kind==='single'&&key(r.title)===key(s.title)&&links(s).indexOf(r.mediaUrl)>=0&&str(r.description);});}).length,
      updatedAt:new Date().toISOString().slice(0,10)};
  }
