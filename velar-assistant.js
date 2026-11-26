@@ -4,7 +4,7 @@
    ES5 / Safari12 compatible. */
 (function(){
  'use strict';
- var root=null,dialog=null,log=null,input=null,prompt=null,buttons=null,header=null;
+ var root=null,dialog=null,log=null,input=null,prompt=null,buttons=null,moodQuickButtons=null,header=null;
  var config=null,published=null,opened=false,initialized=false;
  var MAX_INPUT=360,activeTyping=null,announcer=null,jokeCursor=-1;
  var offlineBanner=false,offlineInChat=false,pendingConsentReply=null;
@@ -618,6 +618,7 @@
    announcer.setAttribute('aria-atomic','true');dialog.appendChild(announcer);
    buttons=el('div','velar-assistant-suggestions');
    dialog.appendChild(buttons);
+   moodQuickButtons=el('div','velar-assistant-mood-suggestions');dialog.appendChild(moodQuickButtons);
    var form=el('form','velar-assistant-form');
    input=el('input','velar-assistant-input');
    input.type='text';input.maxLength=MAX_INPUT;input.autocomplete='off';
@@ -676,7 +677,7 @@
      {label:'Сотрудничество',query:'сотрудничество'}
    ];
    var tc=published&&published.genres&&published.genres.topics,api=window.VMM_LANDING_SCHEMA,cfg=tc&&(tc.moods||api&&api.defaultMoods&&api.defaultMoods());
-   if(cfg&&cfg.enabled){entries=cfg.entries.filter(function(m){return m.visible;}).map(function(m){return {label:m.label,query:m.label+' музыка'};}).concat(entries);}
+   if(moodQuickButtons){clear(moodQuickButtons);if(cfg&&cfg.enabled){cfg.entries.filter(function(m){return m.visible;}).forEach(function(m){var b=el('button','velar-assistant-suggestion',m.label);b.type='button';b.onclick=function(){say(m.label+' музыка');};moodQuickButtons.appendChild(b);});}}
    entries.forEach(function(topic){
      var button=el('button','velar-assistant-suggestion',topic.label);
      button.type='button';
