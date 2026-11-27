@@ -7,7 +7,7 @@
   if(!form||!body)return;
   var holder=document.createElement('section');
   holder.id='vmm-lyrics-tools';
-  holder.innerHTML='<div class="vmm-lyric-buttons"><button type="button" id="vmm-paste-text">Вставить текст</button><button type="button" id="vmm-clean-suno">Очистить Suno</button><button type="button" data-vmm-section="Куплет">Куплет</button><button type="button" data-vmm-section="Припев">Припев</button><button type="button" data-vmm-section="Бридж">Бридж</button><button type="button" data-vmm-section="Финал">Финал</button><button type="button" id="vmm-bold-text"><strong>Жирный</strong></button><button type="button" id="vmm-undo-clean" class="hidden">Отменить очистку</button></div><p id="vmm-lyric-note" class="sync-note">Вставь текст с командами Suno: известные служебные команды будут удалены, а куплеты и припевы оформлены автоматически.</p><div id="vmm-clean-preview" class="hidden"><p>Результат очистки. Незнакомые команды и слова в скобках сохранены.</p><textarea id="vmm-clean-result" rows="6" readonly></textarea><div class="vmm-lyric-buttons"><button type="button" id="vmm-apply-clean">Применить</button><button type="button" id="vmm-cancel-clean">Отмена</button></div></div>';
+  holder.innerHTML='<div class="vmm-lyric-buttons"><button type="button" id="vmm-paste-text">Вставить текст</button><button type="button" id="vmm-clean-suno">Очистить Suno</button><button type="button" data-vmm-section="Куплет">Куплет</button><button type="button" data-vmm-section="Припев">Припев</button><button type="button" data-vmm-section="Бридж">Бридж</button><button type="button" data-vmm-section="Финал">Финал</button><button type="button" id="vmm-bold-text"><strong>Жирный</strong></button><button type="button" id="vmm-undo-clean" class="hidden">Отменить очистку</button></div><p id="vmm-lyric-note" class="sync-note">При вставке известные команды Suno очищаются автоматически. «Очистить Suno» удаляет все закрытые квадратные скобки; очистку можно отменить.</p><div id="vmm-clean-preview" class="hidden"><p>Результат полной очистки Suno. Слова вне квадратных скобок сохранены.</p><textarea id="vmm-clean-result" rows="6" readonly></textarea><div class="vmm-lyric-buttons"><button type="button" id="vmm-apply-clean">Применить</button><button type="button" id="vmm-cancel-clean">Отмена</button></div></div>';
   el('vmm-lyrics-toolbar').appendChild(holder);
   var cleanOriginal='',lastProof=null,renderTimer=null,renderSeq=0,undoClean=null,suppressAutoOnce=false,autoDisabledAfterUndo=false;
   function el(n){return document.getElementById(n);}
@@ -51,6 +51,31 @@
     });
     text=text.replace(/\n{4,}/g,'\n\n\n').trim();
     return {text:text,removed:count,headings:recognized};
+  }
+
+  // Explicit owner action only. Match balanced brackets across lines and nested
+  // cues; never consume an unmatched opening bracket or ordinary parentheses.
+  function cleanAllSuno(input){
+    var src=String(input||'').replace(/\r\n?/g,'\n'),out='',removed=0,headings=0,i=0;
+    while(i<src.length){
+      if(src.charAt(i)!=='['){out+=src.charAt(i++);continue;}
+      var start=i,depth=1,j=i+1;
+      for(;j<src.length&&depth;j++){
+        if(src.charAt(j)==='[')depth++;
+        else if(src.charAt(j)===']')depth--;
+      }
+      if(depth){out+=src.charAt(i++);continue;}
+      var cue=src.slice(start+1,j-1),h=heading(cue);
+      var lineStart=src.lastIndexOf('\n',start-1)+1;
+      var lineEnd=src.indexOf('\n',j);if(lineEnd<0)lineEnd=src.length;
+      var standalone=!src.slice(lineStart,start).trim()&&!src.slice(j,lineEnd).trim();
+      if(h&&standalone&&cue.indexOf('\n')===-1){out+='**'+h+'**';headings++;}
+      else if(!standalone&&start>0&&j<src.length&&/[^\s]/.test(src.charAt(start-1))&&/[^\s.,!?;:…]/.test(src.charAt(j)))out+=' ';
+      removed++;i=j;
+    }
+    // Remove only now-empty lines and excess whitespace introduced by cues.
+    if(removed)out=out.replace(/[ \t]+(?=\n|$)/g,'').replace(/\n[ \t]*\n(?:[ \t]*\n)+/g,'\n\n').trim();
+    return {text:out,removed:removed,headings:headings};
   }
 
   function printRows(text){
@@ -225,17 +250,20 @@
   };
 
   el('vmm-clean-suno').onclick=function(){
-    cleanOriginal=body.value;var result=cleanSuno(cleanOriginal);
-    if(!result.removed){note('Команд Suno в квадратных скобках не обнаружено.');return;}
-    el('vmm-clean-result').value=result.text;el('vmm-clean-preview').className='';
-    note('Найдено тегов: '+result.removed+'. Исходный текст сохранён без изменений. Сравни результат перед применением.');
+    if(body.readOnly||form.className.indexOf('hidden')!==-1)return;
+    cleanOriginal=body.value;var result=cleanAllSuno(cleanOriginal);
+    if(!result.removed){note('Закрытых квадратных скобок не обнаружено. Текст уже очищен или содержит незакрытую скобку.');return;}
+    el('vmm-clean-result').value=result.text;
+    applyCleanResult();
+    note('Удалено тегов Suno: '+result.removed+'. Текст изменён только в редакторе. Можно отменить очистку или сохранить.');
   };
-  el('vmm-apply-clean').onclick=function(){
+  function applyCleanResult(){
     if(cleanOriginal!==body.value){note('Текст изменился после предварительного просмотра. Сначала повтори очистку.');return;}
-    if(!window.confirm('Применить очищенный вариант? Автоматически сохранён он НЕ будет — для сохранения отдельно нажми кнопку «Сохранить текст».'))return;
+    if(body.readOnly||form.className.indexOf('hidden')!==-1)return;
     undoClean={before:cleanOriginal,after:el('vmm-clean-result').value};el('vmm-undo-clean').className='';body.value=undoClean.after;body.dispatchEvent(new Event('input',{bubbles:true}));
     el('vmm-clean-preview').className='hidden';lastProof=null;schedulePreview();note('Очистка применена в редакторе. Проверь слова и нажми «Сохранить текст» только после сверки.');
-  };
+  }
+  el('vmm-apply-clean').onclick=applyCleanResult;
   el('vmm-cancel-clean').onclick=function(){el('vmm-clean-preview').className='hidden';note('Очистка отменена; исходный текст не изменён.');};
 
   el('vmm-read-mode').onclick=function(){toggleReader(false);};
@@ -296,6 +324,6 @@
 
 
   // Programmatic lyric selection does not fire input; the main editor calls this hook.
-  window.VMM_LYRICS_TOOLS={refreshPreview:schedulePreview,cleanSuno:cleanSuno,print:print,share:share,onRecordLoaded:recordLoaded};
+  window.VMM_LYRICS_TOOLS={refreshPreview:schedulePreview,cleanSuno:cleanSuno,cleanAllSuno:cleanAllSuno,print:print,share:share,onRecordLoaded:recordLoaded};
   window.addEventListener('resize',function(){if(el('vmm-paper-preview').className.indexOf('hidden')<0)resizePreview();});
 }());

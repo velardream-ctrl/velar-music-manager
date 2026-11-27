@@ -10,7 +10,7 @@ const css=read('studio/studio.css');
 assert.match(tools,/new File\(\[cleaned\],name\+'\.txt'/,'TXT must use the song title, not generic Text');
 assert.match(tools,/navigator\.canShare\(\{files:\[file\]\}\)/);
 assert.ok(!/window\.open\('about:blank'/.test(tools),'No window.open for PWA printing');
-assert.ok(html.indexOf('print-export.js?v=1') < html.indexOf('lyrics-tools.js?v=4'),'Print module must load first');
+assert.ok(html.indexOf('print-export.js?v=1') < html.indexOf('lyrics-tools.js?v=5'),'Print module must load first');
 assert.match(css,/#vmm-export-overlay/);
 assert.match(css,/#print-page \.vmm-print-words/);
 assert.match(exporter,/← Назад в редактор/);
