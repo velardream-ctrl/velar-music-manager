@@ -8,9 +8,9 @@ for(const p of ['studio/workflows.js','studio/lyrics-tools.js','studio/studio.js
  assert.equal(result.status,0,p+': '+result.stderr);
 }
 assert.ok(html.includes('<script src="workflows.js?v=12"></script>'));
-assert.match(html,/<script src="lyrics-tools\.js\?v=5"><\/script>/);
+assert.match(html,/<script src="lyrics-tools\.js\?v=6"><\/script>/);
 assert.ok(html.indexOf('import.js?v=1')<html.indexOf('workflows.js?v=12'));
-assert.ok(html.indexOf('workflows.js?v=12')<html.indexOf('lyrics-tools.js?v=5'));
+assert.ok(html.indexOf('workflows.js?v=12')<html.indexOf('lyrics-tools.js?v=6'));
 for(const k of ['overview','catalog','platforms','recordings','contacts','outreach','extras','audit'])assert.ok(workflows.includes(k));
 for(const path of ["'vmm_admins'","'vmm_catalog'","'vmm_links'","'vmm_audit'","'vmm_recordings'","'vmm_contacts'","'vmm_outreach'","'vmm_platforms'"])assert.ok(workflows.includes(path),'Firestore collection missing: '+path);
 assert.match(workflows,/get\(\{source:'server'\}\)/);
@@ -47,7 +47,7 @@ assert.match(lyrics,/schedulePreview/);
 assert.match(lyrics,/vmm-paste-text/);
 assert.match(lyrics,/cleanSuno\(input\)/);
 assert.match(lyrics,/lastProof/);
-assert.match(lyrics,/scrollWidth/);
+assert.match(lyrics,/VMM_PRINT_EXPORT.prepare/);
 assert.match(lyrics,/column-count:2/);
 assert.match(lyrics,/Печать \/ PDF/);
 assert.match(css,/safe-area-inset-bottom/);

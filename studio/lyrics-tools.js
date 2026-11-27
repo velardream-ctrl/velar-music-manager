@@ -120,52 +120,32 @@
     }
   }
 
-  function frameFit(font){
-    var doc=el('vmm-paper-frame').contentDocument;if(!doc)return false;
-    var words=doc.getElementById('words'),sheet=doc.getElementById('sheet');if(!words||!sheet)return false;
-    words.style.fontSize=font+'px';
-    // Multi-column overflow can expand the scroll width, not just the height.
-    return words.scrollWidth<=words.clientWidth+3&&words.scrollHeight<=words.clientHeight+3&&sheet.scrollWidth<=sheet.clientWidth+3&&sheet.scrollHeight<=sheet.clientHeight+3;
-  }
   function preview(){
-    var input=body.value,sourceTitle=title();
-    lastProof=null;
-    if(!input.trim()){
-      el('vmm-paper-preview').className='hidden';
-      note('Вставь текст песни (можно прямо с командами Suno).');
-      return;
-    }
-    var parsed=cleanSuno(input);
+    var input=body.value,sourceTitle=title();lastProof=null;
+    if(!input.trim()){el('vmm-paper-preview').className='hidden';note('Вставь текст песни (можно прямо с командами Suno).');return;}
+    var parsed=cleanAllSuno(input);
     el('vmm-paper-preview').className='';
-    el('vmm-paper-status').textContent='Подгонка A4…';
-    note(parsed.removed?'Автоформатирование: '+parsed.removed+' команд Suno; исходный текст остаётся в редакторе.':'Предпросмотр обновляется автоматически. Слова песни не изменены.');
-    var frame=el('vmm-paper-frame');
-    var seq=++renderSeq;
-    frame.onload=function(){
-      if(seq!==renderSeq)return;
-      try{
-        var chosen=0;
-        for(var size=15;size>=9;size-=0.5){
-          if(frameFit(size)){chosen=size;break;}
-        }
-        if(chosen){
-          frameFit(chosen);
-          lastProof={source:input,text:parsed.text,title:sourceTitle,language:lang(),version:version(),font:chosen};
-          el('vmm-paper-status').textContent='✓ 1 лист A4 · 2 колонки · шрифт '+(chosen*0.75).toFixed(1)+' pt · команд Suno обработано: '+parsed.removed;
-        }else{
-          el('vmm-paper-status').textContent='Не весь текст помещается в A4. Печать заблокирована, чтобы ничего не обрезать; попробуй более короткую версию.';
-        }
-        resizePreview();
-      }catch(err){lastProof=null;el('vmm-paper-status').textContent='Ошибка предпросмотра: '+err.message;}
-    };
-    frame.srcdoc=documentHTML(parsed.text,15,false);
+    el('vmm-paper-status').textContent='Подбор размера и балансировка A4…';
+    note(parsed.removed?'Предпросмотр: команды Suno скрыты только на листе A4. Исходный текст не изменён.':'Предпросмотр обновляется автоматически. Слова песни не изменены.');
+    var frame=el('vmm-paper-frame'),seq=++renderSeq;
+    try{
+      if(!window.VMM_PRINT_EXPORT||!window.VMM_PRINT_EXPORT.prepare)throw new Error('Модуль верстки ещё не загружен. Обнови страницу.');
+      var p={source:input,text:parsed.text,title:sourceTitle,language:lang(),version:version()};
+      p.prepared=window.VMM_PRINT_EXPORT.prepare(p);
+      var plan=p.prepared.layout;
+      lastProof=p;
+      frame.onload=function(){if(seq===renderSeq)resizePreview();};
+      frame.srcdoc=p.prepared.pageHTML;
+      el('vmm-paper-status').textContent='✓ 1 лист A4 · '+(plan.columns===1?'1 колонка':'2 сбалансированные колонки')+' · '+(plan.font*.75).toFixed(1)+' pt'+(plan.font<16?' · плотный текст, мелкий шрифт':'');
+      resizePreview();
+    }catch(err){lastProof=null;frame.srcdoc='';el('vmm-paper-status').textContent='Печать недоступна: '+err.message;}
   }
   function recordLoaded(){
     if(readerActive)toggleReader(true);
     lastInput=body.value;undoClean=null;autoDisabledAfterUndo=false;
     var undo=el('vmm-undo-clean');if(undo)undo.className='hidden';
     var clean=el('vmm-clean-preview');if(clean)clean.className='hidden';
-    note('Текст готов. Вставь команды Suno — они очистятся автоматически. «Лист A4» покажет две колонки.');
+    note('Текст готов. Вставь команды Suno — они очистятся автоматически. «Лист A4» подберёт размер шрифта и расположение текста.');
     if(el('vmm-paper-view').className.indexOf('hidden')<0)schedulePreview();
   }
   function autoCleanEditor(reason,original){
@@ -212,12 +192,7 @@
       note('Сначала дождись автоматической проверки листа A4 и повтори печать.');preview();return;
     }
     if(!window.VMM_PRINT_EXPORT){note('Модуль печати ещё не загружен. Обнови страницу.');return;}
-    window.VMM_PRINT_EXPORT.show({
-      title:title(),language:lang(),version:version(),
-      text:lastProof.text,font:lastProof.font,
-      rowsHTML:printRows(lastProof.text),
-      pageHTML:documentHTML(lastProof.text,lastProof.font,false)
-    });
+    window.VMM_PRINT_EXPORT.show(lastProof);
   }
 
   function replaceSelection(txt,wrap){
