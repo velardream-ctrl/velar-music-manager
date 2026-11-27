@@ -4,3 +4,10 @@ const api=window.VMM_LANDING_SCHEMA,d=api.defaults(),tc=d.genres.topics,u='https
 tc.entries.find(t=>t.slug==='happiness').tracks=[song];tc.entries.find(t=>t.slug==='humor').tracks=[song];let v=api.normalize(d),cfg=v.genres.topics.moods;assert.equal(cfg.entries.length,6);assert.equal(api.moodTracks(v.genres.topics,cfg.entries[0]).length,1);
 const a=window.VELAR_ASSISTANT.answer('Хочу весёлую музыку',v,v.genres.assistant);assert.equal(a.action,'mood');assert.equal(a.target,'happy');
 v.genres.topics.moods.enabled=false;assert.notEqual(window.VELAR_ASSISTANT.answer('Хочу весёлую музыку',v,v.genres.assistant).action,'mood');d.genres.topics.moods.entries.reverse();assert.equal(api.normalize(d).genres.topics.moods.entries[0].id,'energy');console.log('PASS: six editable mood collections, deduplication, assistant, visibility');
+assert.equal(api.defaults().hero.sectionOrder.indexOf('topics'),api.defaults().hero.sectionOrder.indexOf('playlists')+1);
+let ordered=api.defaults();ordered.hero.sectionOrder=['topics','artists','topics','bad'];let norm=api.normalize(ordered);assert.equal(norm.hero.sectionOrder.length,10);assert.equal(norm.hero.sectionOrder[0],'topics');assert.equal(norm.hero.sectionOrder[1],'artists');
+let conflicting=api.defaults(),ct=conflicting.genres.topics;
+['happiness','sadness','dance','calm','love','upbeat'].forEach(k=>{let t=ct.entries.find(t=>t.slug===k);if(t)t.tracks=[song];});
+let review=api.normalize(conflicting).genres.topics;let group=api.moodReview(review)[0];assert.ok(group.conflict);assert.equal(group.effective.length,0);review.moods.entries.forEach(m=>assert.equal(api.moodTracks(review,m).length,0));
+conflicting.genres.topics.moods.assignments=[{url:song.url,mood:'sad'}];review=api.normalize(conflicting).genres.topics;assert.equal(api.moodTracks(review,review.moods.entries.find(m=>m.id==='sad')).length,1);assert.equal(api.moodTracks(review,review.moods.entries.find(m=>m.id==='happy')).length,0);
+console.log('PASS: section ordering, conflict review and single manual mood override');

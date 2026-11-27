@@ -146,11 +146,17 @@
     });
     return {rules:clone,added:added,skipped:skipped};
   }
+  function defaultSectionOrder(){return ['artists','releases','albums','playlists','topics','universe','languages','song-stories','genres','about'];}
+  function sectionOrder(raw){
+    var defaults=defaultSectionOrder(),out=[];
+    if(Array.isArray(raw))raw.forEach(function(id){if(defaults.indexOf(id)>=0&&out.indexOf(id)<0)out.push(id);});
+    defaults.forEach(function(id){if(out.indexOf(id)<0)out.push(id);});return out;
+  }
   function defaults(){
     return {
       hero:{
         skin:'classic',
-        palette:'amethyst',songStories:{mode:'showcase',entries:[]},
+        palette:'amethyst',sectionOrder:defaultSectionOrder(),songStories:{mode:'showcase',entries:[]},
         featuredPlaylist:{enabled:true,title:'Лучшее от Velar Dream Records',description:'Избранные композиции наших артистов',url:'https://open.spotify.com/playlist/11Vdx5lXmtfMiXh63YhIwh'},
         crystalJourney:{enabled:true,kicker:'VELARDREAM / DIGITAL ART EXPERIENCE',title:'Музыка рождает свет. Свет создаёт вселенную.',description:'Один кристалл. Тысячи музыкальных историй. Прокручивайте страницу — пространство раскрывает новые грани.',linkText:'Открыть музыкальные миры',stages:['01 — Рождение света','02 — Пробуждение созвездий','03 — Путешествие к музыке']},
         featureMode:'random',featureUrl:'',featureMinutes:5,featureSource:'all',featureGroup:'',featureDaily:false,featureListRotation:'open',
@@ -708,7 +714,15 @@
     var d=defaultMoods(),v=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{},rows=v.entries===undefined?d.entries:v.entries;
     if(!Array.isArray(rows)||rows.length!==6)throw Error('Настроения: требуется шесть карточек.');
     var seen=Object.create(null);
-    return {enabled:v.enabled!==false,heading:plain(typeof v.heading==='string'?v.heading:d.heading,'Заголовок настроений',120,true),entries:rows.map(function(r){
+    var assignments=[],keys=Object.create(null),rawAssignments=v.assignments||[];
+    if(!Array.isArray(rawAssignments)||rawAssignments.length>4000)throw Error('Настроения: максимум 4000 ручных назначений.');
+    rawAssignments.forEach(function(r){
+      if(!r||typeof r.url!=='string'||!d.entries.some(function(m){return m.id===r.mood;})&&r.mood!=='none')throw Error('Настроения: неверное ручное назначение.');
+      var url=songUrl(r.url,'spotify')||songUrl(r.url,'youtube')||songUrl(r.url,'appleMusic');
+      if(!url||keys[url])throw Error('Настроения: неверная или повторная ссылка.');
+      keys[url]=true;assignments.push({url:url,mood:r.mood});
+    });
+    return {enabled:v.enabled!==false,heading:plain(typeof v.heading==='string'?v.heading:d.heading,'Заголовок настроений',120,true),assignments:assignments,entries:rows.map(function(r){
       if(!r||!d.entries.some(function(x){return x.id===r.id;})||seen[r.id])throw Error('Настроения: неверный код карточки.');
       seen[r.id]=true;
       if(!Array.isArray(r.topics)||r.topics.length>60)throw Error('Настроения: неверный список тем.');
@@ -716,17 +730,33 @@
       return {id:r.id,label:plain(r.label,'Название настроения',50,true),visible:r.visible!==false,topics:topics};
     })};
   }
+  // Topic membership is only evidence, not an acoustic analysis. Conflicting
+  // moods are withheld until the owner assigns the actual recording.
+  function moodReview(config){
+    var cfg=config&&config.moods||defaultMoods(),groups=[],byUrl=Object.create(null);
+    (config&&config.entries||[]).filter(function(t){return t.visible===true&&!t.searchOnly;}).forEach(function(t){
+      (t.tracks||[]).forEach(function(s){
+        var urls=[s.url,s.alternateUrl,s.thirdUrl].filter(Boolean);if(!urls.length)return;
+        var found=[];urls.forEach(function(u){var g=byUrl[u];if(g&&found.indexOf(g)<0)found.push(g);});
+        var group=found[0];if(!group){group={track:s,urls:[],topics:[]};groups.push(group);}
+        found.slice(1).forEach(function(g){g.urls.forEach(function(u){if(group.urls.indexOf(u)<0)group.urls.push(u);byUrl[u]=group;});g.topics.forEach(function(k){if(group.topics.indexOf(k)<0)group.topics.push(k);});groups.splice(groups.indexOf(g),1);});
+        urls.forEach(function(u){if(group.urls.indexOf(u)<0)group.urls.push(u);byUrl[u]=group;});
+        if(group.topics.indexOf(t.slug)<0)group.topics.push(t.slug);
+      });
+    });
+    var assigned=Object.create(null);(cfg.assignments||[]).forEach(function(a){assigned[a.url]=a.mood;});
+    var compatible=['dance|energy','energy|happy','dance|happy','calm|romance','romance|sad','calm|sad','happy|romance'];
+    return groups.map(function(g){
+      var candidates=cfg.entries.filter(function(m){return m.topics.some(function(t){return g.topics.indexOf(t)>=0;});}).map(function(m){return m.id;});
+      var manual=[];g.urls.forEach(function(u){var a=assigned[u];if(a&&manual.indexOf(a)<0)manual.push(a);});
+      var conflict=candidates.length>2||(candidates.length===2&&compatible.indexOf(candidates.slice().sort().join('|'))<0);
+      g.candidates=candidates;g.manual=manual.length===1?manual[0]:'';g.conflict=manual.length>1||(!manual.length&&conflict);
+      g.effective=manual.length===1?(manual[0]==='none'?[]:manual.slice()):g.conflict?[]:candidates;
+      return g;
+    });
+  }
   function moodTracks(config,mood){
-    var rows=(config&&config.entries||[]).filter(function(t){return t.visible===true&&!t.searchOnly&&mood.topics.indexOf(t.slug)>=0;});
-    var tracks=[],seen=Object.create(null);
-    // Explicit mappings only. Parent themes do not implicitly include sad or unrelated children.
-    rows.forEach(function(t){(t.tracks||[]).forEach(function(s){
-      var urls=[s.url,s.alternateUrl,s.thirdUrl].filter(Boolean);
-      if(!urls.length)return;
-      if(!urls.some(function(u){return seen[u];}))tracks.push(s);
-      urls.forEach(function(u){seen[u]=true;});
-    });});
-    return tracks;
+    return moodReview(config).filter(function(g){return g.effective.indexOf(mood.id)>=0;}).map(function(g){return g.track;});
   }
   function topicsConfig(raw,def){
     var x=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{};
@@ -1105,6 +1135,7 @@
         classicPlaylistId:hero.classicPlaylistId==='off'?'off':playlistId(hero.classicPlaylistId),
         skin:hero.skin==='compact'?'compact':'classic',
         palette:hero.palette==='classic'?'classic':'amethyst',
+        sectionOrder:sectionOrder(hero.sectionOrder),
         songStories:storyConfig(hero.songStories),
         featureMode:['fixed','rotate','list'].indexOf(hero.featureMode)>=0?hero.featureMode:'random',
         featureUrl:typeof hero.featureUrl==='string'?hero.featureUrl.slice(0,2048):'',
@@ -1255,7 +1286,7 @@
     universeConfig:universeConfig,languagesConfig:languagesConfig,
     languageTrack:languageTrack,consolidateAttachedTracks:consolidateAttachedTracks,
     defaultUniverseNodes:defaultUniverseNodes,defaultLanguages:defaultLanguages,
-    defaultTopics:defaultTopics,topicsConfig:topicsConfig,genreEntries:genreEntries,defaultMoods:defaultMoods,moodTracks:moodTracks,
+    defaultTopics:defaultTopics,topicsConfig:topicsConfig,genreEntries:genreEntries,defaultMoods:defaultMoods,moodTracks:moodTracks,moodReview:moodReview,defaultSectionOrder:defaultSectionOrder,sectionOrder:sectionOrder,
     assistantConfig:assistantConfig,auditAssistantRules:auditAssistantRules,
     recommendedAssistantRules:recommendedAssistantRules,
     addRecommendedAssistantRules:addRecommendedAssistantRules};
