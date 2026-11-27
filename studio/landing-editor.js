@@ -1962,7 +1962,7 @@
        });list.appendChild(card);
      });
      var status=document.createElement('p');status.className='sync-note';status.textContent='Найдено: '+found.length+' · страница '+(page+1)+' из '+pages;list.appendChild(status);
-     var prev=button('← Назад',function(){page--;draw();}),next=button('Далее →',function(){page++;draw();});prev.disabled=page===0;next.disabled=page>=pages-1;list.appendChild(prev);list.appendChild(next);
+     var prev=button('← Предыдущие песни',function(){page--;draw();}),next=button('Следующие песни →',function(){page++;draw();});prev.disabled=page===0;next.disabled=page>=pages-1;list.appendChild(prev);list.appendChild(next);
    }
    search.oninput=filter.onchange=function(){page=0;draw();};draw();
  }
