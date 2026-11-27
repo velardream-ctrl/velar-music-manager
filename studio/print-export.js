@@ -120,10 +120,11 @@
     var title=String(p.title||'Текст песни'),meta=String(p.language||'')+(p.version?' · '+p.version:'');
     function font(size,bold){ctx.font=(bold?'bold ':'')+size+'px Arial, sans-serif';}
     function candidate(size,margin,cols,allowSplit){
-      var gap=Math.max(32,margin),width=(W-2*margin-(cols-1)*gap)/cols;
+      // Permanent 20 mm left binding gutter; never shrink it for dense lyrics.
+      var leftMargin=76,rightMargin=margin,gap=Math.max(32,margin),usable=W-leftMargin-rightMargin,width=(usable-(cols-1)*gap)/cols;
       var titleSize=Math.max(22,Math.min(34,size*1.12)),titleLH=titleSize*1.18;
-      font(titleSize,true);var titleRows=wrap(ctx,title,W-2*margin);
-      font(13,false);var metaRows=meta?wrap(ctx,meta,W-2*margin):[];
+      font(titleSize,true);var titleRows=wrap(ctx,title,usable);
+      font(13,false);var metaRows=meta?wrap(ctx,meta,usable):[];
       var top=margin+titleRows.length*titleLH+metaRows.length*17+Math.max(18,size*.6);
       var bottom=H-margin,available=bottom-top,lh=size*1.28;
       var flat=[],boundaries=[],sums=[0];
@@ -159,7 +160,7 @@
         });
         if(!ranges)return null;
       }
-      return {font:size,columns:cols,margin:margin,columnWidth:width,columnGap:gap,top:top,bottom:bottom,lineHeight:lh,flat:flat,ranges:ranges,heights:heights,titleRows:titleRows,titleSize:titleSize,titleLH:titleLH,metaRows:metaRows,available:available};
+      return {font:size,columns:cols,margin:margin,leftMargin:leftMargin,rightMargin:rightMargin,centerX:leftMargin+usable/2,columnWidth:width,columnGap:gap,top:top,bottom:bottom,lineHeight:lh,flat:flat,ranges:ranges,heights:heights,titleRows:titleRows,titleSize:titleSize,titleLH:titleLH,metaRows:metaRows,available:available};
     }
     var chosen=null;
     [38,28,20].some(function(margin){
@@ -192,7 +193,7 @@
       if(chosen.columns===1&&residual>chosen.lineHeight*3)y+=residual*.35;
       for(var j=a;j<b;j++){
         var row=chosen.flat[j];if(j>a&&row.gapBefore)y+=row.gapBefore+extra;
-        placed.push({text:row.text,bold:row.bold,x:chosen.margin+col*(chosen.columnWidth+chosen.columnGap),y:y+chosen.font,column:col});
+        placed.push({text:row.text,bold:row.bold,x:chosen.leftMargin+col*(chosen.columnWidth+chosen.columnGap),y:y+chosen.font,column:col});
         y+=chosen.lineHeight;
       }
       ends.push(y);
@@ -207,9 +208,9 @@
     ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
     ctx.textBaseline='alphabetic';ctx.textAlign='center';ctx.fillStyle='#111';
     ctx.font='bold '+plan.titleSize+'px Arial, sans-serif';
-    plan.titleRows.forEach(function(t,i){ctx.fillText(t,W/2,plan.margin+plan.titleSize+i*plan.titleLH);});
+    plan.titleRows.forEach(function(t,i){ctx.fillText(t,plan.centerX,plan.margin+plan.titleSize+i*plan.titleLH);});
     ctx.font='13px Arial, sans-serif';ctx.fillStyle='#555';
-    plan.metaRows.forEach(function(t,i){ctx.fillText(t,W/2,plan.margin+plan.titleRows.length*plan.titleLH+13+i*17);});
+    plan.metaRows.forEach(function(t,i){ctx.fillText(t,plan.centerX,plan.margin+plan.titleRows.length*plan.titleLH+13+i*17);});
     ctx.textAlign='left';ctx.fillStyle='#111';
     plan.rows.forEach(function(row){ctx.font=(row.bold?'bold ':'')+plan.font+'px Arial, sans-serif';ctx.fillText(row.text,row.x,row.y);});
     return {canvas:canvas,layout:plan};
