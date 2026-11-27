@@ -15,7 +15,7 @@ assert.match(player,/window\.addEventListener\('scroll',updateMiniPlayer,false\)
 assert.match(publicHtml,/Открыть мир артистов <svg class="button-arrow"/);
 assert.doesNotMatch(publicHtml,/Открыть мир артистов <span aria-hidden="true">↗/);
 assert.match(publicCSS,/\.button-primary \.button-arrow/);
-assert.ok(publicHtml.includes('href="style.css?v=86&consent=190&clips=1&cms=205"'));
+assert.ok(publicHtml.includes('href="style.css?v=86&consent=190&clips=1&cms=205&anchor=2"'));
 assert.ok(page.includes('src="studio.js?v=19"'));
 assert.ok(page.includes('src="recordings.js?v=12"'));
 assert.ok(page.includes('href="recordings.css?v=12"'));
