@@ -231,6 +231,29 @@ delete previous.content.hero.crystalJourney;
     assert.equal(portrait.art,'none','Portrait phone hides card artwork');
     assert.equal(portrait.card,'block','Portrait phone keeps compact cards');
   }
+  // Real DOM: clicking About must land on its heading after lazy content and reordering.
+  await p.evaluate(()=>{
+    const d=VMM_LANDING_SCHEMA.defaults();
+    d.hero.skin='classic';d.hero.imageLoadingLevel=3;
+    VMM_PUBLIC_LANDING.render(d);
+    scrollTo(0,0);
+  });
+  await p.locator('.site-nav a[href="#about"]').click();
+  await p.waitForFunction(()=>{const r=document.querySelector('#about-section-heading').getBoundingClientRect();return location.hash==='#about'&&r.top>=0&&r.bottom<=innerHeight;});
+  await p.evaluate(()=>{
+    const d=VMM_LANDING_SCHEMA.defaults();d.hero.imageLoadingLevel=3;
+    d.hero.sectionOrder=['topics','playlists','artists','albums','releases','languages','universe','song-stories','genres','about'];
+    d.hero.crystalJourney.stages=Array.from({length:12},(_,i)=>'CMS delayed '+i);
+    VMM_PUBLIC_LANDING.render(d);
+  });
+  await p.waitForFunction(()=>{const r=document.querySelector('#about-section-heading').getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;});
+  await p.evaluate(()=>{document.querySelector('#topics').style.paddingBottom='700px';});
+  await p.waitForFunction(()=>{const r=document.querySelector('#about-section-heading').getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;});
+  await p.evaluate(()=>{window.dispatchEvent(new Event('wheel'));scrollTo(0,0);});
+  await p.waitForFunction(()=>scrollY<5);
+  await p.waitForTimeout(100);
+  assert.ok(await p.evaluate(()=>scrollY<5),'User scroll must cancel anchor stabilization');
+  console.log('PASS '+name+' about navigation after lazy rendering and layout changes');
   console.log('PASS '+name+' 1/3/12 stages, viewport pin, two skins, dedup, visibility and URL. Scene heights: '+result.join(', '));
   await c.close();
  }

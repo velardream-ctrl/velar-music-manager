@@ -103,3 +103,11 @@ assert.equal(elements['public-artists-cards'].className,'feature feature-artists
 assert.doesNotMatch(html,/vmm_lyrics|vmm_recordings/);
 assert.doesNotMatch(publicSrc,/\.set\(|\.add\(|\.update\(|\.delete\(/);
 console.log('PASS: public landing only listens to approved landing doc, renders safe cards, protects private data and restores static fallbacks');
+
+assert.match(html,/<a href="#about">О проекте<\/a>/);
+assert.match(html,/<section id="about"[^>]*aria-labelledby="about-section-heading"/);
+assert.match(html,/<h2 id="about-section-heading">О проекте<\/h2>/);
+assert.match(publicSrc,/assign\('about-title',value\.about\.heading\)/);
+assert.match(publicSrc,/loadBeforeAnchor\(target\)/);
+assert.match(publicSrc,/if\(anchorIntent\)\{alignAnchor\(\);queueAnchor\(\);\}/);
+console.log('PASS: explicit About heading and layout-aware anchor navigation');
