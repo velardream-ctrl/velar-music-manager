@@ -10,7 +10,7 @@ const css=read('studio/studio.css');
 assert.match(tools,/new File\(\[cleaned\],name\+'\.txt'/,'TXT must use the song title, not generic Text');
 assert.match(tools,/navigator\.canShare\(\{files:\[file\]\}\)/);
 assert.ok(!/window\.open\('about:blank'/.test(tools),'No window.open for PWA printing');
-assert.ok(html.indexOf('print-export.js?v=1') < html.indexOf('lyrics-tools.js?v=5'),'Print module must load first');
+assert.ok(html.indexOf('print-export.js?v=2') < html.indexOf('lyrics-tools.js?v=6'),'Print module must load first');
 assert.match(css,/#vmm-export-overlay/);
 assert.match(css,/#print-page \.vmm-print-words/);
 assert.match(exporter,/← Назад в редактор/);
@@ -60,3 +60,19 @@ assert.equal(data.files[0].name,'А над речкой туман.pdf','Standal
 get('vmm-export-close').onclick();
 assert.equal(window.VMM_PRINT_EXPORT.safeName('/////'),'Текст песни');
 console.log('PASS: named TXT sharing, no print dead end, in-app Back, standalone PDF share, valid PDF container');
+
+// Stage sheet: font-sensitive layout tests, no real song data.
+const metrics={font:'',measureText(s){const size=Number((this.font.match(/([\d.]+)px/)||[])[1])||12;return {width:String(s).length*size*.52};}};
+const build=window.VMM_PRINT_EXPORT.buildLayout;
+const short={title:'Короткая песня',text:'**Куплет 1**\nМоя родная сторона\nСветит тихая луна\n\n**Припев**\nДом родной, родной мой дом\nСердце остаётся в нём'};
+const shortPlan=build(short,metrics);assert.ok(shortPlan.font>20);
+const stanza=Array.from({length:8},(_,i)=>'Строка песни '+(i+1)+' звучит над землёй').join('\n');
+const long={title:'Длинная песня',text:Array.from({length:7},(_,i)=>'**Куплет '+(i+1)+'**\n'+stanza).join('\n\n')};
+const plan=build(long,metrics);
+assert.equal(plan.columns,2);assert.ok(plan.font>=16);assert.equal(plan.rows.filter(r=>r.bold).length,7);
+assert.equal(plan.rows.filter(r=>!r.bold).length,56,'All lyric lines survive');
+assert.ok(Math.abs(plan.ends[0]-plan.ends[1])<plan.lineHeight*8,'Columns should be balanced');
+assert.ok(plan.rows.every(r=>r.y<=plan.bottom));assert.ok(plan.margin>=20);
+for(let i=1;i<plan.rows.length;i++){let a=plan.rows[i-1],b=plan.rows[i];if(a.column===b.column&&b.bold)assert.ok(b.y-a.y>=plan.lineHeight*1.99,'At least one blank line between sections');}
+assert.match(window.VMM_PRINT_EXPORT.prepare(short).pageHTML,/data:image\/jpeg/);
+console.log('PASS: short-song font, balanced sections, complete A4, blank-line gaps, shared print image');

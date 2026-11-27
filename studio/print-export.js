@@ -34,12 +34,13 @@
   }
   function preparePrint(){
     if(!active)return;
-    byId('print-page').innerHTML=markup(active);
+    byId('print-page').innerHTML='<img alt="Лист A4" style="display:block;width:210mm;height:297mm;margin:0" src="'+active.prepared.image+'">';
     printPrepared=true;
   }
   function show(p){
     if(!p||!p.text)return;
     close();
+    try{p.prepared=p.prepared||prepare(p);}catch(err){return;}
     active=p;
     opener=document.activeElement;
     overlay=document.createElement('div');
@@ -50,7 +51,7 @@
     overlay.innerHTML=
       '<div class="vmm-export-toolbar">'+
         '<button type="button" id="vmm-export-close" class="vmm-export-back">← Назад в редактор</button>'+
-        '<span class="vmm-export-title">Лист A4 · две колонки</span>'+
+        '<span class="vmm-export-title">Лист A4 · адаптивная верстка</span>'+
         '<button type="button" id="vmm-export-print">Печать</button>'+
         '<button type="button" id="vmm-export-pdf">Сохранить PDF</button>'+
       '</div>'+
@@ -68,7 +69,7 @@
     };
     var f=byId('vmm-export-frame');
     f.onload=resize;
-    f.srcdoc=p.pageHTML;
+    f.srcdoc=p.prepared.pageHTML;
     resize();
     if(standalone())setMessage('На iPhone из домашнего экрана печать может блокироваться iOS. Нажми «Печать» или «Сохранить PDF», затем выбери «Печать» либо «Сохранить в Файлы» в системном меню.');
     else setMessage('Печать отправит лист на принтер. «Сохранить PDF» создаст отдельный файл с названием песни.');
@@ -107,62 +108,115 @@
     if(part)out.push(part);
     return out.length?out:[''];
   }
-  function renderCanvas(p){
-    var scale=2, W=794,H=1123,canvas=document.createElement('canvas');
-    canvas.width=W*scale;canvas.height=H*scale;
-    var ctx=canvas.getContext('2d');
-    if(!ctx)throw new Error('Canvas недоступен');
-    ctx.scale(scale,scale);
-    var items=blocks(p.text),font=Math.min(15,Math.max(9,Number(p.font)||12));
-    function layout(size,draw){
-      var x=[19,414],y=77,column=0,cw=361,bottom=1104,lineHeight=size*1.28, gap=9;
-      ctx.textBaseline='alphabetic';ctx.fillStyle='#111';
-      for(var i=0;i<items.length;i++){
-        var b=items[i],isHeading=b.type==='heading',fontFace=isHeading?'bold ':'';
-        ctx.font=fontFace+(isHeading?(size*1.04):size)+'px Arial, sans-serif';
-        var rows=[];
-        for(var k=0;k<b.lines.length;k++){
-          var wrapped=wrap(ctx,b.lines[k],cw);
-          for(var n=0;n<wrapped.length;n++)rows.push(wrapped[n]);
+  // Shared measured layout for A4 preview, PDF and print.
+  function buildLayout(p,ctx){
+    var W=794,H=1123,groups=[];
+    blocks(p.text).forEach(function(b){
+      var g=groups[groups.length-1];
+      if(b.type==='stanza'&&g&&g.headingOnly){g.parts.push(b);g.headingOnly=false;}
+      else groups.push({parts:[b],headingOnly:b.type==='heading'});
+    });
+    if(!groups.length)throw new Error('Нет текста для печати.');
+    var title=String(p.title||'Текст песни'),meta=String(p.language||'')+(p.version?' · '+p.version:'');
+    function font(size,bold){ctx.font=(bold?'bold ':'')+size+'px Arial, sans-serif';}
+    function candidate(size,margin,cols,allowSplit){
+      var gap=Math.max(32,margin),width=(W-2*margin-(cols-1)*gap)/cols;
+      var titleSize=Math.max(22,Math.min(34,size*1.12)),titleLH=titleSize*1.18;
+      font(titleSize,true);var titleRows=wrap(ctx,title,W-2*margin);
+      font(13,false);var metaRows=meta?wrap(ctx,meta,W-2*margin):[];
+      var top=margin+titleRows.length*titleLH+metaRows.length*17+Math.max(18,size*.6);
+      var bottom=H-margin,available=bottom-top,lh=size*1.28;
+      var flat=[],boundaries=[],sums=[0];
+      groups.forEach(function(g,i){
+        if(i)boundaries.push(flat.length);
+        var first=true;
+        g.parts.forEach(function(part){
+          var bold=part.type==='heading';font(size,bold);
+          part.lines.forEach(function(line){wrap(ctx,line,width).forEach(function(t){
+            var gapBefore=i>0&&first?lh:0;first=false;
+            flat.push({text:t,bold:bold,gapBefore:gapBefore});
+            sums.push(sums[sums.length-1]+lh+gapBefore);
+          });});
+        });
+      });
+      function height(a,b){return sums[b]-sums[a]-(a<b?flat[a].gapBefore:0);}
+      var ranges,heights,best=Infinity;
+      if(cols===1){
+        var total=height(0,flat.length);if(total>available+.01)return null;
+        ranges=[[0,flat.length]];heights=[total];
+      }else{
+        var choices=boundaries.slice();
+        if(allowSplit)for(var i=2;i<flat.length-1;i++){
+          if(!flat[i-2].bold&&!flat[i-1].bold&&!flat[i].bold&&!flat[i+1].bold&&choices.indexOf(i)<0)choices.push(i);
         }
-        var blockHeight=rows.length*lineHeight+(isHeading?4:gap);
-        if(isHeading&&items[i+1]){
-          var next=items[i+1];
-          if(next.type==='stanza'){
-            ctx.font=size+'px Arial, sans-serif';
-            var first=wrap(ctx,next.lines[0],cw).length*lineHeight+gap;
-            if(y+blockHeight+first>bottom&&column===0){column=1;y=77;}
-          }
-        }
-        if(y+blockHeight>bottom){
-          if(column===1)return false;
-          column=1;y=77;
-        }
-        if(y+blockHeight>bottom)return false;
-        if(draw){
-          ctx.font=fontFace+(isHeading?(size*1.04):size)+'px Arial, sans-serif';
-          for(var r=0;r<rows.length;r++)ctx.fillText(rows[r],x[column],y+(r+1)*lineHeight-3);
-        }
-        y+=blockHeight;
+        choices.forEach(function(cut){
+          if(cut<=0||cut>=flat.length)return;
+          if(flat[cut-1].bold&&!flat[cut].bold&&!flat[cut].gapBefore)return;
+          var a=height(0,cut),b=height(cut,flat.length);
+          if(Math.max(a,b)>available+.01)return;
+          var score=Math.max(a,b)+Math.abs(a-b)*.15+(boundaries.indexOf(cut)<0?lh*2.5:0);
+          if(score<best){best=score;ranges=[[0,cut],[cut,flat.length]];heights=[a,b];}
+        });
+        if(!ranges)return null;
       }
-      return true;
+      return {font:size,columns:cols,margin:margin,columnWidth:width,columnGap:gap,top:top,bottom:bottom,lineHeight:lh,flat:flat,ranges:ranges,heights:heights,titleRows:titleRows,titleSize:titleSize,titleLH:titleLH,metaRows:metaRows,available:available};
     }
-    while(font>=8&&!layout(font,false))font-=.5;
-    if(font<8)throw new Error('Текст не помещается на одном листе A4');
+    var chosen=null;
+    [38,28,20].some(function(margin){
+      var best=null;
+      for(var size=44;size>=8;size-=.5){
+        var one=candidate(size,margin,1,false),two=candidate(size,margin,2,false);
+        if(one||two){best=one||two;break;}
+      }
+      if(!best)return false;
+      if(!chosen||best.font>chosen.font)chosen=best;
+      return best.font>=18;
+    });
+    if(chosen&&chosen.columns===2&&Math.abs(chosen.heights[0]-chosen.heights[1])>chosen.lineHeight*7){
+      var balanced=candidate(chosen.font,chosen.margin,2,true);
+      if(balanced&&Math.abs(balanced.heights[0]-balanced.heights[1])+chosen.lineHeight*3<Math.abs(chosen.heights[0]-chosen.heights[1]))chosen=balanced;
+    }
+    // Only exceptionally dense or unbroken text may split at lyric-line boundaries.
+    if(!chosen||chosen.font<16){
+      for(var s=44;s>=8;s-=.5){var split=candidate(s,20,2,true);if(split){if(!chosen||split.font>chosen.font)chosen=split;break;}}
+    }
+    if(!chosen)throw new Error('Весь текст не помещается на одном листе A4 без обрезки.');
+    var placed=[],ends=[];
+    chosen.ranges.forEach(function(range,col){
+      var a=range[0],b=range[1],gaps=0;
+      for(var i=a+1;i<b;i++)if(chosen.flat[i].gapBefore)gaps++;
+      var slack=Math.max(0,chosen.available-chosen.heights[col]);
+      var extra=gaps?Math.min(slack/gaps,chosen.lineHeight*1.2):0;
+      var residual=Math.max(0,slack-extra*gaps),y=chosen.top;
+      // A very short song is centered vertically instead of creating giant gaps.
+      if(chosen.columns===1&&residual>chosen.lineHeight*3)y+=residual*.35;
+      for(var j=a;j<b;j++){
+        var row=chosen.flat[j];if(j>a&&row.gapBefore)y+=row.gapBefore+extra;
+        placed.push({text:row.text,bold:row.bold,x:chosen.margin+col*(chosen.columnWidth+chosen.columnGap),y:y+chosen.font,column:col});
+        y+=chosen.lineHeight;
+      }
+      ends.push(y);
+    });
+    chosen.rows=placed;chosen.ends=ends;return chosen;
+  }
+  function renderCanvas(p){
+    var scale=3,W=794,H=1123,canvas=document.createElement('canvas');
+    canvas.width=W*scale;canvas.height=H*scale;
+    var ctx=canvas.getContext('2d');if(!ctx)throw new Error('Canvas недоступен');
+    ctx.scale(scale,scale);var plan=buildLayout(p,ctx);
     ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='#111';ctx.textAlign='center';
-    var heading=String(p.title||'Текст песни');
-    ctx.font='bold 19px Arial,sans-serif';
-    if(ctx.measureText(heading).width>760){
-      while(ctx.measureText(heading).width>760&&heading.length>10)heading=heading.slice(0,-1);
-      heading+='…';
-    }
-    ctx.fillText(heading,W/2,40);
-    ctx.font='11px Arial,sans-serif';ctx.fillStyle='#555';
-    ctx.fillText(p.language+(p.version?' · '+p.version:''),W/2,60);
+    ctx.textBaseline='alphabetic';ctx.textAlign='center';ctx.fillStyle='#111';
+    ctx.font='bold '+plan.titleSize+'px Arial, sans-serif';
+    plan.titleRows.forEach(function(t,i){ctx.fillText(t,W/2,plan.margin+plan.titleSize+i*plan.titleLH);});
+    ctx.font='13px Arial, sans-serif';ctx.fillStyle='#555';
+    plan.metaRows.forEach(function(t,i){ctx.fillText(t,W/2,plan.margin+plan.titleRows.length*plan.titleLH+13+i*17);});
     ctx.textAlign='left';ctx.fillStyle='#111';
-    layout(font,true);
-    return canvas;
+    plan.rows.forEach(function(row){ctx.font=(row.bold?'bold ':'')+plan.font+'px Arial, sans-serif';ctx.fillText(row.text,row.x,row.y);});
+    return {canvas:canvas,layout:plan};
+  }
+  function prepare(p){
+    var result=renderCanvas(p),image=result.canvas.toDataURL('image/jpeg',.96);
+    return {canvas:result.canvas,layout:result.layout,image:image,pageHTML:'<!doctype html><html lang="ru"><head><meta charset="utf-8"><style>@page{size:A4;margin:0}html,body{margin:0;padding:0;background:#fff}img{display:block;width:794px;height:1123px}@media print{img{width:210mm;height:297mm}}</style></head><body><img alt="Лист A4" src="'+image+'"></body></html>'};
   }
   function ascii(s){
     var out=new Uint8Array(s.length);
@@ -195,7 +249,7 @@
   function sharePDF(){
     if(!active)return;
     var blob;
-    try{blob=pdfBlob(renderCanvas(active));}
+    try{blob=pdfBlob(active.prepared.canvas);}
     catch(err){setMessage('Не удалось создать PDF: '+err.message);return;}
     var filename=safeName(active.title)+'.pdf', file;
     try{file=new File([blob],filename,{type:'application/pdf'});}catch(err){file=null;}
@@ -217,5 +271,5 @@
   }
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&overlay)close();});
   window.addEventListener('resize',resize);
-  window.VMM_PRINT_EXPORT={show:show,close:close,safeName:safeName};
+  window.VMM_PRINT_EXPORT={show:show,close:close,safeName:safeName,prepare:prepare,buildLayout:buildLayout};
 }());
