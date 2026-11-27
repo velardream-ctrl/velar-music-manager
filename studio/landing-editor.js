@@ -1945,6 +1945,10 @@
    heading(box,'Музыка по настроению','Существующие темы объединяются в простые подборки. Это предварительная группировка по темам, не автоматический анализ звучания. Иконки фиксированы.');
    function toggle(host,label,obj,key){var row=document.createElement('label');row.className='landing-checkbox';var c=document.createElement('input');c.type='checkbox';c.checked=obj[key]!==false;c.onchange=function(){obj[key]=c.checked;updateButtons();};row.appendChild(c);row.appendChild(document.createTextNode(label));host.appendChild(row);}
    toggle(box,'Показывать блок на сайте и быстрые кнопки помощника',m,'enabled');
+   toggle(box,'Самостоятельный раздел',m,'standalone');
+   toggle(box,'Показывать в главном меню',m,'menu');
+   if(m.embedded===undefined)m.embedded=false;
+   toggle(box,'Показывать в тематических созвездиях',m,'embedded');
    field(box,'Заголовок',m.heading,function(v){m.heading=v;});
    var list=document.createElement('div');box.appendChild(list);
    function draw(){clear(list);m.entries.forEach(function(r,i){
