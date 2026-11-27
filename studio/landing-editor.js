@@ -1939,10 +1939,28 @@
    search.oninput=function(){genreCatalogSearch=this.value;genreCatalogPage=0;draw();};
    draw();parent.appendChild(card);
  }
+ function moodEditor(parent,config){
+   var box=document.createElement('details'),sum=document.createElement('summary');sum.textContent='Музыка по настроению — 6 карточек';box.appendChild(sum);parent.appendChild(box);
+   var m=config.moods||(config.moods=API.defaultMoods());
+   heading(box,'Музыка по настроению','Существующие темы объединяются в простые подборки. Это предварительная группировка по темам, не автоматический анализ звучания. Иконки фиксированы.');
+   function toggle(host,label,obj,key){var row=document.createElement('label');row.className='landing-checkbox';var c=document.createElement('input');c.type='checkbox';c.checked=obj[key]!==false;c.onchange=function(){obj[key]=c.checked;updateButtons();};row.appendChild(c);row.appendChild(document.createTextNode(label));host.appendChild(row);}
+   toggle(box,'Показывать блок на сайте и быстрые кнопки помощника',m,'enabled');
+   field(box,'Заголовок',m.heading,function(v){m.heading=v;});
+   var list=document.createElement('div');box.appendChild(list);
+   function draw(){clear(list);m.entries.forEach(function(r,i){
+     var card=document.createElement('details'),s=document.createElement('summary');s.textContent=r.label+' · '+API.moodTracks(config,r).length+' песен';card.appendChild(s);list.appendChild(card);
+     field(card,'Название карточки',r.label,function(v){r.label=v;s.textContent=v;});
+     toggle(card,'Показывать карточку',r,'visible');
+     card.appendChild(button('↑ Выше',function(){if(i){m.entries.splice(i,1);m.entries.splice(i-1,0,r);draw();updateButtons();}}));
+     card.appendChild(button('↓ Ниже',function(){if(i<m.entries.length-1){m.entries.splice(i,1);m.entries.splice(i+1,0,r);draw();updateButtons();}}));
+     config.entries.filter(function(t){return !t.searchOnly;}).forEach(function(t){var row=document.createElement('label'),c=document.createElement('input');row.className='landing-checkbox';c.type='checkbox';c.checked=r.topics.indexOf(t.slug)>=0;c.onchange=function(){if(c.checked&&r.topics.indexOf(t.slug)<0)r.topics.push(t.slug);if(!c.checked)r.topics=r.topics.filter(function(x){return x!==t.slug;});s.textContent=r.label+' · '+API.moodTracks(config,r).length+' песен';updateButtons();};row.appendChild(c);row.appendChild(document.createTextNode(t.label+(t.visible?'':' (скрыта)')));card.appendChild(row);});
+   });}draw();
+ }
  function topicEditor(parent){
    var config=data.genres.topics,topics=config.entries;
    heading(parent,'Темы и настроения',
      'Прикрепляй песни из каталога к нескольким темам — как к артистам. Никаких автоматических догадок по названиям. Изменения остаются в черновике до отдельной публикации.');
+   moodEditor(parent,config);
    field(parent,'Заголовок тематических миров',config.heading,function(v){config.heading=v;});
    field(parent,'Описание тематических миров',config.intro,function(v){config.intro=v;},true);
    var menu=document.createElement('div');menu.className='landing-language-menu';

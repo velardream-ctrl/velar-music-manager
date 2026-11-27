@@ -171,6 +171,7 @@ assert.equal(host.querySelector('.velar-assistant-header-avatar').attributes['da
 assert.equal(host.querySelector('.velar-assistant-greeting-avatar').attributes['data-expression'],'morning');
 const tags=host.querySelector('.velar-assistant-suggestions');
 assert.equal(tags.children.length,1);assert.equal(tags.children[0].textContent,'Любовь');
+const moodTags=host.querySelector('.velar-assistant-mood-suggestions');assert.equal(moodTags.children.length,6);config.genres.topics.moods.enabled=false;deviceWindow.VELAR_ASSISTANT.render(config);assert.equal(moodTags.children.length,0);config.genres.topics.moods.enabled=true;
 config.genres.assistant.quickTopics=[];
 deviceWindow.VELAR_ASSISTANT.render(config);
 assert.equal(tags.children.length,0,'Zero quick tags must be supported');

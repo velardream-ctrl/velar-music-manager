@@ -4,7 +4,7 @@
    ES5 / Safari12 compatible. */
 (function(){
  'use strict';
- var root=null,dialog=null,log=null,input=null,prompt=null,buttons=null,header=null;
+ var root=null,dialog=null,log=null,input=null,prompt=null,buttons=null,moodQuickButtons=null,header=null;
  var config=null,published=null,opened=false,initialized=false;
  var MAX_INPUT=360,activeTyping=null,announcer=null,jokeCursor=-1;
  var offlineBanner=false,offlineInChat=false,pendingConsentReply=null;
@@ -168,6 +168,15 @@
      return {text:settings.jokes[jokeCursor],
        action:'ask',target:'ещё анекдот',label:'Ещё анекдот 🎵'};
    }
+   var moodConfig=data&&data.genres&&data.genres.topics,api=window.VMM_LANDING_SCHEMA;
+   var cfg=moodConfig&&(moodConfig.moods||api&&api.defaultMoods&&api.defaultMoods());
+   // Only unambiguous generic requests, not a particular song or name.
+   if(cfg&&cfg.enabled&&api&&api.moodTracks){
+     var moodQuery=q.replace(/ё/g,'е').replace(/^(?:мне нужна|мне нужно|хочу|посоветуй|подбери|найди|включи|покажи)\s+/,'').replace(/\s+(?:музыку|музыка|песню|песня|песни|композиции)$/,'').trim();
+     var aliases={happy:/^весел(?:ая|ую|ые|ой|ое|о)$|^радостн(?:ая|ую|ые)$|^позитивн(?:ая|ую|ые)$/,sad:/^грустн(?:ая|ую|ые)$/,dance:/^танцевальн(?:ая|ую|ые)$/,romance:/^романтическ(?:ая|ую|ие)$/,calm:/^спокойн(?:ая|ую|ые)$/,energy:/^энергичн(?:ая|ую|ые)$|^бодр(?:ая|ую|ые)$/};
+     var mood=cfg.entries.filter(function(m){return m.visible&&(moodQuery===norm(m.label).replace(/ё/g,'е')||aliases[m.id]&&aliases[m.id].test(moodQuery));})[0];
+     if(mood){var tracks=api.moodTracks(moodConfig,mood);return {text:tracks.length?'Подборка «'+mood.label+'»: '+tracks.length+' песен. Выберите композицию по душе.':'Эта подборка пока пополняется.',action:'mood',target:mood.id,label:'Открыть подборку «'+mood.label+'»'};}
+   }
    var search=window.VELAR_NAVIGATION&&window.VELAR_NAVIGATION.command(raw,data);
    if(search)return search;
    // RUN-212: current public routes are verified by the site navigation catalog.
@@ -299,6 +308,10 @@
            var subject='VELARDREAM — предложение о сотрудничестве';
            var body='Здравствуйте!%0A%0AЯ хочу обсудить сотрудничество с VELARDREAM.%0A';
            window.location.href='mailto:'+email+'?subject='+encodeURIComponent(subject)+'&body='+body;
+         }else if(choice.action==='mood'){
+           if(window.VELAR_TOPICS&&window.VELAR_TOPICS.selectMood)window.VELAR_TOPICS.selectMood(choice.target);
+           window.location.hash='topics';
+           var moodArea=find('public-mood-detail');if(moodArea&&moodArea.scrollIntoView)moodArea.scrollIntoView({block:'nearest'});
          }else if(choice.action==='topic'){
            if(window.VELAR_TOPICS&&window.VELAR_TOPICS.select)
              window.VELAR_TOPICS.select(choice.target);
@@ -605,6 +618,7 @@
    announcer.setAttribute('aria-atomic','true');dialog.appendChild(announcer);
    buttons=el('div','velar-assistant-suggestions');
    dialog.appendChild(buttons);
+   moodQuickButtons=el('div','velar-assistant-mood-suggestions');dialog.appendChild(moodQuickButtons);
    var form=el('form','velar-assistant-form');
    input=el('input','velar-assistant-input');
    input.type='text';input.maxLength=MAX_INPUT;input.autocomplete='off';
@@ -662,6 +676,8 @@
      {label:'Космос',query:'космос'},
      {label:'Сотрудничество',query:'сотрудничество'}
    ];
+   var tc=published&&published.genres&&published.genres.topics,api=window.VMM_LANDING_SCHEMA,cfg=tc&&(tc.moods||api&&api.defaultMoods&&api.defaultMoods());
+   if(moodQuickButtons){clear(moodQuickButtons);if(cfg&&cfg.enabled){cfg.entries.filter(function(m){return m.visible;}).forEach(function(m){var b=el('button','velar-assistant-suggestion',m.label);b.type='button';b.onclick=function(){say(m.label+' музыка');};moodQuickButtons.appendChild(b);});}}
    entries.forEach(function(topic){
      var button=el('button','velar-assistant-suggestion',topic.label);
      button.type='button';
