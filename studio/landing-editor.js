@@ -1939,10 +1939,37 @@
    search.oninput=function(){genreCatalogSearch=this.value;genreCatalogPage=0;draw();};
    draw();parent.appendChild(card);
  }
+ function moodReviewEditor(parent,config){
+   var box=document.createElement('details'),summary=document.createElement('summary');box.appendChild(summary);parent.appendChild(box);
+   var cfg=config.moods,rows=API.moodReview(config),labels={};cfg.entries.forEach(function(m){labels[m.id]=m.label;});
+   heading(box,'Проверка настроений отдельных песен','Тема песни не равна характеру музыки. Конфликтные совпадения не показываются до ручного назначения. Тематические привязки и записи остаются без изменений.');
+   var search=document.createElement('input');search.type='search';search.placeholder='Название песни или исполнитель';search.setAttribute('aria-label','Поиск песни для настроения');box.appendChild(search);
+   var filter=document.createElement('select');[['conflicts','Требуют проверки'],['all','Все песни из тем']].forEach(function(p){var o=document.createElement('option');o.value=p[0];o.textContent=p[1];filter.appendChild(o);});box.appendChild(filter);
+   var list=document.createElement('div');box.appendChild(list);var page=0;
+   function draw(){
+     rows=API.moodReview(config);var conflicts=rows.filter(function(g){return g.conflict;}).length;
+     summary.textContent='Настроения отдельных песен · требуют проверки: '+conflicts;
+     var q=search.value.toLowerCase().trim(),found=rows.filter(function(g){return (filter.value==='all'||g.conflict)&&(!q||(g.track.title+' '+g.track.artist).toLowerCase().indexOf(q)>=0);});
+     clear(list);var pages=Math.max(1,Math.ceil(found.length/25));page=Math.min(page,pages-1);
+     found.slice(page*25,page*25+25).forEach(function(g){
+       var card=document.createElement('div');card.className='landing-item';var name=document.createElement('strong');name.textContent=g.track.title+(g.track.artist?' — '+g.track.artist:'');card.appendChild(name);
+       var evidence=document.createElement('p');evidence.className='sync-note';evidence.textContent='По темам: '+(g.candidates.map(function(k){return labels[k];}).join(', ')||'нет')+(g.conflict?' · конфликт, скрыта из настроений':'');card.appendChild(evidence);
+       var a=document.createElement('a');a.href=g.track.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Прослушать запись';card.appendChild(a);
+       selectField(card,'Основное настроение',[['auto','По темам (авто)'],['none','Не показывать в настроениях']].concat(cfg.entries.map(function(m){return [m.id,m.label];})),g.manual||'auto',function(v){
+         cfg.assignments=(cfg.assignments||[]).filter(function(x){return g.urls.indexOf(x.url)<0;});
+         if(v!=='auto')cfg.assignments.push({url:g.track.url,mood:v});
+         updateButtons();draw();
+       });list.appendChild(card);
+     });
+     var status=document.createElement('p');status.className='sync-note';status.textContent='Найдено: '+found.length+' · страница '+(page+1)+' из '+pages;list.appendChild(status);
+     var prev=button('← Предыдущие песни',function(){page--;draw();}),next=button('Следующие песни →',function(){page++;draw();});prev.disabled=page===0;next.disabled=page>=pages-1;list.appendChild(prev);list.appendChild(next);
+   }
+   search.oninput=filter.onchange=function(){page=0;draw();};draw();
+ }
  function moodEditor(parent,config){
    var box=document.createElement('details'),sum=document.createElement('summary');sum.textContent='Музыка по настроению — 6 карточек';box.appendChild(sum);parent.appendChild(box);
    var m=config.moods||(config.moods=API.defaultMoods());
-   heading(box,'Музыка по настроению','Существующие темы объединяются в простые подборки. Это предварительная группировка по темам, не автоматический анализ звучания. Иконки фиксированы.');
+   heading(box,'Музыка по настроению','Темы дают предварительные варианты. Противоречивые совпадения скрываются до ручного выбора основного настроения. Иконки фиксированы.');
    function toggle(host,label,obj,key){var row=document.createElement('label');row.className='landing-checkbox';var c=document.createElement('input');c.type='checkbox';c.checked=obj[key]!==false;c.onchange=function(){obj[key]=c.checked;updateButtons();};row.appendChild(c);row.appendChild(document.createTextNode(label));host.appendChild(row);}
    toggle(box,'Показывать блок на сайте и быстрые кнопки помощника',m,'enabled');
    field(box,'Заголовок',m.heading,function(v){m.heading=v;});
@@ -1961,6 +1988,7 @@
    heading(parent,'Темы и настроения',
      'Прикрепляй песни из каталога к нескольким темам — как к артистам. Никаких автоматических догадок по названиям. Изменения остаются в черновике до отдельной публикации.');
    moodEditor(parent,config);
+   moodReviewEditor(parent,config);
    field(parent,'Заголовок тематических миров',config.heading,function(v){config.heading=v;});
    field(parent,'Описание тематических миров',config.intro,function(v){config.intro=v;},true);
    var menu=document.createElement('div');menu.className='landing-language-menu';
@@ -3287,6 +3315,21 @@
    }
    parent.appendChild(box);
  }
+ function sectionOrderEditor(parent){
+   var box=document.createElement('section');parent.appendChild(box);
+   heading(box,'Порядок разделов главной страницы','Стрелками перемещай разделы. Изменения становятся видимыми посетителям после сохранения и публикации. Шапка, главный кристалл, радио и подвал не перемещаются.');
+   var names={artists:'Артисты',releases:'Музыка и релизы',albums:'Альбомы',playlists:'Плейлисты и подписки',topics:'Созвездия чувств и историй',universe:'Музыкальная вселенная',languages:'Языки песен','song-stories':'У каждой песни своя история',genres:'Жанры',about:'О проекте'};
+   var list=document.createElement('div');box.appendChild(list);
+   function draw(){clear(list);var order=data.hero.sectionOrder=API.sectionOrder(data.hero.sectionOrder);
+     order.forEach(function(key,i){var row=document.createElement('div');row.className='landing-language-menu-item';
+       var label=document.createElement('strong');label.textContent=(i+1)+'. '+names[key];row.appendChild(label);
+       var up=button('↑ Выше',function(){if(i){order.splice(i,1);order.splice(i-1,0,key);draw();updateButtons();}});
+       var down=button('↓ Ниже',function(){if(i<order.length-1){order.splice(i,1);order.splice(i+1,0,key);draw();updateButtons();}});
+       up.disabled=i===0;down.disabled=i===order.length-1;row.appendChild(up);row.appendChild(down);list.appendChild(row);
+     });
+   }
+   box.appendChild(button('Восстановить стандартный порядок',function(){data.hero.sectionOrder=API.defaultSectionOrder();draw();updateButtons();}));draw();
+ }
  function render(){
    var host=id('landing-fields');if(!host)return;
    clear(host);
@@ -3295,6 +3338,7 @@
      heading(panel,'Первый экран','Эмблема, название VELARDREAM и кнопки остаются частью оформления сайта; здесь меняются подпись и вступление.');
      field(panel,'Подзаголовок',data.hero.subtitle,function(v){data.hero.subtitle=v;});
      field(panel,'Основное описание',data.hero.intro,function(v){data.hero.intro=v;},true);
+     sectionOrderEditor(panel);
      // RUN-123: on-site image load testing. Saving and publication remain separate.
      var loadPanel=document.createElement('section');loadPanel.className='landing-loading-controls';
      heading(loadPanel,'Загрузка изображений и разделов',

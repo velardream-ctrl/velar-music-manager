@@ -1354,6 +1354,13 @@
    sectionTasks[id]=work;
    sectionObserver.observe(target);
  }
+ function applySectionOrder(order){
+   var parent=byId('explore');if(!parent||!parent.children||!parent.appendChild)return;
+   var nodes=order.map(function(id){return byId(id);}).filter(function(n){return n&&n.parentNode===parent;});
+   var current=Array.prototype.filter.call(parent.children,function(n){return nodes.indexOf(n)>=0;});
+   if(current.length===nodes.length&&current.every(function(n,i){return n===nodes[i];}))return;
+   nodes.forEach(function(n){parent.appendChild(n);});
+ }
  function render(content){
    if(!window.VMM_LANDING_SCHEMA)return false;
    var value;
@@ -1365,6 +1372,7 @@
      byId('station-status').textContent=config.enabled?'':'Радио сейчас выключено владельцем.';
      return true;
    }
+   applySectionOrder(value.hero.sectionOrder);
    if(window.VELAR_STORIES)window.VELAR_STORIES.render(value);
    if(window.VelarHomeSkin)window.VelarHomeSkin.render(value);
    if(imagePolicy()&&imagePolicy().configure)imagePolicy().configure(value.hero.imageLoadingLevel);

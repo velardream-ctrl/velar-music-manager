@@ -39,13 +39,13 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js" defer></script>
   <script src="studio/firebase-config.js" defer></script>
-  <script src="landing-schema.js?v=34&clips=1&heroSong=194" defer></script>
+  <script src="landing-schema.js?v=34&clips=1&heroSong=194&orderMood=1" defer></script>
   <script src="image-loading.js?v=1" defer></script>
   <script src="public-offline.js?v=1" defer></script>
   <script src="playlist-resonance.js?v=2" defer></script>
   <script src="youtube-compat.js?v=2" defer></script>
   <script src="analytics-public.js?v=1&privacy=191" defer></script>
-  <script src="landing-public.js?v=63&clips=1" defer></script>
+  <script src="landing-public.js?v=63&clips=1&orderMood=1" defer></script>
   <script src="universe.js?v=7" defer></script>
   <script src="smart-navigation.js?v=1" defer></script>
   <script src="public-song-ui.js?v=26&clips=1" defer></script>
@@ -224,6 +224,29 @@
         </div>
       </section>
 
+      <section id="topics" class="topics-section" aria-labelledby="topics-title">
+        <p class="universe-overline">VELARDREAM / CONSTELLATIONS OF FEELINGS</p>
+        <h2 id="topics-title">Созвездия чувств и историй</h2>
+        <p class="topics-intro" id="topics-intro">Откройте музыку по теме: любовь, свадьба, космос, юмор и другие музыкальные истории.</p>
+        <div id="public-moods" class="velar-moods" hidden></div>
+        <div id="public-mood-detail" class="topic-detail velar-mood-detail" hidden aria-live="polite"></div>
+        <div class="topics-cosmos">
+          <div class="topics-cosmos-core" aria-hidden="true">
+            <span class="topics-cosmos-glow"></span>
+            <img src="assets/velardream-symbol.svg" width="100" height="180" alt="" loading="eager" decoding="async">
+          </div>
+          <div id="public-topic-orbit" class="topics-orbit" role="group" aria-label="Тематические планеты песен"></div>
+        </div>
+        <details class="topics-more"><summary>Все основные темы</summary>
+        <div id="public-topic-cloud" class="topics-cloud" role="group" aria-label="Все темы и настроения">
+
+        </div>
+        </details>
+        <div id="public-topic-detail" class="topic-detail" aria-live="polite">
+          <p>Выберите тему, чтобы открыть её песни.</p>
+        </div>
+      </section>
+
       <section id="universe" class="universe-section" aria-labelledby="universe-title">
         <p class="universe-overline">VELARDREAM / EXPLORE THE SOUND</p>
         <h2 id="universe-title">Вселенная, которую можно услышать</h2>
@@ -263,29 +286,6 @@
 
       <!-- RUN-073: curated topic planets with the existing crystal, no hidden media.
            Search indexing deliberately remains disabled while the site is built. -->
-      <section id="topics" class="topics-section" aria-labelledby="topics-title">
-        <p class="universe-overline">VELARDREAM / CONSTELLATIONS OF FEELINGS</p>
-        <h2 id="topics-title">Созвездия чувств и историй</h2>
-        <p class="topics-intro" id="topics-intro">Откройте музыку по теме: любовь, свадьба, космос, юмор и другие музыкальные истории.</p>
-        <div id="public-moods" class="velar-moods" hidden></div>
-        <div id="public-mood-detail" class="topic-detail velar-mood-detail" hidden aria-live="polite"></div>
-        <div class="topics-cosmos">
-          <div class="topics-cosmos-core" aria-hidden="true">
-            <span class="topics-cosmos-glow"></span>
-            <img src="assets/velardream-symbol.svg" width="100" height="180" alt="" loading="eager" decoding="async">
-          </div>
-          <div id="public-topic-orbit" class="topics-orbit" role="group" aria-label="Тематические планеты песен"></div>
-        </div>
-        <details class="topics-more"><summary>Все основные темы</summary>
-        <div id="public-topic-cloud" class="topics-cloud" role="group" aria-label="Все темы и настроения">
-
-        </div>
-        </details>
-        <div id="public-topic-detail" class="topic-detail" aria-live="polite">
-          <p>Выберите тему, чтобы открыть её песни.</p>
-        </div>
-      </section>
-
       <section id="song-stories" class="topics-section song-stories-section" aria-labelledby="song-stories-title" hidden>
         <p class="universe-overline">VELARDREAM / SONG STORIES</p>
         <h2 id="song-stories-title">У каждой песни своя история</h2>
