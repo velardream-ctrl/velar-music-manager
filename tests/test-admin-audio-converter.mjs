@@ -9,6 +9,6 @@ assert.match(code,/id==='converter'&&authorized&&converterFrame/);
 assert.match(code,/section==='converter'/);
 assert.match(code,/function clearConverter\(\).*removeAttribute\('src'\)/);
 assert.match(code,/function unauthorized\(note\)[\s\S]*?clearConverter\(\)/);
-assert.match(sw,/STUDIO_PREFIX\+'v65'/);
+assert.match(sw,/admin-converter1/);
 assert.doesNotMatch(fs.readFileSync('index.html','utf8'),/converter-admin|mp3-converter/);
 console.log('Admin converter: menu order, lazy auth gate, sign-out and public menu checks passed');
