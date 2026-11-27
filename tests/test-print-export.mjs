@@ -10,7 +10,7 @@ const css=read('studio/studio.css');
 assert.match(tools,/new File\(\[cleaned\],name\+'\.txt'/,'TXT must use the song title, not generic Text');
 assert.match(tools,/navigator\.canShare\(\{files:\[file\]\}\)/);
 assert.ok(!/window\.open\('about:blank'/.test(tools),'No window.open for PWA printing');
-assert.ok(html.indexOf('print-export.js?v=5') < html.indexOf('lyrics-tools.js?v=7'),'Print module must load first');
+assert.ok(html.indexOf('print-export.js?v=6') < html.indexOf('lyrics-tools.js?v=7'),'Print module must load first');
 assert.match(css,/#vmm-export-overlay/);
 assert.match(css,/#print-page \.vmm-print-words/);
 assert.match(exporter,/← Назад в редактор/);
@@ -83,7 +83,8 @@ assert.match(window.VMM_PRINT_EXPORT.prepare(short).pageHTML,/data:image\/jpeg/)
 console.log('PASS: short-song font, balanced sections, complete A4, blank-line gaps, shared print image');
 
 for(const p of [shortPlan,plan,build({title:'Плотная песня',text:Array.from({length:10},(_,i)=>'**Куплет '+(i+1)+'**\n'+stanza).join('\n\n')},metrics)]){
-  assert.equal(p.leftMargin,76,'Binding margin is always 20 mm');
+  assert.equal(p.leftMargin,95,'Binding margin is always at least 25 mm');
+  assert.ok(p.leftMargin*210/794>=25);
   assert.ok(p.rightMargin<p.leftMargin,'Larger margin belongs on the left');
   assert.ok(p.rows.every(r=>r.x>=p.leftMargin));
   assert.ok(p.centerX>397);

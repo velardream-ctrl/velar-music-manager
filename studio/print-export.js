@@ -127,8 +127,8 @@
     var title=String(p.title||'Текст песни'),meta=authorCredit(p.artist);
     function font(size,bold){ctx.font=(bold?'bold ':'')+size+'px Arial, sans-serif';}
     function candidate(size,margin,cols,allowSplit){
-      // Permanent 20 mm left binding gutter; never shrink it for dense lyrics.
-      var leftMargin=76,rightMargin=margin,gap=Math.max(32,margin),usable=W-leftMargin-rightMargin,width=(usable-(cols-1)*gap)/cols;
+      // Permanent 25 mm left binding gutter; never shrink it for dense lyrics.
+      var leftMargin=Math.ceil(W*25/210),rightMargin=margin,gap=Math.max(32,margin),usable=W-leftMargin-rightMargin,width=(usable-(cols-1)*gap)/cols;
       var titleSize=Math.max(22,Math.min(34,size*1.12)),titleLH=titleSize*1.18;
       font(titleSize,true);var titleRows=wrap(ctx,title,usable);
       font(13,false);var metaRows=meta?wrap(ctx,meta,usable):[];
