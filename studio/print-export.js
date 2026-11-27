@@ -109,6 +109,13 @@
     return out.length?out:[''];
   }
   // Shared measured layout for A4 preview, PDF and print.
+  function authorCredit(artist){
+    var name=String(artist||'').trim().replace(/\s+/g,' '),key=name.toLowerCase();
+    var base='Стихи: Илья Дмитриев';
+    if(/^(?:dj\s+)?velar$/.test(key))return base+' (Velar)';
+    if(!name||/^(?:илья дмитриев|ilya dmitriev|ilia dmitriev|ilja dmitriev|ilya dmitryev|ilya dmitriyev)$/.test(key))return base;
+    return base+' · Исполнитель: '+name;
+  }
   function buildLayout(p,ctx){
     var W=794,H=1123,groups=[];
     blocks(p.text).forEach(function(b){
@@ -117,7 +124,7 @@
       else groups.push({parts:[b],headingOnly:b.type==='heading'});
     });
     if(!groups.length)throw new Error('Нет текста для печати.');
-    var title=String(p.title||'Текст песни'),meta=String(p.language||'')+(p.version?' · '+p.version:'');
+    var title=String(p.title||'Текст песни'),meta=authorCredit(p.artist);
     function font(size,bold){ctx.font=(bold?'bold ':'')+size+'px Arial, sans-serif';}
     function candidate(size,margin,cols,allowSplit){
       // Permanent 20 mm left binding gutter; never shrink it for dense lyrics.
@@ -277,5 +284,5 @@
   }
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&overlay)close();});
   window.addEventListener('resize',resize);
-  window.VMM_PRINT_EXPORT={show:show,close:close,safeName:safeName,prepare:prepare,buildLayout:buildLayout};
+  window.VMM_PRINT_EXPORT={show:show,close:close,safeName:safeName,prepare:prepare,buildLayout:buildLayout,authorCredit:authorCredit};
 }());

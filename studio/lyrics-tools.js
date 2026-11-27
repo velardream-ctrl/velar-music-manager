@@ -16,6 +16,7 @@
   function title(){return String((meta()||{}).title||'').trim();}
   function lang(){return String((meta()||{}).language||'').trim();}
   function version(){return String((meta()||{}).version||'').trim();}
+  function artist(){var node=el('lyric-selected-artist');return String((node&&node.textContent)||((meta()||{}).artist)||'').trim();}
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(x){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x];});}
   function heading(cue) {
     var s=String(cue||'').replace(/\s+/g,' ').trim(),m;
@@ -130,7 +131,7 @@
     var frame=el('vmm-paper-frame'),seq=++renderSeq;
     try{
       if(!window.VMM_PRINT_EXPORT||!window.VMM_PRINT_EXPORT.prepare)throw new Error('Модуль верстки ещё не загружен. Обнови страницу.');
-      var p={source:input,text:parsed.text,title:sourceTitle,language:lang(),version:version()};
+      var p={source:input,text:parsed.text,title:sourceTitle,language:lang(),version:version(),artist:artist()};
       p.prepared=window.VMM_PRINT_EXPORT.prepare(p);
       var plan=p.prepared.layout;
       lastProof=p;
@@ -188,7 +189,7 @@
       note('Лист A4 открыт. Проверь расположение текста, затем повторно нажми «Печать / PDF».');
       return;
     }
-    if(!lastProof||lastProof.source!==body.value||lastProof.title!==title()||lastProof.language!==lang()||lastProof.version!==version()){
+    if(!lastProof||lastProof.source!==body.value||lastProof.title!==title()||lastProof.language!==lang()||lastProof.version!==version()||lastProof.artist!==artist()){
       note('Сначала дождись автоматической проверки листа A4 и повтори печать.');preview();return;
     }
     if(!window.VMM_PRINT_EXPORT){note('Модуль печати ещё не загружен. Обнови страницу.');return;}
