@@ -3,7 +3,7 @@
    No network calls, user lyrics stay on the device for PDF export. */
 (function () {
   'use strict';
-  var active=null, overlay=null, opener=null, printPrepared=false;
+  var active=null, overlay=null, opener=null, printPrepared=false, pdfBusy=false;
   function byId(id){return document.getElementById(id);}
   function escapeHTML(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function safeName(s){
@@ -248,27 +248,32 @@
     return new Blob(chunks,{type:'application/pdf'});
   }
   function sharePDF(){
-    if(!active)return;
+    if(!active||pdfBusy)return;
     var blob;
     try{blob=pdfBlob(active.prepared.canvas);}
     catch(err){setMessage('Не удалось создать PDF: '+err.message);return;}
-    var filename=safeName(active.title)+'.pdf', file;
+    var filename=safeName(active.title)+' — текст.pdf', file;
     try{file=new File([blob],filename,{type:'application/pdf'});}catch(err){file=null;}
     if(file&&navigator.share&&navigator.canShare){
       var supported=false;
       try{supported=navigator.canShare({files:[file]});}catch(ignore){}
       if(supported){
-        navigator.share({files:[file],title:active.title||'Текст песни'})
-          .catch(function(err){if(!err||err.name!=='AbortError')setMessage('Передача PDF не удалась: '+(err.message||'ошибка'));});
+        pdfBusy=true;
+        try{
+          // Exactly one file, no separate text, image, or second download.
+          Promise.resolve(navigator.share({files:[file]})).then(function(){pdfBusy=false;},function(err){pdfBusy=false;if(!err||err.name!=='AbortError')setMessage('Передача PDF не удалась: '+(err&&err.message||'ошибка'));});
+        }catch(err){pdfBusy=false;setMessage('Не удалось открыть меню PDF: '+(err.message||'ошибка'));}
         return;
       }
     }
     try{
+      pdfBusy=true;
       var url=URL.createObjectURL(blob),link=document.createElement('a');
       link.href=url;link.download=filename;document.body.appendChild(link);link.click();document.body.removeChild(link);
       setMessage('PDF создан. Если загрузка не началась, открой сайт в Safari и повтори. Кнопка «Назад в редактор» остаётся доступна.');
+      setTimeout(function(){pdfBusy=false;},1000);
       setTimeout(function(){URL.revokeObjectURL(url);},60000);
-    }catch(err){setMessage('Это устройство не может сохранить PDF из приложения. Открой страницу в Safari.');}
+    }catch(err){pdfBusy=false;setMessage('Это устройство не может сохранить PDF из приложения. Открой страницу в Safari.');}
   }
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&overlay)close();});
   window.addEventListener('resize',resize);
