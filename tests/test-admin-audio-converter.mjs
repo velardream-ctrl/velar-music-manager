@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const page=fs.readFileSync('studio/index.html','utf8'), code=fs.readFileSync('studio/studio.js','utf8'), sw=fs.readFileSync('sw.js','utf8');
+assert.match(page,/data-panel="recordings">Фонограммы<\/button>\s*<button type="button" data-panel="converter">Аудиоконвертер<\/button>/);
+assert.match(page,/<iframe id="converter-admin-frame"[^>]*sandbox="allow-scripts allow-same-origin allow-downloads"[^>]*>/);
+assert.doesNotMatch(page,/<iframe id="converter-admin-frame"[^>]*\ssrc=/);
+assert.match(code,/if\(id==='converter'&&!authorized\)return/);
+assert.match(code,/id==='converter'&&authorized&&converterFrame/);
+assert.match(code,/section==='converter'/);
+assert.match(code,/function clearConverter\(\).*removeAttribute\('src'\)/);
+assert.match(code,/function unauthorized\(note\)[\s\S]*?clearConverter\(\)/);
+assert.match(sw,/STUDIO_PREFIX\+'v65'/);
+assert.doesNotMatch(fs.readFileSync('index.html','utf8'),/converter-admin|mp3-converter/);
+console.log('Admin converter: menu order, lazy auth gate, sign-out and public menu checks passed');
