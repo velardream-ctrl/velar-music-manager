@@ -277,7 +277,7 @@
       return match&&validPanel(match[1])?match[1]:'overview';
     }catch(ignore){return 'overview';}
   }
-  var CONVERTER_URL='https://velardream-ctrl.github.io/velardream-preview/mp3-converter/?v=216';
+  var CONVERTER_URL='https://velardream-ctrl.github.io/velardream-preview/mp3-converter/?v=217';
   function clearConverter(){var frame=el('converter-admin-frame'),link=el('converter-admin-external');if(frame)frame.removeAttribute('src');if(link)link.removeAttribute('href');show(el('converter-admin'),false);}
   function selectPanel(id){
     if(id==='converter'&&!authorized)return;
