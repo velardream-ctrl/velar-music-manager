@@ -47,6 +47,7 @@
           <button type="button" class="nav-active" data-panel="lyrics">Тексты песен</button>
           <button type="button" data-panel="catalog">Каталог релизов</button>
           <button type="button" data-panel="recordings">Фонограммы</button>
+          <button type="button" data-panel="converter">Аудиоконвертер</button>
           <button type="button" data-panel="platforms">Площадки и ссылки</button>
           <button type="button" data-panel="contacts">Контакты</button>
           <button type="button" data-panel="outreach">Рассылки</button>
@@ -165,6 +166,13 @@
           </section>
           <section id="panel-future" class="panel hidden" aria-live="polite">
             <iframe id="forum-admin-frame" class="hidden" title="Управление форумом" style="display:block;width:100%;height:75vh;min-height:420px;border:0"></iframe>
+            <section id="converter-admin" class="hidden" aria-labelledby="converter-admin-title">
+              <h2 id="converter-admin-title">Аудиоконвертер</h2>
+              <p class="sync-note">Рабочий инструмент администратора: формат, тональность, темп. Обработка выполняется в браузере. Скачайте готовый MP3 или FLAC (до 50 МБ), затем загрузите его в разделе «Фонограммы».</p>
+              <p class="sync-note">При первом открытии нужен интернет. При переключении разделов выбранный файл сохраняется до выхода из кабинета или перезагрузки страницы.</p>
+              <iframe id="converter-admin-frame" title="Velar Dream Audio Studio" sandbox="allow-scripts allow-same-origin allow-downloads" referrerpolicy="no-referrer" style="display:block;width:100%;height:85vh;min-height:540px;border:0;border-radius:14px;background:#081126"></iframe>
+              <p class="sync-note">Если встроенное скачивание не поддерживается браузером, откройте инструмент отдельно: <a id="converter-admin-external" target="_blank" rel="noopener noreferrer">Открыть конвертер в новой вкладке</a>.</p>
+            </section>
             <section id="analytics-report" class="hidden" aria-labelledby="analytics-report-title">
               <h2 id="analytics-report-title">Статистика сайта и музыки</h2>
               <p class="muted">Посещения учитываются после согласия на аналитику. Запуски YouTube и открытия плееров показаны отдельно.</p>
