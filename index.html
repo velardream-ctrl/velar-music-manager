@@ -78,6 +78,7 @@
       <a href="#playlists">Плейлисты</a>
       <a href="#genres">Жанры</a>
       <a href="#languages">Языки</a>
+      <a id="moods-nav" href="#moods" hidden>Музыка по настроению</a>
       <a href="#topics">Темы песен</a>
       <a id="story-nav" href="#song-stories" hidden>Истории песен</a>
       <a href="/forum/">Форум</a>
@@ -263,12 +264,15 @@
 
       <!-- RUN-073: curated topic planets with the existing crystal, no hidden media.
            Search indexing deliberately remains disabled while the site is built. -->
+      <section id="moods" class="topics-section" hidden aria-label="Музыка по настроению">
+        <div id="public-moods" class="velar-moods" hidden></div>
+        <div id="public-mood-detail" class="topic-detail velar-mood-detail" hidden aria-live="polite"></div>
+      </section>
       <section id="topics" class="topics-section" aria-labelledby="topics-title">
         <p class="universe-overline">VELARDREAM / CONSTELLATIONS OF FEELINGS</p>
         <h2 id="topics-title">Созвездия чувств и историй</h2>
         <p class="topics-intro" id="topics-intro">Откройте музыку по теме: любовь, свадьба, космос, юмор и другие музыкальные истории.</p>
-        <div id="public-moods" class="velar-moods" hidden></div>
-        <div id="public-mood-detail" class="topic-detail velar-mood-detail" hidden aria-live="polite"></div>
+        <div id="embedded-moods"></div>
         <div class="topics-cosmos">
           <div class="topics-cosmos-core" aria-hidden="true">
             <span class="topics-cosmos-glow"></span>
