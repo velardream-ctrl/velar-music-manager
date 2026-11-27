@@ -150,5 +150,6 @@
    });
    var previousMood=activeMood;select(active);renderMoods();if(previousMood)selectMood(previousMood);
  }
- window.VELAR_TOPICS={render:render,entries:entries,select:select,openFromChat:openFromChat,selectMood:selectMood};
+ window.VELAR_TOPICS={render:render,entries:entries,select:select,openFromChat:openFromChat};
+ window.VELAR_TOPICS.selectMood=selectMood;
 }());
