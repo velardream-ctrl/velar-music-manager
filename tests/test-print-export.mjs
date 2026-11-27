@@ -10,7 +10,7 @@ const css=read('studio/studio.css');
 assert.match(tools,/new File\(\[cleaned\],name\+'\.txt'/,'TXT must use the song title, not generic Text');
 assert.match(tools,/navigator\.canShare\(\{files:\[file\]\}\)/);
 assert.ok(!/window\.open\('about:blank'/.test(tools),'No window.open for PWA printing');
-assert.ok(html.indexOf('print-export.js?v=4') < html.indexOf('lyrics-tools.js?v=6'),'Print module must load first');
+assert.ok(html.indexOf('print-export.js?v=5') < html.indexOf('lyrics-tools.js?v=7'),'Print module must load first');
 assert.match(css,/#vmm-export-overlay/);
 assert.match(css,/#print-page \.vmm-print-words/);
 assert.match(exporter,/← Назад в редактор/);
@@ -90,3 +90,16 @@ for(const p of [shortPlan,plan,build({title:'Плотная песня',text:Arr
   for(const r of p.rows){metrics.font=(r.bold?'bold ':'')+p.font+'px Arial';assert.ok(r.x+metrics.measureText(r.text).width<=794-p.rightMargin+.01,'No text in margins');}
 }
 console.log('PASS: permanent left binding margin for short, long and dense songs');
+
+const credit=window.VMM_PRINT_EXPORT.authorCredit;
+assert.equal(credit('Илья Дмитриев'),'Стихи: Илья Дмитриев');
+assert.equal(credit('Ilya Dmitriev'),'Стихи: Илья Дмитриев');
+assert.equal(credit('Velar'),'Стихи: Илья Дмитриев (Velar)');
+assert.equal(credit('DJ Velar'),'Стихи: Илья Дмитриев (Velar)');
+assert.equal(credit('Crazy Bobr'),'Стихи: Илья Дмитриев · Исполнитель: Crazy Bobr');
+assert.equal(credit(''),'Стихи: Илья Дмитриев');
+assert.equal(build({...short,artist:'Velar',language:'Русский',version:'Основная'},metrics).metaRows.join(' '),'Стихи: Илья Дмитриев (Velar)');
+assert.match(tools,/lyric-selected-artist/);
+assert.match(tools,/artist:artist\(\)/);
+assert.match(tools,/lastProof\.artist!==artist\(\)/);
+console.log('PASS: print credits by selected performer, no language/version in A4 credit');
