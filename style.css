@@ -2597,3 +2597,8 @@ html.legacy-ipad-crystal [data-many-stages][data-journey-phase] .crystal-journey
 /* Official Spotify tracklist appears only after a visitor opens the album. */
 .cms-album-spotify-label{margin:12px 0 8px;color:#e8cb99;font-size:.86rem}
 .cms-album-spotify-embed{display:block;width:100%;height:360px;border:0;border-radius:12px;background:#111b2b;max-width:100%}
+
+/* Keep the About destination recognizable and fully reachable even at the page end. */
+.about-section .about-brand-heading{font-family:Georgia,"Times New Roman",serif;font-size:clamp(1.15rem,3vw,1.45rem);font-weight:400;line-height:1.35;color:#e7c992;margin:0 0 17px}
+#about:target{min-height:calc(100vh - 60px);align-items:start}
+#about:target .section-heading{opacity:1!important;transform:none!important}

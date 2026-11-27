@@ -1354,6 +1354,83 @@
    sectionTasks[id]=work;
    sectionObserver.observe(target);
  }
+ // Anchor navigation must be measured after lazy sections and CMS reordering.
+ // Keep a brief navigation intent; wheel/touch/key/pointer interaction releases it.
+ var anchorIntent=null,anchorFrame=0,anchorObserver=null,anchorTimer=0;
+ function cancelAnchor(){
+   anchorIntent=null;
+   if(anchorFrame&&window.cancelAnimationFrame)window.cancelAnimationFrame(anchorFrame);
+   anchorFrame=0;
+   if(anchorObserver){anchorObserver.disconnect();anchorObserver=null;}
+   if(anchorTimer){window.clearTimeout(anchorTimer);anchorTimer=0;}
+ }
+ function hashSection(hash){
+   var key=String(hash||'').replace(/^#/,'');
+   var target=/^(artists|releases|albums|playlists|topics|universe|languages|song-stories|genres|about)$/.test(key)&&byId(key);
+   return target&&!target.hidden?target:null;
+ }
+ function loadBeforeAnchor(target){
+   var parent=byId('explore');
+   if(parent&&parent.children){
+     for(var i=0;i<parent.children.length;i++){
+       var node=parent.children[i];ensureSection(node.id);
+       if(node===target)break;
+     }
+   }
+   ensureSection(target.id);
+ }
+ function alignAnchor(){
+   if(!anchorIntent)return;
+   var target=hashSection(window.location.hash);
+   if(!target||target.id!==anchorIntent){cancelAnchor();return;}
+   loadBeforeAnchor(target);
+   if(!target.scrollIntoView)return;
+   var root=document.documentElement,old=root.style.scrollBehavior;
+   root.style.scrollBehavior='auto';
+   try{target.scrollIntoView({block:'start',behavior:'auto'});}
+   catch(ignore){target.scrollIntoView(true);}
+   root.style.scrollBehavior=old;
+ }
+ function queueAnchor(){
+   if(!anchorIntent)return;
+   if(anchorFrame)return;
+   if(window.requestAnimationFrame)anchorFrame=window.requestAnimationFrame(function(){anchorFrame=0;alignAnchor();});
+   else alignAnchor();
+ }
+ function startAnchor(hash){
+   cancelAnchor();var target=hashSection(hash);if(!target)return;
+   anchorIntent=target.id;alignAnchor();queueAnchor();
+   if(window.ResizeObserver){
+     anchorObserver=new window.ResizeObserver(queueAnchor);
+     var content=byId('content');if(content)anchorObserver.observe(content);
+     var panels=byId('explore');if(panels)anchorObserver.observe(panels);
+   }
+   anchorTimer=window.setTimeout(cancelAnchor,5000);
+ }
+ function installAnchorNavigation(){
+   if(!byId('explore')||!window.location||!document.addEventListener||!window.addEventListener)return;
+   document.addEventListener('click',function(e){
+     if(e.defaultPrevented||e.button!==0&&e.button!==undefined||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+     var link=e.target;
+     while(link&&link!==document&&String(link.tagName).toLowerCase()!=='a')link=link.parentNode;
+     if(!link||!link.getAttribute)return;
+     var href=link.getAttribute('href'),target=hashSection(href);
+     if(!href||href.charAt(0)!=='#'||!target)return;
+     if(!window.history||!window.history.pushState)return;
+     e.preventDefault();
+     if(window.location.hash!==href)window.history.pushState(null,'',href);
+     startAnchor(href);
+   });
+   window.addEventListener('hashchange',function(){startAnchor(window.location.hash);});
+   window.addEventListener('popstate',function(){startAnchor(window.location.hash);});
+   ['wheel','touchstart','pointerdown','mousedown'].forEach(function(name){
+     window.addEventListener(name,cancelAnchor,{passive:true});
+   });
+   window.addEventListener('keydown',function(e){
+     if(/^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End| |Spacebar)$/.test(e.key||''))cancelAnchor();
+   });
+   if(hashSection(window.location.hash))startAnchor(window.location.hash);
+ }
  function applySectionOrder(order){
    var parent=byId('explore');if(!parent||!parent.children||!parent.appendChild)return;
    var nodes=order.map(function(id){return byId(id);}).filter(function(n){return n&&n.parentNode===parent;});
@@ -1449,6 +1526,7 @@
      window.VELAR_TOPICS.render(value.genres.topics);});
    if(window.VELAR_ASSISTANT&&window.VELAR_ASSISTANT.render)
      window.VELAR_ASSISTANT.render(value);
+   if(anchorIntent){alignAnchor();queueAnchor();}
    return true;
  }
  // RUN-183: optional footer row, no third-party SDK, no automatic sharing.
@@ -1550,6 +1628,7 @@
  }
  function start(){
    if(byId('artist-main'))return; // The profile owns its public snapshot subscription.
+   installAnchorNavigation();
    var help=byId("standalone-help");if(help)help.appendChild(stationHelp(true));
    if(!window.VMM_LANDING_SCHEMA)return;
    // Provide the default player when the first public snapshot is unavailable.
