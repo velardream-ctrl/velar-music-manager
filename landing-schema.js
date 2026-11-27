@@ -708,7 +708,7 @@
     var d=defaultMoods(),v=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{},rows=v.entries===undefined?d.entries:v.entries;
     if(!Array.isArray(rows)||rows.length!==6)throw Error('Настроения: требуется шесть карточек.');
     var seen=Object.create(null);
-    return {enabled:v.enabled!==false,heading:plain(typeof v.heading==='string'?v.heading:d.heading,'Заголовок настроений',120,true),entries:rows.map(function(r){
+    return {enabled:v.enabled!==false,standalone:v.standalone!==false,embedded:v.embedded===true,menu:v.menu!==false,heading:plain(typeof v.heading==='string'?v.heading:d.heading,'Заголовок настроений',120,true),entries:rows.map(function(r){
       if(!r||!d.entries.some(function(x){return x.id===r.id;})||seen[r.id])throw Error('Настроения: неверный код карточки.');
       seen[r.id]=true;
       if(!Array.isArray(r.topics)||r.topics.length>60)throw Error('Настроения: неверный список тем.');
