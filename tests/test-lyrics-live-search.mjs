@@ -7,7 +7,7 @@ assert.match(html,/id="lyric-search-results"/);
 assert.match(html,/aria-controls="lyric-search-results"/);
 assert.match(css,/\.lyrics-search-hit/);
 assert.match(css,/min-height:48px/);
-assert.ok(html.includes('src="studio.js?v=19"'));
+assert.ok(html.includes('src="studio.js?v=20"'));
 assert.ok(html.includes('href="studio.css?v=31"'));
 assert.ok(sw.includes("STUDIO_PREFIX+'v64'"));
 assert.doesNotMatch(src,/localStorage\.setItem|sessionStorage\.setItem/);

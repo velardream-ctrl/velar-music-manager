@@ -16,7 +16,7 @@ assert.match(publicHtml,/Открыть мир артистов <svg class="butt
 assert.doesNotMatch(publicHtml,/Открыть мир артистов <span aria-hidden="true">↗/);
 assert.match(publicCSS,/\.button-primary \.button-arrow/);
 assert.ok(publicHtml.includes('href="style.css?v=86&consent=190&clips=1&cms=205"'));
-assert.ok(page.includes('src="studio.js?v=19"'));
+assert.ok(page.includes('src="studio.js?v=20"'));
 assert.ok(page.includes('src="recordings.js?v=13"'));
 assert.ok(page.includes('href="recordings.css?v=14"'));
 assert.ok(sw.includes("CACHE_PREFIX + 'v100'"));
