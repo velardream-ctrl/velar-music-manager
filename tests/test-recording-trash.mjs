@@ -15,7 +15,7 @@ assert.match(source,/id="vmm-r-trash-current"/);
 assert.match(source,/data-r-action="restore"/);
 assert.doesNotMatch(source,/request\([^\n]+method:'DELETE'/);
 assert.ok(html.includes('src="recordings.js?v=12"'));
-assert.ok(html.includes('href="recordings.css?v=12"'));
+assert.ok(html.includes('href="recordings.css?v=13"'));
 assert.ok(sw.includes("STUDIO_PREFIX+'v64'"));
 
 const nodes={};

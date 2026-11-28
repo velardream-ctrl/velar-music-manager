@@ -5,11 +5,11 @@ var CACHE_NAME = CACHE_PREFIX + 'v100' + '-shared-skins-groups2-owner-skin-song-
 /* Only private studio SOURCE FILES are cached. Never cache Firestore, Drive files,
    authenticated responses, user lyrics or audio through this Service Worker. */
 var STUDIO_PREFIX='velar-studio-shell-';
-var STUDIO_CACHE=STUDIO_PREFIX+'v64' + '-groups2-owner-skin-song-amethyst-stories-batch1-coverage1-moods1' + '-smart201-refresh-clips'+'-progress184-run185'+'-analytics186' + '-velar188' + '-reports191-ai192-run193-catalog194-fallback195-budget198-run205-classic-playlist-album210-order211-admin-converter1-suno-clean1-studio-nav19-a4-balanced1-binding-left1-pdf-name1-author-credit1-binding25mm-order-mood-review1';
+var STUDIO_CACHE=STUDIO_PREFIX+'v64' + '-groups2-owner-skin-song-amethyst-stories-batch1-coverage1-moods1' + '-smart201-refresh-clips'+'-progress184-run185'+'-analytics186' + '-velar188' + '-reports191-ai192-run193-catalog194-fallback195-budget198-run205-classic-playlist-album210-order211-admin-converter1-suno-clean1-studio-nav19-a4-balanced1-binding-left1-pdf-name1-author-credit1-binding25mm-order-mood-review1-playerContrast1';
 var STUDIO_ASSETS=[
   './studio/','./studio/index.html','./studio/studio.css?v=31','./studio/artist-choices.js?v=1','./studio/artist-track-links.js?v=1','./studio/artist-image-editor.js?v=1','./studio/title-language.js?v=2', './studio/landing-merge.js?v=1',
   './studio/song-distribution.js?v=3','./studio/story-batch.js?v=1','./studio/existing-links-reconcile.js?v=1','./ai-fallback.js?v=1','./studio/ai-public-catalog.js?v=1','./studio/ai-lab.js?v=5&layout=203&usage=204', './landing-schema.js?v=34&clips=1&carousel=201&heroSong=194&orderMood=1', './studio/album-auto-match.js?v=2', './studio/landing-editor.js?v=49&fix=185&analytics=189&reports=191&ai=192&carousel=201&clips=1&heroSong=194&albumCode=209&albumMatch=210&albumOrder=211&orderMood=1',
-  './studio/recordings.css?v=12','./studio/offline-admin.js?v=1','./studio/offline-lyrics-sync.js?v=1','./studio/studio.js?v=19','./studio/analytics-report.js?v=1',
+  './studio/recordings.css?v=13','./studio/offline-admin.js?v=1','./studio/offline-lyrics-sync.js?v=1','./studio/studio.js?v=19','./studio/analytics-report.js?v=1',
   './studio/import.js?v=1','./studio/workflows.js?v=7',
   './studio/lyrics-tools.js?v=7','./studio/print-export.js?v=6',
   './studio/offline-repertoire.js?v=3','./studio/offline-cloud-sync.js?v=1','./studio/recordings.js?v=12',
