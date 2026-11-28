@@ -345,7 +345,7 @@
 }
 
 
-/* RUN-057 — one-row compact player; normal 44px touch target, ~33px gold icon.
+/* RUN-057 — one-row compact player; normal 44px touch target, solid gold button.
    Kept native AirPlay/overflow and the same <audio> playback engine. */
 #vmm-repertoire .vmm-r-controls-shell{margin:10px 0 4px;border-radius:12px}
 #vmm-repertoire .vmm-r-stage{
@@ -353,22 +353,19 @@
   width:100%;min-height:56px;margin:0;padding:5px 9px;
 }
 #vmm-repertoire .vmm-r-play-button{
-  position:relative;isolation:isolate;
+  /* Solid background on the actual control: Safari 12 does not reliably
+     establish isolation for a negative-z pseudo-element. */
+  position:relative;box-sizing:border-box;-webkit-appearance:none;appearance:none;
   flex:0 0 44px;width:44px;min-width:44px;height:44px;
-  border:0;background:transparent;box-shadow:none;color:#14213a;
+  border:1px solid #f0d8aa;background:#e6cb95;box-shadow:0 2px 5px rgba(0,0,0,.30);color:#14213a;
   padding:0;display:inline-flex;justify-content:center;align-items:center;
   border-radius:10px;
 }
-#vmm-repertoire .vmm-r-play-button::before{
-  content:'';position:absolute;z-index:-1;inset:5px;
-  border-radius:9px;background:#e6cb95;border:1px solid #f0d8aa;
-  box-shadow:0 2px 5px #0005;
-}
 #vmm-repertoire .vmm-r-play-button:active:not(:disabled){
-  background:transparent;transform:none;
+  background:#ffe5af;transform:none;
 }
-#vmm-repertoire .vmm-r-play-button:active:not(:disabled)::before{background:#ffe5af}
-#vmm-repertoire .vmm-r-play-button svg{width:17px;height:17px}
+#vmm-repertoire .vmm-r-play-button svg{width:24px;height:24px;flex:0 0 24px;fill:#14213a;pointer-events:none}
+#vmm-repertoire .vmm-r-play-button:focus{outline:2px solid #fff2d4;outline-offset:2px}
 #vmm-repertoire .vmm-r-timeline{
   display:flex;flex:1 1 55px;min-width:35px;gap:0;justify-content:center;
 }
@@ -399,7 +396,7 @@
 }
 #vmm-repertoire .vmm-r-player.is-minimized .vmm-r-controls-shell{margin:0}
 #vmm-repertoire .vmm-r-player.is-minimized .vmm-r-stage{min-height:48px;padding:2px 7px}
-#vmm-repertoire .vmm-r-player.is-minimized .vmm-r-play-button::before{inset:6px}
+/* Minimized player uses the same fully visible 44px play/pause control. */
 #vmm-repertoire .vmm-r-player-sync{
   position:relative;overflow:visible;
   font-size:inherit;
@@ -422,7 +419,7 @@
  #vmm-repertoire .vmm-r-play-button{
    flex:0 0 44px;width:44px;min-width:44px;height:44px;
  }
- #vmm-repertoire .vmm-r-play-button svg{width:16px;height:16px}
+ #vmm-repertoire .vmm-r-play-button svg{width:24px;height:24px}
  #vmm-repertoire .vmm-r-quick-actions{gap:0;padding:0;min-height:44px}
  #vmm-repertoire .vmm-r-quick-btn{flex-basis:44px;min-width:44px;width:44px;height:44px}
  #vmm-repertoire .vmm-r-clock{font-size:.73rem}
