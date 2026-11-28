@@ -25,7 +25,7 @@ assert.match(css,/#vmm-repertoire \.vmm-r-timeline input\[type="range"\]\{[\s\S]
 assert.match(css,/#vmm-repertoire \.vmm-r-timeline input\[type="range"\]::-webkit-slider-runnable-track\{\s*height:6px/);
 assert.match(css,/::-webkit-slider-thumb\{\s*[\s\S]*?height:21px;width:21px/);
 assert.match(css,/\.vmm-r-system:not\(\[open\]\)\{display:none\}/);
-assert.ok(html.includes('recordings.js?v=12'));
+assert.ok(html.includes('recordings.js?v=13'));
 assert.ok(html.includes('recordings.css?v=14'));
 assert.ok(sw.includes("STUDIO_PREFIX+'v64'"));
 
