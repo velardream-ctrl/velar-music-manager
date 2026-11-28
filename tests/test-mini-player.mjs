@@ -11,7 +11,7 @@ assert.match(js,/vmm-r-player-sentinel/);
 assert.match(js,/function updateMiniPlayer/);
 assert.match(js,/window.addEventListener\('scroll',updateMiniPlayer,false\)/);
 assert.match(js,/viewBox="0 0 24 24" width="28" height="28"/);
-assert.ok(html.includes('recordings.js?v=12'));
+assert.ok(html.includes('recordings.js?v=13'));
 assert.ok(html.includes('recordings.css?v=14'));
 assert.ok(sw.includes("STUDIO_PREFIX+'v64'"));
 const latest=css.slice(css.indexOf('/* RUN-057'));

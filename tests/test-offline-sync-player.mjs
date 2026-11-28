@@ -17,7 +17,7 @@ const document={
 };
 const uid='owner001',meta={fileId:'file_abc0001',catalogId:'song001',title:'Дикая вишня',
  artist:'Velar',variant:'Минусовка',filename:'dikaya_vishnya.flac',mimeType:'audio/flac',size:35000000};
-let cached=[],remote=[meta],removals=0;
+let cached=[],remote=[meta],removals=0,pending=[],releaseWrite;
 const offline={
  list(){return Promise.resolve(cached.slice());},
  put(uid,item){cached=cached.filter(x=>x.fileId!==item.fileId).concat([{...item,size:item.blob.size}]);return Promise.resolve();},
@@ -25,7 +25,9 @@ const offline={
  persist(){return Promise.resolve(true);},
  estimate(){return Promise.resolve(null);},
  wasCloudReady(){return Promise.resolve(true);},
- pendingPinChanges(){return Promise.resolve([]);},
+ pendingPinChanges(){return Promise.resolve(pending.slice());},
+ acknowledgePinChange(uid,id){pending=pending.filter(p=>p.fileId!==id);return Promise.resolve();},
+ putPinned(uid,item,pin){return new Promise(resolve=>{releaseWrite=()=>{pending.push({fileId:item.fileId,item:pin,enabled:true,nonce:'1'});this.put(uid,item);resolve();};});},
  markCloudReady(){return Promise.resolve();},
  queuePinChange(){return Promise.resolve();},
  rememberSelection(){return Promise.resolve();}
@@ -33,8 +35,9 @@ const offline={
 const api={
  read(){return Promise.resolve({pins:remote.slice(),authoritative:true});},
  update(db,uid,item,on){remote=remote.filter(x=>x.fileId!==item.fileId);if(on)remote.push(item);return Promise.resolve(remote);},
- pin:item=>item
+ pin:item=>({...item,fileId:item.fileId||item.driveFileId})
 };
+const navigator={onLine:true};
 const window={VMM_OFFLINE:offline,VMM_CLOUD_PINS:api,addEventListener(){},__downloads:0};
 const replacement=[
  'window.VMM_RECORDINGS={_test:{header:header,refresh:refreshCloudPins,reset:reset,reloadCache:readCache,',
@@ -43,11 +46,13 @@ const replacement=[
  'recordings=[{id:"record1",driveFileId:"file_abc0001",catalogId:"song001",title:"Дикая вишня",artist:"Velar",',
  'variant:"Минусовка",filename:"dikaya_vishnya.flac",mimeType:"audio/flac",size:35000000}];',
  'audioBlob=function(){window.__downloads++;return Promise.resolve({size:35000000});};},',
+ 'savePlaying:function(){songId="song001";audioFileId="file_abc0001";currentAudioBlob={size:35000000};return offlineOn(recordings[0],true);},',
+ 'switchSong:function(){clearAudio();songId="song002";},',
  'state:function(){return {count:saved.length,pins:cloudPins.length,ready:cloudPinsLoaded,status:cloudStatus};}}};'
 ].join('\n');
 const injected=source.replace('window.VMM_RECORDINGS={open:open,hide:hide,reset:reset,translit:translit,filename:filename};',replacement);
 assert.notEqual(injected,source);
-vm.runInNewContext(injected,{document,window,navigator:{onLine:true},Promise,Date,Number,String,Array,Object,Math,Error,URL:{revokeObjectURL(){}},setTimeout},{timeout:1000});
+vm.runInNewContext(injected,{document,window,navigator,Promise,Date,Number,String,Array,Object,Math,Error,URL:{revokeObjectURL(){}},setTimeout},{timeout:1000});
 const app=window.VMM_RECORDINGS._test;
 app.header();
 for(const match of panel.innerHTML.matchAll(/id="([^"]+)"/g))document.getElementById(match[1]);
@@ -75,3 +80,17 @@ await app.refresh();
 assert.equal(cached.length,0,'Explicit remote unpin removes local copy on sync');
 assert.equal(removals,1);
 console.log('PASS: second device downloads after Drive auth once, retains media across logout, obeys remote unpin');
+
+app.reset();app.setup('');navigator.onLine=false;
+const saving=app.savePlaying();
+app.switchSong();await Promise.resolve();assert.equal(typeof releaseWrite,'function');
+releaseWrite();await saving;
+assert.equal(cached.length,1,'A song switch must not cancel the offline save');
+assert.equal(cached[0].fileId,meta.fileId);
+assert.equal(cached[0].catalogId,meta.catalogId);
+assert.equal(pending.length,1);
+assert.equal(window.__downloads,1,'Saving playing audio must not redownload it');
+assert.match(elements['vmm-r-offline-list'].innerHTML,/офлайн ✓/);
+app.reset();app.setup('');await app.reloadCache();
+assert.equal(app.state().count,1,'Reopening must restore the saved file');
+console.log('PASS offline save keeps playing bytes and identity through song switch and reopen');
