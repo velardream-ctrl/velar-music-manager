@@ -28,23 +28,61 @@
     });});
   }
   function key(uid,fileId){return String(uid)+':'+String(fileId);}
-  function put(uid,item){
+  // Store plain bytes for Safari 12 compatibility, keep existing Blob rows.
+  function bytesOf(blob){
+    if(typeof blob.arrayBuffer==='function')return blob.arrayBuffer();
+    return new Promise(function(resolve,reject){
+      var reader=new FileReader();
+      reader.onload=function(){resolve(reader.result);};
+      reader.onerror=function(){reject(reader.error||new Error('Не удалось прочитать аудиофайл.'));};
+      reader.onabort=function(){reject(new Error('Чтение аудиофайла отменено.'));};
+      reader.readAsArrayBuffer(blob);
+    });
+  }
+  function restore(row){
+    if(!row)return row;
+    if(row.bytes&&row.bytes.byteLength===row.size){
+      row.blob=new Blob([row.bytes],{type:row.mimeType||'audio/mpeg'});
+      delete row.bytes;
+    }
+    return row;
+  }
+  function validRow(row){return !!(row&&row.blob&&row.blob.size>0&&row.blob.size===row.size);}
+  function write(uid,item,pin){
     if(!item||!item.fileId||!item.blob||!item.blob.size)return Promise.reject(new Error('Нужны аудиофайл и ID'));
-    return transaction('readwrite',function(s){
-      return s.put({
-        key:key(uid,item.fileId),uid:uid,fileId:item.fileId,catalogId:item.catalogId||'',
-        title:item.title||'',artist:item.artist||'',variant:item.variant||'',
-        filename:item.filename||'',mimeType:item.mimeType||'',size:item.blob.size,
-        savedAt:Date.now(),lyrics:item.lyrics||'',blob:item.blob
+    var size=item.blob.size;
+    return bytesOf(item.blob).then(function(bytes){
+      if(!bytes||bytes.byteLength!==size)throw new Error('Не удалось прочитать аудиофайл полностью.');
+      var row={key:key(uid,item.fileId),uid:uid,fileId:item.fileId,catalogId:item.catalogId||'',
+        title:item.title||'',artist:item.artist||'',variant:item.variant||'',filename:item.filename||'',
+        mimeType:item.mimeType||item.blob.type||'',size:size,savedAt:Date.now(),lyrics:item.lyrics||'',bytes:bytes};
+      if(!pin)return transaction('readwrite',function(s){return s.put(row);});
+      // File and pending pin commit in one transaction, before cloud sync.
+      return open().then(function(db){return new Promise(function(resolve,reject){
+        var tx=db.transaction([STORE,META],'readwrite'),meta=tx.objectStore(META),k=pendingKey(uid);
+        tx.oncomplete=function(){resolve();};
+        tx.onabort=tx.onerror=function(){reject(tx.error||new Error('Не удалось записать офлайн-файл и выбор.'));};
+        try{
+          tx.objectStore(STORE).put(row);
+          var req=meta.get(k);
+          req.onsuccess=function(){meta.put({uid:k,changes:pinChanges(req.result,pin,true)});};
+        }catch(err){try{tx.abort();}catch(ignore){}reject(err);}
+      });});
+    }).then(function(){
+      return get(uid,item.fileId).then(function(row){
+        if(!validRow(row)||row.size!==size)throw new Error('Файл не удалось прочитать после записи. Проверь память устройства.');
+        return row;
       });
     });
   }
-  function get(uid,fileId){return transaction('readonly',function(s){return s.get(key(uid,fileId));});}
+  function put(uid,item){return write(uid,item,null);}
+  function putPinned(uid,item,pin){return write(uid,item,pin);}
+  function get(uid,fileId){return transaction('readonly',function(s){return s.get(key(uid,fileId));}).then(restore);}
   function remove(uid,fileId){return transaction('readwrite',function(s){return s.delete(key(uid,fileId));});}
   function list(uid){
     return open().then(function(db){return new Promise(function(resolve,reject){
       var result=[],tx=db.transaction(STORE,'readonly'),req=tx.objectStore(STORE).openCursor();
-      req.onsuccess=function(){var cur=req.result;if(!cur)return;var v=cur.value;if(v.uid===uid)result.push(v);cur.continue();};
+      req.onsuccess=function(){var cur=req.result;if(!cur)return;var v=cur.value;if(v.uid===uid){try{v=restore(v);if(validRow(v))result.push(v);}catch(ignore){/* A damaged row is not an available offline file. */}}cur.continue();};
       tx.oncomplete=function(){resolve(result);};
       tx.onerror=function(){reject(tx.error||new Error('Ошибка чтения списка'));};
     });});
@@ -70,19 +108,22 @@
   // Stored in the existing preferences store under a separate key so that
   // rememberSelection() never overwrites it. No IndexedDB schema migration.
   function pendingKey(uid){return '__offline_pin_ops__'+String(uid);}
+  function pinChanges(previous,item,enabled){
+    var rows=(previous&&previous.changes||[]).filter(function(c){return c.fileId!==item.fileId;});
+    rows.push({fileId:String(item.fileId),enabled:!!enabled,
+      item:{fileId:String(item.fileId),catalogId:item.catalogId||'',title:item.title||'',
+        artist:item.artist||'',variant:item.variant||'',filename:item.filename||'',
+        mimeType:item.mimeType||'',size:Number(item.size)||0},
+      nonce:Date.now()+'-'+Math.random().toString(36).slice(2)});
+    return rows;
+  }
   function queuePinChange(uid,item,enabled){
     if(!item||!item.fileId)return Promise.reject(new Error('Нет ID фонограммы.'));
     return open().then(function(db){return new Promise(function(resolve,reject){
       var tx=db.transaction(META,'readwrite'),store=tx.objectStore(META),k=pendingKey(uid);
       var request=store.get(k);
       request.onsuccess=function(){
-        var previous=request.result&&request.result.changes||[];
-        var rows=previous.filter(function(c){return c.fileId!==item.fileId;});
-        rows.push({fileId:String(item.fileId),enabled:!!enabled,
-          item:{fileId:String(item.fileId),catalogId:item.catalogId||'',title:item.title||'',
-            artist:item.artist||'',variant:item.variant||'',filename:item.filename||'',
-            mimeType:item.mimeType||'',size:Number(item.size)||0},
-          nonce:Date.now()+'-'+Math.random().toString(36).slice(2)});
+        var rows=pinChanges(request.result,item,enabled);
         store.put({uid:k,changes:rows});
       };
       tx.oncomplete=function(){resolve();};
@@ -138,5 +179,5 @@
     if(navigator.storage&&navigator.storage.persist)return navigator.storage.persist().catch(function(){return false;});
     return Promise.resolve(false);
   }
-  window.VMM_OFFLINE={key:key,put:put,get:get,remove:remove,list:list,rememberSelection:rememberSelection,lastSelection:lastSelection,queuePinChange:queuePinChange,pendingPinChanges:pendingPinChanges,acknowledgePinChange:acknowledgePinChange,wasCloudReady:wasCloudReady,markCloudReady:markCloudReady,estimate:estimate,persist:persist};
+  window.VMM_OFFLINE={key:key,put:put,putPinned:putPinned,get:get,remove:remove,list:list,rememberSelection:rememberSelection,lastSelection:lastSelection,queuePinChange:queuePinChange,pendingPinChanges:pendingPinChanges,acknowledgePinChange:acknowledgePinChange,wasCloudReady:wasCloudReady,markCloudReady:markCloudReady,estimate:estimate,persist:persist};
 }());

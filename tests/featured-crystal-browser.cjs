@@ -137,6 +137,23 @@ delete previous.content.hero.crystalJourney;
  await studio.locator('#landing-publish').click();
  await published.waitForFunction(value=>document.querySelector('#vd-feature-title').textContent===value,initialPlaylist);
  console.log('PASS mode-specific editor, catalog playlist selection, draft reload and independent public modes.');
+ // Real IndexedDB test: exercise Safari's FileReader path and verify both records.
+ await studio.evaluate(async()=>{
+   const store=window.VMM_OFFLINE,uid='fixture-offline-owner';
+   const blob=new Blob([new Uint8Array([1,2,3,4,5])],{type:'audio/mpeg'});
+   Object.defineProperty(blob,'arrayBuffer',{value:undefined});
+   const item={fileId:'fixture_audio_a',catalogId:'fixture_song_a',title:'Offline fixture',mimeType:'audio/mpeg',blob};
+   const pin={fileId:item.fileId,catalogId:item.catalogId,title:item.title,size:5};
+   await store.putPinned(uid,item,pin);
+   const row=await store.get(uid,item.fileId),ops=await store.pendingPinChanges(uid);
+   if(!row||row.blob.size!==5||ops.length!==1||ops[0].fileId!==item.fileId)throw Error('Atomic offline save failed');
+   const data=new Uint8Array(await row.blob.arrayBuffer());
+   if(data.join(',')!=='1,2,3,4,5')throw Error('Offline audio bytes changed');
+ });
+ await studio.reload();
+ await studio.waitForFunction(()=>window.VMM_OFFLINE);
+ assert.equal(await studio.evaluate(async()=>{const rows=await VMM_OFFLINE.list('fixture-offline-owner');return rows.length===1&&rows[0].blob.size===5;}),true);
+ console.log('PASS real IndexedDB audio bytes, FileReader fallback, atomic pin and reload');
  await admin.close();
  const profiles=[
   ['Desktop '+engine.name(), {viewport:{width:1440,height:900}}],
