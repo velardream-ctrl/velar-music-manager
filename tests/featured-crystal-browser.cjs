@@ -234,6 +234,27 @@ delete previous.content.hero.crystalJourney;
   console.log('PASS '+name+' 1/3/12 stages, viewport pin, two skins, dedup, visibility and URL. Scene heights: '+result.join(', '));
   await c.close();
  }
+ // Verify the real player stylesheet without relying on flex-gap support.
+ const playerPage=await browser.newPage();
+ await playerPage.setContent('<div id="vmm-repertoire"><div class="vmm-r-player" id="vmm-r-player-card"><div class="vmm-r-stage"><button class="vmm-r-play-button" aria-pressed="true"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16"/></svg></button><div class="vmm-r-timeline"><input type="range"><div class="vmm-r-clock">1:48</div></div><div class="vmm-r-quick-actions"><button class="vmm-r-quick-btn">A</button><button class="vmm-r-quick-btn">…</button></div></div></div></div>');
+ await playerPage.addStyleTag({content:fs.readFileSync('studio/recordings.css','utf8')});
+ for(const width of [320,414,768,1024]){
+   await playerPage.setViewportSize({width,height:900});
+   for(const minimized of [false,true]){
+     const measured=await playerPage.evaluate(minimized=>{
+       document.querySelector('#vmm-r-player-card').classList.toggle('is-minimized',minimized);
+       const stage=document.querySelector('.vmm-r-stage');stage.style.gap='0';
+       const b=document.querySelector('.vmm-r-play-button').getBoundingClientRect();
+       const input=document.querySelector('.vmm-r-timeline input').getBoundingClientRect();
+       const q=document.querySelector('.vmm-r-quick-actions').getBoundingClientRect();
+       return {left:input.left-b.right,right:q.left-input.right,width:b.width,track:input.width};
+     },minimized);
+     assert.ok(measured.left>=7.9&&measured.right>=5.9,'Player spacing '+width+' '+JSON.stringify(measured));
+     assert.ok(measured.width>=44&&measured.track>0,'Player touch target and timeline');
+   }
+ }
+ await playerPage.close();
+ console.log('PASS player spacing in normal/minimized controls at 320/414/768/1024px with flex gap disabled');
  console.log('Console errors: '+JSON.stringify(unexpected));
  assert.deepEqual(unexpected,[]);
  } finally{await browser.close();}

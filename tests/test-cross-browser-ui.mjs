@@ -18,7 +18,7 @@ assert.match(publicCSS,/\.button-primary \.button-arrow/);
 assert.ok(publicHtml.includes('href="style.css?v=86&consent=190&clips=1&cms=205"'));
 assert.ok(page.includes('src="studio.js?v=19"'));
 assert.ok(page.includes('src="recordings.js?v=12"'));
-assert.ok(page.includes('href="recordings.css?v=13"'));
+assert.ok(page.includes('href="recordings.css?v=14"'));
 assert.ok(sw.includes("CACHE_PREFIX + 'v100'"));
 assert.ok(sw.includes("STUDIO_PREFIX+'v64'"));
 assert.match(studio,/db\.collection\('vmm_admins'\)\.doc\(user\.uid\)\.get\(\{source:'server'\}\)/,

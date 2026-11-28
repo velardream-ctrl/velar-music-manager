@@ -65,6 +65,6 @@ input.value='несуществующее название';
 input.oninput();
 assert.match(elements['vmm-r-results'].children[0].textContent,/не найдено/);
 assert.ok(html.includes('src="recordings.js?v=12"'));
-assert.ok(html.includes('href="recordings.css?v=13"'));
+assert.ok(html.includes('href="recordings.css?v=14"'));
 assert.ok(sw.includes("recordings.js?v=12"));
 console.log('PASS: Firebase v8 Drive credential, iPhone Cyrillic search results/tap, empty-result messaging and cache versions');

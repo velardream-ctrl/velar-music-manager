@@ -14,7 +14,7 @@ assert.doesNotMatch(source,/data-r-offline=/,'Do not expose live offline checkbo
 assert.doesNotMatch(source,/data-r-action="trash"/,'Do not expose per-track trash in playback list');
 assert.match(source,/duplicate&&!window\.confirm/,'Duplicate variant upload must require confirmation');
 assert.ok(html.includes('src="recordings.js?v=12"'));
-assert.ok(html.includes('href="recordings.css?v=13"'));
+assert.ok(html.includes('href="recordings.css?v=14"'));
 assert.ok(sw.includes("STUDIO_PREFIX+'v64'"));
 assert.match(css,/\.vmm-r-edit-toggle/);
 

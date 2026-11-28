@@ -12,7 +12,7 @@ assert.match(js,/function updateMiniPlayer/);
 assert.match(js,/window.addEventListener\('scroll',updateMiniPlayer,false\)/);
 assert.match(js,/viewBox="0 0 24 24" width="28" height="28"/);
 assert.ok(html.includes('recordings.js?v=12'));
-assert.ok(html.includes('recordings.css?v=13'));
+assert.ok(html.includes('recordings.css?v=14'));
 assert.ok(sw.includes("STUDIO_PREFIX+'v64'"));
 const latest=css.slice(css.indexOf('/* RUN-057'));
 assert.doesNotMatch(latest,/\.vmm-r-play-button::before/);
@@ -46,3 +46,9 @@ t.edit(false);system.open=true;t.mini();assert.doesNotMatch(card.className,/is-m
 system.open=false;t.text(false);t.mini();assert.doesNotMatch(card.className,/is-minimized/);
 t.text(true);sentinel.getBoundingClientRect=()=>({bottom:30});t.mini();assert.doesNotMatch(card.className,/is-minimized/);
 console.log('PASS: narrow single-row player, no skip, scalable cloud and safe sticky minimization');
+
+assert.match(latest,/\.vmm-r-stage\{\s*display:flex;flex-wrap:nowrap;align-items:center;gap:0/);
+assert.match(latest,/\.vmm-r-timeline\{[^}]*margin-left:12px;margin-right:10px/);
+assert.match(latest,/\.vmm-r-timeline\{margin-left:8px;margin-right:6px\}/);
+assert.ok(sw.includes('recordings.css?v=14'));
+console.log('PASS: explicit slider separation on legacy Safari and compact screens');

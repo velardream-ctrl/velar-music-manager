@@ -349,7 +349,7 @@
    Kept native AirPlay/overflow and the same <audio> playback engine. */
 #vmm-repertoire .vmm-r-controls-shell{margin:10px 0 4px;border-radius:12px}
 #vmm-repertoire .vmm-r-stage{
-  display:flex;flex-wrap:nowrap;align-items:center;gap:7px;
+  display:flex;flex-wrap:nowrap;align-items:center;gap:0;
   width:100%;min-height:56px;margin:0;padding:5px 9px;
 }
 #vmm-repertoire .vmm-r-play-button{
@@ -367,7 +367,9 @@
 #vmm-repertoire .vmm-r-play-button svg{width:24px;height:24px;flex:0 0 24px;fill:#14213a;pointer-events:none}
 #vmm-repertoire .vmm-r-play-button:focus{outline:2px solid #fff2d4;outline-offset:2px}
 #vmm-repertoire .vmm-r-timeline{
+  /* Explicit margins work on Safari versions without flex gap. */
   display:flex;flex:1 1 55px;min-width:35px;gap:0;justify-content:center;
+  margin-left:12px;margin-right:10px;
 }
 #vmm-repertoire .vmm-r-timeline input[type="range"]{height:34px;min-height:34px}
 #vmm-repertoire .vmm-r-clock{font-size:.77rem;padding:0;min-height:15px;line-height:1.1}
@@ -415,7 +417,8 @@
  #vmm-repertoire .vmm-r-player-sync #vmm-r-sync-mark{font-size:15px}
 }
 @media(max-width:480px){
- #vmm-repertoire .vmm-r-stage{min-height:53px;padding:4px 6px;gap:4px}
+ #vmm-repertoire .vmm-r-stage{min-height:53px;padding:4px 6px;gap:0}
+ #vmm-repertoire .vmm-r-timeline{margin-left:8px;margin-right:6px}
  #vmm-repertoire .vmm-r-play-button{
    flex:0 0 44px;width:44px;min-width:44px;height:44px;
  }
