@@ -53,7 +53,7 @@ assert.match(sw,/Only exact allowlisted source URLs/);
 assert.ok(!/audio\/mpeg|audio\/flac|drive\.google\.com|firestore\.googleapis\.com/.test(sw),'SW cannot cache private data or MP3');
 assert.ok(html.includes('src="recordings.js?v=12"'));
 assert.ok(html.includes('src="offline-repertoire.js?v=3"'));
-assert.ok(html.includes('href="recordings.css?v=13"'));
+assert.ok(html.includes('href="recordings.css?v=14"'));
 assert.ok(html.indexOf('workflows.js?v=7')<html.indexOf('recordings.js?v=12'));
 assert.match(workflows,/window\.VMM_RECORDINGS\.open\(\)/);
 assert.match(css,/vmm-r-player/);

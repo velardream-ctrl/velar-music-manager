@@ -55,7 +55,7 @@ assert.ok(html.includes('src="workflows.js?v=12"'));
 assert.ok(html.includes('src="recordings.js?v=12"'));
 assert.ok(html.includes('src="offline-repertoire.js?v=3"'));
 assert.ok(html.includes('href="studio.css?v=31"'));
-assert.ok(html.includes('href="recordings.css?v=13"'));
+assert.ok(html.includes('href="recordings.css?v=14"'));
 assert.ok(sw.includes("STUDIO_PREFIX+'v64'"));
 
 // Live behavior: exercise controller view and pin behavior, without OAuth.
